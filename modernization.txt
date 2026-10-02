@@ -1,0 +1,20 @@
+Open
+C:\Repository\BMMS-Legacy\BMMS.sln
+Switch to modernization
+
+Make changes
+Commit
+
+git add .
+git commit -m "Description of Change"
+git push origin modernization
+
+
+Before any major change
+
+git checkout master
+git tag BMMS-Recovered-Baseline
+git push origin BMMS-Recovered-Baseline
+
+
+
