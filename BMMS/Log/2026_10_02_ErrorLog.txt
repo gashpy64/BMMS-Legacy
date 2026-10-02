@@ -1,0 +1,202 @@
+-----------------------------------------------------------------------------------------------------------------------------
+Date & Time : 02 October 2026 02:21:56
+Class  Name : Login
+Method Name : btnLogin_Click
+Description : System.Data.SqlClient.SqlException (0x80131904): A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: SQL Network Interfaces, error: 26 - Error Locating Server/Instance Specified)
+   at BMMSDAL.CommonDB.GetDataTable(String ProcedureName, SqlParameter[] ParamArray) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\CommonDB.cs:line 80
+   at BMMSDAL.UserDB.GetUserByLoginName(String LoginName, String Password, String User_IP_Address, String Server_Url) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\UserDB.cs:line 144
+   at BMMSBAL.UserMgr.GetUserByLoginName(String LoginName, String Password, String User_IP_Address, String Server_Url) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\UserMgr.cs:line 134
+   at BMMS._Default.btnLogin_Click(Object sender, ImageClickEventArgs e) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMS\Default.aspx.cs:line 68
+ClientConnectionId:00000000-0000-0000-0000-000000000000
+Error Number:-1,State:0,Class:20
+-----------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------
+Date & Time : 02 October 2026 02:24:29
+Class  Name : Login
+Method Name : btnLogin_Click
+Description : System.Configuration.ConfigurationErrorsException: The entry 'ConnectionString' has already been added. (C:\BMMS\BMMS\Source\BMMS\web.config line 10)
+   at System.Configuration.BaseConfigurationRecord.EvaluateOne(String[] keys, SectionInput input, Boolean isTrusted, FactoryRecord factoryRecord, SectionRecord sectionRecord, Object parentResult)
+   at System.Configuration.BaseConfigurationRecord.Evaluate(FactoryRecord factoryRecord, SectionRecord sectionRecord, Object parentResult, Boolean getLkg, Boolean getRuntimeObject, Object& result, Object& resultRuntimeObject)
+   at System.Configuration.BaseConfigurationRecord.GetSectionRecursive(String configKey, Boolean getLkg, Boolean checkPermission, Boolean getRuntimeObject, Boolean requestIsHere, Object& result, Object& resultRuntimeObject)
+   at System.Configuration.BaseConfigurationRecord.GetSection(String configKey)
+   at System.Web.HttpContext.GetSection(String sectionName)
+   at System.Web.Configuration.HttpConfigurationSystem.GetSection(String sectionName)
+   at System.Web.Configuration.HttpConfigurationSystem.System.Configuration.Internal.IInternalConfigSystem.GetSection(String configKey)
+   at System.Configuration.ConfigurationManager.get_ConnectionStrings()
+   at BMMSDAL.ConnectDB.GetConnectionString() in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\ConnectDB.cs:line 13
+   at BMMSDAL.CommonDB.GetDataTable(String ProcedureName, SqlParameter[] ParamArray) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\CommonDB.cs:line 58
+   at BMMSDAL.UserDB.GetUserByLoginName(String LoginName, String Password, String User_IP_Address, String Server_Url) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\UserDB.cs:line 144
+   at BMMSBAL.UserMgr.GetUserByLoginName(String LoginName, String Password, String User_IP_Address, String Server_Url) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\UserMgr.cs:line 134
+   at BMMS._Default.btnLogin_Click(Object sender, ImageClickEventArgs e) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMS\Default.aspx.cs:line 68
+-----------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------
+Date & Time : 02 October 2026 02:29:36
+Class  Name : Login
+Method Name : btnLogin_Click
+Description : System.Configuration.ConfigurationErrorsException: The configuration section cannot contain a CDATA or text element. (C:\BMMS\BMMS\Source\BMMS\web.config line 10)
+   at System.Configuration.BaseConfigurationRecord.EvaluateOne(String[] keys, SectionInput input, Boolean isTrusted, FactoryRecord factoryRecord, SectionRecord sectionRecord, Object parentResult)
+   at System.Configuration.BaseConfigurationRecord.Evaluate(FactoryRecord factoryRecord, SectionRecord sectionRecord, Object parentResult, Boolean getLkg, Boolean getRuntimeObject, Object& result, Object& resultRuntimeObject)
+   at System.Configuration.BaseConfigurationRecord.GetSectionRecursive(String configKey, Boolean getLkg, Boolean checkPermission, Boolean getRuntimeObject, Boolean requestIsHere, Object& result, Object& resultRuntimeObject)
+   at System.Configuration.BaseConfigurationRecord.GetSection(String configKey)
+   at System.Web.HttpContext.GetSection(String sectionName)
+   at System.Web.Configuration.HttpConfigurationSystem.GetSection(String sectionName)
+   at System.Web.Configuration.HttpConfigurationSystem.System.Configuration.Internal.IInternalConfigSystem.GetSection(String configKey)
+   at System.Configuration.ConfigurationManager.get_ConnectionStrings()
+   at BMMSDAL.ConnectDB.GetConnectionString() in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\ConnectDB.cs:line 13
+   at BMMSDAL.CommonDB.GetDataTable(String ProcedureName, SqlParameter[] ParamArray) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\CommonDB.cs:line 58
+   at BMMSDAL.UserDB.GetUserByLoginName(String LoginName, String Password, String User_IP_Address, String Server_Url) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\UserDB.cs:line 144
+   at BMMSBAL.UserMgr.GetUserByLoginName(String LoginName, String Password, String User_IP_Address, String Server_Url) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\UserMgr.cs:line 134
+   at BMMS._Default.btnLogin_Click(Object sender, ImageClickEventArgs e) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMS\Default.aspx.cs:line 68
+-----------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------
+Date & Time : 02 October 2026 02:34:51
+Class  Name : Login
+Method Name : btnLogin_Click
+Description : System.Configuration.ConfigurationErrorsException: The configuration section cannot contain a CDATA or text element. (C:\BMMS\BMMS\Source\BMMS\web.config line 10)
+   at System.Configuration.BaseConfigurationRecord.EvaluateOne(String[] keys, SectionInput input, Boolean isTrusted, FactoryRecord factoryRecord, SectionRecord sectionRecord, Object parentResult)
+   at System.Configuration.BaseConfigurationRecord.Evaluate(FactoryRecord factoryRecord, SectionRecord sectionRecord, Object parentResult, Boolean getLkg, Boolean getRuntimeObject, Object& result, Object& resultRuntimeObject)
+   at System.Configuration.BaseConfigurationRecord.GetSectionRecursive(String configKey, Boolean getLkg, Boolean checkPermission, Boolean getRuntimeObject, Boolean requestIsHere, Object& result, Object& resultRuntimeObject)
+   at System.Configuration.BaseConfigurationRecord.GetSection(String configKey)
+   at System.Web.HttpContext.GetSection(String sectionName)
+   at System.Web.Configuration.HttpConfigurationSystem.GetSection(String sectionName)
+   at System.Web.Configuration.HttpConfigurationSystem.System.Configuration.Internal.IInternalConfigSystem.GetSection(String configKey)
+   at System.Configuration.ConfigurationManager.get_ConnectionStrings()
+   at BMMSDAL.ConnectDB.GetConnectionString() in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\ConnectDB.cs:line 13
+   at BMMSDAL.CommonDB.GetDataTable(String ProcedureName, SqlParameter[] ParamArray) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\CommonDB.cs:line 58
+   at BMMSDAL.UserDB.GetUserByLoginName(String LoginName, String Password, String User_IP_Address, String Server_Url) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\UserDB.cs:line 144
+   at BMMSBAL.UserMgr.GetUserByLoginName(String LoginName, String Password, String User_IP_Address, String Server_Url) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\UserMgr.cs:line 134
+   at BMMS._Default.btnLogin_Click(Object sender, ImageClickEventArgs e) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMS\Default.aspx.cs:line 68
+-----------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------
+Date & Time : 02 October 2026 02:38:34
+Class  Name : Login
+Method Name : btnLogin_Click
+Description : System.Configuration.ConfigurationErrorsException: The configuration section cannot contain a CDATA or text element. (C:\BMMS\BMMS\Source\BMMS\web.config line 10)
+   at System.Configuration.BaseConfigurationRecord.EvaluateOne(String[] keys, SectionInput input, Boolean isTrusted, FactoryRecord factoryRecord, SectionRecord sectionRecord, Object parentResult)
+   at System.Configuration.BaseConfigurationRecord.Evaluate(FactoryRecord factoryRecord, SectionRecord sectionRecord, Object parentResult, Boolean getLkg, Boolean getRuntimeObject, Object& result, Object& resultRuntimeObject)
+   at System.Configuration.BaseConfigurationRecord.GetSectionRecursive(String configKey, Boolean getLkg, Boolean checkPermission, Boolean getRuntimeObject, Boolean requestIsHere, Object& result, Object& resultRuntimeObject)
+   at System.Configuration.BaseConfigurationRecord.GetSection(String configKey)
+   at System.Web.HttpContext.GetSection(String sectionName)
+   at System.Web.Configuration.HttpConfigurationSystem.GetSection(String sectionName)
+   at System.Web.Configuration.HttpConfigurationSystem.System.Configuration.Internal.IInternalConfigSystem.GetSection(String configKey)
+   at System.Configuration.ConfigurationManager.get_ConnectionStrings()
+   at BMMSDAL.ConnectDB.GetConnectionString() in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\ConnectDB.cs:line 13
+   at BMMSDAL.CommonDB.GetDataTable(String ProcedureName, SqlParameter[] ParamArray) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\CommonDB.cs:line 58
+   at BMMSDAL.UserDB.GetUserByLoginName(String LoginName, String Password, String User_IP_Address, String Server_Url) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\UserDB.cs:line 144
+   at BMMSBAL.UserMgr.GetUserByLoginName(String LoginName, String Password, String User_IP_Address, String Server_Url) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\UserMgr.cs:line 134
+   at BMMS._Default.btnLogin_Click(Object sender, ImageClickEventArgs e) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMS\Default.aspx.cs:line 68
+-----------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------
+Date & Time : 02 October 2026 02:47:54
+Class  Name : Login
+Method Name : btnLogin_Click
+Description : System.Configuration.ConfigurationErrorsException: The configuration section cannot contain a CDATA or text element. (C:\BMMS\BMMS\Source\BMMS\web.config line 10)
+   at System.Configuration.BaseConfigurationRecord.EvaluateOne(String[] keys, SectionInput input, Boolean isTrusted, FactoryRecord factoryRecord, SectionRecord sectionRecord, Object parentResult)
+   at System.Configuration.BaseConfigurationRecord.Evaluate(FactoryRecord factoryRecord, SectionRecord sectionRecord, Object parentResult, Boolean getLkg, Boolean getRuntimeObject, Object& result, Object& resultRuntimeObject)
+   at System.Configuration.BaseConfigurationRecord.GetSectionRecursive(String configKey, Boolean getLkg, Boolean checkPermission, Boolean getRuntimeObject, Boolean requestIsHere, Object& result, Object& resultRuntimeObject)
+   at System.Configuration.BaseConfigurationRecord.GetSection(String configKey)
+   at System.Web.HttpContext.GetSection(String sectionName)
+   at System.Web.Configuration.HttpConfigurationSystem.GetSection(String sectionName)
+   at System.Web.Configuration.HttpConfigurationSystem.System.Configuration.Internal.IInternalConfigSystem.GetSection(String configKey)
+   at System.Configuration.ConfigurationManager.get_ConnectionStrings()
+   at BMMSDAL.ConnectDB.GetConnectionString() in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\ConnectDB.cs:line 13
+   at BMMSDAL.CommonDB.GetDataTable(String ProcedureName, SqlParameter[] ParamArray) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\CommonDB.cs:line 58
+   at BMMSDAL.UserDB.GetUserByLoginName(String LoginName, String Password, String User_IP_Address, String Server_Url) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\UserDB.cs:line 144
+   at BMMSBAL.UserMgr.GetUserByLoginName(String LoginName, String Password, String User_IP_Address, String Server_Url) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\UserMgr.cs:line 134
+   at BMMS._Default.btnLogin_Click(Object sender, ImageClickEventArgs e) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMS\Default.aspx.cs:line 68
+-----------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------
+Date & Time : 02 October 2026 02:48:02
+Class  Name : Login
+Method Name : btnLogin_Click
+Description : System.Configuration.ConfigurationErrorsException: The configuration section cannot contain a CDATA or text element. (C:\BMMS\BMMS\Source\BMMS\web.config line 10)
+   at System.Configuration.BaseConfigurationRecord.EvaluateOne(String[] keys, SectionInput input, Boolean isTrusted, FactoryRecord factoryRecord, SectionRecord sectionRecord, Object parentResult)
+   at System.Configuration.BaseConfigurationRecord.Evaluate(FactoryRecord factoryRecord, SectionRecord sectionRecord, Object parentResult, Boolean getLkg, Boolean getRuntimeObject, Object& result, Object& resultRuntimeObject)
+   at System.Configuration.BaseConfigurationRecord.GetSectionRecursive(String configKey, Boolean getLkg, Boolean checkPermission, Boolean getRuntimeObject, Boolean requestIsHere, Object& result, Object& resultRuntimeObject)
+   at System.Configuration.BaseConfigurationRecord.GetSection(String configKey)
+   at System.Web.HttpContext.GetSection(String sectionName)
+   at System.Web.Configuration.HttpConfigurationSystem.GetSection(String sectionName)
+   at System.Web.Configuration.HttpConfigurationSystem.System.Configuration.Internal.IInternalConfigSystem.GetSection(String configKey)
+   at System.Configuration.ConfigurationManager.get_ConnectionStrings()
+   at BMMSDAL.ConnectDB.GetConnectionString() in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\ConnectDB.cs:line 13
+   at BMMSDAL.CommonDB.GetDataTable(String ProcedureName, SqlParameter[] ParamArray) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\CommonDB.cs:line 58
+   at BMMSDAL.UserDB.GetUserByLoginName(String LoginName, String Password, String User_IP_Address, String Server_Url) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\UserDB.cs:line 144
+   at BMMSBAL.UserMgr.GetUserByLoginName(String LoginName, String Password, String User_IP_Address, String Server_Url) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\UserMgr.cs:line 134
+   at BMMS._Default.btnLogin_Click(Object sender, ImageClickEventArgs e) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMS\Default.aspx.cs:line 68
+-----------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------
+Date & Time : 02 October 2026 02:51:34
+Class  Name : Login
+Method Name : btnLogin_Click
+Description : System.Configuration.ConfigurationErrorsException: The configuration section cannot contain a CDATA or text element. (C:\BMMS\BMMS\Source\BMMS\web.config line 10)
+   at System.Configuration.BaseConfigurationRecord.EvaluateOne(String[] keys, SectionInput input, Boolean isTrusted, FactoryRecord factoryRecord, SectionRecord sectionRecord, Object parentResult)
+   at System.Configuration.BaseConfigurationRecord.Evaluate(FactoryRecord factoryRecord, SectionRecord sectionRecord, Object parentResult, Boolean getLkg, Boolean getRuntimeObject, Object& result, Object& resultRuntimeObject)
+   at System.Configuration.BaseConfigurationRecord.GetSectionRecursive(String configKey, Boolean getLkg, Boolean checkPermission, Boolean getRuntimeObject, Boolean requestIsHere, Object& result, Object& resultRuntimeObject)
+   at System.Configuration.BaseConfigurationRecord.GetSection(String configKey)
+   at System.Web.HttpContext.GetSection(String sectionName)
+   at System.Web.Configuration.HttpConfigurationSystem.GetSection(String sectionName)
+   at System.Web.Configuration.HttpConfigurationSystem.System.Configuration.Internal.IInternalConfigSystem.GetSection(String configKey)
+   at System.Configuration.ConfigurationManager.get_ConnectionStrings()
+   at BMMSDAL.ConnectDB.GetConnectionString() in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\ConnectDB.cs:line 13
+   at BMMSDAL.CommonDB.GetDataTable(String ProcedureName, SqlParameter[] ParamArray) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\CommonDB.cs:line 58
+   at BMMSDAL.UserDB.GetUserByLoginName(String LoginName, String Password, String User_IP_Address, String Server_Url) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\UserDB.cs:line 144
+   at BMMSBAL.UserMgr.GetUserByLoginName(String LoginName, String Password, String User_IP_Address, String Server_Url) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\UserMgr.cs:line 134
+   at BMMS._Default.btnLogin_Click(Object sender, ImageClickEventArgs e) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMS\Default.aspx.cs:line 68
+-----------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------
+Date & Time : 02 October 2026 02:55:15
+Class  Name : Login
+Method Name : btnLogin_Click
+Description : System.Configuration.ConfigurationErrorsException: The configuration section cannot contain a CDATA or text element. (C:\BMMS\BMMS\Source\BMMS\web.config line 9)
+   at System.Configuration.BaseConfigurationRecord.EvaluateOne(String[] keys, SectionInput input, Boolean isTrusted, FactoryRecord factoryRecord, SectionRecord sectionRecord, Object parentResult)
+   at System.Configuration.BaseConfigurationRecord.Evaluate(FactoryRecord factoryRecord, SectionRecord sectionRecord, Object parentResult, Boolean getLkg, Boolean getRuntimeObject, Object& result, Object& resultRuntimeObject)
+   at System.Configuration.BaseConfigurationRecord.GetSectionRecursive(String configKey, Boolean getLkg, Boolean checkPermission, Boolean getRuntimeObject, Boolean requestIsHere, Object& result, Object& resultRuntimeObject)
+   at System.Configuration.BaseConfigurationRecord.GetSection(String configKey)
+   at System.Web.HttpContext.GetSection(String sectionName)
+   at System.Web.Configuration.HttpConfigurationSystem.GetSection(String sectionName)
+   at System.Web.Configuration.HttpConfigurationSystem.System.Configuration.Internal.IInternalConfigSystem.GetSection(String configKey)
+   at System.Configuration.ConfigurationManager.get_ConnectionStrings()
+   at BMMSDAL.ConnectDB.GetConnectionString() in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\ConnectDB.cs:line 13
+   at BMMSDAL.CommonDB.GetDataTable(String ProcedureName, SqlParameter[] ParamArray) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\CommonDB.cs:line 58
+   at BMMSDAL.UserDB.GetUserByLoginName(String LoginName, String Password, String User_IP_Address, String Server_Url) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\UserDB.cs:line 144
+   at BMMSBAL.UserMgr.GetUserByLoginName(String LoginName, String Password, String User_IP_Address, String Server_Url) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\UserMgr.cs:line 134
+   at BMMS._Default.btnLogin_Click(Object sender, ImageClickEventArgs e) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMS\Default.aspx.cs:line 68
+-----------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------
+Date & Time : 02 October 2026 03:00:03
+Class  Name : Login
+Method Name : btnLogin_Click
+Description : System.Configuration.ConfigurationErrorsException: The configuration section cannot contain a CDATA or text element. (C:\BMMS\BMMS\Source\BMMS\web.config line 9)
+   at System.Configuration.BaseConfigurationRecord.EvaluateOne(String[] keys, SectionInput input, Boolean isTrusted, FactoryRecord factoryRecord, SectionRecord sectionRecord, Object parentResult)
+   at System.Configuration.BaseConfigurationRecord.Evaluate(FactoryRecord factoryRecord, SectionRecord sectionRecord, Object parentResult, Boolean getLkg, Boolean getRuntimeObject, Object& result, Object& resultRuntimeObject)
+   at System.Configuration.BaseConfigurationRecord.GetSectionRecursive(String configKey, Boolean getLkg, Boolean checkPermission, Boolean getRuntimeObject, Boolean requestIsHere, Object& result, Object& resultRuntimeObject)
+   at System.Configuration.BaseConfigurationRecord.GetSection(String configKey)
+   at System.Web.HttpContext.GetSection(String sectionName)
+   at System.Web.Configuration.HttpConfigurationSystem.GetSection(String sectionName)
+   at System.Web.Configuration.HttpConfigurationSystem.System.Configuration.Internal.IInternalConfigSystem.GetSection(String configKey)
+   at System.Configuration.ConfigurationManager.get_ConnectionStrings()
+   at BMMSDAL.ConnectDB.GetConnectionString() in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\ConnectDB.cs:line 13
+   at BMMSDAL.CommonDB.GetDataTable(String ProcedureName, SqlParameter[] ParamArray) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\CommonDB.cs:line 58
+   at BMMSDAL.UserDB.GetUserByLoginName(String LoginName, String Password, String User_IP_Address, String Server_Url) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\UserDB.cs:line 144
+   at BMMSBAL.UserMgr.GetUserByLoginName(String LoginName, String Password, String User_IP_Address, String Server_Url) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\UserMgr.cs:line 134
+   at BMMS._Default.btnLogin_Click(Object sender, ImageClickEventArgs e) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMS\Default.aspx.cs:line 68
+-----------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------
+Date & Time : 02 October 2026 03:04:25
+Class  Name : Login
+Method Name : btnLogin_Click
+Description : System.Configuration.ConfigurationErrorsException: The configuration section cannot contain a CDATA or text element. (C:\BMMS\BMMS\Source\BMMS\web.config line 9)
+   at System.Configuration.BaseConfigurationRecord.EvaluateOne(String[] keys, SectionInput input, Boolean isTrusted, FactoryRecord factoryRecord, SectionRecord sectionRecord, Object parentResult)
+   at System.Configuration.BaseConfigurationRecord.Evaluate(FactoryRecord factoryRecord, SectionRecord sectionRecord, Object parentResult, Boolean getLkg, Boolean getRuntimeObject, Object& result, Object& resultRuntimeObject)
+   at System.Configuration.BaseConfigurationRecord.GetSectionRecursive(String configKey, Boolean getLkg, Boolean checkPermission, Boolean getRuntimeObject, Boolean requestIsHere, Object& result, Object& resultRuntimeObject)
+   at System.Configuration.BaseConfigurationRecord.GetSection(String configKey)
+   at System.Web.HttpContext.GetSection(String sectionName)
+   at System.Web.Configuration.HttpConfigurationSystem.GetSection(String sectionName)
+   at System.Web.Configuration.HttpConfigurationSystem.System.Configuration.Internal.IInternalConfigSystem.GetSection(String configKey)
+   at System.Configuration.ConfigurationManager.get_ConnectionStrings()
+   at BMMSDAL.ConnectDB.GetConnectionString() in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\ConnectDB.cs:line 13
+   at BMMSDAL.CommonDB.GetDataTable(String ProcedureName, SqlParameter[] ParamArray) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\CommonDB.cs:line 58
+   at BMMSDAL.UserDB.GetUserByLoginName(String LoginName, String Password, String User_IP_Address, String Server_Url) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\UserDB.cs:line 144
+   at BMMSBAL.UserMgr.GetUserByLoginName(String LoginName, String Password, String User_IP_Address, String Server_Url) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\UserMgr.cs:line 134
+   at BMMS._Default.btnLogin_Click(Object sender, ImageClickEventArgs e) in S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMS\Default.aspx.cs:line 68
+-----------------------------------------------------------------------------------------------------------------------------

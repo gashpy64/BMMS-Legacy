@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<appSettings>
+  <add key="PageTitle" value=".:: BMMS ::." />
+  <add key="FooterText" value="Copyright © 2010 - The Lakshmi Vilas Bank Ltd. All Rights Reserved" />
+  <add key="CommonErrMsg" value="The Web server may be busy or down.  Please try again later or contact your System Administrator" />
+  <add key="delete_reference" value="You cannot delete this record, because it has references." />
+  <add key="data.notDelete" value="This is master record.  So you cannot delete." />
+  <add key="delete_msg" value="Record deleted successfully." />
+  <add key="NoRecord" value="No such records found" />
+  <add key="LoginIdMaxLength" value="12" />
+  <add key="PasswordMaxLength" value="12" />
+  <add key="PasswordMinLength" value="6" />
+</appSettings>

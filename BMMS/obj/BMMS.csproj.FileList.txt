@@ -1,0 +1,15 @@
+obj\Debug\ResolveAssemblyReference.cache
+obj\Debug\BMMS.dll.licenses
+bin\BMMS.dll
+bin\BMMS.pdb
+bin\AjaxControlToolkit.dll
+bin\BMMSBAL.dll
+bin\FreeTextBox.dll
+bin\itextsharp.dll
+bin\Microsoft.SqlServer.BatchParser.dll
+bin\Microsoft.SqlServer.Replication.dll
+bin\BMMSDAL.dll
+bin\BMMSDAL.pdb
+bin\BMMSBAL.pdb
+obj\Debug\BMMS.dll
+obj\Debug\BMMS.pdb

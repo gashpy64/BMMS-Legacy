@@ -1,0 +1,144 @@
+E:\Sahay\Test\MODEL\BMMS\BMMSBAL\bin\Debug\BMMSBAL.dll
+E:\Sahay\Test\MODEL\BMMS\BMMSBAL\bin\Debug\BMMSBAL.pdb
+E:\Sahay\Test\MODEL\BMMS\BMMSBAL\obj\Debug\ResolveAssemblyReference.cache
+E:\Sahay\Test\MODEL\BMMS\BMMSBAL\obj\Debug\BMMSBAL.dll
+E:\Sahay\Test\MODEL\BMMS\BMMSBAL\obj\Debug\BMMSBAL.pdb
+E:\Sahay\Test\MODEL\BMMS\BMMSBAL\bin\Debug\BMMSDAL.dll
+E:\Sahay\Test\MODEL\BMMS\BMMSBAL\bin\Debug\BMMSDAL.pdb
+E:\Sahay\Test\MODEL\MODEL\NewModel\BMMSBAL\bin\Debug\BMMSBAL.dll
+E:\Sahay\Test\MODEL\MODEL\NewModel\BMMSBAL\bin\Debug\BMMSBAL.pdb
+E:\Sahay\Test\MODEL\MODEL\NewModel\BMMSBAL\bin\Debug\BMMSDAL.dll
+E:\Sahay\Test\MODEL\MODEL\NewModel\BMMSBAL\bin\Debug\BMMSDAL.pdb
+E:\Sahay\Test\MODEL\MODEL\NewModel\BMMSBAL\obj\Debug\ResolveAssemblyReference.cache
+E:\Sahay\Test\MODEL\MODEL\NewModel\BMMSBAL\obj\Debug\BMMSBAL.dll
+E:\Sahay\Test\MODEL\MODEL\NewModel\BMMSBAL\obj\Debug\BMMSBAL.pdb
+G:\Works\MODEL\MODEL\MODEL\NewModel\BMMSBAL\bin\Debug\BMMSBAL.dll
+G:\Works\MODEL\MODEL\MODEL\NewModel\BMMSBAL\bin\Debug\BMMSBAL.pdb
+G:\Works\MODEL\MODEL\MODEL\NewModel\BMMSBAL\bin\Debug\BMMSDAL.dll
+G:\Works\MODEL\MODEL\MODEL\NewModel\BMMSBAL\bin\Debug\BMMSDAL.pdb
+G:\Works\MODEL\MODEL\MODEL\NewModel\BMMSBAL\obj\Debug\ResolveAssemblyReference.cache
+G:\Works\MODEL\MODEL\MODEL\NewModel\BMMSBAL\obj\Debug\BMMSBAL.dll
+G:\Works\MODEL\MODEL\MODEL\NewModel\BMMSBAL\obj\Debug\BMMSBAL.pdb
+G:\Works\NewBMMS\NewModel\BMMSBAL\bin\Debug\BMMSBAL.dll
+G:\Works\NewBMMS\NewModel\BMMSBAL\bin\Debug\BMMSBAL.pdb
+G:\Works\NewBMMS\NewModel\BMMSBAL\bin\Debug\BMMSDAL.dll
+G:\Works\NewBMMS\NewModel\BMMSBAL\bin\Debug\BMMSDAL.pdb
+G:\Works\NewBMMS\NewModel\BMMSBAL\obj\Debug\ResolveAssemblyReference.cache
+G:\Works\NewBMMS\NewModel\BMMSBAL\obj\Debug\BMMSBAL.dll
+G:\Works\NewBMMS\NewModel\BMMSBAL\obj\Debug\BMMSBAL.pdb
+E:\Sahay\Test\NewModel\NewModel\BMMSBAL\bin\Debug\BMMSBAL.dll
+E:\Sahay\Test\NewModel\NewModel\BMMSBAL\bin\Debug\BMMSBAL.pdb
+E:\Sahay\Test\NewModel\NewModel\BMMSBAL\bin\Debug\BMMSDAL.dll
+E:\Sahay\Test\NewModel\NewModel\BMMSBAL\bin\Debug\BMMSDAL.pdb
+E:\Sahay\Test\NewModel\NewModel\BMMSBAL\obj\Debug\ResolveAssemblyReference.cache
+E:\Sahay\Test\NewModel\NewModel\BMMSBAL\obj\Debug\BMMSBAL.dll
+E:\Sahay\Test\NewModel\NewModel\BMMSBAL\obj\Debug\BMMSBAL.pdb
+G:\Works\NewBMMS\NewModel\NewModel\NewModel\BMMSBAL\bin\Debug\BMMSBAL.dll
+G:\Works\NewBMMS\NewModel\NewModel\NewModel\BMMSBAL\bin\Debug\BMMSBAL.pdb
+G:\Works\NewBMMS\NewModel\NewModel\NewModel\BMMSBAL\bin\Debug\BMMSDAL.dll
+G:\Works\NewBMMS\NewModel\NewModel\NewModel\BMMSBAL\bin\Debug\BMMSDAL.pdb
+G:\Works\NewBMMS\NewModel\NewModel\NewModel\BMMSBAL\obj\Debug\ResolveAssemblyReference.cache
+G:\Works\NewBMMS\NewModel\NewModel\NewModel\BMMSBAL\obj\Debug\BMMSBAL.dll
+G:\Works\NewBMMS\NewModel\NewModel\NewModel\BMMSBAL\obj\Debug\BMMSBAL.pdb
+G:\Works\NewBMMS\NewModel\NewModel\BMMSBAL\bin\Debug\BMMSBAL.dll
+G:\Works\NewBMMS\NewModel\NewModel\BMMSBAL\bin\Debug\BMMSBAL.pdb
+G:\Works\NewBMMS\NewModel\NewModel\BMMSBAL\bin\Debug\BMMSDAL.dll
+G:\Works\NewBMMS\NewModel\NewModel\BMMSBAL\bin\Debug\BMMSDAL.pdb
+G:\Works\NewBMMS\NewModel\NewModel\BMMSBAL\obj\Debug\ResolveAssemblyReference.cache
+G:\Works\NewBMMS\NewModel\NewModel\BMMSBAL\obj\Debug\BMMSBAL.dll
+G:\Works\NewBMMS\NewModel\NewModel\BMMSBAL\obj\Debug\BMMSBAL.pdb
+E:\Sahay\Test\NewModel\NewModel\NewModel\BMMSBAL\bin\Debug\BMMSBAL.dll
+E:\Sahay\Test\NewModel\NewModel\NewModel\BMMSBAL\bin\Debug\BMMSBAL.pdb
+E:\Sahay\Test\NewModel\NewModel\NewModel\BMMSBAL\bin\Debug\BMMSDAL.dll
+E:\Sahay\Test\NewModel\NewModel\NewModel\BMMSBAL\bin\Debug\BMMSDAL.pdb
+E:\Sahay\Test\NewModel\NewModel\NewModel\BMMSBAL\obj\Debug\ResolveAssemblyReference.cache
+E:\Sahay\Test\NewModel\NewModel\NewModel\BMMSBAL\obj\Debug\BMMSBAL.dll
+E:\Sahay\Test\NewModel\NewModel\NewModel\BMMSBAL\obj\Debug\BMMSBAL.pdb
+E:\Sahay\Test\NewModel\BMMSBAL\bin\Debug\BMMSBAL.dll
+E:\Sahay\Test\NewModel\BMMSBAL\bin\Debug\BMMSBAL.pdb
+E:\Sahay\Test\NewModel\BMMSBAL\bin\Debug\BMMSDAL.dll
+E:\Sahay\Test\NewModel\BMMSBAL\bin\Debug\BMMSDAL.pdb
+E:\Sahay\Test\NewModel\BMMSBAL\obj\Debug\ResolveAssemblyReference.cache
+E:\Sahay\Test\NewModel\BMMSBAL\obj\Debug\BMMSBAL.dll
+E:\Sahay\Test\NewModel\BMMSBAL\obj\Debug\BMMSBAL.pdb
+G:\Projects\BMMS\BMMS\BMMSBAL\bin\Debug\BMMSBAL.dll
+G:\Projects\BMMS\BMMS\BMMSBAL\bin\Debug\BMMSBAL.pdb
+G:\Projects\BMMS\BMMS\BMMSBAL\bin\Debug\BMMSDAL.dll
+G:\Projects\BMMS\BMMS\BMMSBAL\bin\Debug\BMMSDAL.pdb
+G:\Projects\BMMS\BMMS\BMMSBAL\obj\Debug\ResolveAssemblyReference.cache
+G:\Projects\BMMS\BMMS\BMMSBAL\obj\Debug\BMMSBAL.dll
+G:\Projects\BMMS\BMMS\BMMSBAL\obj\Debug\BMMSBAL.pdb
+E:\Sahay\Test\New Folder\BMMS\BMMSBAL\bin\Debug\BMMSBAL.dll
+E:\Sahay\Test\New Folder\BMMS\BMMSBAL\bin\Debug\BMMSBAL.pdb
+E:\Sahay\Test\New Folder\BMMS\BMMSBAL\bin\Debug\BMMSDAL.dll
+E:\Sahay\Test\New Folder\BMMS\BMMSBAL\bin\Debug\BMMSDAL.pdb
+E:\Sahay\Test\New Folder\BMMS\BMMSBAL\obj\Debug\ResolveAssemblyReference.cache
+E:\Sahay\Test\New Folder\BMMS\BMMSBAL\obj\Debug\BMMSBAL.dll
+E:\Sahay\Test\New Folder\BMMS\BMMSBAL\obj\Debug\BMMSBAL.pdb
+G:\Projects\BMMS\BMMS\BMMSBAL\bin\Debug\itextsharp.dll
+G:\Projects\BMMS\BMMS\BMMSBAL\obj\Debug\BMMSBAL.csproj.ResolveComReference.cache
+E:\Sahay\Test\New Folder\BMMS\BMMS\BMMSBAL\bin\Debug\BMMSBAL.dll
+E:\Sahay\Test\New Folder\BMMS\BMMS\BMMSBAL\bin\Debug\BMMSBAL.pdb
+E:\Sahay\Test\New Folder\BMMS\BMMS\BMMSBAL\bin\Debug\BMMSDAL.dll
+E:\Sahay\Test\New Folder\BMMS\BMMS\BMMSBAL\bin\Debug\itextsharp.dll
+E:\Sahay\Test\New Folder\BMMS\BMMS\BMMSBAL\bin\Debug\BMMSDAL.pdb
+E:\Sahay\Test\New Folder\BMMS\BMMS\BMMSBAL\bin\Debug\Interop.Microsoft.Office.Core.dll
+E:\Sahay\Test\New Folder\BMMS\BMMS\BMMSBAL\obj\Debug\ResolveAssemblyReference.cache
+E:\Sahay\Test\New Folder\BMMS\BMMS\BMMSBAL\obj\Debug\Interop.Microsoft.Office.Core.dll
+E:\Sahay\Test\New Folder\BMMS\BMMS\BMMSBAL\obj\Debug\BMMSBAL.csproj.ResolveComReference.cache
+E:\Sahay\Test\New Folder\BMMS\BMMS\BMMSBAL\obj\Debug\BMMSBAL.dll
+E:\Sahay\Test\New Folder\BMMS\BMMS\BMMSBAL\obj\Debug\BMMSBAL.pdb
+E:\Sahay\Test\New Folder\BMMS\BMMSBAL\bin\Debug\itextsharp.dll
+E:\Sahay\Test\New Folder\BMMS\BMMSBAL\obj\Debug\BMMSBAL.csproj.ResolveComReference.cache
+G:\Projects\BMMS\BMMS\BMMSBAL\bin\Debug\Microsoft.SqlServer.Replication.dll
+G:\Projects\BMMS\BMMS\BMMSBAL\bin\Debug\Microsoft.SqlServer.BatchParser.dll
+E:\Sahay\Test\New Folder\BMMS\BMMSBAL\bin\Debug\Microsoft.SqlServer.Replication.dll
+E:\Sahay\Test\New Folder\BMMS\BMMSBAL\bin\Debug\Microsoft.SqlServer.BatchParser.dll
+G:\Raj\Projects\BMMS\BMMS\BMMSBAL\bin\Debug\BMMSBAL.dll
+G:\Raj\Projects\BMMS\BMMS\BMMSBAL\bin\Debug\BMMSBAL.pdb
+G:\Raj\Projects\BMMS\BMMS\BMMSBAL\bin\Debug\BMMSDAL.dll
+G:\Raj\Projects\BMMS\BMMS\BMMSBAL\bin\Debug\itextsharp.dll
+G:\Raj\Projects\BMMS\BMMS\BMMSBAL\bin\Debug\Microsoft.SqlServer.Replication.dll
+G:\Raj\Projects\BMMS\BMMS\BMMSBAL\bin\Debug\Microsoft.SqlServer.BatchParser.dll
+G:\Raj\Projects\BMMS\BMMS\BMMSBAL\bin\Debug\BMMSDAL.pdb
+G:\Raj\Projects\BMMS\BMMS\BMMSBAL\obj\Debug\ResolveAssemblyReference.cache
+G:\Raj\Projects\BMMS\BMMS\BMMSBAL\obj\Debug\BMMSBAL.csproj.ResolveComReference.cache
+G:\Raj\Projects\BMMS\BMMS\BMMSBAL\obj\Debug\BMMSBAL.dll
+G:\Raj\Projects\BMMS\BMMS\BMMSBAL\obj\Debug\BMMSBAL.pdb
+S:\Raj\Projects\BMMS\BMMS\BMMSBAL\bin\Debug\BMMSBAL.dll
+S:\Raj\Projects\BMMS\BMMS\BMMSBAL\bin\Debug\BMMSBAL.pdb
+S:\Raj\Projects\BMMS\BMMS\BMMSBAL\bin\Debug\BMMSDAL.dll
+S:\Raj\Projects\BMMS\BMMS\BMMSBAL\bin\Debug\itextsharp.dll
+S:\Raj\Projects\BMMS\BMMS\BMMSBAL\bin\Debug\Microsoft.SqlServer.Replication.dll
+S:\Raj\Projects\BMMS\BMMS\BMMSBAL\bin\Debug\Microsoft.SqlServer.BatchParser.dll
+S:\Raj\Projects\BMMS\BMMS\BMMSBAL\bin\Debug\BMMSDAL.pdb
+S:\Raj\Projects\BMMS\BMMS\BMMSBAL\obj\Debug\ResolveAssemblyReference.cache
+S:\Raj\Projects\BMMS\BMMS\BMMSBAL\obj\Debug\BMMSBAL.csproj.ResolveComReference.cache
+S:\Raj\Projects\BMMS\BMMS\BMMSBAL\obj\Debug\BMMSBAL.dll
+S:\Raj\Projects\BMMS\BMMS\BMMSBAL\obj\Debug\BMMSBAL.pdb
+S:\Raj\Projects\BMMS\BMMS\Source\BMMSBAL\bin\Debug\BMMSBAL.dll
+S:\Raj\Projects\BMMS\BMMS\Source\BMMSBAL\bin\Debug\BMMSBAL.pdb
+S:\Raj\Projects\BMMS\BMMS\Source\BMMSBAL\bin\Debug\BMMSDAL.dll
+S:\Raj\Projects\BMMS\BMMS\Source\BMMSBAL\bin\Debug\itextsharp.dll
+S:\Raj\Projects\BMMS\BMMS\Source\BMMSBAL\bin\Debug\Microsoft.SqlServer.Replication.dll
+S:\Raj\Projects\BMMS\BMMS\Source\BMMSBAL\bin\Debug\Microsoft.SqlServer.BatchParser.dll
+S:\Raj\Projects\BMMS\BMMS\Source\BMMSBAL\bin\Debug\BMMSDAL.pdb
+S:\Raj\Projects\BMMS\BMMS\Source\BMMSBAL\obj\Debug\ResolveAssemblyReference.cache
+S:\Raj\Projects\BMMS\BMMS\Source\BMMSBAL\obj\Debug\BMMSBAL.csproj.ResolveComReference.cache
+S:\Raj\Projects\BMMS\BMMS\Source\BMMSBAL\obj\Debug\BMMSBAL.dll
+S:\Raj\Projects\BMMS\BMMS\Source\BMMSBAL\obj\Debug\BMMSBAL.pdb
+S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\bin\Debug\BMMSBAL.dll
+S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\bin\Debug\BMMSBAL.pdb
+S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\bin\Debug\BMMSDAL.dll
+S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\bin\Debug\Microsoft.Office.Interop.Word.dll
+S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\bin\Debug\office.dll
+S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\bin\Debug\Microsoft.SqlServer.Replication.dll
+S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\bin\Debug\Microsoft.SqlServer.BatchParser.dll
+S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\bin\Debug\Microsoft.Vbe.Interop.dll
+S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\bin\Debug\Microsoft.Office.Interop.Word.xml
+S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\bin\Debug\BMMSDAL.pdb
+S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\bin\Debug\office.xml
+S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\obj\Debug\ResolveAssemblyReference.cache
+S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\obj\Debug\BMMSBAL.csproj.ResolveComReference.cache
+S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\obj\Debug\BMMSBAL.dll
+S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSBAL\obj\Debug\BMMSBAL.pdb

@@ -1,0 +1,274 @@
+/* MY POPUP */
+
+.MyPopupOuter
+{
+	left: 0;
+	position: fixed;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 10000;
+	background-color: #414141; 	
+}
+
+.MyPopupContent
+{
+	margin: auto;
+	overflow: auto;
+	top: 0%;
+	left:0%;
+	width: 100%;
+	height: 100%;
+	z-index: 100001;
+	position: absolute;
+	background-color: White;
+	padding: 5px;
+}
+
+.MyPopupContentInner
+{
+	background-color: #FEE2C3;
+    border: 2px solid #FFCF9A;
+    height: auto;
+    margin: auto;
+    overflow: hidden;
+    width: 90%;
+}
+
+.MyPopupBG
+{
+	position: fixed;
+	left: 0px;
+	top: 0px;
+	width: 1000px;
+	height: 100%;
+	z-index: 10000;
+	background-color: #414141;
+	filter: alpha(opacity=90);
+	opacity: 0.9;
+}
+
+/* MODEL POPUP */
+
+.ModalPopupBackground
+{
+	background-color: #2476e4;
+	filter: alpha(opacity=90);
+	opacity: 0.9;
+}
+
+/*  DIV RELATED STYLE */
+
+.divRow
+{
+	float: left;
+	width: 100%;
+	height: auto;
+	padding-bottom: 10px;
+}
+
+.divRowEmpty
+{
+	float: left;
+	width: 100%;
+	height: 15px;
+	overflow: hidden;
+}
+
+.divRowFixed
+{
+	float: left;
+	width: 0px;
+	height: 350px;
+	overflow: hidden;
+}
+
+.divRowLeft
+{
+	float: left;
+	width: 45%;
+	height: auto;
+	padding-right: 10px;
+	text-align: right;
+	line-height: 18px;
+}
+
+.divRowRight
+{
+	float: left;
+	width: 50%;
+	height: auto;
+	text-align: left;
+	line-height: 18px;
+}
+
+.divRowPanelHeader
+{
+	float: left;
+	width: 100%;
+	height: 25px;
+	font-size: 10pt;
+	text-align: center;
+	font-weight: bold;
+}
+
+.divRowAlignCenter
+{
+	float: left;
+	width: 100%;
+	height: auto;
+	text-align: center;
+	padding-bottom: 10px;
+}
+.divRowAlignRight
+{
+	float: left;
+	width: 100%;
+	height: auto;
+	text-align: right;
+	padding-bottom: 10px;
+}
+
+.divRowGridScroll
+{
+	float: left;
+	width: 100%;
+	height: 310px;
+	overflow: auto;
+}
+/*  SPAN RELATED STYLE */
+
+.spanWhite
+{
+	font-size: 0pt;
+	width: 0px;
+	height: 0px;
+}
+
+.spanMandatory
+{
+	background-color: Transparent;
+	color: red;
+	height: 3px;
+	width: 3px;
+}
+
+
+
+/* ERROR RELATED */
+
+.divError
+{
+	float: left;
+	width: 100%;
+	height: 18px;
+	text-align: center;
+	overflow: visible;
+	padding-top: 10px;
+}
+.divErrorHide
+{
+	float: left;
+	width: 100%;
+	height: 0px;
+	overflow: hidden;
+}
+
+.divRowErrorFixed
+{
+	float: left;
+	width: 100%;
+	height: 35px;
+	overflow: hidden;
+}
+
+.lblError
+{
+	text-align: center;
+	vertical-align: top;
+	color: Red;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: x-small;
+	border: solid 1px #CFAD66;
+	background-color: #FFFBCC;
+	padding: 8px 8px 8px 30px;
+	vertical-align: middle;
+	background-image: url(      "../Images/Common/Error-Info.gif" );
+	background-repeat: no-repeat;
+	background-position: 6px center;
+	width: auto;
+}
+
+/* Common */
+
+.divMemberDetails
+{
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 9pt;
+	line-height: 20pt;
+}
+
+.divNoRecord
+{
+	background-color: #FFCF9A;
+	color: #FF3E00;
+	font-size: 10pt;
+	font-weight: bold;
+	height: 60px;
+	padding-top: 50px;
+	text-align: center;
+	width: 100%;
+}
+
+
+/* PROGRESS BAR */
+
+.divProgress
+{
+	position: fixed;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+}
+
+.divProgressImg
+{
+	margin: auto;
+	top: 50%;
+	width: 120px;
+	height: 25px;
+	z-index: 100001;
+	position: relative;
+	vertical-align: middle;
+	text-align: center;
+	background-color: White;
+	background-image: url(../Images/loader.gif);
+	background-repeat: no-repeat;
+	background-position: 10px 5px;
+	font-weight: bold;
+	padding-left: 25px;
+	padding-top: 15px;
+	border: solid 1px #FF3E00;
+}
+
+.divProgressBackground
+{
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	z-index: 10000; /*background-color:#FF3E00;*/
+	filter: alpha(opacity=90);
+	opacity: 0.9;
+}
+
+
+/*  TEXT BOX RELATED  */
+
+.txtTimeFormat
+{
+	width: 50px;
+	text-align: left;
+}

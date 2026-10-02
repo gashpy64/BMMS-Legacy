@@ -1,0 +1,35 @@
+body
+{
+	background-color: #DA251D;
+	margin: 0;
+	padding: 0;
+}
+
+div#wrapper
+{
+	background-image:url("../Images/login-bg.gif");
+	background-repeat:no-repeat;
+	width:701px;
+	height:500px;
+	margin:auto;
+	margin-top:20px;
+	padding:40px 20px 20px 45px;
+	font-size:12px;
+}
+
+div#logo{
+	background-image:url("../Images/login-lvb-logo.gif");
+	background-repeat:no-repeat;
+	width:598px;
+	height:129px;
+	padding-bottom:20px;
+}
+
+div#loginBox{
+	background-image:url("../Images/login-box.gif");
+	background-repeat:no-repeat;
+	width:200px;
+	height:180px;
+	padding-left:405px;
+	padding-top:88px;
+}

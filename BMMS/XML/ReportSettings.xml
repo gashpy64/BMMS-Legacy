@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<repoSettings>
+
+	<add key="MinutesReport_Width" value="560" />
+	<add key="MinutesExtractReport_Width" value="560" />
+	
+	<add key="FollowupReport_Width" value="560" />
+	
+	
+</repoSettings>

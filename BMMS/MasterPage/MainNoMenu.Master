@@ -1,0 +1,53 @@
+<%@ Master Language="C#" AutoEventWireup="true" Codebehind="MainNoMenu.Master.cs" Inherits="BMMS.MasterPage.MainNoMenu" %>
+<%@ Register Src="../UserControl/MenuUserControl.ascx" TagName="MenuUserControl"
+    TagPrefix="uc1" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>Untitled Page</title>
+    <link href="../CSS/MainMaster.css" rel="stylesheet" type="text/css" />
+    <link href="../CSS/MainMaster.css" rel="stylesheet" type="text/css" />
+    <link href="../CSS/ddlevelsmenu-topbar.css" rel="stylesheet" type="text/css" />
+    <link href="../CSS/CommonHTML.css" rel="stylesheet" type="text/css" />
+    <link href="../CSS/ddlevelsmenu-base.css" rel="stylesheet" type="text/css" />
+    <link href="../CSS/AjaxCalender.css" rel="stylesheet" type="text/css" />
+    <link href="../CSS/PasswordCheck.css" rel="stylesheet" type="text/css" />
+
+    <script type="text/javascript" language="javascript" src="../JScript/BrowserSecurity.js"></script>
+
+</head>
+<body>
+    <form id="form1" runat="server">
+        <asp:ScriptManager ID="ScriptManager1" runat="server">
+            <Scripts>
+                <asp:ScriptReference Path="~/JScript/ddlevelsmenu.js" />
+                <asp:ScriptReference Path="~/JScript/Validation.js" />
+            </Scripts>
+        </asp:ScriptManager>
+        <div id="mainContainer" >
+            <div id="logo">
+                <p class="welcomeMsg">
+                    <br />
+                    <br />
+                    <br />
+                    <br />
+                    <a href="../Master/ChangePassword.aspx" style="color:White; font-weight:bold; ">Change Password</a>
+                    <b>Logged In :
+                        <%=Session["UserName"]%>
+                        &nbsp;&nbsp;<asp:LinkButton ID="lnkLogout" runat="server" Text="Logout" ForeColor="white"
+                            PostBackUrl="~/Logout.aspx"></asp:LinkButton></b></p>
+            </div>
+<%--            <div id="divMenu">
+                <uc1:MenuUserControl ID="MenuUserControl1" runat="server"></uc1:MenuUserControl>
+            </div>--%>
+            <div id="contentArea">
+                <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server">
+                </asp:ContentPlaceHolder>
+            </div>
+            <div id="footer">
+                <asp:Label ID="lblFooter" runat="server" Text="Footer"></asp:Label>
+            </div>
+        </div>
+    </form>
+</body>
+</html>

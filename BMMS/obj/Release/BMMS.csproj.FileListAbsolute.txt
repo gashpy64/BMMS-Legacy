@@ -1,0 +1,2 @@
+C:\BMMS\BMMS\Source\BMMS\obj\Release\BMMS.csproj.AssemblyReference.cache
+C:\BMMS\BMMS\Source\BMMS\obj\Release\BMMS.dll.licenses

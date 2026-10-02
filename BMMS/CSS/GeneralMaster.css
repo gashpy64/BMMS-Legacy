@@ -1,0 +1,12 @@
+body
+{
+	padding: 0px;
+	margin: 0px;
+	background-image: url("../Images/bg.jpg");
+	background-repeat: repeat-x;
+	background-position: top left;
+	/* background-color: #eb8b1e; */
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+}
+

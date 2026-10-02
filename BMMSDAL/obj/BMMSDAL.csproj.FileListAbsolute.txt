@@ -1,0 +1,30 @@
+G:\Projects\BMMS\BMMS\BMMSDAL\bin\Debug\BMMSDAL.dll
+G:\Projects\BMMS\BMMS\BMMSDAL\bin\Debug\BMMSDAL.pdb
+G:\Projects\BMMS\BMMS\BMMSDAL\obj\Debug\ResolveAssemblyReference.cache
+G:\Projects\BMMS\BMMS\BMMSDAL\obj\Debug\BMMSDAL.dll
+G:\Projects\BMMS\BMMS\BMMSDAL\obj\Debug\BMMSDAL.pdb
+E:\Sahay\Test\New Folder\BMMS\BMMSDAL\bin\Debug\BMMSDAL.dll
+E:\Sahay\Test\New Folder\BMMS\BMMSDAL\bin\Debug\BMMSDAL.pdb
+E:\Sahay\Test\New Folder\BMMS\BMMSDAL\obj\Debug\ResolveAssemblyReference.cache
+E:\Sahay\Test\New Folder\BMMS\BMMSDAL\obj\Debug\BMMSDAL.dll
+E:\Sahay\Test\New Folder\BMMS\BMMSDAL\obj\Debug\BMMSDAL.pdb
+G:\Raj\Projects\BMMS\BMMS\BMMSDAL\bin\Debug\BMMSDAL.dll
+G:\Raj\Projects\BMMS\BMMS\BMMSDAL\bin\Debug\BMMSDAL.pdb
+G:\Raj\Projects\BMMS\BMMS\BMMSDAL\obj\Debug\ResolveAssemblyReference.cache
+G:\Raj\Projects\BMMS\BMMS\BMMSDAL\obj\Debug\BMMSDAL.dll
+G:\Raj\Projects\BMMS\BMMS\BMMSDAL\obj\Debug\BMMSDAL.pdb
+S:\Raj\Projects\BMMS\BMMS\BMMSDAL\bin\Debug\BMMSDAL.dll
+S:\Raj\Projects\BMMS\BMMS\BMMSDAL\bin\Debug\BMMSDAL.pdb
+S:\Raj\Projects\BMMS\BMMS\BMMSDAL\obj\Debug\ResolveAssemblyReference.cache
+S:\Raj\Projects\BMMS\BMMS\BMMSDAL\obj\Debug\BMMSDAL.dll
+S:\Raj\Projects\BMMS\BMMS\BMMSDAL\obj\Debug\BMMSDAL.pdb
+S:\Raj\Projects\BMMS\BMMS\Source\BMMSDAL\bin\Debug\BMMSDAL.dll
+S:\Raj\Projects\BMMS\BMMS\Source\BMMSDAL\bin\Debug\BMMSDAL.pdb
+S:\Raj\Projects\BMMS\BMMS\Source\BMMSDAL\obj\Debug\ResolveAssemblyReference.cache
+S:\Raj\Projects\BMMS\BMMS\Source\BMMSDAL\obj\Debug\BMMSDAL.dll
+S:\Raj\Projects\BMMS\BMMS\Source\BMMSDAL\obj\Debug\BMMSDAL.pdb
+S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\bin\Debug\BMMSDAL.dll
+S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\bin\Debug\BMMSDAL.pdb
+S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\obj\Debug\ResolveAssemblyReference.cache
+S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\obj\Debug\BMMSDAL.dll
+S:\Raj\Projects\BMMS\LVB-Source\BMMS\Source\BMMSDAL\obj\Debug\BMMSDAL.pdb

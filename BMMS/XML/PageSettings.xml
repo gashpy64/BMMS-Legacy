@@ -1,0 +1,152 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<pageSettings>
+	<page Name="Login">
+		<pageTitle>Login</pageTitle>
+		<pageURL>~/</pageURL>
+	</page>
+	<page Name="DashBoard">
+		<pageTitle>DashBoard</pageTitle>
+		<pageURL>~/DashBoard/DashBoard.aspx</pageURL>
+	</page>
+
+	<page Name="Agenda">
+		<pageTitle>Agenda</pageTitle>
+		<pageURL>~/Master/Agenda.aspx</pageURL>
+	</page>
+
+	<page Name="AgendaFinalization">
+		<pageTitle>Agenda Finalization</pageTitle>
+		<pageURL>~/Master/AgendaFinalization.aspx</pageURL>
+	</page>
+
+	<page Name="Attendance">
+		<pageTitle>Attendance</pageTitle>
+		<pageURL>~/Master/Attendance.aspx</pageURL>
+	</page>
+
+	<page Name="Committee">
+		<pageTitle>Committee</pageTitle>
+		<pageURL>~/Master/Committee.aspx</pageURL>
+	</page>
+
+
+	<page Name="CommitteeMember">
+		<pageTitle>Committee Member</pageTitle>
+		<pageURL>~/Master/CommitteeMember.aspx</pageURL>
+	</page>
+
+	<page Name="DecisionType">
+		<pageTitle>Decision Type</pageTitle>
+		<pageURL>~/Master/DecisionType.aspx</pageURL>
+	</page>
+
+	<page Name="Department">
+		<pageTitle>Department</pageTitle>
+		<pageURL>~/Master/.aspx</pageURL>
+	</page>
+
+	<page Name="Designation">
+		<pageTitle>Designation</pageTitle>
+		<pageURL>~/Master/Designation.aspx</pageURL>
+	</page>
+
+	<page Name="Meeting">
+		<pageTitle>Meeting</pageTitle>
+		<pageURL>~/Master/Meeting.aspx</pageURL>
+	</page>
+
+	<page Name="MeetingMember">
+		<pageTitle>MeetingMember</pageTitle>
+		<pageURL>~/Master/MeetingMember.aspx</pageURL>
+	</page>
+
+	<page Name="Member">
+		<pageTitle>Member</pageTitle>
+		<pageURL>~/Master/Member.aspx</pageURL>
+	</page>
+
+	<page Name="MemberType">
+		<pageTitle>MemberType</pageTitle>
+		<pageURL>~/Master/MemberType.aspx</pageURL>
+	</page>
+
+	<page Name="MinutesFinalization">
+		<pageTitle>MinutesFinalization</pageTitle>
+		<pageURL>~/Master/MinutesFinalization.aspx</pageURL>
+	</page>
+
+	<page Name="MinutesUpdate">
+		<pageTitle>MinutesUpdate</pageTitle>
+		<pageURL>~/Master/MinutesUpdate.aspx</pageURL>
+	</page>
+
+	<page Name="SubjectNoAllocation">
+		<pageTitle>SubjectNoAllocation</pageTitle>
+		<pageURL>~/Master/SubjectNoAllocation.aspx</pageURL>
+	</page>
+
+	<page Name="SubjectType">
+		<pageTitle>SubjectType</pageTitle>
+		<pageURL>~/Master/SubjectType.aspx</pageURL>
+	</page>
+
+	<page Name="User">
+		<pageTitle>User</pageTitle>
+		<pageURL>~/Master/User.aspx</pageURL>
+	</page>
+
+
+
+
+
+	<page Name="CommitteeMaster">
+		<pageTitle>CommitteeMaster</pageTitle>
+		<pageURL>~/Report/CommitteeMaster.aspx</pageURL>
+	</page>
+
+	<page Name="MeetingMaster">
+		<pageTitle>MeetingMaster</pageTitle>
+		<pageURL>~/Report/MeetingMaster.aspx</pageURL>
+	</page>
+	
+	<page Name="agenda_summary">
+		<pageTitle>Agenda Summary</pageTitle>
+		<pageURL>~/Report/Reports.aspx?rc=agenda_summary</pageURL>
+	</page>	
+	
+	<page Name="agenda_details">
+		<pageTitle>Agenda Details</pageTitle>
+		<pageURL>~/Report/Reports.aspx?rc=agenda_details</pageURL>
+	</page>	
+	
+	<page Name="minutes">
+		<pageTitle>Minutes</pageTitle>
+		<pageURL>~/Report/Reports.aspx?rc=minutes</pageURL>
+	</page>
+
+	<page Name="minutes_extract">
+		<pageTitle>Minutes Extract</pageTitle>
+		<pageURL>~/Report/Reports.aspx?rc=minutes_extract</pageURL>
+	</page>
+
+	<page Name="followup_report">
+		<pageTitle>Followup</pageTitle>
+		<pageURL>~/Report/Followup.aspx</pageURL>
+	</page>
+	
+	<page Name="Notice">
+		<pageTitle>Notice</pageTitle>
+		<pageURL>~/Report/Notice.aspx</pageURL>
+	</page>
+
+	<page Name="SendMail">
+		<pageTitle>Send Mail</pageTitle>
+		<pageURL>~/Report/SendMail.aspx</pageURL>
+	</page>
+
+	<page Name="-">
+		<pageTitle>-</pageTitle>
+		<pageURL>~/Report/-.aspx</pageURL>
+	</page>
+
+</pageSettings>

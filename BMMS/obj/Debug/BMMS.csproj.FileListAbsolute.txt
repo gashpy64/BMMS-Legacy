@@ -1,0 +1,2 @@
+C:\BMMS\BMMS\Source\BMMS\obj\Debug\BMMS.dll
+C:\BMMS\BMMS\Source\BMMS\obj\Debug\BMMS.pdb

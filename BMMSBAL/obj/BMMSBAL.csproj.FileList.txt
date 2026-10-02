@@ -1,0 +1,11 @@
+bin\Debug\BMMSBAL.dll
+bin\Debug\BMMSBAL.pdb
+bin\Debug\BMMSDAL.dll
+bin\Debug\itextsharp.dll
+bin\Debug\BMMSDAL.pdb
+obj\Debug\ResolveAssemblyReference.cache
+obj\Debug\BMMSBAL.csproj.ResolveComReference.cache
+obj\Debug\BMMSBAL.dll
+obj\Debug\BMMSBAL.pdb
+bin\Debug\Microsoft.SqlServer.Replication.dll
+bin\Debug\Microsoft.SqlServer.BatchParser.dll

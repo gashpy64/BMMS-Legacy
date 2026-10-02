@@ -1,0 +1,5 @@
+bin\Debug\BMMSDAL.dll
+obj\Debug\ResolveAssemblyReference.cache
+obj\Debug\BMMSDAL.dll
+obj\Debug\BMMSDAL.pdb
+bin\Debug\BMMSDAL.pdb
