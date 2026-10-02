@@ -13,12 +13,30 @@ Date: 2026-10-02
 Repository Name:
 BMMS-Legacy
 
+<<<<<<< HEAD
 Repository Purpose:
 Legacy Recovery and Modernization Program
+=======
+Repository Type:
+Legacy Recovery and Modernization Repository
+
+Repository Location:
+C:\Repository\BMMS-Legacy
+
+Primary Development Branch:
+modernization
+
+Protected Branch:
+master
+
+Baseline Tag:
+BMMS-Recovered-Baseline
+>>>>>>> master
 
 Git Hosting:
 GitHub
 
+<<<<<<< HEAD
 Development Repository:
 
 C:\Repository\BMMS-Legacy
@@ -34,12 +52,22 @@ master
 Recovery Tag:
 
 BMMS-Recovered-Baseline
+=======
+Repository Purpose:
+- Preserve recovered legacy application
+- Support modernization activities
+- Maintain architecture documentation
+- Track dependency remediation
+- Support API migration
+- Support React modernization
+>>>>>>> master
 
 ---
 
 # Runtime Environment Information
 
 Runtime Source Location:
+<<<<<<< HEAD
 
 C:\BMMS\BMMS\Source
 
@@ -184,3 +212,100 @@ Sprint 1 – Dependency Stabilization & Inventory
 
 Document Status:
 Approved Baseline Architecture
+=======
+C:\BMMS\BMMS\Source
+
+Purpose:
+Production-like recovery validation environment
+
+Status:
+Operational
+
+Rules:
+- No development changes
+- No modernization changes
+- Used only for validation
+- Used as rollback reference
+
+---
+
+# Modernization Working Environment
+
+Development Source Location:
+C:\Repository\BMMS-Legacy
+
+Current Branch:
+modernization
+
+Purpose:
+- Dependency replacement
+- Framework stabilization
+- API extraction
+- UI modernization
+- Cloud readiness improvements
+
+Status:
+Active Development Repository
+
+---
+
+# Modernization Governance
+
+Change Policy:
+
+master
+- Recovery baseline
+- No direct changes
+- Emergency fixes only
+
+modernization
+- Active development
+- All modernization work
+- Refactoring
+- Architecture improvements
+
+Future Branches:
+
+feature/dependency-cleanup
+
+feature/aspnet-core-api
+
+feature/react-ui
+
+feature/auth-modernization
+
+feature/cloud-migration
+
+---
+
+# Recovery Validation Status
+
+Application Recovery:
+✅ Complete
+
+Database Recovery:
+✅ Complete
+
+Authentication:
+✅ Complete
+
+Dashboard:
+✅ Complete
+
+Source Control:
+✅ Complete
+
+Modernization Readiness:
+✅ Approved
+
+---
+
+Owner:
+Ganesh Shankar
+
+Modernization Program:
+BMMS Transformation Program
+
+Status:
+Sprint 1 Active
+>>>>>>> master
