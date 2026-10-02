@@ -3,269 +3,139 @@
 ## Board Minutes and Management Software (BMMS)
 
 Version: Legacy Recovery Baseline
+Document Version: 1.0
 Date: 2026-10-02
 
-## Repository Information
+---
 
-Repository Name: BMMS-Legacy
+# Repository Information
 
-GitHub Repository:
-https://github.com/<your-account>/BMMS-Legacy
+Repository Name:
+BMMS-Legacy
 
-Development Branch:
+Repository Type:
+Legacy Recovery and Modernization Repository
+
+Repository Location:
+C:\Repository\BMMS-Legacy
+
+Primary Development Branch:
 modernization
+
+Protected Branch:
+master
 
 Baseline Tag:
 BMMS-Recovered-Baseline
 
-## Runtime Environment
+Git Hosting:
+GitHub
 
-Source Location:
+Repository Purpose:
+- Preserve recovered legacy application
+- Support modernization activities
+- Maintain architecture documentation
+- Track dependency remediation
+- Support API migration
+- Support React modernization
 
+---
+
+# Runtime Environment Information
+
+Runtime Source Location:
 C:\BMMS\BMMS\Source
 
 Purpose:
-
-- Stable recovered application
-- Functional validation
-- User acceptance testing
-- Regression testing
+Production-like recovery validation environment
 
 Status:
+Operational
 
-✅ Operational
+Rules:
+- No development changes
+- No modernization changes
+- Used only for validation
+- Used as rollback reference
 
-## Development Environment
+---
 
-Repository Location:
+# Modernization Working Environment
 
+Development Source Location:
 C:\Repository\BMMS-Legacy
 
-Purpose:
+Current Branch:
+modernization
 
-- Modernization
-- Git source control
-- Refactoring
+Purpose:
 - Dependency replacement
-- API development
-- Cloud migration
+- Framework stabilization
+- API extraction
+- UI modernization
+- Cloud readiness improvements
 
 Status:
+Active Development Repository
 
-✅ Active Development Repository
+---
 
-## Current Architecture Status
+# Modernization Governance
 
-Recovery Stage:
-Completed
+Change Policy:
 
-Modernization Stage:
-Sprint 1 – Stabilization & Inventory
+master
+- Recovery baseline
+- No direct changes
+- Emergency fixes only
 
-Application Status:
-Operational
+modernization
+- Active development
+- All modernization work
+- Refactoring
+- Architecture improvements
 
-Database Status:
-Operational
+Future Branches:
 
-Authentication Status:
-Operational
+feature/dependency-cleanup
 
-Current Login:
+feature/aspnet-core-api
 
-admin / 123
+feature/react-ui
 
-Database:
+feature/auth-modernization
 
-BMMS
+feature/cloud-migration
 
-Platform:
+---
 
-SQL Server 2025 Developer Edition
+# Recovery Validation Status
 
-Framework:
+Application Recovery:
+✅ Complete
 
-ASP.NET Web Forms
-.NET Framework 4.8
+Database Recovery:
+✅ Complete
 
-IDE:
+Authentication:
+✅ Complete
 
-Visual Studio Community
+Dashboard:
+✅ Complete
 
---------------------------------------------------------------------------------
+Source Control:
+✅ Complete
 
-# High Level Architecture
+Modernization Readiness:
+✅ Approved
 
-Users
-    │
-    ▼
-ASP.NET Web Forms (BMMS)
-    │
-    ▼
-BMMSBAL (Business Layer)
-    │
-    ▼
-BMMSDAL (Data Access Layer)
-    │
-    ▼
-SQL Server (BMMS)
+---
 
---------------------------------------------------------------------------------
+Owner:
+Ganesh Shankar
 
-# Functional Coverage
+Modernization Program:
+BMMS Transformation Program
 
-- Committee Management
-- Committee Member Tagging
-- Member Management
-- Meeting Management
-- Attendance
-- Agenda Workflow
-- Minutes Workflow
-- Action Items
-- Alerts
-- Reports
-- Audit Trail
-- SMTP Configuration
-- Administration
-
---------------------------------------------------------------------------------
-
-# User Roles
-
-1. Admin
-2. Controller
-3. Manager
-4. User
-5. Management
-
---------------------------------------------------------------------------------
-
-# Governance Workflow
-
-Agenda Entry
-    ↓
-Manager Approval
-    ↓
-Controller Approval
-    ↓
-Agenda Finalization
-    ↓
-Attendance
-    ↓
-Minutes Update
-    ↓
-Minutes Finalization
-    ↓
-Minutes Confirmation
-    ↓
-Meeting Closure
-
---------------------------------------------------------------------------------
-
-# Major Database Entities
-
-Users
-Roles
-
-Department
-Designation
-Member
-Member_Type
-
-Committee
-Committee_Member
-
-Meeting
-Meeting_Member
-Attendance
-
-Agenda
-Minutes
-Action_Item
-
-Subject_Type
-Decision_Type
-
-Alert_Master
-Alert_User_Map
-
---------------------------------------------------------------------------------
-
-# Known Legacy Dependencies
-
-High Priority
-
-- FreeTextBox
-- AjaxControlToolkit
-- Microsoft.SqlServer.Replication
-- Microsoft.SqlServer.BatchParser
-- Office Interop
-
-Medium Priority
-
-- Legacy Web.config
-- ADO.NET DataTables
-- Stored Procedure Tight Coupling
-
---------------------------------------------------------------------------------
-
-# Modernization Boundary
-
-The following business processes must remain unchanged:
-
-- Committee Workflow
-- Agenda Approval Workflow
-- Minutes Workflow
-- Action Item Workflow
-- Audit Trail Workflow
-- Reporting Workflow
-
-Only the technology stack will be modernized.
-
---------------------------------------------------------------------------------
-
-# Modernization Roadmap
-
-Sprint 1
-- Inventory
-- Dependency Assessment
-- Stabilization
-
-Sprint 2
-- Legacy Dependency Removal
-
-Sprint 3
-- ASP.NET Core API Layer
-
-Sprint 4
-- React UI
-
-Sprint 5
-- Authentication Modernization
-
-Sprint 6
-- Azure Migration
-
---------------------------------------------------------------------------------
-
-# Recovery Validation
-
-Recovery Completed:
-
-✅ SQL Server Installed
-
-✅ Database Restored
-
-✅ Source Recovered
-
-✅ Solution Builds
-
-✅ Login Page Displays
-
-✅ Authentication Works
-
-✅ Dashboard Accessible
-
-✅ Application Operational
-
---------------------------------------------------------------------
+Status:
+Sprint 1 Active
