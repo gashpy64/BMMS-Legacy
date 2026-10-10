@@ -136,6 +136,13 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region RecordLogin
+        public static void RecordLogin(int UserId, string User_IP_Address, string Server_Url)
+        {
+            UserDB.RecordLogin(UserId, User_IP_Address, Server_Url);
+        }
+        #endregion
+
         #region GetUserList
         public static DataTable GetUserList()
         {

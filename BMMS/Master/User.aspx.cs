@@ -198,7 +198,18 @@ namespace BMMS.Master
                     myUser.RoleId = Convert.ToInt16(ddlRole.SelectedValue);
                     myUser.EmailId = txtEmailId.Text.Trim();
                     myUser.LoginName = txtLoginName.Text.Trim();
-                    myUser.Password = Common.EncryptVal(txtPassword.Text);
+
+                    if (!string.IsNullOrEmpty(txtPassword.Text))
+                    {
+                        myUser.Password = myUser.Code == "Save" ? Common.HashPassword(txtPassword.Text) : string.Empty;
+                    }
+                    else if (myUser.Code == "Update")
+                    {
+                        // Leave the existing hash untouched — AddEditUser's UPDATE branch
+                        // must not overwrite Password when this is null; see DAL note below.
+                        myUser.Password = null;
+                    }
+
                     myUser.CreatedOn = System.DateTime.Now;
                     myUser.CreatedBy = int.Parse(Session["UserId"].ToString());
                     myUser.UpdatedOn = System.DateTime.Now;
@@ -311,8 +322,8 @@ namespace BMMS.Master
                     txtEmailId.Text = myUser.EmailId;
                     txtLoginName.Text = myUser.LoginName;
                     txtLoginName.Enabled = false;
-                    txtPassword.Text = myUser.Password;
-                    txtConfirmPassword.Text = myUser.Password;
+                    txtPassword.Text = string.Empty;
+                    txtConfirmPassword.Text = string.Empty;
                     pnlPwd.Visible = false;
 
                     ScriptManager.GetCurrent(this).SetFocus(txtUserName.ClientID);

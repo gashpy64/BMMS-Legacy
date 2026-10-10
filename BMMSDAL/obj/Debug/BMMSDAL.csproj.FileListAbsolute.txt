@@ -1,2 +1,8 @@
 C:\BMMS\BMMS\Source\BMMSDAL\obj\Debug\BMMSDAL.dll
 C:\BMMS\BMMS\Source\BMMSDAL\obj\Debug\BMMSDAL.pdb
+C:\Repositories\BMMS-Legacy\BMMSDAL\bin\Debug\BMMSDAL.dll
+C:\Repositories\BMMS-Legacy\BMMSDAL\bin\Debug\BMMSDAL.pdb
+C:\Repositories\BMMS-Legacy\BMMSDAL\obj\Debug\BMMSDAL.csproj.AssemblyReference.cache
+C:\Repositories\BMMS-Legacy\BMMSDAL\obj\Debug\BMMSDAL.csproj.CoreCompileInputs.cache
+C:\Repositories\BMMS-Legacy\BMMSDAL\obj\Debug\BMMSDAL.dll
+C:\Repositories\BMMS-Legacy\BMMSDAL\obj\Debug\BMMSDAL.pdb
