@@ -28,7 +28,7 @@ namespace BMMSBAL
                 pSMTPServer = dtSMTPMaster.Rows[0]["SMTPServer"].ToString();
                 pSMTPServerPort = dtSMTPMaster.Rows[0]["SMTPServerPort"].ToString();
                 pUserName = dtSMTPMaster.Rows[0]["UserName"].ToString();
-                pPassword = Common.DecryptVal(dtSMTPMaster.Rows[0]["Password"].ToString());
+                pPassword = Common.UnprotectSecret(dtSMTPMaster.Rows[0]["Password"].ToString());
 
                 string pFromMailId = dtSMTPMaster.Rows[0]["FromMailId"].ToString();
 

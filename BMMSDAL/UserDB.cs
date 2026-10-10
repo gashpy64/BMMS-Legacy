@@ -146,6 +146,17 @@ namespace BMMSDAL
         }
         #endregion
 
+        #region RecordLogin
+        public static void RecordLogin(int UserId, string User_IP_Address, string Server_Url)
+        {
+            SqlParameter[] parameter = new SqlParameter[3];
+            parameter[0] = new SqlParameter("@UserId", UserId);
+            parameter[1] = new SqlParameter("@User_IP_Address", User_IP_Address);
+            parameter[2] = new SqlParameter("@Server_Url", Server_Url);
+
+            CommonDB.ExecuteProcedure("spr_RecordLoginByUserId", parameter);
+        }
+        #endregion
         #region GetUserList
         public static DataTable GetUserList()
         {

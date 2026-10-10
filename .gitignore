@@ -9,7 +9,8 @@ obj/
  
 # SQL Server backups
 *.bak
- 
+*.suo
+
 # Logs
 Log/
  
@@ -27,3 +28,5 @@ packages/
  
 # ReSharper
 _ReSharper*/
+
+BMMS/connectionStrings.config

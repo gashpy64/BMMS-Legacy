@@ -59,13 +59,13 @@ namespace BMMS
             DataTable dtUser = new DataTable();
 
             string sLoginName = txtLoginName.Text.Trim();
-            string sPassword = Common.EncryptVal(txtPassword.Text.Trim());
+            string sPasswordInput = txtPassword.Text.Trim();
             string User_IP_Address = Utilities.GetLocalIPAddress();
             string Server_Url = Request.Url.AbsoluteUri.ToString();
 
             try
             {
-                dtUser = UserMgr.GetUserByLoginName(sLoginName, sPassword, User_IP_Address, Server_Url);
+                dtUser = UserMgr.GetUserByLoginName(sLoginName, string.Empty, User_IP_Address, Server_Url);
 
                 if (dtUser.Rows.Count <= 0)
                 {
@@ -81,7 +81,7 @@ namespace BMMS
                     errMsg = "Your account was locked by admin.";
                     ScriptManager.GetCurrent(this).SetFocus(txtLoginName.ClientID);
                 }
-                else if (dtUser.Rows[0]["Password"].ToString() != sPassword)
+                else if (!Common.VerifyPassword(sPasswordInput, dtUser.Rows[0]["Password"].ToString()))
                 {
                     int UserId = int.Parse(dtUser.Rows[0]["UserId"].ToString());
 
@@ -101,6 +101,12 @@ namespace BMMS
                 }
                 else
                 {
+                    int loggedInUserId = int.Parse(dtUser.Rows[0]["UserId"].ToString());
+                    UserMgr.RecordLogin(loggedInUserId, User_IP_Address, Server_Url);
+
+                    // Upgrade an old-format password to the new hash on first successful login
+                    if (Common.IsLegacyFormat(dtUser.Rows[0]["Password"].ToString()))
+                        UserMgr.ResetPasswordByUserId(loggedInUserId, Common.HashPassword(sPasswordInput), loggedInUserId);
                     Session["UserId"] = dtUser.Rows[0]["UserId"].ToString();
                     Session["UserName"] = dtUser.Rows[0]["UserName"].ToString();
                     Session["DesignName"] = dtUser.Rows[0]["DesignationName"].ToString();

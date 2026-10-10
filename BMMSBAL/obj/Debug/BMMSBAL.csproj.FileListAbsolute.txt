@@ -1,2 +1,13 @@
 C:\BMMS\BMMS\Source\BMMSBAL\obj\Debug\BMMSBAL.dll
 C:\BMMS\BMMS\Source\BMMSBAL\obj\Debug\BMMSBAL.pdb
+C:\Repositories\BMMS-Legacy\BMMSBAL\bin\Debug\BMMSBAL.dll
+C:\Repositories\BMMS-Legacy\BMMSBAL\bin\Debug\BMMSBAL.pdb
+C:\Repositories\BMMS-Legacy\BMMSBAL\bin\Debug\BMMSDAL.dll
+C:\Repositories\BMMS-Legacy\BMMSBAL\bin\Debug\stdole.dll
+C:\Repositories\BMMS-Legacy\BMMSBAL\bin\Debug\BMMSDAL.pdb
+C:\Repositories\BMMS-Legacy\BMMSBAL\obj\Debug\BMMSBAL.csproj.AssemblyReference.cache
+C:\Repositories\BMMS-Legacy\BMMSBAL\obj\Debug\BMMSBAL.csproj.ResolveComReference.cache
+C:\Repositories\BMMS-Legacy\BMMSBAL\obj\Debug\BMMSBAL.csproj.CoreCompileInputs.cache
+C:\Repositories\BMMS-Legacy\BMMSBAL\obj\Debug\BMMSBAL.csproj.Up2Date
+C:\Repositories\BMMS-Legacy\BMMSBAL\obj\Debug\BMMSBAL.dll
+C:\Repositories\BMMS-Legacy\BMMSBAL\obj\Debug\BMMSBAL.pdb

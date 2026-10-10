@@ -101,7 +101,7 @@ namespace BMMS.Master
                 int UserId = Convert.ToInt16(ddlLoginUser.SelectedValue);
                 int UpdatedBy = Convert.ToInt16(Session["UserId"].ToString());
 
-                string Password = Common.EncryptVal(NewPassword);
+                string Password = Common.HashPassword(NewPassword);
 
                 errMsg = "New passward was sent through mail.";
 
