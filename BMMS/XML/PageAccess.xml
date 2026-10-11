@@ -14,7 +14,7 @@
   This first version is derived from what the menu (MenuUserControl.ascx) shows each role.
   Items marked CONFIRM are guesses that the log-only trial should settle.
 -->
-<pageAccess mode="LogOnly">
+<pageAccess mode="Enforce">
   <public>
     <page path="Default.aspx"/>
     <page path="Logout.aspx"/>
