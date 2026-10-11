@@ -22,9 +22,10 @@
 
    Deliberately NOT added here (see the notes that came with this script):
      Alert_Master.DepartmentId, Alert_Master.CommitteeId, Alert_User_Map.UserId,
-     Users.ManagerId, Agenda.MgrApprovedBy, Agenda.ControllerApprovedBy, and
-     (until small procedure changes are made) Action_Item.MinutesId,
-     ActionItem_User_Map.UserId, Meeting.ChairmanNameId, Member.State_Id.
+     Users.ManagerId, Agenda.MgrApprovedBy, Agenda.ControllerApprovedBy.
+     Action_Item.MinutesId, ActionItem_User_Map.UserId, Meeting.ChairmanNameId
+     and Member.State_Id are added by BMMS-Add-ForeignKeys-Step3.sql, after
+     the procedure changes in BMMS-Fix-FK-Procedures.sql.
    ============================================================================ */
 
 USE [BMMS];
