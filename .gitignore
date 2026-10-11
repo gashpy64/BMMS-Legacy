@@ -41,3 +41,10 @@ BMMS/Files/MemberResume/
 
 
 
+
+/BMMS/ConnectionStrings.config
+**/App_Data/PageAccessLog.txt
+**/Files/SqlBackup/*.bak
+/BMMS/Files/AgendaAttach/
+/BMMS/Files/MemberPhoto/
+/BMMS/Files/MemberResume/

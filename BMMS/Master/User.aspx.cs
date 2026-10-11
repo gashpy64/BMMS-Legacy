@@ -199,16 +199,8 @@ namespace BMMS.Master
                     myUser.EmailId = txtEmailId.Text.Trim();
                     myUser.LoginName = txtLoginName.Text.Trim();
 
-                    if (!string.IsNullOrEmpty(txtPassword.Text))
-                    {
-                        myUser.Password = myUser.Code == "Save" ? Common.HashPassword(txtPassword.Text) : string.Empty;
-                    }
-                    else if (myUser.Code == "Update")
-                    {
-                        // Leave the existing hash untouched — AddEditUser's UPDATE branch
-                        // must not overwrite Password when this is null; see DAL note below.
-                        myUser.Password = null;
-                    }
+                    myUser.Password = (btnSave.Text == "Save") ? Common.HashPassword(txtPassword.Text) : string.Empty;
+
 
                     myUser.CreatedOn = System.DateTime.Now;
                     myUser.CreatedBy = int.Parse(Session["UserId"].ToString());
