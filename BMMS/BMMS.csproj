@@ -84,6 +84,7 @@
     <Content Include="CSS\CommonHTML.css" />
     <Content Include="Default.aspx" />
     <Content Include="JScript\Validation.js" />
+    <Content Include="XML\PageAccess.xml" />
     <Content Include="UserControl\MenuUserControl.ascx" />
   </ItemGroup>
   <ItemGroup>
@@ -183,6 +184,7 @@
     </Compile>
     <Compile Include="Master\BackupDatabase.aspx.cs">
       <DependentUpon>BackupDatabase.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Master\BackupDatabase.aspx.designer.cs">
       <DependentUpon>BackupDatabase.aspx</DependentUpon>
@@ -313,6 +315,7 @@
     <Compile Include="Master\Department.aspx.designer.cs">
       <DependentUpon>Department.aspx</DependentUpon>
     </Compile>
+    <Compile Include="PageAccessModule.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Report\AttendanceDetails.aspx.cs">
       <DependentUpon>AttendanceDetails.aspx</DependentUpon>
@@ -564,6 +567,7 @@
     <Content Include="XML\ReportSettings.xml" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="App_Data\" />
     <Folder Include="Files\AgendaAttach\" />
     <Folder Include="Files\AgendaText\" />
     <Folder Include="Files\MemberResume\" />

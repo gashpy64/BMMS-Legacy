@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  BMMS page-access policy, read by BMMS.Security.PageAccessModule.
+
+  mode="LogOnly"  -> nothing is blocked for role reasons; requests that WOULD be denied are
+                     written to App_Data\PageAccessLog.txt. Start here.
+  mode="Enforce"  -> denied requests receive an "Access denied" page (HTTP 403).
+  Being logged in is required for every page not listed under <public>, in both modes.
+
+  roles="*" means any logged-in user. Otherwise list role codes separated by commas:
+  admin, controller, manager, user, mgmt, md_sect   (Roles.RoleCode in the database).
+  A page that is not listed at all is treated as not allowed.
+
+  This first version is derived from what the menu (MenuUserControl.ascx) shows each role.
+  Items marked CONFIRM are guesses that the log-only trial should settle.
+-->
+<pageAccess mode="LogOnly">
+  <public>
+    <page path="Default.aspx"/>
+    <page path="Logout.aspx"/>
+    <page path="Error/ErrorPage.aspx"/>
+  </public>
+  <pages>
+    <!-- every role lands here after login, admin and md_sect included -->
+    <page path="DashBoard/DashBoard.aspx" roles="*"/>
+    <page path="ChangePasswordFirst.aspx" roles="*"/>
+    <page path="Master/ChangePassword.aspx" roles="*"/>
+    <page path="Report/EventCalendar.aspx" roles="*"/>  <!-- CONFIRM: no link to it was found in the code -->
+
+    <!-- admin only -->
+    <page path="Master/MemberType.aspx" roles="admin"/>
+    <page path="Master/ResetDatabase.aspx" roles="admin"/>
+    <page path="Master/SMTPServerConfig.aspx" roles="admin"/>
+
+    <!-- admin and controller: the Master and Admin menus -->
+    <page path="Master/Department.aspx" roles="admin,controller"/>
+    <page path="Master/Designation.aspx" roles="admin,controller"/>
+    <page path="Master/SubjectType.aspx" roles="admin,controller"/>
+    <page path="Master/DecisionType.aspx" roles="admin,controller"/>
+    <page path="Master/User.aspx" roles="admin,controller"/>
+    <page path="Master/Member.aspx" roles="admin,controller"/>
+    <page path="Master/Committee.aspx" roles="admin,controller"/>
+    <page path="Master/CommitteeMember.aspx" roles="admin,controller"/>
+    <page path="Master/Meeting.aspx" roles="admin,controller"/>
+    <page path="Master/MeetingMember.aspx" roles="admin,controller"/>
+    <page path="Master/Attendance.aspx" roles="admin,controller"/>
+    <page path="Master/ResetPassword.aspx" roles="admin,controller"/>
+    <page path="Master/BackupDatabase.aspx" roles="admin,controller"/>
+
+    <!-- agenda entry -->
+    <page path="Master/Agenda.aspx" roles="controller,manager,user"/>
+
+    <!-- followup -->
+    <page path="Master/Followup.aspx" roles="controller,md_sect"/>
+    <page path="Report/FollowupActionTaken.aspx" roles="controller,manager"/>  <!-- CONFIRM: managers reach it from the dashboard action items -->
+
+    <!-- reports -->
+    <page path="Report/Reports.aspx" roles="controller,manager"/>  <!-- CONFIRM: the mgmt role is shown a Reports menu with no items -->
+    <page path="Report/ViewReport.aspx" roles="controller,manager"/>  <!-- report pop-ups -->
+    <page path="Report/ReportPrint.aspx" roles="controller,manager"/>  <!-- report pop-ups -->
+
+    <!-- controller only: agenda/minutes workflow and the report menu -->
+    <page path="Master/AgendaFinalization.aspx" roles="controller"/>
+    <page path="Master/MinutesUpdate.aspx" roles="controller"/>
+    <page path="Master/MinutesFinalization.aspx" roles="controller"/>
+    <page path="Master/MinutesConfirmation.aspx" roles="controller"/>
+    <page path="Report/AgendaApproval.aspx" roles="controller"/>
+    <page path="Report/AttendanceDetails.aspx" roles="controller"/>
+    <page path="Report/AuditTrail.aspx" roles="controller"/>
+    <page path="Report/CommitteeMaster.aspx" roles="controller"/>
+    <page path="Report/CommitteeMember.aspx" roles="controller"/>
+    <page path="Report/Followup.aspx" roles="controller"/>
+    <page path="Report/MeetingCalendar.aspx" roles="controller"/>
+    <page path="Report/MeetingMaster.aspx" roles="controller"/>
+    <page path="Report/Notice.aspx" roles="controller"/>
+    <page path="Report/SendMail.aspx" roles="controller"/>
+    <page path="Report/SittingFees.aspx" roles="controller"/>
+    <page path="Report/SittingFeesApplicable.aspx" roles="controller"/>
+
+    <!-- Error/TestPage.aspx is intentionally not listed, so it is never allowed -->
+  </pages>
+</pageAccess>
