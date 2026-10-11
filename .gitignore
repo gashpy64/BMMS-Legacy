@@ -4,6 +4,8 @@
 *.suo
  
 # Build folders
+# The third-party DLLs still tracked under BMMS/bin and BMMSBAL/bin/Debug are
+# kept on purpose: the projects reference them from there.
 bin/
 obj/
  
