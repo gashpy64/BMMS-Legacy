@@ -14,6 +14,11 @@ GO
    Logging in with lvb@123 sends the user straight to ChangePasswordFirst, so
    every seeded account must choose a new password at first login.
 
+   Critical fix #5: the three seeded users without a manager are inserted with
+   ManagerId NULL instead of 0, so the procedure keeps working once
+   FK_Users_ManagerId exists. BMMS-Add-ForeignKeys-Step4.sql refuses to add
+   that key until it finds the marker FK#5-ManagerId-NULL in this procedure.
+
    This script only replaces the procedure. It does NOT run it and changes no
    data. Remember that executing the procedure wipes the whole database.
    ============================================================================ */
@@ -220,14 +225,15 @@ UNION ALL
 SELECT 'md_sect', 'MD Secretariat', 'MD Secretariat', 6, GETDATE(), 1, GETDATE(), 1;
 
 
+-- FK#5-ManagerId-NULL: no manager is stored as NULL, never 0
 INSERT INTO [Users]
 ([UserName],[DepartmentId],[DesignationId],[ManagerId],[RoleId],[EmailId],[LoginName],[Password]
            ,[AccountStatus],[CreatedOn],[CreatedBy],[UpdatedOn],[UpdatedBy])
-SELECT 'admin', 1, 1, 0, 1, '', 'admin', '100000.WADOkeW3PD8T+KGnhd13NA==.ykPBZLhjry5KbA3hGEQsf8hdO3yY8C23RTHKeAOfXWU=', 1, GETDATE(), 1, GETDATE(), 1
+SELECT 'admin', 1, 1, NULL, 1, '', 'admin', '100000.WADOkeW3PD8T+KGnhd13NA==.ykPBZLhjry5KbA3hGEQsf8hdO3yY8C23RTHKeAOfXWU=', 1, GETDATE(), 1, GETDATE(), 1
 UNION ALL
-SELECT 'Controller', 2, 3, 0, 2, 'con@lvb.com', 'secuser', '100000.M/UxC7LnMnNnEZFfpnw6mg==.BjFpjTZvVXXXGN0NOfAyBgtqgpaTbE4rH41LJyBONSc=', 1, GETDATE(), 1, GETDATE(), 1
+SELECT 'Controller', 2, 3, NULL, 2, 'con@lvb.com', 'secuser', '100000.M/UxC7LnMnNnEZFfpnw6mg==.BjFpjTZvVXXXGN0NOfAyBgtqgpaTbE4rH41LJyBONSc=', 1, GETDATE(), 1, GETDATE(), 1
 UNION ALL
-SELECT 'Manager', 4, 4, 0, 3, 'mgr@lvb.com', 'credmanager', '100000.PsM4vZJAAQ9wtc5TyVtBcg==.g2/yOexqH1W/RQ33t0LmQ0eZYFQl6gPN7buM+M1bbqY=', 1, GETDATE(), 1, GETDATE(), 1
+SELECT 'Manager', 4, 4, NULL, 3, 'mgr@lvb.com', 'credmanager', '100000.PsM4vZJAAQ9wtc5TyVtBcg==.g2/yOexqH1W/RQ33t0LmQ0eZYFQl6gPN7buM+M1bbqY=', 1, GETDATE(), 1, GETDATE(), 1
 UNION ALL
 SELECT 'User', 4, 5, 3, 4, 'usr@lvb.com', 'creduser', '100000.VqhtwYgekpXELBK53d/DLg==.haI/Qxp3EbSWTlfeUjLiqWbR30WATDUW5pazcR8k7tA=', 1, GETDATE(), 1, GETDATE(), 1;
 

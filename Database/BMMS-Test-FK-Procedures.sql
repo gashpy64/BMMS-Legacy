@@ -1,8 +1,9 @@
 /* ============================================================================
    BMMS - Critical fix #5: tests for BMMS-Fix-FK-Procedures.sql,
-   BMMS-Add-ForeignKeys-Step3.sql and BMMS-Fix-MinutesFinalize-Procedure.sql
+   BMMS-Add-ForeignKeys-Step3.sql, BMMS-Fix-MinutesFinalize-Procedure.sql and
+   BMMS-Add-ForeignKeys-Step4.sql
    ----------------------------------------------------------------------------
-   Run AFTER all three of those scripts.
+   Run AFTER all four of those scripts.
 
    Everything runs inside one transaction that is ROLLED BACK at the end, so
    no test data is kept and the agenda / minutes used by tests 12-18 are
@@ -151,7 +152,7 @@ BEGIN TRY
         (UserName, DepartmentId, DesignationId, ManagerId, RoleId, EmailId, LoginName, [Password],
          AccountStatus, CreatedOn, CreatedBy, UpdatedOn, UpdatedBy)
         VALUES
-        ('FK test user', @DepartmentId, @DesignationId, 0, @RoleId, '', 'zzfktestuser', 'not-a-login',
+        ('FK test user', @DepartmentId, @DesignationId, NULL, @RoleId, '', 'zzfktestuser', 'not-a-login',
          0, @Now, 1, @Now, 1);
 
         SET @UserId = SCOPE_IDENTITY();
@@ -278,6 +279,19 @@ BEGIN TRY
               GROUP BY ActionItemId, UserId HAVING COUNT(*) > 1) d;
     END
 
+    ---------------------------------------------------------------------------
+    -- Users.ManagerId (BMMS-Add-ForeignKeys-Step4.sql)
+    ---------------------------------------------------------------------------
+    -- UserDB.AddEditUser sends NULL (DBNull.Value) when no manager is selected.
+    EXEC spr_AddEditUser @Code = 'Save', @UserId = 0, @UserName = 'FK test user 2', @DepartmentId = @DepartmentId,
+         @DesignationId = @DesignationId, @ManagerId = NULL, @RoleId = @RoleId, @EmailId = '',
+         @LoginName = 'zzfktestuser2', @Password = 'not-a-login', @CreatedOn = @Now, @CreatedBy = 1,
+         @UpdatedOn = @Now, @UpdatedBy = 1;
+
+    INSERT INTO @T
+    SELECT 19, 'User saved with no manager: ManagerId stored as NULL', 'NULL', ISNULL(CAST(ManagerId AS VARCHAR(12)), 'NULL')
+    FROM Users WHERE LoginName = 'zzfktestuser2';
+
 END TRY
 BEGIN CATCH
     INSERT INTO @T VALUES (99, 'Unexpected error - tests after this point did not run', 'No error',
@@ -301,6 +315,6 @@ ORDER BY TestNo;
 
 -- Confirm nothing was kept: all three counts should be 0.
 SELECT (SELECT COUNT(*) FROM Member WHERE MemberCode = 'ZZFKTEST') AS TestMembersLeft,
-       (SELECT COUNT(*) FROM Users WHERE LoginName = 'zzfktestuser') AS TestUsersLeft,
+       (SELECT COUNT(*) FROM Users WHERE LoginName IN ('zzfktestuser', 'zzfktestuser2')) AS TestUsersLeft,
        (SELECT COUNT(*) FROM Action_Item WHERE Directions = 'FK test') AS TestActionItemsLeft;
 GO

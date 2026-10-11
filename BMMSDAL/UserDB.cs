@@ -241,7 +241,8 @@ namespace BMMSDAL
             parameter[2] = new SqlParameter("@UserName", UserDAL.UserName);
             parameter[3] = new SqlParameter("@DepartmentId", UserDAL.DepartmentId);
             parameter[4] = new SqlParameter("@DesignationId", UserDAL.DesignationId);
-            parameter[5] = new SqlParameter("@ManagerId", UserDAL.ManagerId);
+            // No manager is stored as NULL. DBNull.Value, not null: a null value means "parameter not supplied".
+            parameter[5] = new SqlParameter("@ManagerId", UserDAL.ManagerId <= 0 ? (object)DBNull.Value : UserDAL.ManagerId);
             parameter[6] = new SqlParameter("@RoleId", UserDAL.RoleId);
             parameter[7] = new SqlParameter("@EmailId", UserDAL.EmailId);
             parameter[8] = new SqlParameter("@LoginName", UserDAL.LoginName);

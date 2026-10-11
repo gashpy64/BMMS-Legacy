@@ -727,7 +727,9 @@ namespace BMMS.Master
                     if (dtUser.Rows[i]["UserId"].ToString() == Session["UserId"].ToString())
                     {
                         ToMailId = dtUser.Rows[i]["EmailId"].ToString();
-                        mgrUserId = Convert.ToInt16(dtUser.Rows[i]["ManagerId"].ToString());
+                        // ManagerId is NULL when the user has no manager
+                        if (!int.TryParse(dtUser.Rows[i]["ManagerId"].ToString(), out mgrUserId))
+                            mgrUserId = 0;
                         break;
                     }
                 }

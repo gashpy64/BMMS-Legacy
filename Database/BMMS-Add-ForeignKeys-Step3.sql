@@ -27,8 +27,10 @@
      BACKUP DATABASE BMMS TO DISK = N'C:\Backups\BMMS_before_fk_step3.bak' WITH COPY_ONLY;
 
    Still deliberately NOT added:
-     Alert_Master.DepartmentId, Alert_Master.CommitteeId, Alert_User_Map.UserId,
-     Users.ManagerId, Agenda.MgrApprovedBy, Agenda.ControllerApprovedBy.
+     Alert_Master.DepartmentId, Alert_Master.CommitteeId, Alert_User_Map.UserId.
+     Users.ManagerId is added by BMMS-Add-ForeignKeys-Step4.sql.
+     Agenda.MgrApprovedBy and Agenda.ControllerApprovedBy are unused by the
+     application code and are left in place without a key.
    ============================================================================ */
 
 USE [BMMS];
