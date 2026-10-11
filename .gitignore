@@ -30,3 +30,8 @@ packages/
 _ReSharper*/
 
 BMMS/connectionStrings.config
+
+Files/SqlBackup/*.bak
+
+App_Data/PageAccessLog.txt
+
