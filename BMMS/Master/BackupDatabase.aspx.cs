@@ -12,7 +12,7 @@ using BMMSBAL;
 
 namespace BMMS.Master
 {
-    /*public partial class BackupDatabase : System.Web.UI.Page
+    public partial class BackupDatabase : System.Web.UI.Page
     {
         private string className = "BackupDatabase";
 
@@ -70,5 +70,5 @@ namespace BMMS.Master
         #endregion
         
 
-    } */
+    } 
 }

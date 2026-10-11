@@ -185,13 +185,13 @@ namespace BMMSDAL
             dt = CommonDB.GetDataTable("spr_GetUserByUserId", parameter);
 
             UserDAL UserDAL = new UserDAL();
-            UserDAL.UserId = Convert.ToInt16(dt.Rows[0]["UserId"].ToString());
+            UserDAL.UserId = ToInt(dt.Rows[0]["UserId"]);
             UserDAL.UserName = dt.Rows[0]["UserName"].ToString();
-            UserDAL.DepartmentId = Convert.ToInt16(dt.Rows[0]["DepartmentId"].ToString());
+            UserDAL.DepartmentId = ToInt(dt.Rows[0]["DepartmentId"]);
             UserDAL.DepartmentName = dt.Rows[0]["DepartmentName"].ToString();
-            UserDAL.DesignationId = Convert.ToInt16(dt.Rows[0]["DesignationId"].ToString());
-            UserDAL.ManagerId = Convert.ToInt16(dt.Rows[0]["ManagerId"].ToString());
-            UserDAL.RoleId = Convert.ToInt16(dt.Rows[0]["RoleId"].ToString());
+            UserDAL.DesignationId = ToInt(dt.Rows[0]["DesignationId"]);
+            UserDAL.ManagerId = ToInt(dt.Rows[0]["ManagerId"]);   // NULL = no manager = 0
+            UserDAL.RoleId = ToInt(dt.Rows[0]["RoleId"]);
             UserDAL.EmailId = dt.Rows[0]["EmailId"].ToString();
             UserDAL.LoginName = dt.Rows[0]["LoginName"].ToString();
             UserDAL.Password = dt.Rows[0]["Password"].ToString();
@@ -199,7 +199,11 @@ namespace BMMSDAL
             return UserDAL;
         }
         #endregion
-
+        private static int ToInt(object value)
+        {
+            int result;
+            return (value != null && int.TryParse(value.ToString(), out result)) ? result : 0;
+        }
         #region GetUserDataTableByUserId
         public static DataTable GetUserDataTableByUserId(int UserId)
         {

@@ -87,6 +87,7 @@
     <Compile Include="DocToString.cs" />
     <Compile Include="Mail_Mgr.cs" />
     <Compile Include="HtmlToPdfBuilder.cs" />
+    <Compile Include="Sql_Backup_Mgr.cs" />
     <Compile Include="WordUtilities.cs" />
     <Compile Include="PDFUtilities.cs" />
     <Compile Include="MinutesMgr.cs" />
