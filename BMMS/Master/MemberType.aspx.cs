@@ -250,9 +250,12 @@ namespace BMMS.Master
                     
                     try
                     {
-                        MemberTypeMgr.DeleteMemberTypeByMemberTypeId(MemberTypeId);
+                        int Result = MemberTypeMgr.DeleteMemberTypeByMemberTypeId(MemberTypeId);
 
-                        MsgDisplay("Record Deleted Successfully");
+                        if (Result == 1)
+                            MsgDisplay("Record Deleted Successfully");
+                        else
+                            MsgDisplay(Common.GetAppSetting("delete_reference"));
                     }
                     catch (Exception ex)
                     {

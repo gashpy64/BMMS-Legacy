@@ -394,9 +394,12 @@ namespace BMMS.Master
                         }
                         else
                         {
-                            CommitteeMgr.DeleteCommitteeByCommitteeId(CommitteeId);
+                            int Result = CommitteeMgr.DeleteCommitteeByCommitteeId(CommitteeId);
 
-                            MsgDisplay(Common.GetAppSetting("delete_msg"));
+                            if (Result == 1)
+                                MsgDisplay(Common.GetAppSetting("delete_msg"));
+                            else
+                                MsgDisplay(Common.GetAppSetting("delete_reference"));
                         }
                     }
                     catch (Exception ex)
