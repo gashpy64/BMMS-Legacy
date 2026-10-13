@@ -13,10 +13,13 @@
     <link href="../CSS/AjaxCalender.css" rel="stylesheet" type="text/css" />
     <link href="../CSS/PasswordCheck.css" rel="stylesheet" type="text/css" />
 
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="../CSS/bmms-workbench.css" rel="stylesheet" type="text/css" />
+
     <script type="text/javascript" language="javascript" src="../JScript/BrowserSecurity.js"></script>
 
 </head>
-<body>
+<body class="wb">
     <form id="form1" runat="server">
         <asp:ScriptManager ID="ScriptManager1" runat="server">
             <Scripts>
@@ -25,25 +28,46 @@
             </Scripts>
         </asp:ScriptManager>
         <div id="mainContainer">
-            <div id="logo">
-                <p class="welcomeMsg">
-                    <br />
-                    <br />
-                    <br />
-                    <b>
-                    <a href="../Master/ChangePassword.aspx" style="color: White; font-weight: bold;">
-                            Change Password</a>
-                        </b>
-                    <br />
-                    <br />
-                    <b>Logged In :
-                        <%=Session["UserName"]%>
-                        &nbsp; <asp:LinkButton ID="lnkLogout" runat="server" Text="Logout" ForeColor="white" PostBackUrl="~/Logout.aspx"></asp:LinkButton></b>
-                </p>
+            <div class="wb-header">
+                <span class="wb-brand">BMMS</span>
+                <div id="divMenu" class="wb-nav">
+                    <uc1:MenuUserControl ID="MenuUserControl1" runat="server"></uc1:MenuUserControl>
+                </div>
+                <div class="wb-user">
+                    <a href="../DashBoard/DashBoard.aspx">Alerts (<%: AlertCount %>)</a>
+                    <span class="wb-user-name"><%: Session["UserName"] %> | <%: Session["RoleName"] %></span>
+                    <a href="../Master/ChangePassword.aspx">Change Password</a>
+                    <asp:LinkButton ID="lnkLogout" runat="server" Text="Logout" PostBackUrl="~/Logout.aspx"></asp:LinkButton>
+                </div>
             </div>
-            <div id="divMenu">
-                <uc1:MenuUserControl ID="MenuUserControl1" runat="server"></uc1:MenuUserControl>
-            </div>
+
+            <script type="text/javascript">
+                // Mark the top menu item that owns the current page (CSS class wb-active).
+                (function () {
+                    var bar = document.getElementById("ddtopmenubar");
+                    if (!bar) return;
+                    var here = window.location.pathname.toLowerCase();
+                    function isHere(a) { return a.pathname && ("/" + a.pathname.replace(/^\//, "")).toLowerCase() == here; }
+                    var tops = bar.getElementsByTagName("a");
+                    for (var i = 0; i < tops.length; i++) {
+                        var active = false;
+                        var sub = tops[i].getAttribute("rel") ? document.getElementById(tops[i].getAttribute("rel")) : null;
+                        if (sub) {
+                            var links = sub.getElementsByTagName("a");
+                            for (var j = 0; j < links.length; j++)
+                                if (isHere(links[j])) active = true;
+                        }
+                        else {
+                            active = isHere(tops[i]);
+                        }
+                        if (active) tops[i].className += " wb-active";
+                    }
+                    // The menu script caches item positions; measure again once fonts and layout have settled.
+                    if (window.addEventListener)
+                        window.addEventListener("load", function () { ddlevelsmenu.gettopitemsdimensions(); }, false);
+                })();
+            </script>
+
             <div id="contentArea">
                 <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server">
                 </asp:ContentPlaceHolder>

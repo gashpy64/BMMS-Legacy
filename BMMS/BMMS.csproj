@@ -81,6 +81,7 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="CSS\bmms-workbench.css" />
     <Content Include="CSS\CommonHTML.css" />
     <Content Include="Default.aspx" />
     <Content Include="JScript\Validation.js" />
@@ -474,6 +475,9 @@
     <Content Include="Error\TestPage.aspx" />
     <Content Include="Files\MemberPhoto\FemalePhoto.png" />
     <Content Include="Files\MemberPhoto\MalePhoto.png" />
+    <Content Include="Fonts\OFL.txt" />
+    <Content Include="Fonts\PublicSans-Bold.woff2" />
+    <Content Include="Fonts\PublicSans-Regular.woff2" />
     <Content Include="Global.asax" />
     <Content Include="Images\bg.jpg" />
     <Content Include="Images\chromebg.gif" />
@@ -484,6 +488,7 @@
     <Content Include="Images\login-bg.gif" />
     <Content Include="Images\login-box.gif" />
     <Content Include="Images\login-btn.gif" />
+    <Content Include="Images\login-btn-workbench.svg" />
     <Content Include="Images\login-lvb-logo.gif" />
     <Content Include="Images\logo.jpg" />
     <Content Include="Images\tableft.gif" />
