@@ -38,7 +38,9 @@ DECLARE @UserId INT;
 DECLARE @MinutesId INT;
 DECLARE @AgendaId INT;
 DECLARE @ActionItemId INT;
-DECLARE @AnyUserId INT;
+-- An existing user for the CreatedBy / UpdatedBy columns. Never a hard-coded id:
+-- since BMMS-Add-ForeignKeys-Step5.sql those columns must hold a real user.
+DECLARE @AnyUserId INT = (SELECT TOP 1 UserId FROM Users ORDER BY UserId);
 
 BEGIN TRANSACTION;
 
@@ -50,8 +52,8 @@ BEGIN TRY
     EXEC spr_AddEditMember @Code = 'Save', @MemberId = 0, @MemberCode = 'ZZFKTEST', @MemberName = 'FK test member',
          @SexId = @SexId, @DesignationId = @DesignationId, @DOB = '', @Address1 = '', @Address2 = '', @Address3 = '',
          @CityName = '', @State_Id = '0', @PinCode = '', @DOJ = '', @EmailId = '', @DinNo = '', @PhotoPath = '',
-         @ResumePath = '', @RelievingDate = '', @StatusId = 1, @CreatedOn = @Now, @CreatedBy = 1,
-         @UpdatedOn = @Now, @UpdatedBy = 1;
+         @ResumePath = '', @RelievingDate = '', @StatusId = 1, @CreatedOn = @Now, @CreatedBy = @AnyUserId,
+         @UpdatedOn = @Now, @UpdatedBy = @AnyUserId;
 
     SET @MemberId = (SELECT MemberId FROM Member WHERE MemberCode = 'ZZFKTEST');
 
@@ -112,7 +114,7 @@ BEGIN TRY
     ---------------------------------------------------------------------------
     BEGIN TRY
         INSERT INTO Action_Item (MinutesId, Directions, ActionText, ActionStatus, UpdatedOn, UpdatedBy)
-        VALUES (-1, '', '', '', @Now, 1);
+        VALUES (-1, '', '', '', @Now, @AnyUserId);
         INSERT INTO @T VALUES (7, 'Key rejects an Action_Item for minutes that do not exist', 'Error 547', 'No error');
     END TRY
     BEGIN CATCH
@@ -135,7 +137,7 @@ BEGIN TRY
         SET @AgendaId = (SELECT AgendaId FROM Minutes WHERE MinutesId = @MinutesId);
 
         INSERT INTO Action_Item (MinutesId, Directions, ActionText, ActionStatus, UpdatedOn, UpdatedBy)
-        VALUES (@MinutesId, 'FK test', '', 'Pending', @Now, 1);
+        VALUES (@MinutesId, 'FK test', '', 'Pending', @Now, @AnyUserId);
 
         SET @ActionItemId = SCOPE_IDENTITY();
 
@@ -153,7 +155,7 @@ BEGIN TRY
          AccountStatus, CreatedOn, CreatedBy, UpdatedOn, UpdatedBy)
         VALUES
         ('FK test user', @DepartmentId, @DesignationId, NULL, @RoleId, '', 'zzfktestuser', 'not-a-login',
-         0, @Now, 1, @Now, 1);
+         0, @Now, @AnyUserId, @Now, @AnyUserId);
 
         SET @UserId = SCOPE_IDENTITY();
 
@@ -202,7 +204,7 @@ BEGIN TRY
                           WHERE m.MinutesId = @MinutesId);
 
         INSERT INTO Action_Item (MinutesId, Directions, ActionText, ActionStatus, UpdatedOn, UpdatedBy)
-        VALUES (@MinutesId, 'FK test', '', 'Pending', @Now, 1);
+        VALUES (@MinutesId, 'FK test', '', 'Pending', @Now, @AnyUserId);
 
         SET @ActionItemId = SCOPE_IDENTITY();
 
@@ -253,7 +255,7 @@ BEGIN TRY
         UPDATE Minutes SET DecisionTypeId = 1 WHERE MinutesId = @MinutesId;
 
         INSERT INTO Action_Item (MinutesId, Directions, ActionText, ActionStatus, UpdatedOn, UpdatedBy)
-        VALUES (@MinutesId, 'FK test', '', '', @Now, 1);
+        VALUES (@MinutesId, 'FK test', '', '', @Now, @AnyUserId);
 
         SET @ActionItemId = SCOPE_IDENTITY();
 
@@ -285,8 +287,8 @@ BEGIN TRY
     -- UserDB.AddEditUser sends NULL (DBNull.Value) when no manager is selected.
     EXEC spr_AddEditUser @Code = 'Save', @UserId = 0, @UserName = 'FK test user 2', @DepartmentId = @DepartmentId,
          @DesignationId = @DesignationId, @ManagerId = NULL, @RoleId = @RoleId, @EmailId = '',
-         @LoginName = 'zzfktestuser2', @Password = 'not-a-login', @CreatedOn = @Now, @CreatedBy = 1,
-         @UpdatedOn = @Now, @UpdatedBy = 1;
+         @LoginName = 'zzfktestuser2', @Password = 'not-a-login', @CreatedOn = @Now, @CreatedBy = @AnyUserId,
+         @UpdatedOn = @Now, @UpdatedBy = @AnyUserId;
 
     INSERT INTO @T
     SELECT 19, 'User saved with no manager: ManagerId stored as NULL', 'NULL', ISNULL(CAST(ManagerId AS VARCHAR(12)), 'NULL')

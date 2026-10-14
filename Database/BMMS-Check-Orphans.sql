@@ -120,3 +120,49 @@ SELECT m.SexId AS StoredSexId, COUNT(*) AS Members,
 FROM Member m
 GROUP BY m.SexId
 ORDER BY m.SexId;
+
+/* ----------------------------------------------------------------------------
+   Third grid - every column that stores a user id (42 columns).
+     HasKey      1 = a foreign key to Users exists.
+     OrphanRows  rows whose value matches no user (0 counts as no user).
+     OrphanIds   the distinct values behind OrphanRows.
+   Columns marked "checked by procedure only" are deliberately left without a
+   key (see BMMS-Add-ForeignKeys-Step5.sql); spr_DeleteUserByUserId still
+   refuses to delete a user they point at.
+   ---------------------------------------------------------------------------- */
+DECLARE @UserCols TABLE (TableName SYSNAME, ColumnName SYSNAME, Note VARCHAR(60));
+
+INSERT INTO @UserCols (TableName, ColumnName, Note)
+SELECT t.name, c.name,
+       CASE WHEN t.name IN ('Minutes', 'Audit_Trial_Login', 'Audit_Trail_SendMail', 'Department', 'Designation', 'Roles',
+                            'Alert_Type', 'Decision_Type', 'Member_Type', 'Subject_Type')
+              OR (t.name = 'Users' AND c.name = 'CreatedBy')
+            THEN 'checked by procedure only' ELSE '' END
+FROM sys.columns c
+INNER JOIN sys.tables t ON t.object_id = c.object_id
+WHERE t.is_ms_shipped = 0 AND t.name <> 'sysdiagrams' AND c.is_identity = 0
+AND c.name IN ('CreatedBy', 'UpdatedBy', 'MgrApprovedBy', 'ControllerApprovedBy', 'UserId', 'User_Id',
+               'Update_By', 'Mail_Send_By', 'ManagerId');
+
+DECLARE @UserColSql NVARCHAR(MAX);
+
+SET @UserColSql = N'';
+
+SELECT @UserColSql = @UserColSql
+     + N'SELECT ''' + TableName + N'.' + ColumnName + N''' AS UserIdColumn, '
+     + N'(SELECT COUNT(*) FROM sys.foreign_key_columns f WHERE f.parent_object_id = OBJECT_ID(''dbo.' + TableName + N''') '
+     + N'AND COL_NAME(f.parent_object_id, f.parent_column_id) = ''' + ColumnName + N''' AND f.referenced_object_id = OBJECT_ID(''dbo.Users'')) AS HasKey, '
+     + N'(SELECT COUNT(' + QUOTENAME(ColumnName) + N') FROM ' + QUOTENAME(TableName) + N') AS RowsWithValue, '
+     + N'(SELECT COUNT(*) FROM ' + QUOTENAME(TableName) + N' y WHERE y.' + QUOTENAME(ColumnName) + N' IS NOT NULL '
+     + N'AND NOT EXISTS (SELECT 1 FROM Users u WHERE u.UserId = y.' + QUOTENAME(ColumnName) + N')) AS OrphanRows, '
+     + N'ISNULL(STUFF((SELECT DISTINCT '', '' + CAST(y.' + QUOTENAME(ColumnName) + N' AS VARCHAR(12)) FROM ' + QUOTENAME(TableName) + N' y '
+     + N'WHERE y.' + QUOTENAME(ColumnName) + N' IS NOT NULL AND NOT EXISTS (SELECT 1 FROM Users u WHERE u.UserId = y.' + QUOTENAME(ColumnName) + N') '
+     + N'FOR XML PATH('''')), 1, 2, ''''), '''') AS OrphanIds, '
+     + N'''' + Note + N''' AS Note UNION ALL '
+FROM @UserCols;
+
+IF (LEN(@UserColSql) > 0)
+BEGIN
+    SET @UserColSql = LEFT(@UserColSql, LEN(@UserColSql) - 10) + N' ORDER BY UserIdColumn';
+    EXEC sp_executesql @UserColSql;
+END

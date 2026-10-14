@@ -9,8 +9,11 @@ GO
      2. Finds a row that is NOT referenced anywhere -> expects Result = 1,
         then confirms the row is actually gone afterward
 
-   Run this against a DEV/TEST copy of the database, not production data —
-   the "unreferenced" branch of each test actually deletes a real row.
+   The "unreferenced" branch of each test deletes a real row, so the whole
+   script runs inside one transaction that is ROLLED BACK at the end: nothing
+   stays deleted. (Before this change the deletes were permanent.)
+
+   Users are no longer tested here: see BMMS-Test-UserDelete.sql.
    If a given test prints "No unreferenced row found", that's informational,
    not a failure — it just means every row of that type currently has a
    reference, so only the "blocked" half of that test could run.
@@ -19,6 +22,8 @@ GO
    ============================================================================ */
 
 SET NOCOUNT ON;
+
+BEGIN TRANSACTION;
 
 -------------------------------------------------------------------------------
 PRINT '=== 1. Committee ===';
@@ -197,37 +202,12 @@ ELSE PRINT '  No unreferenced Decision_Type found — skipped delete test.';
 -------------------------------------------------------------------------------
 PRINT '=== 7. Users ===';
 -------------------------------------------------------------------------------
-DECLARE @RefUserId INT = (
-    SELECT TOP 1 UserId FROM (
-        SELECT MgrApprovedBy AS UserId FROM Agenda WHERE MgrApprovedBy IS NOT NULL
-        UNION ALL
-        SELECT ControllerApprovedBy FROM Agenda WHERE ControllerApprovedBy IS NOT NULL
-        UNION ALL
-        SELECT ManagerId FROM Users WHERE ManagerId IS NOT NULL
-    ) x
-);
-DECLARE @UnrefUserId INT = (
-    SELECT TOP 1 u.UserId FROM Users u
-    WHERE NOT EXISTS (SELECT 1 FROM Agenda a WHERE a.MgrApprovedBy = u.UserId OR a.ControllerApprovedBy = u.UserId)
-      AND NOT EXISTS (SELECT 1 FROM Users u2 WHERE u2.ManagerId = u.UserId)
-);
-
-IF @RefUserId IS NOT NULL
-BEGIN
-    PRINT '  Referenced UserId = ' + CAST(@RefUserId AS VARCHAR) + ' (expect Result = 0):';
-    EXEC spr_DeleteUserByUserId @UserId = @RefUserId;
-END
-ELSE PRINT '  No referenced User found to test.';
-
-IF @UnrefUserId IS NOT NULL
-BEGIN
-    PRINT '  CAUTION: this will actually delete UserId = ' + CAST(@UnrefUserId AS VARCHAR) + ' (expect Result = 1).';
-    PRINT '  Comment out the EXEC below if you want to keep this user.';
-    EXEC spr_DeleteUserByUserId @UserId = @UnrefUserId;
-    PRINT '  Row count after (expect 0):';
-    SELECT COUNT(*) AS RemainingRows FROM Users WHERE UserId = @UnrefUserId;
-END
-ELSE PRINT '  No unreferenced User found — skipped delete test.';
+PRINT '  Not tested here any more: this section used to delete a real user permanently.';
+PRINT '  Run BMMS-Test-UserDelete.sql instead (it rolls everything back).';
 
 
+IF (@@TRANCOUNT > 0)
+    ROLLBACK TRANSACTION;
+
+PRINT '=== All deletes above were rolled back. ===';
 PRINT '=== Done. Scroll up through the Messages tab and check each Result value above. ===';
