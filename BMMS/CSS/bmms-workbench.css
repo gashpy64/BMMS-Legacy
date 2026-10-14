@@ -602,6 +602,13 @@ body.wb .ddsubmenustyle li a:focus
 {
 	color: var(--wb-danger);
 }
+/* disabled by code-behind (Decision Type for non-admin roles) */
+.wb-page .wb-link-btn[disabled]
+{
+	color: var(--wb-text-muted);
+	text-decoration: none;
+	cursor: default;
+}
 
 /* GridView pager row */
 .wb-table > tbody > tr.wb-pager > td
