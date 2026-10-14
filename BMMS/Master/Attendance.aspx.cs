@@ -15,6 +15,7 @@ namespace BMMS.Master
     public partial class Attendance : System.Web.UI.Page
     {
         private string className = "Attendance";
+        private const string MeetingNotHeldMsg = "Attendance cannot be marked for a meeting that has not yet taken place.";
 
         #region Page_Load
         protected void Page_Load(object sender, EventArgs e)
@@ -214,13 +215,23 @@ namespace BMMS.Master
                     int CommitteeId = int.Parse(ddlCommittee.SelectedValue.ToString());
                     int ChairmanNameId = int.Parse(ddlChairmanName.SelectedValue.ToString());
 
+                    // Attendance only for a meeting dated today or earlier (database server date)
+                    if (!AttendanceMgr.IsMeetingHeld(MeetingId))
+                    {
+                        MsgDisplay(MeetingNotHeldMsg);
+                        return;
+                    }
+
                     MeetingMgr.UpdateMeetingChairman(MeetingId, CommitteeId, ChairmanNameId);
 
-                    UpdateCommitteeMember();
+                    bool committeeSaved = UpdateCommitteeMember();
 
-                    UpdateMeetingMember();
+                    bool meetingSaved = UpdateMeetingMember();
 
-                    sMsg = "Attendance Successfully Updated";
+                    if (committeeSaved && meetingSaved)
+                        sMsg = "Attendance Successfully Updated";
+                    else
+                        sMsg = MeetingNotHeldMsg;
 
                     MsgDisplay(sMsg);
                 }
@@ -233,8 +244,9 @@ namespace BMMS.Master
         #endregion
 
         #region UpdateCommitteeMember
-        public void UpdateCommitteeMember()
+        public bool UpdateCommitteeMember()
         {
+            bool allSaved = true;
             int MeetingId = int.Parse(ddlMeeting.SelectedValue.ToString());
             int CommitteeId = int.Parse(ddlCommittee.SelectedValue.ToString());
 
@@ -261,16 +273,20 @@ namespace BMMS.Master
                     }
                     myAttendance.UpdatedBy = int.Parse(Session["UserId"].ToString());
 
-                    AttendanceMgr.UpdateAttendance(myAttendance);
+                    if (AttendanceMgr.UpdateAttendance(myAttendance) != 1)
+                        allSaved = false;
 
                 }
             }
+
+            return allSaved;
         }
         #endregion
 
         #region UpdateMeetingMember
-        public void UpdateMeetingMember()
+        public bool UpdateMeetingMember()
         {
+            bool allSaved = true;
             int MeetingId = int.Parse(ddlMeeting.SelectedValue.ToString());
             int CommitteeId = int.Parse(ddlCommittee.SelectedValue.ToString());
 
@@ -297,10 +313,13 @@ namespace BMMS.Master
                     }
                     myAttendance.UpdatedBy = int.Parse(Session["UserId"].ToString());
 
-                    AttendanceMgr.UpdateAttendance(myAttendance);
+                    if (AttendanceMgr.UpdateAttendance(myAttendance) != 1)
+                        allSaved = false;
 
                 }
             }
+
+            return allSaved;
         }
         #endregion
 
