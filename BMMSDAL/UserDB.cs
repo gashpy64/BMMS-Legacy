@@ -233,7 +233,7 @@ namespace BMMSDAL
         #endregion
 
         #region AddEditUser
-        public static int AddEditUser(UserDAL UserDAL)
+        public static DataTable AddEditUser(UserDAL UserDAL)
         {
             SqlParameter[] parameter = new SqlParameter[14];
             parameter[0] = new SqlParameter("@Code", UserDAL.Code);
@@ -252,20 +252,20 @@ namespace BMMSDAL
             parameter[12] = new SqlParameter("@UpdatedOn", UserDAL.UpdatedOn);
             parameter[13] = new SqlParameter("@UpdatedBy", UserDAL.UpdatedBy);
 
-            return CommonDB.ExecuteProcedure("spr_AddEditUser", parameter);
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-UserProtection-Stage1.sql)
+            return CommonDB.GetDataTable("spr_AddEditUser", parameter);
         }
         #endregion
 
         #region DeleteUserByUserId
-        public static int DeleteUserByUserId(int UserId)
+        public static DataTable DeleteUserByUserId(int UserId, int ActingUserId)
         {
-            SqlParameter[] parameter = new SqlParameter[1];
+            SqlParameter[] parameter = new SqlParameter[2];
             parameter[0] = new SqlParameter("@UserId", UserId);
+            parameter[1] = new SqlParameter("@ActingUserId", ActingUserId);
 
-            DataTable dtResult = new DataTable();
-            dtResult = CommonDB.GetDataTable("spr_DeleteUserByUserId", parameter);
-
-            return Convert.ToInt16(dtResult.Rows[0]["Result"].ToString());
+            // One row: Result, Reason, ReasonDetail
+            return CommonDB.GetDataTable("spr_DeleteUserByUserId", parameter);
         }
         #endregion
 
@@ -277,7 +277,38 @@ namespace BMMSDAL
             parameter[1] = new SqlParameter("@Password", Password);
             parameter[2] = new SqlParameter("@UpdatedBy", UpdatedBy);
 
-            return CommonDB.ExecuteProcedure("spr_ResetPasswordByUserId", parameter); ;
+            DataTable dtResult = CommonDB.GetDataTable("spr_ResetPasswordByUserId", parameter);
+
+            // No row: the procedure from before BMMS-Fix-UserProtection-Stage1.sql, which has
+            // already updated the password. Keeps login and Change Password working until it is run.
+            if (dtResult.Rows.Count == 0)
+                return 1;
+
+            return Convert.ToInt16(dtResult.Rows[0]["Result"].ToString());
+        }
+        #endregion
+
+        #region CheckUserChange
+        public static DataTable CheckUserChange(int ActingUserId, int TargetUserId, string Action, int NewRoleId)
+        {
+            SqlParameter[] parameter = new SqlParameter[4];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = new SqlParameter("@TargetUserId", TargetUserId);
+            parameter[2] = new SqlParameter("@Action", Action);
+            parameter[3] = new SqlParameter("@NewRoleId", NewRoleId <= 0 ? (object)DBNull.Value : NewRoleId);
+
+            // One row: Result, Reason, ReasonDetail
+            return CommonDB.GetDataTable("spr_CheckUserChange", parameter);
+        }
+        #endregion
+
+        #region GetUserListForUserPage
+        public static DataTable GetUserListForUserPage(int ActingUserId)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+
+            return CommonDB.GetDataTable("spr_GetUserListForUserPage", parameter);
         }
         #endregion
 

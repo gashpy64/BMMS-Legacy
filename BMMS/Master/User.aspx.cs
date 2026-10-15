@@ -94,7 +94,8 @@ namespace BMMS.Master
             try
             {
                 DataTable dtUser = new DataTable();
-                dtUser = UserMgr.GetUserList();
+                // Same rows as GetUserList, plus CanEdit / CanChangeRole / CanDelete for the logged-in user
+                dtUser = UserMgr.GetUserListForUserPage(ActingUserId());
 
                 ViewState["dtUser"] = dtUser;
                 BindGridView();
@@ -125,6 +126,23 @@ namespace BMMS.Master
             {
                 if (e.Row.RowType == DataControlRowType.DataRow)
                 {
+                    // Visual only: the procedures refuse these anyway
+                    DataRowView drv = (DataRowView)e.Row.DataItem;
+
+                    if (Convert.ToInt32(drv["CanEdit"]) != 1)
+                    {
+                        Button btnEdit = (Button)e.Row.FindControl("btnEdit");
+                        btnEdit.Enabled = false;
+                        btnEdit.ToolTip = "You cannot edit this user";
+                    }
+
+                    if (Convert.ToInt32(drv["CanDelete"]) != 1)
+                    {
+                        Button btnDelete = (Button)e.Row.FindControl("btnDelete");
+                        btnDelete.Enabled = false;
+                        btnDelete.ToolTip = "You cannot delete this user";
+                    }
+
                     //e.Row.Attributes.Add("onmouseover", "MouseEvents(this, event)");
                     //e.Row.Attributes.Add("onmouseout", "MouseEvents(this, event)");
 
@@ -157,12 +175,22 @@ namespace BMMS.Master
         }
         #endregion
 
+        #region ActingUserId
+        // The logged-in user, from the server-side session only (0 when missing; the procedures refuse 0)
+        private int ActingUserId()
+        {
+            int userId;
+            return (Session["UserId"] != null && int.TryParse(Session["UserId"].ToString(), out userId)) ? userId : 0;
+        }
+        #endregion
+
         #region btnAdd_Click
         protected void btnAdd_Click(object sender, EventArgs e)
         {
             MsgHide();
             LoadDDLlist();
             ClearText();
+            ddlRole.Enabled = true;
             hdnUserId.Value = "0";
             pnlViewUser.Visible = false;
             pnlEditUser.Visible = true;
@@ -202,15 +230,18 @@ namespace BMMS.Master
                     myUser.Password = (btnSave.Text == "Save") ? Common.HashPassword(txtPassword.Text) : string.Empty;
 
 
+                    // Acting user: the server-side session only
                     myUser.CreatedOn = System.DateTime.Now;
-                    myUser.CreatedBy = int.Parse(Session["UserId"].ToString());
+                    myUser.CreatedBy = ActingUserId();
                     myUser.UpdatedOn = System.DateTime.Now;
-                    myUser.UpdatedBy = int.Parse(Session["UserId"].ToString());
+                    myUser.UpdatedBy = ActingUserId();
 
-                    int result = myUserMgr.AddEditUser(myUser);
+                    UserChangeResult result = myUserMgr.AddEditUser(myUser);
 
-                    if (result == 1)
+                    if (result.Result == 1)
                         sMsg = "Successfully Saved";
+                    else if (result.Reason != UserChangeReason.None)
+                        sMsg = result.RefusalMessage(myUser.Code == "Save" ? "create a user with this role" : "make this change to this user", className);
                     else
                         sMsg = "Record Not Saved";
                 }
@@ -292,6 +323,13 @@ namespace BMMS.Master
                 {
                     int UserId = Convert.ToInt32(e.CommandArgument);
 
+                    UserChangeResult canEdit = UserMgr.CheckUserChange(ActingUserId(), UserId, "Edit", 0);
+                    if (canEdit.Result != 1)
+                    {
+                        MsgDisplay(canEdit.RefusalMessage("edit this user", className));
+                        return;
+                    }
+
                     pnlViewUser.Visible = false;
                     pnlEditUser.Visible = true;
                     LoadDDLlist();
@@ -311,6 +349,9 @@ namespace BMMS.Master
                     else
                         ddlManager.Enabled = false;
 
+                    // Visual only: spr_AddEditUser refuses a role change anyway
+                    ddlRole.Enabled = UserMgr.CheckUserChange(ActingUserId(), UserId, "RoleChange", 0).Result == 1;
+
                     txtEmailId.Text = myUser.EmailId;
                     txtLoginName.Text = myUser.LoginName;
                     txtLoginName.Enabled = false;
@@ -326,20 +367,14 @@ namespace BMMS.Master
                 {
                     int UserId = Convert.ToInt32(e.CommandArgument);
 
-                    try
-                    {
-                        int Result = UserMgr.DeleteUserByUserId(UserId);
+                    // An unexpected error is not "in use": it goes to the outer catch and the error page
+                    UserChangeResult result = UserMgr.DeleteUserByUserId(UserId, ActingUserId());
 
-                        if (Result == 1)
-                            MsgDisplay("Record Deleted Successfully");
-                        else
-                            MsgDisplay(Common.GetAppSetting("delete_reference"));
-                    }
-                    catch (Exception ex)
-                    {
-                        string _ErrMsg = Common.GetAppSetting("delete_reference");
-                        MsgDisplay(_ErrMsg);
-                    }
+                    if (result.Result == 1)
+                        MsgDisplay("Record Deleted Successfully");
+                    else
+                        MsgDisplay(result.RefusalMessage("delete this user", className));
+
                     LoadUser();
                 }
             }

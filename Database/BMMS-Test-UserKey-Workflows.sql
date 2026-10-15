@@ -36,9 +36,11 @@ END
 GO
 
 DECLARE @T TABLE (TestNo INT IDENTITY(1,1), Test VARCHAR(120), Expected VARCHAR(50), Actual VARCHAR(250));
-DECLARE @R TABLE (Result INT);
+DECLARE @R TABLE (Result INT, Reason INT, ReasonDetail NVARCHAR(2000));   -- spr_DeleteUserByUserId returns Result, Reason, ReasonDetail
 
 DECLARE @Now DATETIME = GETDATE();
+DECLARE @AdminId INT = (SELECT TOP 1 u.UserId FROM Users u JOIN Roles r ON r.RoleId = u.RoleId
+                        WHERE r.RoleCode = 'admin' AND u.AccountStatus = 1 ORDER BY u.UserId);   -- acting user for the protected procedures
 DECLARE @DesignationId INT = (SELECT TOP 1 DesignationId FROM Designation ORDER BY DesignationId);
 DECLARE @DepartmentId INT = (SELECT TOP 1 DepartmentId FROM Department ORDER BY DepartmentId);
 DECLARE @SubjectTypeId INT = (SELECT TOP 1 SubjectTypeId FROM Subject_Type ORDER BY SubjectTypeId);
@@ -239,15 +241,15 @@ BEGIN TRY
     -- All three now have history: none of them can be deleted
     ---------------------------------------------------------------------------
     DELETE FROM @R;
-    INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @Usr;
+    INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @Usr, @ActingUserId = @AdminId;
     INSERT INTO @T SELECT 'Delete of the user (added an agenda, logged in): Result', '0', CAST(Result AS VARCHAR(12)) FROM @R;
 
     DELETE FROM @R;
-    INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @Mgr;
+    INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @Mgr, @ActingUserId = @AdminId;
     INSERT INTO @T SELECT 'Delete of the manager (approved, sent mail): Result', '0', CAST(Result AS VARCHAR(12)) FROM @R;
 
     DELETE FROM @R;
-    INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @Ctl;
+    INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @Ctl, @ActingUserId = @AdminId;
     INSERT INTO @T SELECT 'Delete of the controller (approved, finalized, confirmed): Result', '0', CAST(Result AS VARCHAR(12)) FROM @R;
 
     INSERT INTO @T

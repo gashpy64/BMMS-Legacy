@@ -23,6 +23,7 @@ GO
 
 DECLARE @T TABLE (TestNo INT, Test VARCHAR(100), Expected VARCHAR(50), Actual VARCHAR(200));
 DECLARE @R TABLE (Result INT);
+DECLARE @RU TABLE (Result INT, Reason INT, ReasonDetail NVARCHAR(2000));   -- spr_DeleteUserByUserId returns Result, Reason, ReasonDetail
 
 DECLARE @Now DATETIME = GETDATE();
 DECLARE @DesignationId INT = (SELECT TOP 1 DesignationId FROM Designation ORDER BY DesignationId);
@@ -41,6 +42,8 @@ DECLARE @ActionItemId INT;
 -- An existing user for the CreatedBy / UpdatedBy columns. Never a hard-coded id:
 -- since BMMS-Add-ForeignKeys-Step5.sql those columns must hold a real user.
 DECLARE @AnyUserId INT = (SELECT TOP 1 UserId FROM Users ORDER BY UserId);
+DECLARE @AdminId INT = (SELECT TOP 1 u.UserId FROM Users u JOIN Roles r ON r.RoleId = u.RoleId
+                        WHERE r.RoleCode = 'admin' AND u.AccountStatus = 1 ORDER BY u.UserId);   -- acting user for the protected procedures
 
 BEGIN TRANSACTION;
 
@@ -162,11 +165,11 @@ BEGIN TRY
         INSERT INTO ActionItem_User_Map (ActionItemId, UserId, ReadStatus, StatusId)
         VALUES (@ActionItemId, @UserId, 0, 1);
 
-        DELETE FROM @R;
-        INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @UserId;
+        DELETE FROM @RU;
+        INSERT INTO @RU EXEC spr_DeleteUserByUserId @UserId = @UserId, @ActingUserId = @AdminId;
 
         INSERT INTO @T
-        SELECT 9, 'Delete of a user with action-item map rows: Result', '1', CAST(Result AS VARCHAR(12)) FROM @R;
+        SELECT 9, 'Delete of a user with action-item map rows: Result', '1', CAST(Result AS VARCHAR(12)) FROM @RU;
 
         INSERT INTO @T
         SELECT 10, 'Map rows of the deleted user', '0', CAST(COUNT(*) AS VARCHAR(12))
@@ -287,8 +290,8 @@ BEGIN TRY
     -- UserDB.AddEditUser sends NULL (DBNull.Value) when no manager is selected.
     EXEC spr_AddEditUser @Code = 'Save', @UserId = 0, @UserName = 'FK test user 2', @DepartmentId = @DepartmentId,
          @DesignationId = @DesignationId, @ManagerId = NULL, @RoleId = @RoleId, @EmailId = '',
-         @LoginName = 'zzfktestuser2', @Password = 'not-a-login', @CreatedOn = @Now, @CreatedBy = @AnyUserId,
-         @UpdatedOn = @Now, @UpdatedBy = @AnyUserId;
+         @LoginName = 'zzfktestuser2', @Password = 'not-a-login', @CreatedOn = @Now, @CreatedBy = @AdminId,
+         @UpdatedOn = @Now, @UpdatedBy = @AdminId;
 
     INSERT INTO @T
     SELECT 19, 'User saved with no manager: ManagerId stored as NULL', 'NULL', ISNULL(CAST(ManagerId AS VARCHAR(12)), 'NULL')

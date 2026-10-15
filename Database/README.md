@@ -12,7 +12,7 @@ Every change goes to a test copy before it goes to `BMMS`:
 
 Scripts 1 to 9 and the two older test scripts start with `USE [BMMS]`. To run one of them on the test copy, change that first line to `USE [BMMS_bak1]` in the SSMS window before running it, and do not save the change.
 
-Scripts 10 to 12 and the four new test scripts have **no `USE` line**. They run in the database selected in the SSMS toolbar, print its name, and stop without changing anything if the name does not start with `BMMS`.
+Scripts 10 to 13 and the five new test scripts have **no `USE` line**. They run in the database selected in the SSMS toolbar, print its name, and stop without changing anything if the name does not start with `BMMS`.
 
 ## Run order
 
@@ -30,10 +30,11 @@ On a database that does not have the changes yet:
 10. BMMS-Fix-UserDelete-Procedure.sql     (a user with history cannot be deleted; replaces the version of spr_DeleteUserByUserId installed by steps 2 and 6, so always run it after them)
 11. BMMS-Add-ForeignKeys-Step5.sql        (21 keys from the user-id columns to Users; refuses until step 10 is installed, and refuses any key whose column holds an unknown user)
 12. BMMS-Fix-Attendance-FutureMeeting.sql (attendance only for a meeting dated today or earlier, by the database server date; run BEFORE deploying the build that reads its Result)
+13. BMMS-Fix-UserProtection-Stage1.sql    (who may change which user account; replaces spr_DeleteUserByUserId of step 10, spr_AddEditUser and spr_ResetPasswordByUserId; run after step 10 and BEFORE deploying the build that reads Reason)
 
-Steps 1 to 9 are already applied to the local `BMMS` and to `BMMS_bak1`. Steps 10 and 11 are applied to `BMMS_bak1` only. Step 12 is applied to `BMMS_bak1`, `BMMS` and `BMMS_Test`.
+Steps 1 to 9 are already applied to the local `BMMS` and to `BMMS_bak1`. Steps 10 and 11 are applied to `BMMS_bak1` only. Step 12 is applied to `BMMS_bak1`, `BMMS` and `BMMS_Test`. Steps 10, 11 and 13 are also on `BMMS_Test`; step 13 is NOT on `BMMS`.
 Re-running the fix scripts is safe; re-running the key scripts reports that the constraint already exists.
-If step 2 or step 6 is ever re-run, run step 10 again afterwards: both contain an older spr_DeleteUserByUserId.
+If step 2, 6 or 10 is ever re-run, run step 13 again afterwards: each contains an older spr_DeleteUserByUserId (and step 10 needs steps 2 and 6 to be followed by it as before).
 
 ## Steps 10 and 11: what to run where
 
@@ -66,6 +67,9 @@ Do NOT run BMMS-Test-ResetDatabase.sql on `BMMS`. It refuses to, by name.
 - BMMS-Test-UserKey-Workflows.sql         (committee, meeting, agenda, approvals, finalize, confirm, alerts, login / backup / mail audit, through the real procedures; rolled back)
 - BMMS-Test-ResetDatabase.sql             (runs spr_sys_ResetDatabase with all keys in place; TEST COPY ONLY; rolled back, and the identity counters are put back)
 - BMMS-Test-Attendance-FutureMeeting.sql  (tests for step 12: past / today / future / no-date meetings, new attendance and edits; 23 checks; run on the test copy; rolled back)
+- BMMS-Test-UserProtection-Stage1.sql     (tests for step 13: every action by Admin / Controller / other roles, own account, last active Admin / Controller, acting user missing, reasons 5, 6 and 9, re-raised errors, list flags, locks; 142 checks; test copy only; rolled back)
+
+Since step 13 the four older user tests (UserDelete, UserKey-Workflows, FK-Procedures, ResetDatabase) pass an acting Admin to the user procedures and read the extra Reason / ReasonDetail columns. Run them only after step 13.
 
 The rolled-back tests keep no data, but identity values (UserId and so on) skip a few numbers each time they run.
 
@@ -92,6 +96,24 @@ On `BMMS`, after the backup: BMMS-Fix-Attendance-FutureMeeting.sql only.
 Rule: attendance (new or edited, chairman included) is saved only when `CAST(MeetingDate AS date) <= CAST(GETDATE() AS date)` on the database server. A meeting today is allowed at any time of day; a meeting with no date is refused. The page shows "Attendance cannot be marked for a meeting that has not yet taken place." Existing attendance rows are not changed.
 
 Any database the application points at must have step 12 before the new build runs there, otherwise saving attendance stops with an error that names this script.
+
+## Step 13: user account protection, stage 1 (what to run where)
+
+On the test copies (`BMMS_bak1`, `BMMS_Test`): BMMS-Fix-UserProtection-Stage1.sql, then BMMS-Test-UserProtection-Stage1.sql (142 checks), then the four older user tests.
+Not yet on `BMMS`. On `BMMS` it needs steps 10 and 11 first (they are not there either).
+
+Rules (dbo.fn_UserChangeRefusal):
+
+- Nobody can delete, deactivate or change the role of their own account. Editing your own details and password is allowed.
+- The last ACTIVE Admin and the last ACTIVE Controller cannot be deleted, deactivated or given another role.
+- Admin: any user. Controller: any user except Admin and Controller users, for every action (edit details, role, reset password, delete, deactivate); cannot create or promote to Admin / Controller. Other roles: only their own details and password.
+- The acting user must be given: NULL, 0 or an unknown id is refused (Reason 8).
+
+Every protected procedure returns one row `Result, Reason, ReasonDetail`. Result 1 = done, 0 = refused. Reason: 0 done, 1 own account, 2 last active Admin, 3 last active Controller, 4 not allowed for your role, 5 other users point at the user (names), 6 history (groups), 7 reserved (stage 3), 8 acting user missing, 9 a database reference the checks do not know. For Reason 9 the page shows a plain sentence and writes the SQL Server message to the application error log (`BMMS\Log\yyyy_MM_dd_ErrorLog.txt`). Any other database error is re-raised and reaches the error page; it is never reported as "in use".
+
+Rule 2 is checked inside the same transaction as the change, with UPDLOCK, HOLDLOCK on the active Admin / Controller rows, so two simultaneous changes run one after the other and the second sees the first.
+
+spr_SetUserStatusByUserId (deactivate / activate) exists and is tested, but no page calls it until stage 2.
 
 ## Manual checklist (application pointed at the test copy)
 

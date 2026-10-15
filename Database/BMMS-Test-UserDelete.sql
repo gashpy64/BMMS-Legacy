@@ -42,7 +42,7 @@ END
 GO
 
 DECLARE @T TABLE (TestNo INT IDENTITY(1,1), Test VARCHAR(120), Expected VARCHAR(50), Actual VARCHAR(250));
-DECLARE @R TABLE (Result INT);
+DECLARE @R TABLE (Result INT, Reason INT, ReasonDetail NVARCHAR(2000));   -- spr_DeleteUserByUserId returns Result, Reason, ReasonDetail
 
 -- Blocks = 1: the delete must be refused while the column holds the user.
 -- HasKey = 1: the column has a foreign key to Users.
@@ -76,6 +76,8 @@ INSERT INTO @Cols (TableName, ColumnName, Blocks, HasKey) VALUES
 ('ActionItem_User_Map', 'UserId', 0, 1);
 
 DECLARE @Now DATETIME = GETDATE();
+DECLARE @AdminId INT = (SELECT TOP 1 u.UserId FROM Users u JOIN Roles r ON r.RoleId = u.RoleId
+                        WHERE r.RoleCode = 'admin' AND u.AccountStatus = 1 ORDER BY u.UserId);   -- acting user for the protected procedures
 DECLARE @DesignationId INT = (SELECT TOP 1 DesignationId FROM Designation ORDER BY DesignationId);
 DECLARE @DepartmentId INT = (SELECT TOP 1 DepartmentId FROM Department ORDER BY DepartmentId);
 DECLARE @RoleId INT = (SELECT TOP 1 RoleId FROM Roles ORDER BY RoleId);
@@ -153,7 +155,7 @@ BEGIN TRY
     -- A user with no history is deleted
     ---------------------------------------------------------------------------
     DELETE FROM @R;
-    INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @UserA;
+    INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @UserA, @ActingUserId = @AdminId;
 
     INSERT INTO @T SELECT 'User with no history: Result', '1', CAST(Result AS VARCHAR(12)) FROM @R;
     INSERT INTO @T SELECT 'User with no history is gone', '0', CAST(COUNT(*) AS VARCHAR(12)) FROM Users WHERE UserId = @UserA;
@@ -173,7 +175,7 @@ BEGIN TRY
     VALUES (@UserE, DATEADD(YEAR, -5, @Now), 'C', '', '');
 
     DELETE FROM @R;
-    INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @UserE;
+    INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @UserE, @ActingUserId = @AdminId;
 
     INSERT INTO @T SELECT 'User whose id has only OLDER mail / login rows: Result', '1', CAST(Result AS VARCHAR(12)) FROM @R;
     INSERT INTO @T SELECT 'That user is gone', '0', CAST(COUNT(*) AS VARCHAR(12)) FROM Users WHERE UserId = @UserE;
@@ -196,7 +198,7 @@ BEGIN TRY
             INSERT INTO ActionItem_User_Map (ActionItemId, UserId, ReadStatus, StatusId) VALUES (@ActionItemId, @UserB, 0, 1);
 
         DELETE FROM @R;
-        INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @UserB;
+        INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @UserB, @ActingUserId = @AdminId;
 
         INSERT INTO @T SELECT 'User with only alerts received / read flags: Result', '1', CAST(Result AS VARCHAR(12)) FROM @R;
 
@@ -232,7 +234,7 @@ BEGIN TRY
              @ControllerApprovedStatus = 'Approved', @MgrApprovedStatus = '', @UpdatedBy = @UserC;
 
         DELETE FROM @R;
-        INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @UserC;
+        INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @UserC, @ActingUserId = @AdminId;
         INSERT INTO @T SELECT 'Delete of a user who approved an agenda: Result', '0', CAST(Result AS VARCHAR(12)) FROM @R;
 
         ROLLBACK TRANSACTION HistoryTest;
@@ -241,7 +243,7 @@ BEGIN TRY
         EXEC spr_MinutesFinalizeByMeetingId @MeetingId = @MeetingId, @UserId = @UserC;
 
         DELETE FROM @R;
-        INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @UserC;
+        INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @UserC, @ActingUserId = @AdminId;
         INSERT INTO @T SELECT 'Delete of a user who finalized minutes: Result', '0', CAST(Result AS VARCHAR(12)) FROM @R;
 
         ROLLBACK TRANSACTION HistoryTest;
@@ -250,7 +252,7 @@ BEGIN TRY
         EXEC spr_MinutesConfirmByMeetingId @MeetingId = @MeetingId, @UserId = @UserC;
 
         DELETE FROM @R;
-        INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @UserC;
+        INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @UserC, @ActingUserId = @AdminId;
         INSERT INTO @T SELECT 'Delete of a user who confirmed minutes: Result', '0', CAST(Result AS VARCHAR(12)) FROM @R;
 
         ROLLBACK TRANSACTION HistoryTest;
@@ -264,7 +266,7 @@ BEGIN TRY
         EXEC spr_MinutesFinalizeByMeetingId @MeetingId = @MeetingId, @UserId = @UserC;
 
         DELETE FROM @R;
-        INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @UserC;
+        INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @UserC, @ActingUserId = @AdminId;
         INSERT INTO @T SELECT 'Delete of a user who approved and finalized: Result', '0', CAST(Result AS VARCHAR(12)) FROM @R;
         INSERT INTO @T SELECT 'That user still exists', '1', CAST(COUNT(*) AS VARCHAR(12)) FROM Users WHERE UserId = @UserC;
 
@@ -303,7 +305,7 @@ BEGIN TRY
             ELSE
             BEGIN
                 DELETE FROM @R;
-                INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @UserD;
+                INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @UserD, @ActingUserId = @AdminId;
 
                 INSERT INTO @T
                 SELECT @Label, 'Result 0, user kept',

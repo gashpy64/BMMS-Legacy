@@ -55,7 +55,7 @@ CREATE TABLE #Counts (TableName SYSNAME, RowsBefore INT, RowsAfter INT NULL);
 -- Checks made inside the transaction go into a table variable (it survives
 -- the rollback) and are copied to #T afterwards.
 DECLARE @T TABLE (TestNo INT IDENTITY(1,1), Test VARCHAR(120), Expected VARCHAR(50), Actual VARCHAR(250));
-DECLARE @R TABLE (Result INT);
+DECLARE @R TABLE (Result INT, Reason INT, ReasonDetail NVARCHAR(2000));   -- spr_DeleteUserByUserId returns Result, Reason, ReasonDetail
 
 DECLARE @Now DATETIME = GETDATE();
 DECLARE @Sql NVARCHAR(MAX);
@@ -178,12 +178,13 @@ BEGIN TRY
 
     -- The committee alert was sent to the new user; that must not block the delete.
     DELETE FROM @R;
-    INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @NewUserId;
+    INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @NewUserId, @ActingUserId = 1;
     INSERT INTO @T SELECT 'After reset: the new unused user can be deleted', '1', CAST(Result AS VARCHAR(12)) FROM @R;
 
     DELETE FROM @R;
-    INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = 1;
-    INSERT INTO @T SELECT 'After reset: admin (created rows) cannot be deleted', '0', CAST(Result AS VARCHAR(12)) FROM @R;
+    INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = 1, @ActingUserId = 1;
+    INSERT INTO @T SELECT 'After reset: admin cannot delete itself (own account)', 'Result 0, Reason 1',
+                          'Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(2)) FROM @R;
 
 END TRY
 BEGIN CATCH
