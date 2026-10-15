@@ -74,6 +74,9 @@
 
    It has no USE line: select the database in SSMS first (the test copy, then
    BMMS). It stops if the current database name does not start with "BMMS".
+
+   If you install from the command line, use sqlcmd -I (quoted identifiers ON);
+   installing from SSMS already does this.
    ============================================================================ */
 
 SET NOCOUNT ON;

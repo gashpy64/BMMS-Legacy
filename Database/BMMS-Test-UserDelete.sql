@@ -2,7 +2,11 @@
    BMMS - Critical fix #5: tests for BMMS-Fix-UserDelete-Procedure.sql and
    BMMS-Add-ForeignKeys-Step5.sql
    ----------------------------------------------------------------------------
-   Run AFTER both of those scripts.
+   Run AFTER both of those scripts AND BMMS-Fix-UserProtection-Stage1.sql
+   (step 13): every delete below passes @ActingUserId and reads Result,
+   Reason, ReasonDetail. If step 2, 6 or 10 was re-run after step 13, the
+   older spr_DeleteUserByUserId is back: the script stops and says so (it
+   used to fail with error 8144). Run step 13 again, then this script.
 
    Everything runs inside one transaction that is ROLLED BACK at the end, so
    no test data is kept. The only lasting effect is that identity values
@@ -37,6 +41,12 @@ DECLARE @CurrentDatabase SYSNAME = DB_NAME();
 IF (@CurrentDatabase NOT LIKE 'BMMS%')
 BEGIN
     RAISERROR('Current database is "%s". Select the BMMS database (or its test copy) and run again. Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
+ELSE IF NOT EXISTS (SELECT 1 FROM sys.parameters
+                    WHERE object_id = OBJECT_ID('dbo.spr_DeleteUserByUserId') AND name = '@ActingUserId')
+BEGIN
+    RAISERROR('spr_DeleteUserByUserId in "%s" is not the step 13 version (no @ActingUserId; step 2, 6 or 10 was probably re-run after step 13). Run BMMS-Fix-UserProtection-Stage1.sql again, then this script. Nothing was changed.', 16, 1, @CurrentDatabase);
     SET NOEXEC ON;
 END
 GO

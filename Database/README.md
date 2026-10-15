@@ -34,6 +34,7 @@ On a database that does not have the changes yet:
 
 Steps 1 to 9 are already applied to the local `BMMS` and to `BMMS_bak1`. Steps 10 and 11 are applied to `BMMS_bak1` only. Step 12 is applied to `BMMS_bak1`, `BMMS` and `BMMS_Test`. Steps 10, 11 and 13 are also on `BMMS_Test`; step 13 is NOT on `BMMS`.
 Re-running the fix scripts is safe; re-running the key scripts reports that the constraint already exists.
+If you install from the command line, use sqlcmd -I (quoted identifiers ON); installing from SSMS already does this.
 If step 2, 6 or 10 is ever re-run, run step 13 again afterwards: each contains an older spr_DeleteUserByUserId (and step 10 needs steps 2 and 6 to be followed by it as before).
 
 ## Steps 10 and 11: what to run where
@@ -42,19 +43,23 @@ On `BMMS_bak1` (test copy):
 
 1. BMMS-Fix-UserDelete-Procedure.sql
 2. BMMS-Add-ForeignKeys-Step5.sql         (expect "Added now: 21   Refused: 0", or "already exists" on a re-run)
-3. BMMS-Test-UserDelete.sql               (75 checks)
-4. BMMS-Test-UserKey-Workflows.sql        (23 checks)
-5. BMMS-Test-FK-Procedures.sql            (19 checks; change the `USE` line)
-6. BMMS-Test-ResetDatabase.sql            (14 checks; test copy ONLY)
-7. The manual checklist below, with the application pointed at the test copy (optional but recommended)
+3. BMMS-Fix-UserProtection-Stage1.sql     (step 13; the tests below call its signature. Run it again whenever step 10 is re-run)
+4. BMMS-Test-UserDelete.sql               (75 checks)
+5. BMMS-Test-UserKey-Workflows.sql        (23 checks)
+6. BMMS-Test-FK-Procedures.sql            (19 checks; change the `USE` line)
+7. BMMS-Test-ResetDatabase.sql            (14 checks; test copy ONLY)
+8. The manual checklist below, with the application pointed at the test copy (optional but recommended)
 
 Then on `BMMS`, after the backup:
 
 1. BMMS-Fix-UserDelete-Procedure.sql
 2. BMMS-Add-ForeignKeys-Step5.sql
-3. BMMS-Test-UserDelete.sql
-4. BMMS-Test-UserKey-Workflows.sql
-5. BMMS-Test-FK-Procedures.sql
+3. BMMS-Fix-UserProtection-Stage1.sql     (step 13; see its section below for when, relative to the build)
+4. BMMS-Test-UserDelete.sql
+5. BMMS-Test-UserKey-Workflows.sql
+6. BMMS-Test-FK-Procedures.sql
+
+The tests need step 13 on that database. Between step 10 and step 13 they cannot run: BMMS-Test-UserDelete.sql stops with a message naming step 13 (earlier it failed with error 8144, "too many arguments").
 
 Do NOT run BMMS-Test-ResetDatabase.sql on `BMMS`. It refuses to, by name.
 
@@ -63,7 +68,7 @@ Do NOT run BMMS-Test-ResetDatabase.sql on `BMMS`. It refuses to, by name.
 - BMMS-Check-Orphans.sql                  (read-only check of candidate foreign keys, and of every user-id column)
 - BMMS-Test-Delete-Procedures.sql         (delete-procedure tests for the master tables; deletes real unreferenced rows, inside a transaction that is rolled back)
 - BMMS-Test-FK-Procedures.sql             (tests for steps 6 to 9; rolled back)
-- BMMS-Test-UserDelete.sql                (tests for steps 10 and 11: user delete rules, one test per protected column, one per key; rolled back)
+- BMMS-Test-UserDelete.sql                (tests for steps 10 and 11, with step 13 installed: user delete rules, one test per protected column, one per key; rolled back)
 - BMMS-Test-UserKey-Workflows.sql         (committee, meeting, agenda, approvals, finalize, confirm, alerts, login / backup / mail audit, through the real procedures; rolled back)
 - BMMS-Test-ResetDatabase.sql             (runs spr_sys_ResetDatabase with all keys in place; TEST COPY ONLY; rolled back, and the identity counters are put back)
 - BMMS-Test-Attendance-FutureMeeting.sql  (tests for step 12: past / today / future / no-date meetings, new attendance and edits; 23 checks; run on the test copy; rolled back)
