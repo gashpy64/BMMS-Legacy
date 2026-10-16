@@ -17,7 +17,9 @@
      * other roles: only their own details and password
      * acting user NULL, 0 or unknown: Reason 8 on every procedure
      * last active Admin / Controller (Reasons 2 and 3); an inactive Admin
-       does not count
+       does not count. Once BMMS-Fix-UserStatus-Stage2a.sql (step 14) is
+       installed, an inactive Admin can no longer act at all: the three checks
+       that let one act expect Reason 8 instead of 2, and say so in the label
      * Reason 5 and 6 with their detail text, Reason 9 for an unknown
        foreign key (user kept), any other error re-raised (and the delete
        cannot be committed)
@@ -84,6 +86,14 @@ CREATE TABLE #List (UserId INT, UserName VARCHAR(50), DepartmentId INT, Designat
                     DesignationCode VARCHAR(50), DesignationName VARCHAR(250), ManagerId INT, RoleId INT, RoleName VARCHAR(250), RoleDescription VARCHAR(250),
                     DOB VARCHAR(50), EmailId VARCHAR(50), LoginName VARCHAR(50), [Password] VARCHAR(MAX), RoleCode VARCHAR(50), AccountStatus INT,
                     CanEdit INT, CanChangeRole INT, CanDelete INT);
+
+-- Step 14 (UserStatus-Stage2a): the list has four more columns, and an inactive acting user gets Reason 8
+DECLARE @Step14 INT = CASE WHEN OBJECT_DEFINITION(OBJECT_ID('dbo.fn_UserChangeRefusal')) LIKE '%UserStatus-Stage2a%' THEN 1 ELSE 0 END;
+DECLARE @ExpInactiveActor VARCHAR(40) = CASE WHEN @Step14 = 1 THEN 'Result 0, Reason 8' ELSE 'Result 0, Reason 2' END;
+DECLARE @InactiveActorNote VARCHAR(60) = CASE WHEN @Step14 = 1 THEN ' [step 14: inactive actor, Reason 8]' ELSE ' [before step 14: Reason 2]' END;
+
+IF (@Step14 = 1)
+    ALTER TABLE #List ADD Status VARCHAR(10), CanDeactivate INT, CanActivate INT, ManagedCount INT;
 
 IF (@rAdmin IS NULL OR @rCtl IS NULL OR @rMgr IS NULL OR @rUser IS NULL OR @rMgmt IS NULL OR @rMd IS NULL OR @Dept1 IS NULL OR @Desig1 IS NULL)
 BEGIN
@@ -365,12 +375,13 @@ BEGIN TRY
          @Password = '', @CreatedOn = @Now, @CreatedBy = @A1, @UpdatedOn = @Now, @UpdatedBy = @A1;
     INSERT INTO @T SELECT 'Last active Controller: edit email still allowed', 'Result 1, Reason 0', 'Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(2)) FROM @R;
 
-    -- A2 is an Admin but inactive: it acts, and it does not count as active
+    -- A2 is an Admin but inactive: it does not count as active. Before step 14 it
+    -- can act (Reason 2 for the last active Admin); from step 14 on it cannot (Reason 8).
     DELETE FROM @R; INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @A1, @ActingUserId = @A2;
-    INSERT INTO @T SELECT 'Last active Admin (another Admin inactive): delete', 'Result 0, Reason 2', 'Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(2)) FROM @R;
+    INSERT INTO @T SELECT 'Last active Admin (another Admin inactive): delete' + @InactiveActorNote, @ExpInactiveActor, 'Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(2)) FROM @R;
 
     DELETE FROM @R; INSERT INTO @R EXEC spr_SetUserStatusByUserId @UserId = @A1, @AccountStatus = 0, @ActingUserId = @A2;
-    INSERT INTO @T SELECT 'Last active Admin: deactivate', 'Result 0, Reason 2', 'Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(2)) FROM @R;
+    INSERT INTO @T SELECT 'Last active Admin: deactivate' + @InactiveActorNote, @ExpInactiveActor, 'Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(2)) FROM @R;
 
     SELECT @UserName = UserName, @DepartmentId = DepartmentId, @DesignationId = DesignationId, @ManagerId = ManagerId, @EmailId = EmailId, @LoginName = LoginName
     FROM Users WHERE UserId = @A1;
@@ -378,7 +389,7 @@ BEGIN TRY
     DELETE FROM @R; INSERT INTO @R EXEC spr_AddEditUser @Code = 'Update', @UserId = @A1, @UserName = @UserName, @DepartmentId = @DepartmentId,
          @DesignationId = @DesignationId, @ManagerId = @ManagerId, @RoleId = @rUser, @EmailId = @EmailId, @LoginName = @LoginName,
          @Password = '', @CreatedOn = @Now, @CreatedBy = @A2, @UpdatedOn = @Now, @UpdatedBy = @A2;
-    INSERT INTO @T SELECT 'Last active Admin: role change to User', 'Result 0, Reason 2', 'Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(2)) FROM @R;
+    INSERT INTO @T SELECT 'Last active Admin: role change to User' + @InactiveActorNote, @ExpInactiveActor, 'Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(2)) FROM @R;
 
     INSERT INTO @T SELECT 'Function, no acting user: last Admin delete', '2', CAST(dbo.fn_UserChangeRefusal(NULL, @A1, 'Delete', NULL) AS VARCHAR(2));
     INSERT INTO @T SELECT 'Function, no acting user: last Controller deactivate', '3', CAST(dbo.fn_UserChangeRefusal(NULL, @C1, 'Deactivate', NULL) AS VARCHAR(2));

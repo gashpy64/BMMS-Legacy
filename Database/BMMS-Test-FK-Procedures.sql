@@ -15,10 +15,18 @@
    Minutes rows yet); it is not a failure.
    ============================================================================ */
 
-USE [BMMS];
+SET NOCOUNT ON;
+
+DECLARE @CurrentDatabase SYSNAME = DB_NAME();
+
+IF (@CurrentDatabase NOT LIKE 'BMMS%')
+BEGIN
+    RAISERROR('Current database is "%s". Select the BMMS database (or its test copy) and run again. Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
 GO
 
-SET NOCOUNT ON;
+PRINT 'Database: ' + DB_NAME();
 GO
 
 DECLARE @T TABLE (TestNo INT, Test VARCHAR(100), Expected VARCHAR(50), Actual VARCHAR(200));
@@ -87,6 +95,9 @@ BEGIN TRY
     END
     ELSE
     BEGIN
+        -- Step 15: the chairman can only change while the minutes are not finalized
+        UPDATE Meeting SET MinutesStatus = 'Open' WHERE MeetingId = @MeetingId;
+
         EXEC spr_UpdateMeetingChairman @MeetingId = @MeetingId, @CommitteeId = @CommitteeId, @ChairmanNameId = -1;
 
         INSERT INTO @T
@@ -211,6 +222,9 @@ BEGIN TRY
 
         SET @ActionItemId = SCOPE_IDENTITY();
 
+        -- Step 15: the agenda can only be finalized from AgendaStatus 'Open'
+        UPDATE Meeting SET AgendaStatus = 'Open' WHERE MeetingId = @MeetingId;
+
         EXEC spr_AgendaFinalizeByMeetingId @MeetingId = @MeetingId;
 
         INSERT INTO @T
@@ -265,7 +279,10 @@ BEGIN TRY
         INSERT INTO ActionItem_User_Map (ActionItemId, UserId, ReadStatus, StatusId)
         VALUES (@ActionItemId, @AnyUserId, 1, 1);
 
-        -- Twice on purpose: the second run must not add anything.
+        -- Step 15: the minutes can only be finalized from MinutesStatus 'Open'
+        UPDATE Meeting SET MinutesStatus = 'Open' WHERE MeetingId = @MeetingId;
+
+        -- Twice on purpose: the second run must not add anything (from step 15 it is refused).
         EXEC spr_MinutesFinalizeByMeetingId @MeetingId = @MeetingId, @UserId = @AnyUserId;
         EXEC spr_MinutesFinalizeByMeetingId @MeetingId = @MeetingId, @UserId = @AnyUserId;
 
@@ -322,4 +339,7 @@ ORDER BY TestNo;
 SELECT (SELECT COUNT(*) FROM Member WHERE MemberCode = 'ZZFKTEST') AS TestMembersLeft,
        (SELECT COUNT(*) FROM Users WHERE LoginName IN ('zzfktestuser', 'zzfktestuser2')) AS TestUsersLeft,
        (SELECT COUNT(*) FROM Action_Item WHERE Directions = 'FK test') AS TestActionItemsLeft;
+GO
+
+SET NOEXEC OFF;
 GO

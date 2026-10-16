@@ -250,6 +250,9 @@ BEGIN TRY
         ROLLBACK TRANSACTION HistoryTest;
         SAVE TRANSACTION HistoryTest;
 
+        -- Step 15: minutes finalize only from 'Open', confirm only from 'F' (rolled back)
+        UPDATE Meeting SET MinutesStatus = 'Open' WHERE MeetingId = @MeetingId;
+
         EXEC spr_MinutesFinalizeByMeetingId @MeetingId = @MeetingId, @UserId = @UserC;
 
         DELETE FROM @R;
@@ -258,6 +261,8 @@ BEGIN TRY
 
         ROLLBACK TRANSACTION HistoryTest;
         SAVE TRANSACTION HistoryTest;
+
+        UPDATE Meeting SET MinutesStatus = 'F' WHERE MeetingId = @MeetingId;
 
         EXEC spr_MinutesConfirmByMeetingId @MeetingId = @MeetingId, @UserId = @UserC;
 
@@ -272,6 +277,8 @@ BEGIN TRY
         EXEC spr_UpdateAgendaByAgendaId @AgendaId = @AgendaId, @ShortText = @ShortText,
              @ProposedResolution = @ProposedResolution, @MgrComments = '', @ControllerComments = 'ZZ delete test',
              @ControllerApprovedStatus = 'Approved', @MgrApprovedStatus = '', @UpdatedBy = @UserC;
+
+        UPDATE Meeting SET MinutesStatus = 'Open' WHERE MeetingId = @MeetingId;
 
         EXEC spr_MinutesFinalizeByMeetingId @MeetingId = @MeetingId, @UserId = @UserC;
 

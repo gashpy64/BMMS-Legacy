@@ -1,6 +1,3 @@
-USE [BMMS];
-GO
-
 /* ============================================================================
    BMMS — Validation script for the 7 remaining fixed delete procedures
    ----------------------------------------------------------------------------
@@ -19,9 +16,25 @@ GO
    reference, so only the "blocked" half of that test could run.
 
    Read the PRINT output in SSMS's Messages tab as you go.
+
+   It has no USE line: select the database in SSMS first (the test copy, then
+   BMMS). It stops if the current database name does not start with "BMMS".
    ============================================================================ */
 
 SET NOCOUNT ON;
+
+DECLARE @CurrentDatabase SYSNAME = DB_NAME();
+
+IF (@CurrentDatabase NOT LIKE 'BMMS%')
+BEGIN
+    RAISERROR('Current database is "%s". Select the BMMS database (or its test copy) and run again. Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
+GO
+
+PRINT 'Database: ' + DB_NAME();
+GO
+
 
 BEGIN TRANSACTION;
 
@@ -211,3 +224,7 @@ IF (@@TRANCOUNT > 0)
 
 PRINT '=== All deletes above were rolled back. ===';
 PRINT '=== Done. Scroll up through the Messages tab and check each Result value above. ===';
+GO
+
+SET NOEXEC OFF;
+GO

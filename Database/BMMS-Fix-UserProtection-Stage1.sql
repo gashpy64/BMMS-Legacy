@@ -69,6 +69,10 @@
    (step 10). If step 10 (or step 2 or 6) is ever re-run, run this script
    again afterwards.
 
+   BMMS-Fix-UserStatus-Stage2a.sql (step 14) replaces fn_UserChangeRefusal
+   and spr_GetUserListForUserPage of this script. If this script is re-run
+   after step 14, run step 14 again afterwards.
+
    This script only replaces / adds a function and procedures. It changes no
    data and adds no constraint. Safe to re-run.
 
