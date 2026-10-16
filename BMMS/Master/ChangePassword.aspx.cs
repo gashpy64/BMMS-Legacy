@@ -57,7 +57,7 @@ namespace BMMS.Master
             if (PageValidation())
             {
                 int UserId = Convert.ToInt16(Session["UserId"].ToString());
-                string Password = Common.EncryptVal(txtNewPassword.Text.Trim());
+                string Password = Common.HashPassword(txtNewPassword.Text.Trim());
                 int UpdatedBy = Convert.ToInt16(Session["UserId"].ToString());
 
                 UserMgr.ResetPasswordByUserId(UserId, Password, UpdatedBy);
@@ -76,9 +76,7 @@ namespace BMMS.Master
 
             DataTable dtUser = UserMgr.GetUserDataTableByUserId(UserId);
 
-            string Password = Common.DecryptVal(dtUser.Rows[0]["Password"].ToString());
-
-            if (Password != txtOldPassword.Text.Trim())
+            if (!Common.VerifyPassword(txtOldPassword.Text.Trim(), dtUser.Rows[0]["Password"].ToString()))
             {
                 MsgDisplay("Plese enter correct old password.");
                 ScriptManager.GetCurrent(this).SetFocus(txtOldPassword.ClientID);

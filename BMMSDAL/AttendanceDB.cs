@@ -110,7 +110,27 @@ namespace BMMSDAL
             parameter[4] = new SqlParameter("@Attendance", AttendanceDAL.Attendance);
             parameter[5] = new SqlParameter("@UpdatedBy", AttendanceDAL.UpdatedBy);
 
-            return CommonDB.ExecuteProcedure("spr_UpdateAttendance", parameter);
+            DataTable dtResult = new DataTable();
+            dtResult = CommonDB.GetDataTable("spr_UpdateAttendance", parameter);
+
+            // Result = 0: the meeting has not yet taken place (BMMS-Fix-Attendance-FutureMeeting.sql)
+            if (dtResult.Rows.Count == 0)
+                throw new InvalidOperationException("spr_UpdateAttendance returned no Result. Run Database/BMMS-Fix-Attendance-FutureMeeting.sql.");
+
+            return Convert.ToInt16(dtResult.Rows[0]["Result"].ToString());
+        }
+        #endregion
+
+        #region IsMeetingHeld
+        public static bool IsMeetingHeld(int MeetingId)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@MeetingId", MeetingId);
+
+            DataTable dtResult = new DataTable();
+            dtResult = CommonDB.GetDataTable("spr_CheckMeetingHeldByMeetingId", parameter);
+
+            return Convert.ToInt16(dtResult.Rows[0]["Result"].ToString()) == 1;
         }
         #endregion
 

@@ -235,13 +235,15 @@ namespace BMMS.Master
             try
             {
                 int MeetingId = int.Parse(ddlMeeting.SelectedValue.ToString());
+                int ActingUserId = int.Parse(Session["UserId"].ToString());
 
-                DataTable dtAgenda = new DataTable();
-                dtAgenda = AgendaMgr.CheckAgendaFinalizeByMeetingId(MeetingId);
+                // Finalized agenda: only the Controller, with the System Settings option on, until the
+                // minutes are finalized (BMMS-Fix-MeetingLocks-Step16.sql)
+                MeetingChangeResult agendaLock = AgendaMgr.GetAgendaLock(MeetingId, ActingUserId);
 
-                if (dtAgenda.Rows.Count <= 0 && Session["RoleCode"].ToString() != "controller")
+                if (agendaLock.Result != 1)
                 {
-                    MsgDisplay("Agenda is Finalised for this Committee/Meeting");
+                    MsgDisplay(agendaLock.RefusalMessage());
                     ScriptManager.GetCurrent(this).SetFocus(ddlCommittee.ClientID);
                 }
                 else
@@ -395,7 +397,7 @@ namespace BMMS.Master
 
                         try
                         {
-                            AgendaMgr.DeleteAgendaByAgendaId(AgendaId);
+                            MeetingChangeResult deleteResult = AgendaMgr.DeleteAgendaByAgendaId(AgendaId, ActingUserId);
 
 
                             /// Subject no auto regeneration based on Department
@@ -409,7 +411,7 @@ namespace BMMS.Master
                             //    AgendaMgr.UpdateSubjectNoByAgendaId(AgendaIdTemp, SubjectNo);
                             //}
 
-                            MsgDisplay("Record Deleted Successfully");
+                            MsgDisplay(deleteResult.Result == 1 ? "Record Deleted Successfully" : deleteResult.RefusalMessage());
                         }
                         catch (Exception ex)
                         {
@@ -466,12 +468,12 @@ namespace BMMS.Master
                 int CommitteeId = int.Parse(ddlCommittee.SelectedValue);
                 int MeetingId = int.Parse(ddlMeeting.SelectedValue.ToString());
 
-                DataTable dtAgenda = new DataTable();
-                dtAgenda = AgendaMgr.CheckAgendaFinalizeByMeetingId(MeetingId);
+                // Same rule as the agenda procedures (BMMS-Fix-MeetingLocks-Step16.sql)
+                MeetingChangeResult agendaLock = AgendaMgr.GetAgendaLock(MeetingId, int.Parse(Session["UserId"].ToString()));
 
-                if (dtAgenda.Rows.Count <= 0 && Session["RoleCode"].ToString() != "controller")
+                if (agendaLock.Result != 1)
                 {
-                    MsgDisplay("Agenda is Finalised for this Committee/Meeting");
+                    MsgDisplay(agendaLock.RefusalMessage());
                     ScriptManager.GetCurrent(this).SetFocus(ddlCommittee.ClientID);
                 }
                 else
@@ -610,18 +612,27 @@ namespace BMMS.Master
 
                     string strResult = "Success";
 
-                    if (btnSave.Text == "Save")
+                    // Another tab may have finalized the agenda since the form opened: check before
+                    // the mail goes out. The procedure checks again (BMMS-Fix-MeetingLocks-Step16.sql).
+                    int ActingUserId = int.Parse(Session["UserId"].ToString());
+                    MeetingChangeResult agendaLock = AgendaMgr.GetAgendaLock(myAgenda.MeetingId, ActingUserId);
+
+                    if (agendaLock.Result != 1)
+                        strResult = agendaLock.RefusalMessage();
+                    else if (btnSave.Text == "Save")
                         strResult = GenerateMail();
 
                     if (strResult == "Success")
                     {
+                        MeetingChangeResult result;
+
                         switch (Session["RoleCode"].ToString())
                         {
                             case "controller":
 
                                 myAgenda.ControllerComments = ftxtControllerComments.Text.Trim();
 
-                                myAgendaMgr.AddEditAgendaByController(myAgenda);
+                                result = myAgendaMgr.AddEditAgendaByController(myAgenda, ActingUserId);
 
                                 break;
 
@@ -629,16 +640,16 @@ namespace BMMS.Master
 
                                 myAgenda.MgrComments = ftxtManagerComments.Text.Trim();
 
-                                myAgendaMgr.AddEditAgendaByManager(myAgenda);
+                                result = myAgendaMgr.AddEditAgendaByManager(myAgenda, ActingUserId);
 
                                 break;
 
                             default:
-                                myAgendaMgr.AddEditAgenda(myAgenda);
+                                result = myAgendaMgr.AddEditAgenda(myAgenda, ActingUserId);
                                 break;
                         }
 
-                        sMsg = "Successfully Saved";
+                        sMsg = result.Result == 1 ? "Successfully Saved" : result.RefusalMessage();
                     }
                     else
                     {
@@ -719,7 +730,7 @@ namespace BMMS.Master
 
             int mgrUserId = 0;
 
-            DataTable dtUser = UserMgr.GetUserList();
+            DataTable dtUser = UserMgr.GetActiveUserList();   // active users only (stage 2a)
             if (dtUser.Rows.Count > 0)
             {
                 for (int i = 0; i <= dtUser.Rows.Count - 1; i++)
@@ -727,7 +738,9 @@ namespace BMMS.Master
                     if (dtUser.Rows[i]["UserId"].ToString() == Session["UserId"].ToString())
                     {
                         ToMailId = dtUser.Rows[i]["EmailId"].ToString();
-                        mgrUserId = Convert.ToInt16(dtUser.Rows[i]["ManagerId"].ToString());
+                        // ManagerId is NULL when the user has no manager
+                        if (!int.TryParse(dtUser.Rows[i]["ManagerId"].ToString(), out mgrUserId))
+                            mgrUserId = 0;
                         break;
                     }
                 }

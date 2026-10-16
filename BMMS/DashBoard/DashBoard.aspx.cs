@@ -536,6 +536,15 @@ namespace BMMS.DashBoard
             agendaBal.MgrApprovedStatus = "";
             agendaBal.ControllerApprovedStatus = "";
 
+            // Finalized since the alert was opened: refuse before any mail (BMMS-Fix-MeetingLocks-Step16.sql)
+            if (!MeetingMgr.IsAgendaOpen(MeetingId))
+            {
+                ShowAlert(MeetingChangeReason.AgendaFinalizedMessage);
+                pnlAgenda.Visible = false;
+                LoadAlertGRV();
+                return;
+            }
+
             if (Session["RoleCode"].ToString() == "manager")
             {
                 agendaBal.MgrApprovedStatus = "Approved";
@@ -550,9 +559,12 @@ namespace BMMS.DashBoard
 
             agendaBal.UpdatedBy = Convert.ToInt16(Session["UserId"].ToString());
 
-            AgendaMgr.UpdateAgendaByAgendaId(agendaBal);
+            MeetingChangeResult approveResult = AgendaMgr.UpdateAgendaByAgendaId(agendaBal);
 
-            int result = AgendaMgr.GenerateSubjectNoByMeetingId(MeetingId, AgendaId);
+            if (approveResult.Result == 1)
+                AgendaMgr.GenerateSubjectNoByMeetingId(MeetingId, AgendaId);
+            else
+                ShowAlert(approveResult.RefusalMessage());
 
             pnlAgenda.Visible = false;
 
@@ -576,6 +588,15 @@ namespace BMMS.DashBoard
             agendaBal.MgrApprovedStatus = "";
             agendaBal.ControllerApprovedStatus = "";
 
+            // Finalized since the alert was opened: refuse before any mail (BMMS-Fix-MeetingLocks-Step16.sql)
+            if (!MeetingMgr.IsAgendaOpen(MeetingId))
+            {
+                ShowAlert(MeetingChangeReason.AgendaFinalizedMessage);
+                pnlAgenda.Visible = false;
+                LoadAlertGRV();
+                return;
+            }
+
             if (Session["RoleCode"].ToString() == "manager")
             {
                 agendaBal.MgrApprovedStatus = "Rejected";
@@ -590,10 +611,21 @@ namespace BMMS.DashBoard
 
             agendaBal.UpdatedBy = Convert.ToInt16(Session["UserId"].ToString());
 
-            AgendaMgr.UpdateAgendaByAgendaId(agendaBal);
+            MeetingChangeResult rejectResult = AgendaMgr.UpdateAgendaByAgendaId(agendaBal);
+
+            if (rejectResult.Result != 1)
+                ShowAlert(rejectResult.RefusalMessage());
 
             pnlAgenda.Visible = false;
             LoadAlertGRV();
+        }
+        #endregion
+
+        #region ShowAlert
+        private void ShowAlert(string message)
+        {
+            ScriptManager.RegisterStartupScript(this, this.GetType(), "refusal",
+                "alert('" + HttpUtility.JavaScriptStringEncode(HttpUtility.HtmlDecode(message)) + "');", true);
         }
         #endregion
 

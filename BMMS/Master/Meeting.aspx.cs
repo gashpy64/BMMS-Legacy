@@ -161,9 +161,16 @@ namespace BMMS.Master
                         //txtColor.Value = dtMeeting.Rows[0]["MeetingColorCode"].ToString();
                         //txtColor.Attributes.Add("style", "width:80px; background-color:" + dtMeeting.Rows[0]["MeetingColorCode"].ToString() + "; text-align:center;");
 
+                        // Attendance recorded: the date can no longer change (BMMS-Fix-MeetingLocks-Step16.sql)
+                        bool dateLocked = MeetingMgr.HasAttendance(MeetingId);
+                        SetMeetingDateLocked(dateLocked);
+
                         ScriptManager.GetCurrent(this).SetFocus(txtPlace.ClientID);
                         btnSave.Text = "Update";
                         MsgHide();
+
+                        if (dateLocked)
+                            MsgDisplay(MeetingChangeReason.AttendanceLocksMeetingMessage);
                     }
                     if (e.CommandName == "DeleteRec")
                     {
@@ -292,15 +299,22 @@ namespace BMMS.Master
 
                     string strResult = "Success";
 
-                    if (btnSave.Text == "Save")
+                    // Date / committee locked by attendance: say so before any mail goes out.
+                    // The procedure checks again under a lock (BMMS-Fix-MeetingLocks-Step16.sql).
+                    bool dateChanged = hdnMeetingDate.Value != string.Empty
+                        && Convert.ToDateTime(hdnMeetingDate.Value).Date != myMeeting.MeetingDate.Date;
+
+                    if (btnSave.Text == "Update" && dateChanged && MeetingMgr.HasAttendance(myMeeting.MeetingId))
+                        strResult = MeetingChangeReason.AttendanceLocksMeetingMessage;
+                    else if (btnSave.Text == "Save")
                         strResult = GenerateMail("Created");
-                    if (btnSave.Text == "Update")
+                    else if (btnSave.Text == "Update")
                         strResult = GenerateMail("Updated");
 
                     if (strResult == "Success")
                     {
-                        int result = MeetingMgr.AddEditMeeting(myMeeting);
-                        sMsg = "Successfully Saved";
+                        MeetingChangeResult result = MeetingMgr.AddEditMeeting(myMeeting);
+                        sMsg = result.Result == 1 ? "Successfully Saved" : result.RefusalMessage();
                     }
                     else
                     {
@@ -369,7 +383,7 @@ namespace BMMS.Master
             string ToMailId = string.Empty;
             string Bcc = string.Empty;
 
-            DataTable dtUser = UserMgr.GetUserList();
+            DataTable dtUser = UserMgr.GetActiveUserList();   // active users only (stage 2a)
             if (dtUser.Rows.Count > 0)
             {
                 for (int i = 0; i <= dtUser.Rows.Count - 1; i++)
@@ -451,7 +465,16 @@ namespace BMMS.Master
             //txtColor.Value = "#FFFFFF";
             //txtColor.Attributes.Add("style", "width:80px; background-color:#FFFFFF; text-align:center;");
 
+            SetMeetingDateLocked(false);
+        }
+        #endregion
 
+        #region SetMeetingDateLocked
+        private void SetMeetingDateLocked(bool locked)
+        {
+            txtMeetingDate.Enabled = !locked;
+            imgMeetingDate.Enabled = !locked;
+            imgMeetingDate.Visible = !locked;
         }
         #endregion
 

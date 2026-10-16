@@ -5,7 +5,8 @@ using System.IO;
 using System.Web;
 using System.Data;
 using System.Collections;
-using System.Web.Mail;
+using System.Net;
+using System.Net.Mail;
 
 namespace BMMSBAL
 {
@@ -28,7 +29,7 @@ namespace BMMSBAL
                 pSMTPServer = dtSMTPMaster.Rows[0]["SMTPServer"].ToString();
                 pSMTPServerPort = dtSMTPMaster.Rows[0]["SMTPServerPort"].ToString();
                 pUserName = dtSMTPMaster.Rows[0]["UserName"].ToString();
-                pPassword = Common.DecryptVal(dtSMTPMaster.Rows[0]["Password"].ToString());
+                pPassword = Common.UnprotectSecret(dtSMTPMaster.Rows[0]["Password"].ToString());
 
                 string pFromMailId = dtSMTPMaster.Rows[0]["FromMailId"].ToString();
 
@@ -50,44 +51,40 @@ namespace BMMSBAL
                 string pBody = BodyText;
 
 
-                MailMessage eMail = new MailMessage();
+                int smtpPort;
+                if (!int.TryParse(pSMTPServerPort, out smtpPort))
+                    smtpPort = 25;
 
-                eMail.From = pFromMailId;
-                eMail.To = pTo;
+                // using: releases the attachment file once the mail is sent
+                using (MailMessage eMail = new MailMessage())
+                {
+                    eMail.From = new MailAddress(pFromMailId);
+                    AddMailAddresses(eMail.To, pTo);
 
-                if (pBcc != null)
-                    if (pBcc.Trim() != string.Empty)
-                        eMail.Bcc = pBcc;
+                    if (pBcc != null)
+                        if (pBcc.Trim() != string.Empty)
+                            AddMailAddresses(eMail.Bcc, pBcc);
 
-                eMail.Subject = pSubject;
+                    eMail.Subject = pSubject;
 
-                eMail.BodyFormat = MailFormat.Html;
-                pBody += "<br /> <br /> <b>Note :</b> This alert is generated from";
-                pBody += "<b> Board Minutes and Management Software </b>";
-                pBody += "for your information. Please do not reply.";
-                eMail.Body = pBody;
+                    eMail.IsBodyHtml = true;
+                    pBody += "<br /> <br /> <b>Note :</b> This alert is generated from";
+                    pBody += "<b> Board Minutes and Management Software </b>";
+                    pBody += "for your information. Please do not reply.";
+                    eMail.Body = pBody;
 
 
-                if (AttachFileName != null)
-                    eMail.Attachments.Add(new MailAttachment(AttachFileName));
+                    if (AttachFileName != null)
+                        eMail.Attachments.Add(new Attachment(AttachFileName));
 
-                eMail.Fields["http://schemas.microsoft.com/cdo/configuration/smtsperver"] = pSMTPServer;
-                eMail.Fields[
-                    "http://schemas.microsoft.com/cdo/configuration/smtpserverport"] = 25;
-                eMail.Fields[
-                    "http://schemas.microsoft.com/cdo/configuration/sendusing"] = 2;
+                    using (SmtpClient smtp = new SmtpClient(pSMTPServer, smtpPort))
+                    {
+                        if (pUserName.Trim() != string.Empty)
+                            smtp.Credentials = new NetworkCredential(pUserName, pPassword);
 
-                eMail.Fields[
-                    "http://schemas.microsoft.com/cdo/configuration/smtpauthenticate"] = 1;
-                eMail.Fields[
-                    "http://schemas.microsoft.com/cdo/configuration/sendusername"] = pUserName;
-                eMail.Fields[
-                    "http://schemas.microsoft.com/cdo/configuration/sendpassword"] = pPassword;
-
-                //first.Fields["http://schemas.microsoft.com/cdo/configuration/smtpserverpickupdirectory"] = "C:/inetpub/mailroot/pickup";
-
-                SmtpMail.SmtpServer = pSMTPServer;
-                SmtpMail.Send(eMail);
+                        smtp.Send(eMail);
+                    }
+                }
 
                 Common.SaveSendMail(ToMailId, Subject, BodyText, AttachFileName, int.Parse(HttpContext.Current.Session["UserId"].ToString()));
 
@@ -108,81 +105,14 @@ namespace BMMSBAL
         #endregion
 
 
-        #region SendEmail
-        public static string SendEmail(string ToMailId, string Subject, string BodyText)
+        #region AddMailAddresses
+        // Accepts addresses separated by comma or semicolon and skips blanks.
+        private static void AddMailAddresses(MailAddressCollection addresses, string mailIds)
         {
-            try
+            foreach (string mailId in mailIds.Split(new char[] { ',', ';' }))
             {
-                string pGmailEmail = "xxx@gmail.com";
-                string pGmailPassword = "xxx";
-
-                string pTo = ToMailId;
-                string pBcc = string.Empty;
-                string pSubject = Subject;
-
-                pBcc = "xxx@gmail.com";
-
-
-                System.Web.Mail.MailFormat pFormat = MailFormat.Html;
-                string pAttachmentPath = "";
-                string pBody = BodyText;
-
-                System.Web.Mail.MailMessage myMail = new System.Web.Mail.MailMessage();
-                myMail.Fields.Add
-                    ("http://schemas.microsoft.com/cdo/configuration/smtpserver",
-                                  "smtp.gmail.com");
-                myMail.Fields.Add
-                    ("http://schemas.microsoft.com/cdo/configuration/smtpserverport",
-                                  "465");
-                myMail.Fields.Add
-                    ("http://schemas.microsoft.com/cdo/configuration/sendusing",
-                                  "2");
-                //sendusing: cdoSendUsingPort, value 2, for sending the message using 
-                //the network.
-
-                //smtpauthenticate: Specifies the mechanism used when authenticating 
-                //to an SMTP 
-                //service over the network. Possible values are:
-                //- cdoAnonymous, value 0. Do not authenticate.
-                //- cdoBasic, value 1. Use basic clear-text authentication. 
-                //When using this option you have to provide the user name and password 
-                //through the sendusername and sendpassword fields.
-                //- cdoNTLM, value 2. The current process security context is used to 
-                // authenticate with the service.
-                myMail.Fields.Add
-                ("http://schemas.microsoft.com/cdo/configuration/smtpauthenticate", "1");
-                //Use 0 for anonymous
-                myMail.Fields.Add
-                ("http://schemas.microsoft.com/cdo/configuration/sendusername",
-                    pGmailEmail);
-                myMail.Fields.Add
-                ("http://schemas.microsoft.com/cdo/configuration/sendpassword",
-                     pGmailPassword);
-                myMail.Fields.Add
-                ("http://schemas.microsoft.com/cdo/configuration/smtpusessl",
-                     "true");
-                myMail.From = pGmailEmail;
-                myMail.To = pTo;
-                myMail.Bcc = pBcc;
-                myMail.Subject = pSubject;
-                myMail.BodyFormat = pFormat;
-                myMail.Body = pBody;
-                if (pAttachmentPath.Trim() != "")
-                {
-                    MailAttachment MyAttachment =
-                            new MailAttachment(pAttachmentPath);
-                    myMail.Attachments.Add(MyAttachment);
-                    myMail.Priority = System.Web.Mail.MailPriority.High;
-                }
-
-                System.Web.Mail.SmtpMail.SmtpServer = "smtp.gmail.com:465";
-                System.Web.Mail.SmtpMail.Send(myMail);
-
-                return "Success";
-            }
-            catch (Exception ex)
-            {
-                return "Error: " + ex.ToString();
+                if (mailId.Trim() != string.Empty)
+                    addresses.Add(new MailAddress(mailId.Trim()));
             }
         }
         #endregion

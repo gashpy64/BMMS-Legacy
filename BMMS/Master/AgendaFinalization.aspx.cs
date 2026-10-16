@@ -203,9 +203,10 @@ namespace BMMS.Master
                             }
                         }
 
-                        int result = AgendaMgr.AgendaFinalizeByMeetingId(MeetingId);
+                        // Refused if another tab finalized it first (BMMS-Fix-MeetingLocks.sql)
+                        MeetingChangeResult result = AgendaMgr.AgendaFinalizeByMeetingId(MeetingId);
 
-                        sMsg = "Agenda Finalized";
+                        sMsg = result.Result == 1 ? "Agenda Finalized" : result.RefusalMessage();
 
                         MsgDisplay(sMsg);
 

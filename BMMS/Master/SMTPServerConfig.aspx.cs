@@ -100,7 +100,7 @@ namespace BMMS.Master
             string SMTPServer = txtSMTPServer.Text.Trim();
             string SMTPServerPort = txtSMTPServerPort.Text.Trim();
             string UserName = txtUserName.Text.Trim();
-            string Password = Common.EncryptVal(txtPassword.Text.Trim());
+            string Password = Common.ProtectSecret(txtPassword.Text.Trim());
             string FromMailId = txtFromMailId.Text.Trim();
             string Bcc = txtBcc.Text.Trim();
 

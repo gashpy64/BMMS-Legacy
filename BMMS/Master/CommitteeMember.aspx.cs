@@ -388,9 +388,12 @@ namespace BMMS.Master
 
                     try
                     {
-                        CommitteeMemberMgr.DeleteCommitteeMemberByCommitteeMemberId(CommitteeMemberId);
+                        int Result = CommitteeMemberMgr.DeleteCommitteeMemberByCommitteeMemberId(CommitteeMemberId);
 
-                        MsgDisplay("Record Deleted Successfully");
+                        if (Result == 1)
+                            MsgDisplay("Record Deleted Successfully");
+                        else
+                            MsgDisplay(Common.GetAppSetting("delete_reference"));
                     }
                     catch (Exception ex)
                     {

@@ -1,0 +1,4 @@
+<connectionStrings>
+	<add name="ConnectionString"
+		 connectionString="server=.;database=BMMS;uid=bmms_app;password=YOUR_PASSWORD;TrustServerCertificate=True"/>
+</connectionStrings>

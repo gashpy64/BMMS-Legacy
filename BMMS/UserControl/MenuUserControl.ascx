@@ -74,6 +74,7 @@
     <li><a href="../Master/ResetPassword.aspx">Reset Password</a></li>
     <li><a href="../Master/BackupDatabase.aspx">Backup Database</a></li>
     <li><a href="../Master/SMTPServerConfig.aspx">SMTP Configuration</a></li>
+    <li><a href="../Master/SystemSettings.aspx">System Settings</a></li>
     <li><a href="../Master/ResetDatabase.aspx">Reset Database</a></li>
     <%
         } %>

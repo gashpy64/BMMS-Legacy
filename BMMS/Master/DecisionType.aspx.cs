@@ -273,9 +273,12 @@ namespace BMMS.Master
 
                     try
                     {
-                        DecisionTypeMgr.DeleteDecisionTypeByDecisionTypeId(DecisionTypeId);
+                        int Result = DecisionTypeMgr.DeleteDecisionTypeByDecisionTypeId(DecisionTypeId);
 
-                        MsgDisplay("Record Deleted Successfully");
+                        if (Result == 1)
+                            MsgDisplay("Record Deleted Successfully");
+                        else
+                            MsgDisplay(Common.GetAppSetting("delete_reference"));
                     }
                     catch (Exception ex)
                     {

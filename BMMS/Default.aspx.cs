@@ -28,9 +28,15 @@ namespace BMMS
             {
                 InitCtrlAttributes();
                 ScriptManager.GetCurrent(this).SetFocus(txtLoginName.ClientID);
+
+                // Sent here by PageAccessModule: the account was deactivated while logged in
+                if (Request.QueryString["status"] == "inactive")
+                    MsgDisplay(InactiveMessage);
             }
         }
         #endregion
+
+        private const string InactiveMessage = "Your account is inactive. Contact the administrator.";
 
         #region InitSetup()
         private void InitSetup()
@@ -59,13 +65,13 @@ namespace BMMS
             DataTable dtUser = new DataTable();
 
             string sLoginName = txtLoginName.Text.Trim();
-            string sPassword = Common.EncryptVal(txtPassword.Text.Trim());
+            string sPasswordInput = txtPassword.Text.Trim();
             string User_IP_Address = Utilities.GetLocalIPAddress();
             string Server_Url = Request.Url.AbsoluteUri.ToString();
 
             try
             {
-                dtUser = UserMgr.GetUserByLoginName(sLoginName, sPassword, User_IP_Address, Server_Url);
+                dtUser = UserMgr.GetUserByLoginName(sLoginName, string.Empty, User_IP_Address, Server_Url);
 
                 if (dtUser.Rows.Count <= 0)
                 {
@@ -76,12 +82,7 @@ namespace BMMS
                     ScriptManager.GetCurrent(this).SetFocus(txtLoginName.ClientID);
 
                 }
-                else if (dtUser.Rows[0]["AccountStatus"].ToString() == "0")
-                {
-                    errMsg = "Your account was locked by admin.";
-                    ScriptManager.GetCurrent(this).SetFocus(txtLoginName.ClientID);
-                }
-                else if (dtUser.Rows[0]["Password"].ToString() != sPassword)
+                else if (!Common.VerifyPassword(sPasswordInput, dtUser.Rows[0]["Password"].ToString()))
                 {
                     int UserId = int.Parse(dtUser.Rows[0]["UserId"].ToString());
 
@@ -99,8 +100,20 @@ namespace BMMS
                     //if (Session["LoginCount"].ToString() == "3")
                         //UserMgr.LockUserByUserId(UserId);
                 }
+                else if (dtUser.Rows[0]["AccountStatus"].ToString() != "1")
+                {
+                    // Checked after the password, so the message does not tell a stranger the login exists
+                    errMsg = InactiveMessage;
+                    ScriptManager.GetCurrent(this).SetFocus(txtLoginName.ClientID);
+                }
                 else
                 {
+                    int loggedInUserId = int.Parse(dtUser.Rows[0]["UserId"].ToString());
+                    UserMgr.RecordLogin(loggedInUserId, User_IP_Address, Server_Url);
+
+                    // Upgrade an old-format password to the new hash on first successful login
+                    if (Common.IsLegacyFormat(dtUser.Rows[0]["Password"].ToString()))
+                        UserMgr.ResetPasswordByUserId(loggedInUserId, Common.HashPassword(sPasswordInput), loggedInUserId);
                     Session["UserId"] = dtUser.Rows[0]["UserId"].ToString();
                     Session["UserName"] = dtUser.Rows[0]["UserName"].ToString();
                     Session["DesignName"] = dtUser.Rows[0]["DesignationName"].ToString();

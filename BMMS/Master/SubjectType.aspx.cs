@@ -275,9 +275,12 @@ namespace BMMS.Master
                     
                     try
                     {
-                        SubjectTypeMgr.DeleteSubjectTypeBySubjectTypeId(SubjectTypeId);
+                        int Result = SubjectTypeMgr.DeleteSubjectTypeBySubjectTypeId(SubjectTypeId);
 
-                        MsgDisplay("Record Deleted Successfully");
+                        if (Result == 1)
+                            MsgDisplay("Record Deleted Successfully");
+                        else
+                            MsgDisplay(Common.GetAppSetting("delete_reference"));
                     }
                     catch (Exception ex)
                     {

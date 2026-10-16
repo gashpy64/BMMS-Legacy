@@ -56,7 +56,32 @@ namespace BMMSDAL
             return CommonDB.ExecuteProcedure("spr_AddEditAuditTrialLogin", parameter); ;
         }
         #endregion
-    
+
+        #region GetAppSetting
+        // SettingCode, SettingValue, Description, LastChangedOn, LastChangedBy; no row if the
+        // setting is not stored (BMMS-Fix-MeetingLocks-Step16.sql)
+        public static DataTable GetAppSetting(string SettingCode)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@SettingCode", SettingCode);
+
+            return CommonDB.GetDataTable("spr_GetAppSetting", parameter);
+        }
+        #endregion
+
+        #region SetAppSetting
+        // One row: Result, Reason, ReasonDetail; only an active Admin may change a setting
+        public static DataTable SetAppSetting(string SettingCode, string SettingValue, int ActingUserId)
+        {
+            SqlParameter[] parameter = new SqlParameter[3];
+            parameter[0] = new SqlParameter("@SettingCode", SettingCode);
+            parameter[1] = new SqlParameter("@SettingValue", SettingValue);
+            parameter[2] = new SqlParameter("@ActingUserId", ActingUserId);
+
+            return CommonDB.GetDataTable("spr_SetAppSetting", parameter);
+        }
+        #endregion
+
     }
     #endregion
     
