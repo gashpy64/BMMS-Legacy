@@ -69,6 +69,11 @@ BEGIN TRANSACTION;
 
 BEGIN TRY
 
+    -- Step 16: new attendance only for a member on the committee on the meeting date.
+    -- Make the chosen member valid for every test date (rolled back).
+    UPDATE Committee_Member SET AppointmentDate = '2000-01-01', CessationDate = ''
+    WHERE CommitteeId = @CommitteeId AND MemberId = @MemberId;
+
     ---------------------------------------------------------------------------
     -- Test meetings, dated relative to the server date
     ---------------------------------------------------------------------------

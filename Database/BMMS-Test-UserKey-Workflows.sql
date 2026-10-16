@@ -108,7 +108,8 @@ BEGIN TRY
     ---------------------------------------------------------------------------
     -- Meeting created
     ---------------------------------------------------------------------------
-    EXEC spr_AddEditMeeting @Code = 'Save', @MeetingId = 0, @MeetingNo = '00001', @CommitteeId = @CommitteeId, @Place = 'ZZ test',
+    DELETE FROM @R;   -- since step 16 the meeting procedure returns Result, Reason, ReasonDetail
+    INSERT INTO @R EXEC spr_AddEditMeeting @Code = 'Save', @MeetingId = 0, @MeetingNo = '00001', @CommitteeId = @CommitteeId, @Place = 'ZZ test',
          @Venue = 'ZZ test', @MeetingDate = @Now, @MeetingTime = '10:00', @AgendaSubmissionDate = @Now, @MeetingColorCode = '#FFFFFF',
          @CreatedOn = @Now, @CreatedBy = @Ctl, @UpdatedOn = @Now, @UpdatedBy = @Ctl;
 
@@ -125,11 +126,25 @@ BEGIN TRY
     ---------------------------------------------------------------------------
     -- Agenda added by the user
     ---------------------------------------------------------------------------
-    EXEC spr_AddEditAgenda @Code = 'Save', @AgendaId = 0, @AgendaNo = '', @CommitteeId = @CommitteeId, @MeetingId = @MeetingId,
-         @DepartmentId = @DepartmentId, @SubjectTypeId = @SubjectTypeId, @ShortText = 'ZZ workflow test agenda', @AgendaType = 'Text',
-         @AgendaText = 'ZZ test', @AgendaTextPath = '', @ProposedResolution = 'ZZ test resolution', @FilePath = '',
-         @MgrComments = '', @ControllerComments = '', @CurrentStatus = '', @CreatedOn = @Now, @CreatedBy = @Usr,
-         @UpdatedOn = @Now, @UpdatedBy = @Usr, @SubjectNo = 0;
+    -- Step 16: the agenda procedures take the acting user, who must be active
+    -- (the test users are inserted inactive; this one is switched on, rolled back)
+    DELETE FROM @R;
+    IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_AddEditAgenda')), '') LIKE '%MeetingLocks-Step16%')
+    BEGIN
+        UPDATE Users SET AccountStatus = 1 WHERE UserId = @Usr;
+
+        INSERT INTO @R EXEC spr_AddEditAgenda @Code = 'Save', @AgendaId = 0, @AgendaNo = '', @CommitteeId = @CommitteeId, @MeetingId = @MeetingId,
+             @DepartmentId = @DepartmentId, @SubjectTypeId = @SubjectTypeId, @ShortText = 'ZZ workflow test agenda', @AgendaType = 'Text',
+             @AgendaText = 'ZZ test', @AgendaTextPath = '', @ProposedResolution = 'ZZ test resolution', @FilePath = '',
+             @MgrComments = '', @ControllerComments = '', @CurrentStatus = '', @CreatedOn = @Now, @CreatedBy = @Usr,
+             @UpdatedOn = @Now, @UpdatedBy = @Usr, @SubjectNo = 0, @ActingUserId = @Usr;
+    END
+    ELSE
+        EXEC spr_AddEditAgenda @Code = 'Save', @AgendaId = 0, @AgendaNo = '', @CommitteeId = @CommitteeId, @MeetingId = @MeetingId,
+             @DepartmentId = @DepartmentId, @SubjectTypeId = @SubjectTypeId, @ShortText = 'ZZ workflow test agenda', @AgendaType = 'Text',
+             @AgendaText = 'ZZ test', @AgendaTextPath = '', @ProposedResolution = 'ZZ test resolution', @FilePath = '',
+             @MgrComments = '', @ControllerComments = '', @CurrentStatus = '', @CreatedOn = @Now, @CreatedBy = @Usr,
+             @UpdatedOn = @Now, @UpdatedBy = @Usr, @SubjectNo = 0;
 
     SET @AgendaId = (SELECT TOP 1 AgendaId FROM Agenda WHERE MeetingId = @MeetingId ORDER BY AgendaId DESC);
 
@@ -154,7 +169,8 @@ BEGIN TRY
     ---------------------------------------------------------------------------
     -- Manager approves, then controller approves
     ---------------------------------------------------------------------------
-    EXEC spr_UpdateAgendaByAgendaId @AgendaId = @AgendaId, @ShortText = 'ZZ workflow test agenda',
+    DELETE FROM @R;
+    INSERT INTO @R EXEC spr_UpdateAgendaByAgendaId @AgendaId = @AgendaId, @ShortText = 'ZZ workflow test agenda',
          @ProposedResolution = 'ZZ test resolution', @MgrComments = 'ZZ ok', @ControllerComments = '',
          @ControllerApprovedStatus = '', @MgrApprovedStatus = 'Approved', @UpdatedBy = @Mgr;
 
@@ -163,7 +179,8 @@ BEGIN TRY
            ISNULL(MgrApprovedStatus, 'NULL') + ' / ' + ISNULL(CAST(UpdatedBy AS VARCHAR(12)), 'NULL')
     FROM Agenda WHERE AgendaId = @AgendaId;
 
-    EXEC spr_UpdateAgendaByAgendaId @AgendaId = @AgendaId, @ShortText = 'ZZ workflow test agenda',
+    DELETE FROM @R;
+    INSERT INTO @R EXEC spr_UpdateAgendaByAgendaId @AgendaId = @AgendaId, @ShortText = 'ZZ workflow test agenda',
          @ProposedResolution = 'ZZ test resolution', @MgrComments = 'ZZ ok', @ControllerComments = 'ZZ ok',
          @ControllerApprovedStatus = 'Approved', @MgrApprovedStatus = '', @UpdatedBy = @Ctl;
 

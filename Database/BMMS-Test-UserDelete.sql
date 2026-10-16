@@ -239,7 +239,11 @@ BEGIN TRY
     BEGIN
         SAVE TRANSACTION HistoryTest;
 
-        EXEC spr_UpdateAgendaByAgendaId @AgendaId = @AgendaId, @ShortText = @ShortText,
+        -- Step 16: approve / reject only while the agenda is not finalized (rolled back)
+        UPDATE Meeting SET AgendaStatus = 'Open' WHERE MeetingId = @MeetingId;
+
+        DELETE FROM @R;
+        INSERT INTO @R EXEC spr_UpdateAgendaByAgendaId @AgendaId = @AgendaId, @ShortText = @ShortText,
              @ProposedResolution = @ProposedResolution, @MgrComments = '', @ControllerComments = 'ZZ delete test',
              @ControllerApprovedStatus = 'Approved', @MgrApprovedStatus = '', @UpdatedBy = @UserC;
 
@@ -274,7 +278,11 @@ BEGIN TRY
         SAVE TRANSACTION HistoryTest;
 
         -- The case that went wrong: approvals and finalized minutes together.
-        EXEC spr_UpdateAgendaByAgendaId @AgendaId = @AgendaId, @ShortText = @ShortText,
+        -- Step 16: approve / reject only while the agenda is not finalized (rolled back)
+        UPDATE Meeting SET AgendaStatus = 'Open' WHERE MeetingId = @MeetingId;
+
+        DELETE FROM @R;
+        INSERT INTO @R EXEC spr_UpdateAgendaByAgendaId @AgendaId = @AgendaId, @ShortText = @ShortText,
              @ProposedResolution = @ProposedResolution, @MgrComments = '', @ControllerComments = 'ZZ delete test',
              @ControllerApprovedStatus = 'Approved', @MgrApprovedStatus = '', @UpdatedBy = @UserC;
 

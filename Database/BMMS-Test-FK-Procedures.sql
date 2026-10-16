@@ -105,6 +105,10 @@ BEGIN TRY
                ISNULL(CAST(@OldChairmanId AS VARCHAR(12)), 'NULL'), ISNULL(CAST(ChairmanNameId AS VARCHAR(12)), 'NULL')
         FROM Meeting WHERE MeetingId = @MeetingId;
 
+        -- Step 16: a new chairman must be on the meeting's committee on the meeting date
+        INSERT INTO Committee_Member (CommitteeId, MemberId, MemberTypeId, AppointmentDate, CessationDate, IsFeeApplicable, ApplicableFee, CreatedOn, CreatedBy)
+        VALUES (@CommitteeId, @MemberId, (SELECT TOP 1 MemberTypeId FROM Member_Type ORDER BY MemberTypeId), '2000-01-01', '', 0, 0, @Now, @AnyUserId);
+
         EXEC spr_UpdateMeetingChairman @MeetingId = @MeetingId, @CommitteeId = @CommitteeId, @ChairmanNameId = @MemberId;
 
         INSERT INTO @T
@@ -191,7 +195,15 @@ BEGIN TRY
         FROM Users WHERE UserId = @UserId;
 
         -- The action item is still there, so the agenda delete has to remove it.
-        EXEC spr_DeleteAgendaByAgendaId @AgendaId = @AgendaId;
+        -- Step 16: an agenda item can be deleted by its acting user while the agenda and minutes are open.
+        UPDATE Meeting SET AgendaStatus = 'Open', MinutesStatus = 'Open'
+        WHERE MeetingId = (SELECT MeetingId FROM Agenda WHERE AgendaId = @AgendaId);
+
+        DELETE FROM @RU;
+        IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_DeleteAgendaByAgendaId')), '') LIKE '%MeetingLocks-Step16%')
+            INSERT INTO @RU EXEC spr_DeleteAgendaByAgendaId @AgendaId = @AgendaId, @ActingUserId = @AdminId;
+        ELSE
+            EXEC spr_DeleteAgendaByAgendaId @AgendaId = @AgendaId;
 
         INSERT INTO @T
         SELECT 12, 'Agenda delete: agenda is gone', '0', CAST(COUNT(*) AS VARCHAR(12))

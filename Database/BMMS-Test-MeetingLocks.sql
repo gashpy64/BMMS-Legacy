@@ -77,6 +77,15 @@ BEGIN TRANSACTION;
 
 BEGIN TRY
 
+    -- Step 16: new attendance and a new chairman only for a member on the committee on the
+    -- meeting date. Make @Member1 a member of @CommitteeId since 2000 (rolled back).
+    IF EXISTS (SELECT 1 FROM Committee_Member WHERE CommitteeId = @CommitteeId AND MemberId = @Member1)
+        UPDATE Committee_Member SET AppointmentDate = '2000-01-01', CessationDate = ''
+        WHERE CommitteeId = @CommitteeId AND MemberId = @Member1;
+    ELSE
+        INSERT INTO Committee_Member (CommitteeId, MemberId, MemberTypeId, AppointmentDate, CessationDate, IsFeeApplicable, ApplicableFee, CreatedOn, CreatedBy)
+        VALUES (@CommitteeId, @Member1, @MemberTypeId, '2000-01-01', '', 0, 0, @Now, @UserId);
+
     ---------------------------------------------------------------------------
     -- Test meetings (inserted directly), all held a week ago except @MFuture
     ---------------------------------------------------------------------------
