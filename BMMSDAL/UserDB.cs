@@ -164,13 +164,58 @@ namespace BMMSDAL
         }
         #endregion
 
+        #region GetActiveUserList
+        // Same rows as GetUserList, active users only (BMMS-Fix-UserStatus-Stage2a.sql)
+        public static DataTable GetActiveUserList()
+        {
+            return CommonDB.GetDataTable("spr_GetActiveUserList", null);
+        }
+        #endregion
+
         #region GetMgrControllerByDeptId
         public static DataTable GetMgrControllerByDeptId(int DepartmentId)
         {
-            SqlParameter[] parameter = new SqlParameter[1];
-            parameter[0] = new SqlParameter("@DepartmentId", DepartmentId);
+            return GetMgrControllerByDeptId(DepartmentId, 0);
+        }
 
-            return CommonDB.GetDataTable("spr_GetMgrControllerByDeptId", parameter); ;
+        // Active Managers / Controllers of the department, plus IncludeUserId (the edited
+        // user's current manager) even if inactive. Column ManagerText marks it "(inactive)".
+        public static DataTable GetMgrControllerByDeptId(int DepartmentId, int IncludeUserId)
+        {
+            SqlParameter[] parameter = new SqlParameter[2];
+            parameter[0] = new SqlParameter("@DepartmentId", DepartmentId);
+            parameter[1] = new SqlParameter("@IncludeUserId", IncludeUserId <= 0 ? (object)DBNull.Value : IncludeUserId);
+
+            return CommonDB.GetDataTable("spr_GetMgrControllerByDeptId", parameter);
+        }
+        #endregion
+
+        #region GetUserStatusByUserId
+        // AccountStatus of the user (1 active, 0 inactive), or -1 if the user does not exist
+        public static int GetUserStatusByUserId(int UserId)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@UserId", UserId);
+
+            DataTable dt = CommonDB.GetDataTable("spr_GetUserStatusByUserId", parameter);
+
+            if (dt.Rows.Count == 0)
+                return -1;
+
+            return ToInt(dt.Rows[0]["AccountStatus"]);
+        }
+        #endregion
+
+        #region SetUserStatusByUserId
+        public static DataTable SetUserStatusByUserId(int UserId, int AccountStatus, int ActingUserId)
+        {
+            SqlParameter[] parameter = new SqlParameter[3];
+            parameter[0] = new SqlParameter("@UserId", UserId);
+            parameter[1] = new SqlParameter("@AccountStatus", AccountStatus);
+            parameter[2] = new SqlParameter("@ActingUserId", ActingUserId);
+
+            // One row: Result, Reason, ReasonDetail
+            return CommonDB.GetDataTable("spr_SetUserStatusByUserId", parameter);
         }
         #endregion
 
@@ -313,6 +358,8 @@ namespace BMMSDAL
         #endregion
 
         #region LockUserByUserId
+        // Retired: spr_LockUserByUserId raises error 50002 (BMMS-Fix-UserStatus-Stage2a.sql).
+        // Use SetUserStatusByUserId, which applies the user protection rules.
         public static int LockUserByUserId(int UserId)
         {
             SqlParameter[] parameter = new SqlParameter[1];

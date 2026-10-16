@@ -55,7 +55,8 @@ namespace BMMSBAL
                 case UserChangeReason.HasHistory:
                     return "This user cannot be deleted because they have history: " + System.Web.HttpUtility.HtmlEncode(ReasonDetail) + ".";
                 case UserChangeReason.ActingUserMissing:
-                    return "Your login could not be identified. Please log out and log in again.";
+                    // missing or inactive acting user (BMMS-Fix-UserStatus-Stage2a.sql)
+                    return "Your session is no longer valid. Please log in again.";
                 case UserChangeReason.Other:
                     Utilities.WriteErrorLog(ClassName, "UserChange", "Refused by the database: " + ReasonDetail);
                     return "This user cannot be deleted because other data still refers to them. The details were written to the error log.";
@@ -75,7 +76,7 @@ namespace BMMSBAL
         public const int ReferencedByUsers = 5;
         public const int HasHistory = 6;
         public const int SystemAccount = 7;
-        public const int ActingUserMissing = 8;
+        public const int ActingUserMissing = 8;   // missing or inactive (stage 2a)
         public const int Other = 9;
     }
     #endregion
@@ -224,10 +225,36 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region GetActiveUserList
+        public static DataTable GetActiveUserList()
+        {
+            return UserDB.GetActiveUserList();
+        }
+        #endregion
+
         #region GetMgrController
         public static DataTable GetMgrControllerByDeptId(int DepartmentId)
         {
             return UserDB.GetMgrControllerByDeptId(DepartmentId);
+        }
+
+        public static DataTable GetMgrControllerByDeptId(int DepartmentId, int IncludeUserId)
+        {
+            return UserDB.GetMgrControllerByDeptId(DepartmentId, IncludeUserId);
+        }
+        #endregion
+
+        #region GetUserStatusByUserId
+        public static int GetUserStatusByUserId(int UserId)
+        {
+            return UserDB.GetUserStatusByUserId(UserId);
+        }
+        #endregion
+
+        #region SetUserStatusByUserId
+        public static UserChangeResult SetUserStatusByUserId(int UserId, int AccountStatus, int ActingUserId)
+        {
+            return UserChangeResult.FromTable(UserDB.SetUserStatusByUserId(UserId, AccountStatus, ActingUserId));
         }
         #endregion
 

@@ -6,6 +6,63 @@ using BMMSDAL;
 
 namespace BMMSBAL
 {
+    #region MeetingChangeResult
+    /// <summary>
+    /// Answer of the meeting-state procedures (BMMS-Fix-MeetingLocks.sql).
+    /// Result 1 = done, 0 = refused. Reason says why (see MeetingChangeReason).
+    /// ReasonDetail: the meeting's current status for reason 3.
+    /// </summary>
+    public class MeetingChangeResult
+    {
+        public int Result;
+        public int Reason;
+        public string ReasonDetail = string.Empty;
+
+        public static MeetingChangeResult FromTable(DataTable dt)
+        {
+            if (dt == null || dt.Rows.Count == 0 || !dt.Columns.Contains("Reason"))
+                throw new InvalidOperationException("The meeting procedure returned no Reason. Run Database/BMMS-Fix-MeetingLocks.sql.");
+
+            MeetingChangeResult r = new MeetingChangeResult();
+            r.Result = Convert.ToInt32(dt.Rows[0]["Result"]);
+            r.Reason = Convert.ToInt32(dt.Rows[0]["Reason"]);
+            r.ReasonDetail = dt.Rows[0]["ReasonDetail"].ToString();
+            return r;
+        }
+
+        /// <summary>Message for the page when Result = 0.</summary>
+        public string RefusalMessage()
+        {
+            switch (Reason)
+            {
+                case MeetingChangeReason.MinutesFinalized:
+                    return MeetingChangeReason.MinutesFinalizedMessage;
+                case MeetingChangeReason.AttendanceRecorded:
+                    return "This member's attendance is recorded for the meeting, so they cannot be removed.";
+                case MeetingChangeReason.WrongState:
+                    return "This step has already been done for this meeting (status: "
+                         + System.Web.HttpUtility.HtmlEncode(ReasonDetail) + "). Reload the page to see the current state.";
+                case MeetingChangeReason.NotFound:
+                    return "The meeting or member no longer exists. Reload the page.";
+                default:
+                    return "Record Not Saved";
+            }
+        }
+    }
+
+    public static class MeetingChangeReason
+    {
+        public const int None = 0;
+        public const int MinutesFinalized = 1;     // MinutesStatus 'F' or 'C'
+        public const int AttendanceRecorded = 2;   // meeting member delete
+        public const int WrongState = 3;           // agenda / minutes finalize, minutes confirm
+        public const int NotFound = 4;
+
+        public const string MinutesFinalizedMessage =
+            "The minutes of this meeting are finalized. Members, attendance and chairman can no longer be changed.";
+    }
+    #endregion
+
     #region MeetingBAL
     public class MeetingBAL
     {
@@ -226,9 +283,20 @@ namespace BMMSBAL
         #endregion
 
         #region UpdateMeetingChairman
-        public static void UpdateMeetingChairman(int MeetingId, int CommitteeId, int ChairmanNameId)
+        public static MeetingChangeResult UpdateMeetingChairman(int MeetingId, int CommitteeId, int ChairmanNameId)
         {
-            MeetingDB.UpdateMeetingChairman(MeetingId, CommitteeId, ChairmanNameId);
+            return MeetingChangeResult.FromTable(MeetingDB.UpdateMeetingChairman(MeetingId, CommitteeId, ChairmanNameId));
+        }
+        #endregion
+
+        #region IsMinutesFinalized
+        // True once the minutes are finalized ('F') or confirmed ('C'): members, attendance
+        // and chairman can no longer change (BMMS-Fix-MeetingLocks.sql)
+        public static bool IsMinutesFinalized(int MeetingId)
+        {
+            DataTable dt = MeetingDB.GetMeetingStatusByMeetingId(MeetingId);
+
+            return dt.Rows.Count > 0 && Convert.ToInt32(dt.Rows[0]["IsMinutesFinalized"]) == 1;
         }
         #endregion
 

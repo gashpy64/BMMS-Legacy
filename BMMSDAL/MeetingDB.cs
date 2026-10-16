@@ -271,14 +271,26 @@ namespace BMMSDAL
         #endregion
 
         #region UpdateMeetingChairman
-        public static int UpdateMeetingChairman(int MeetingId, int CommitteeId, int ChairmanNameId)
+        public static DataTable UpdateMeetingChairman(int MeetingId, int CommitteeId, int ChairmanNameId)
         {
             SqlParameter[] parameter = new SqlParameter[3];
             parameter[0] = new SqlParameter("@MeetingId", MeetingId);
             parameter[1] = new SqlParameter("@CommitteeId", CommitteeId);
             parameter[2] = new SqlParameter("@ChairmanNameId", ChairmanNameId);
 
-            return CommonDB.ExecuteProcedure("spr_UpdateMeetingChairman", parameter);
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks.sql)
+            return CommonDB.GetDataTable("spr_UpdateMeetingChairman", parameter);
+        }
+        #endregion
+
+        #region GetMeetingStatusByMeetingId
+        // AgendaStatus, MinutesStatus, IsHeld, IsMinutesFinalized; no row if the meeting does not exist
+        public static DataTable GetMeetingStatusByMeetingId(int MeetingId)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@MeetingId", MeetingId);
+
+            return CommonDB.GetDataTable("spr_GetMeetingStatusByMeetingId", parameter);
         }
         #endregion
 

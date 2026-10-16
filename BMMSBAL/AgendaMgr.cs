@@ -364,9 +364,9 @@ namespace BMMSBAL
         #endregion
 
         #region AgendaFinalizeByMeetingId
-        public static int AgendaFinalizeByMeetingId(int MeetingId)
+        public static MeetingChangeResult AgendaFinalizeByMeetingId(int MeetingId)
         {
-            return AgendaDB.AgendaFinalizeByMeetingId(MeetingId);
+            return MeetingChangeResult.FromTable(AgendaDB.AgendaFinalizeByMeetingId(MeetingId));
         }
         #endregion
 
@@ -386,16 +386,16 @@ namespace BMMSBAL
 
 
         #region MinutesFinalizeByMeetingId
-        public static int MinutesFinalizeByMeetingId(int MeetingId, int UserId)
+        public static MeetingChangeResult MinutesFinalizeByMeetingId(int MeetingId, int UserId)
         {
-            return AgendaDB.MinutesFinalizeByMeetingId(MeetingId, UserId);
+            return MeetingChangeResult.FromTable(AgendaDB.MinutesFinalizeByMeetingId(MeetingId, UserId));
         }
         #endregion
 
         #region MinutesConfirmByMeetingId
-        public static int MinutesConfirmByMeetingId(int MeetingId, int UserId)
+        public static MeetingChangeResult MinutesConfirmByMeetingId(int MeetingId, int UserId)
         {
-            return AgendaDB.MinutesConfirmByMeetingId(MeetingId, UserId);
+            return MeetingChangeResult.FromTable(AgendaDB.MinutesConfirmByMeetingId(MeetingId, UserId));
         }
         #endregion
 

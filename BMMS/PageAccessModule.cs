@@ -18,6 +18,9 @@ namespace BMMS.Security
     ///      login page (this also protects the pages that never called
     ///      Common.InitSetup: ResetDatabase, BackupDatabase, ResetPassword,
     ///      SMTPServerConfig, ViewReport, ReportPrint).
+    ///      The user must also still be active (Users.AccountStatus = 1, read on
+    ///      every request); otherwise the session is cleared and the login page
+    ///      says the account is inactive.
     ///   3. The user's role (Session["RoleCode"]) must be listed for the page.
     ///      A page that is not in the policy at all is treated as not allowed.
     ///
@@ -78,6 +81,15 @@ namespace BMMS.Security
                 return;
             }
 
+            // --- 1b. the account must still be active (BMMS-Fix-UserStatus-Stage2a.sql) ---
+            if (!IsActiveUser(ctx))
+            {
+                ctx.Session.Clear();
+                ctx.Session.Abandon();
+                RedirectToLogin(app, ctx, "?status=inactive");
+                return;
+            }
+
             if (policy.LoadError != null)
             {
                 Log(ctx, "POLICY-NOT-LOADED", page, "", policy.LoadError);
@@ -122,9 +134,34 @@ namespace BMMS.Security
             return h != null && h.IndexOf("Delta=true", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
+        // Read on every request, so a user deactivated while logged in is sent out at the next page.
+        // A database error lets the request through (written to the error log): the page itself
+        // then fails as it would without this check, instead of logging everyone out.
+        private static bool IsActiveUser(HttpContext ctx)
+        {
+            int userId;
+            if (!int.TryParse(Convert.ToString(ctx.Session["UserId"]), out userId) || userId <= 0)
+                return false;
+
+            try
+            {
+                return BMMSBAL.UserMgr.GetUserStatusByUserId(userId) == 1;
+            }
+            catch (Exception ex)
+            {
+                BMMSBAL.Utilities.WriteErrorLog("PageAccessModule", "IsActiveUser", ex.ToString());
+                return true;
+            }
+        }
+
         private static void RedirectToLogin(HttpApplication app, HttpContext ctx)
         {
-            string url = VirtualPathUtility.ToAbsolute("~/Default.aspx");
+            RedirectToLogin(app, ctx, string.Empty);
+        }
+
+        private static void RedirectToLogin(HttpApplication app, HttpContext ctx, string query)
+        {
+            string url = VirtualPathUtility.ToAbsolute("~/Default.aspx") + query;
 
             if (IsAjaxPartialPostBack(ctx))
             {

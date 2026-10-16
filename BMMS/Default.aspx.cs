@@ -28,9 +28,15 @@ namespace BMMS
             {
                 InitCtrlAttributes();
                 ScriptManager.GetCurrent(this).SetFocus(txtLoginName.ClientID);
+
+                // Sent here by PageAccessModule: the account was deactivated while logged in
+                if (Request.QueryString["status"] == "inactive")
+                    MsgDisplay(InactiveMessage);
             }
         }
         #endregion
+
+        private const string InactiveMessage = "Your account is inactive. Contact the administrator.";
 
         #region InitSetup()
         private void InitSetup()
@@ -76,11 +82,6 @@ namespace BMMS
                     ScriptManager.GetCurrent(this).SetFocus(txtLoginName.ClientID);
 
                 }
-                else if (dtUser.Rows[0]["AccountStatus"].ToString() == "0")
-                {
-                    errMsg = "Your account was locked by admin.";
-                    ScriptManager.GetCurrent(this).SetFocus(txtLoginName.ClientID);
-                }
                 else if (!Common.VerifyPassword(sPasswordInput, dtUser.Rows[0]["Password"].ToString()))
                 {
                     int UserId = int.Parse(dtUser.Rows[0]["UserId"].ToString());
@@ -98,6 +99,12 @@ namespace BMMS
 
                     //if (Session["LoginCount"].ToString() == "3")
                         //UserMgr.LockUserByUserId(UserId);
+                }
+                else if (dtUser.Rows[0]["AccountStatus"].ToString() != "1")
+                {
+                    // Checked after the password, so the message does not tell a stranger the login exists
+                    errMsg = InactiveMessage;
+                    ScriptManager.GetCurrent(this).SetFocus(txtLoginName.ClientID);
                 }
                 else
                 {

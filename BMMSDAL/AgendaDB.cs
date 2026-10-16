@@ -396,12 +396,13 @@ namespace BMMSDAL
         #endregion
 
         #region AgendaFinalizeByMeetingId
-        public static int AgendaFinalizeByMeetingId(int MeetingId)
+        public static DataTable AgendaFinalizeByMeetingId(int MeetingId)
         {
             SqlParameter[] parameter = new SqlParameter[1];
             parameter[0] = new SqlParameter("@MeetingId", MeetingId);
 
-            return CommonDB.ExecuteProcedure("spr_AgendaFinalizeByMeetingId", parameter); ;
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks.sql)
+            return CommonDB.GetDataTable("spr_AgendaFinalizeByMeetingId", parameter);
         }
         #endregion
 
@@ -428,24 +429,26 @@ namespace BMMSDAL
         #endregion
 
         #region MinutesFinalizeByMeetingId
-        public static int MinutesFinalizeByMeetingId(int MeetingId, int UserId)
+        public static DataTable MinutesFinalizeByMeetingId(int MeetingId, int UserId)
         {
             SqlParameter[] parameter = new SqlParameter[2];
             parameter[0] = new SqlParameter("@MeetingId", MeetingId);
             parameter[1] = new SqlParameter("@UserId", UserId);
 
-            return CommonDB.ExecuteProcedure("spr_MinutesFinalizeByMeetingId", parameter); ;
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks.sql)
+            return CommonDB.GetDataTable("spr_MinutesFinalizeByMeetingId", parameter);
         }
         #endregion
 
         #region MinutesConfirmByMeetingId
-        public static int MinutesConfirmByMeetingId(int MeetingId, int UserId)
+        public static DataTable MinutesConfirmByMeetingId(int MeetingId, int UserId)
         {
             SqlParameter[] parameter = new SqlParameter[2];
             parameter[0] = new SqlParameter("@MeetingId", MeetingId);
             parameter[1] = new SqlParameter("@UserId", UserId);
 
-            return CommonDB.ExecuteProcedure("spr_MinutesConfirmByMeetingId", parameter); ;
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks.sql)
+            return CommonDB.GetDataTable("spr_MinutesConfirmByMeetingId", parameter);
         }
         #endregion
 

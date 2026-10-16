@@ -681,6 +681,22 @@ body.wb .ddsubmenustyle li a:focus
 {
 	color: var(--wb-danger);
 }
+/* Deactivate / Activate (User page) */
+.wb-page .wb-link-status
+{
+	color: var(--wb-text);
+}
+
+/* Inactive user row (User page): muted, status in italics */
+.wb-table > tbody > tr.wb-row-inactive > td
+{
+	color: var(--wb-text-muted);
+	background: var(--wb-surface-alt);
+}
+.wb-table > tbody > tr.wb-row-inactive .wb-status
+{
+	font-style: italic;
+}
 /* disabled by code-behind (Decision Type for non-admin roles) */
 .wb-page .wb-link-btn[disabled]
 {

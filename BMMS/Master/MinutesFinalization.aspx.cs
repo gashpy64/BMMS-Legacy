@@ -134,9 +134,10 @@ namespace BMMS.Master
                         if (MeetingChairman != string.Empty)
                         {
 
-                            int result = AgendaMgr.MinutesFinalizeByMeetingId(MeetingId, int.Parse(Session["UserId"].ToString()));
+                            // Refused if another tab finalized it first (BMMS-Fix-MeetingLocks.sql)
+                            MeetingChangeResult result = AgendaMgr.MinutesFinalizeByMeetingId(MeetingId, int.Parse(Session["UserId"].ToString()));
 
-                            sMsg = "Minutes Finalized";
+                            sMsg = result.Result == 1 ? "Minutes Finalized" : result.RefusalMessage();
 
                             MsgDisplay(sMsg);
                         }

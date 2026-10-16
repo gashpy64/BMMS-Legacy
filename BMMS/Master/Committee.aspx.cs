@@ -272,7 +272,7 @@ namespace BMMS.Master
             string ToMailId = string.Empty;
             string Bcc = string.Empty;
 
-            DataTable dtUser = UserMgr.GetUserList();
+            DataTable dtUser = UserMgr.GetActiveUserList();   // active users only (stage 2a)
             if (dtUser.Rows.Count > 0)
             {
                 for (int i = 0; i <= dtUser.Rows.Count - 1; i++)

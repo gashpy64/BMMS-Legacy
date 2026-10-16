@@ -82,10 +82,26 @@
                                     <asp:Label ID="lblLoginName" runat="server" SkinID="lblskingen" Text='<%#Eval("LoginName")%>'></asp:Label>
                                 </ItemTemplate>
                             </asp:TemplateField>
+                            <asp:TemplateField SortExpression="Status">
+                                <HeaderTemplate>
+                                    <asp:LinkButton ID="lnk8" runat="server" Text="Status" CommandName="Sort" CommandArgument="Status"></asp:LinkButton>
+                                </HeaderTemplate>
+                                <ItemTemplate>
+                                    <asp:Label ID="lblStatus" runat="server" CssClass="wb-status" Text='<%#Eval("Status")%>'></asp:Label>
+                                </ItemTemplate>
+                            </asp:TemplateField>
                             <asp:TemplateField>
                                 <ItemTemplate>
                                     <asp:Button ID="btnEdit" CssClass="wb-link-btn wb-link-edit" Text="Edit" ToolTip="Edit"
                                         CommandArgument='<%#Eval("UserId")%>' runat="server" CommandName="EditRec" />
+                                </ItemTemplate>
+                                <ItemStyle CssClass="wb-col-action" />
+                            </asp:TemplateField>
+                            <asp:TemplateField>
+                                <ItemTemplate>
+                                    <%-- Text, CommandName and confirmation set in grvUser_RowDataBound (Deactivate / Activate) --%>
+                                    <asp:Button ID="btnStatus" CssClass="wb-link-btn wb-link-status" Text="Deactivate" ToolTip="Deactivate"
+                                        CommandArgument='<%#Eval("UserId")%>' runat="server" CommandName="DeactivateRec" />
                                 </ItemTemplate>
                                 <ItemStyle CssClass="wb-col-action" />
                             </asp:TemplateField>
@@ -107,7 +123,8 @@
                 </div>
                 <p class="wb-help">
                     Click a column heading to sort. Delete asks for confirmation; a user that is in use
-                    cannot be deleted.</p>
+                    cannot be deleted. Deactivate stops the user logging in and keeps them and their
+                    history; Activate lets them log in again. Inactive users are shown greyed.</p>
             </div>
         </asp:Panel>
         <asp:Panel ID="pnlEditUser" runat="server">
