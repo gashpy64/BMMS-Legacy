@@ -31,6 +31,7 @@
     <page path="Master/MemberType.aspx" roles="admin"/>
     <page path="Master/ResetDatabase.aspx" roles="admin"/>
     <page path="Master/SMTPServerConfig.aspx" roles="admin"/>
+    <page path="Master/SystemSettings.aspx" roles="admin"/>
 
     <!-- admin and controller: the Master and Admin menus -->
     <page path="Master/Department.aspx" roles="admin,controller"/>

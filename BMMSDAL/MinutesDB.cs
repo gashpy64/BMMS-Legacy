@@ -148,7 +148,7 @@ namespace BMMSDAL
         #endregion
 
         #region UpdateMinutes
-        public static int UpdateMinutes(MinutesDAL myMinutesDAL)
+        public static DataTable UpdateMinutes(MinutesDAL myMinutesDAL)
         {
             SqlParameter[] parameter = new SqlParameter[8];
             parameter[0] = new SqlParameter("@Code", myMinutesDAL.Code);
@@ -161,7 +161,8 @@ namespace BMMSDAL
             parameter[6] = new SqlParameter("@CreatedBy", myMinutesDAL.CreatedBy);
             parameter[7] = new SqlParameter("@UpdatedBy", myMinutesDAL.UpdatedBy);
 
-            return CommonDB.ExecuteProcedure("spr_UpdateMinutes", parameter); ;
+            // One row: Result, Reason, ReasonDetail; refused once the minutes are confirmed (BMMS-Fix-MeetingLocks-Step16.sql)
+            return CommonDB.GetDataTable("spr_UpdateMinutes", parameter);
         }
         #endregion
     }

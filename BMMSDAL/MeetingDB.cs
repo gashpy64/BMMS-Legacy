@@ -248,7 +248,7 @@ namespace BMMSDAL
         #endregion
 
         #region AddEditMeeting
-        public static int AddEditMeeting(MeetingDAL MeetingDAL)
+        public static DataTable AddEditMeeting(MeetingDAL MeetingDAL)
         {
             SqlParameter[] parameter = new SqlParameter[14];
             parameter[0] = new SqlParameter("@Code", MeetingDAL.Code);
@@ -266,7 +266,8 @@ namespace BMMSDAL
             parameter[12] = new SqlParameter("@UpdatedOn", MeetingDAL.UpdatedOn);
             parameter[13] = new SqlParameter("@UpdatedBy", MeetingDAL.UpdatedBy);
 
-            return CommonDB.ExecuteProcedure("spr_AddEditMeeting", parameter);
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks-Step16.sql)
+            return CommonDB.GetDataTable("spr_AddEditMeeting", parameter);
         }
         #endregion
 
@@ -291,6 +292,17 @@ namespace BMMSDAL
             parameter[0] = new SqlParameter("@MeetingId", MeetingId);
 
             return CommonDB.GetDataTable("spr_GetMeetingStatusByMeetingId", parameter);
+        }
+        #endregion
+
+        #region GetMeetingEditLockByMeetingId
+        // HasAttendance, HasAgenda; no row if the meeting does not exist (BMMS-Fix-MeetingLocks-Step16.sql)
+        public static DataTable GetMeetingEditLockByMeetingId(int MeetingId)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@MeetingId", MeetingId);
+
+            return CommonDB.GetDataTable("spr_GetMeetingEditLockByMeetingId", parameter);
         }
         #endregion
 

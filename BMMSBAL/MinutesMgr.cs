@@ -128,7 +128,7 @@ namespace BMMSBAL
         #endregion
 
         #region UpdateMinutes
-        public static int UpdateMinutes(MinutesBAL myMinutesBAL)
+        public static MeetingChangeResult UpdateMinutes(MinutesBAL myMinutesBAL)
         {
             MinutesDAL myMinutesDAL = new MinutesDAL();
 
@@ -142,7 +142,7 @@ namespace BMMSBAL
             myMinutesDAL.CreatedBy = myMinutesBAL.CreatedBy;
             myMinutesDAL.UpdatedBy = myMinutesBAL.UpdatedBy;
 
-            return MinutesDB.UpdateMinutes(myMinutesDAL);
+            return MeetingChangeResult.FromTable(MinutesDB.UpdateMinutes(myMinutesDAL));
         }
         #endregion
 

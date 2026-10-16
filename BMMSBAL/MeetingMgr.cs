@@ -8,9 +8,11 @@ namespace BMMSBAL
 {
     #region MeetingChangeResult
     /// <summary>
-    /// Answer of the meeting-state procedures (BMMS-Fix-MeetingLocks.sql).
-    /// Result 1 = done, 0 = refused. Reason says why (see MeetingChangeReason).
-    /// ReasonDetail: the meeting's current status for reason 3.
+    /// Answer of the meeting-state procedures (BMMS-Fix-MeetingLocks.sql and
+    /// BMMS-Fix-MeetingLocks-Step16.sql). Result 1 = done, 0 = refused.
+    /// Reason says why (see MeetingChangeReason). ReasonDetail: the meeting's
+    /// current status for reason 3, Finalized / BypassOff for reason 5, the
+    /// locked fields for reason 6, the member name for reason 9.
     /// </summary>
     public class MeetingChangeResult
     {
@@ -21,7 +23,7 @@ namespace BMMSBAL
         public static MeetingChangeResult FromTable(DataTable dt)
         {
             if (dt == null || dt.Rows.Count == 0 || !dt.Columns.Contains("Reason"))
-                throw new InvalidOperationException("The meeting procedure returned no Reason. Run Database/BMMS-Fix-MeetingLocks.sql.");
+                throw new InvalidOperationException("The meeting procedure returned no Reason. Run Database/BMMS-Fix-MeetingLocks.sql and BMMS-Fix-MeetingLocks-Step16.sql.");
 
             MeetingChangeResult r = new MeetingChangeResult();
             r.Result = Convert.ToInt32(dt.Rows[0]["Result"]);
@@ -44,6 +46,20 @@ namespace BMMSBAL
                          + System.Web.HttpUtility.HtmlEncode(ReasonDetail) + "). Reload the page to see the current state.";
                 case MeetingChangeReason.NotFound:
                     return "The meeting or member no longer exists. Reload the page.";
+                case MeetingChangeReason.AgendaFinalized:
+                    return ReasonDetail == "BypassOff"
+                         ? MeetingChangeReason.AgendaFinalizedMessage + " Controller changes after finalization are switched off in System Settings."
+                         : MeetingChangeReason.AgendaFinalizedMessage;
+                case MeetingChangeReason.AttendanceLocksMeeting:
+                    return MeetingChangeReason.AttendanceLocksMeetingMessage;
+                case MeetingChangeReason.MinutesConfirmed:
+                    return MeetingChangeReason.MinutesConfirmedMessage;
+                case MeetingChangeReason.ActingUserInvalid:
+                    return "Your session is no longer valid. Please log in again.";
+                case MeetingChangeReason.NotOnCommittee:
+                    return System.Web.HttpUtility.HtmlEncode(ReasonDetail) + " is not a member of this committee on the meeting date.";
+                case MeetingChangeReason.AgendaLocksCommittee:
+                    return "Agenda items are recorded for this meeting, so its committee cannot be changed.";
                 default:
                     return "Record Not Saved";
             }
@@ -57,9 +73,24 @@ namespace BMMSBAL
         public const int AttendanceRecorded = 2;   // meeting member delete
         public const int WrongState = 3;           // agenda / minutes finalize, minutes confirm
         public const int NotFound = 4;
+        public const int AgendaFinalized = 5;          // step 16: agenda add / edit / delete / approve
+        public const int AttendanceLocksMeeting = 6;   // step 16: meeting date / committee
+        public const int MinutesConfirmed = 7;         // step 16: minutes update
+        public const int ActingUserInvalid = 8;        // step 16: acting user missing or inactive
+        public const int NotOnCommittee = 9;           // step 16: chairman
+        public const int AgendaLocksCommittee = 10;    // step 16: meeting committee
 
         public const string MinutesFinalizedMessage =
             "The minutes of this meeting are finalized. Members, attendance and chairman can no longer be changed.";
+
+        public const string AgendaFinalizedMessage =
+            "The agenda for this meeting is finalized, so agenda items can no longer be added, changed or deleted.";
+
+        public const string AttendanceLocksMeetingMessage =
+            "Attendance is recorded for this meeting, so its date and committee cannot be changed. Venue, time and the other details can still be changed.";
+
+        public const string MinutesConfirmedMessage =
+            "The minutes of this meeting are confirmed and can no longer be changed.";
     }
     #endregion
 
@@ -260,7 +291,9 @@ namespace BMMSBAL
         #endregion
 
         #region AddEditMeeting
-        public static int AddEditMeeting(MeetingBAL MeetingBAL)
+        // Refused (Reason 6) when attendance is recorded and the date or committee changes,
+        // and (Reason 10) when agenda items exist and the committee changes (BMMS-Fix-MeetingLocks-Step16.sql)
+        public static MeetingChangeResult AddEditMeeting(MeetingBAL MeetingBAL)
         {
             MeetingDAL MeetingDAL = new MeetingDAL();
             MeetingDAL.Code = MeetingBAL.Code;
@@ -278,7 +311,37 @@ namespace BMMSBAL
             MeetingDAL.UpdatedOn = MeetingBAL.UpdatedOn;
             MeetingDAL.UpdatedBy = MeetingBAL.UpdatedBy;
 
-            return MeetingDB.AddEditMeeting(MeetingDAL);
+            return MeetingChangeResult.FromTable(MeetingDB.AddEditMeeting(MeetingDAL));
+        }
+        #endregion
+
+        #region IsMeetingHeld
+        // True when the meeting is dated today or earlier (database server date)
+        public static bool IsMeetingHeld(int MeetingId)
+        {
+            DataTable dt = MeetingDB.GetMeetingStatusByMeetingId(MeetingId);
+
+            return dt.Rows.Count > 0 && Convert.ToInt32(dt.Rows[0]["IsHeld"]) == 1;
+        }
+        #endregion
+
+        #region IsAgendaOpen
+        // True while the agenda is not finalized (NULL AgendaStatus counts as 'Open')
+        public static bool IsAgendaOpen(int MeetingId)
+        {
+            DataTable dt = MeetingDB.GetMeetingStatusByMeetingId(MeetingId);
+
+            return dt.Rows.Count > 0 && dt.Rows[0]["AgendaStatus"].ToString() == "Open";
+        }
+        #endregion
+
+        #region HasAttendance
+        // True when attendance is recorded for the meeting: its date and committee are then locked
+        public static bool HasAttendance(int MeetingId)
+        {
+            DataTable dt = MeetingDB.GetMeetingEditLockByMeetingId(MeetingId);
+
+            return dt.Rows.Count > 0 && Convert.ToInt32(dt.Rows[0]["HasAttendance"]) == 1;
         }
         #endregion
 

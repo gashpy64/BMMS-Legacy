@@ -211,6 +211,13 @@
     <Compile Include="Master\Followup.aspx.designer.cs">
       <DependentUpon>Followup.aspx</DependentUpon>
     </Compile>
+    <Compile Include="Master\SystemSettings.aspx.cs">
+      <DependentUpon>SystemSettings.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Master\SystemSettings.aspx.designer.cs">
+      <DependentUpon>SystemSettings.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Master\SMTPServerConfig.aspx.cs">
       <DependentUpon>SMTPServerConfig.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -522,6 +529,7 @@
     <Content Include="Master\ChangePassword.aspx" />
     <Content Include="ChangePasswordFirst.aspx" />
     <Content Include="Master\SMTPServerConfig.aspx" />
+    <Content Include="Master\SystemSettings.aspx" />
     <Content Include="Master\ResetPassword.aspx" />
     <Content Include="Master\MinutesConfirmation.aspx" />
     <Content Include="Master\ResetDatabase.aspx" />

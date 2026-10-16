@@ -156,6 +156,20 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region App settings (BMMS-Fix-MeetingLocks-Step16.sql)
+        public const string AgendaControllerBypass = "AgendaControllerBypass";
+
+        public static DataTable GetAppSetting(string SettingCode)
+        {
+            return UtilitiesDB.GetAppSetting(SettingCode);
+        }
+
+        public static MeetingChangeResult SetAppSetting(string SettingCode, string SettingValue, int ActingUserId)
+        {
+            return MeetingChangeResult.FromTable(UtilitiesDB.SetAppSetting(SettingCode, SettingValue, ActingUserId));
+        }
+        #endregion
+
         #region GetLocalIPAddress
         public static string GetLocalIPAddress()
         {

@@ -277,6 +277,9 @@ namespace BMMS.Master
                         sMsg = "Attendance Successfully Updated";
                     else if (MeetingMgr.IsMinutesFinalized(MeetingId))
                         sMsg = MeetingChangeReason.MinutesFinalizedMessage;
+                    else if (MeetingMgr.IsMeetingHeld(MeetingId))
+                        // a committee member not on the committee on the meeting date (BMMS-Fix-MeetingLocks-Step16.sql)
+                        sMsg = "Some members are not on the committee on the meeting date, so their attendance was not saved. Reload the meeting to see the current list.";
                     else
                         sMsg = MeetingNotHeldMsg;
 
