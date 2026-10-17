@@ -729,6 +729,7 @@ namespace BMMS.Master
             string Bcc = string.Empty;
 
             int mgrUserId = 0;
+            bool mgrActive = false;
 
             DataTable dtUser = UserMgr.GetActiveUserList();   // active users only (stage 2a)
             if (dtUser.Rows.Count > 0)
@@ -752,11 +753,21 @@ namespace BMMS.Master
                     if (dtUser.Rows[i]["UserId"].ToString() == mgrUserId.ToString())
                     {
                         Bcc += dtUser.Rows[i]["EmailId"].ToString();
+                        mgrActive = true;
                         break;
                     }
                 }
             }
 
+            // A user's new item waits for their manager: refused while that manager is inactive, before
+            // any mail goes out. No manager is unchanged. The procedure checks again (BMMS-Fix-UserStatus-Stage2b.sql).
+            string roleCode = Session["RoleCode"].ToString();
+            if (mgrUserId != 0 && !mgrActive && roleCode != "controller" && roleCode != "manager")
+            {
+                DataTable dtMgr = UserMgr.GetUserDataTableByUserId(mgrUserId);
+                string mgrName = dtMgr.Rows.Count > 0 ? dtMgr.Rows[0]["UserName"].ToString() : string.Empty;
+                return MeetingChangeReason.ManagerInactiveMessage(mgrName);
+            }
 
             string Subject = "Agenda (" + txtAgendaNo.Text.Trim() + ") has been Created";
             string BodyText = string.Empty;

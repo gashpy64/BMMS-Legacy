@@ -60,6 +60,8 @@ namespace BMMSBAL
                     return System.Web.HttpUtility.HtmlEncode(ReasonDetail) + " is not a member of this committee on the meeting date.";
                 case MeetingChangeReason.AgendaLocksCommittee:
                     return "Agenda items are recorded for this meeting, so its committee cannot be changed.";
+                case MeetingChangeReason.ManagerInactive:
+                    return MeetingChangeReason.ManagerInactiveMessage(ReasonDetail);
                 default:
                     return "Record Not Saved";
             }
@@ -79,6 +81,14 @@ namespace BMMSBAL
         public const int ActingUserInvalid = 8;        // step 16: acting user missing or inactive
         public const int NotOnCommittee = 9;           // step 16: chairman
         public const int AgendaLocksCommittee = 10;    // step 16: meeting committee
+        public const int ManagerInactive = 11;         // step 17: the user's manager is inactive (new agenda item)
+
+        /// <summary>A user's new agenda item waits for their manager, who is inactive (BMMS-Fix-UserStatus-Stage2b.sql).</summary>
+        public static string ManagerInactiveMessage(string managerName)
+        {
+            string who = string.IsNullOrEmpty(managerName) ? "Your manager" : "Your manager (" + System.Web.HttpUtility.HtmlEncode(managerName) + ")";
+            return who + " is inactive, so this agenda item cannot be sent for approval. Ask the administrator to assign you an active manager.";
+        }
 
         public const string MinutesFinalizedMessage =
             "The minutes of this meeting are finalized. Members, attendance and chairman can no longer be changed.";

@@ -107,6 +107,11 @@ namespace BMMS.Master
             {
                 errMsg = "The password was not reset. Please try again.";
             }
+            else if (UserMgr.GetUserStatusByUserId(UserId) != 1)
+            {
+                // An inactive user receives no mail (BMMS-Fix-UserStatus-Stage2b.sql)
+                errMsg = "Password reset; no mail sent because the account is inactive.";
+            }
             else
             {
                 result = Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, null);

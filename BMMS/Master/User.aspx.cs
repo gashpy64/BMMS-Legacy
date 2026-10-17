@@ -153,7 +153,7 @@ namespace BMMS.Master
                         string confirmText = "Deactivate " + login + "? They will no longer be able to log in. Their history is kept.";
                         if (managed > 0)
                             confirmText += " They are the reporting person for " + managed + " active user" + (managed == 1 ? "" : "s")
-                                         + "; those users keep them as manager.";
+                                         + "; those users keep them as manager, and new agenda items from those who are not Managers or Controllers will be refused until they get an active manager.";
 
                         btnStatus.Text = "Deactivate";
                         btnStatus.ToolTip = "Deactivate";
