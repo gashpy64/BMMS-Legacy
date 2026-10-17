@@ -80,7 +80,16 @@ BEGIN TRY
     VALUES ('ZZ workflow user', @DepartmentId, @DesignationId, @Mgr, @RoleUser, '', 'zzwftestusr', 'not-a-login', 0, @Now, NULL, NULL, NULL);
     SET @Usr = SCOPE_IDENTITY();
 
-    SET @OtherUsers = (SELECT COUNT(*) FROM Users) - 1;
+    -- Step 17: alerts, action items and alert mail go to active users only, and a user's agenda is
+    -- refused while their manager is inactive. The three test users are switched on (rolled back)
+    -- and "every other user" counts active users only.
+    IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetAlertMailId')), '') LIKE '%UserStatus2b-Step17%')
+    BEGIN
+        UPDATE Users SET AccountStatus = 1 WHERE UserId IN (@Usr, @Mgr, @Ctl);
+        SET @OtherUsers = (SELECT COUNT(*) FROM Users WHERE AccountStatus = 1) - 1;
+    END
+    ELSE
+        SET @OtherUsers = (SELECT COUNT(*) FROM Users) - 1;
 
     ---------------------------------------------------------------------------
     -- Committee created (alert sent to every other user)

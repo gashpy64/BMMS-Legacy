@@ -1,5 +1,5 @@
 /* ============================================================================
-   BMMS - Which numbered steps (README run order 1 to 16) are installed
+   BMMS - Which numbered steps (README run order 1 to 17) are installed
    ----------------------------------------------------------------------------
    READ ONLY. It reads object definitions and constraint names; it creates,
    changes and deletes nothing, and it can run on BMMS as well as on a copy.
@@ -11,14 +11,16 @@
                      the re-run notes in Database/README.md)
      Missing         none is present
      Not detectable  the step leaves nothing that can be checked (none of
-                     steps 1 to 16 today; kept for future steps)
+                     steps 1 to 17 today; kept for future steps)
 
    A step that is replaced by a later one is checked by what survives: for
    example step 10 by the "FK#5-UserDelete-AllColumns" text that step 13 kept
    in spr_DeleteUserByUserId, step 8 by the duplicate check that step 15 kept
    in spr_MinutesFinalizeByMeetingId. Step 16 keeps the texts of steps 6, 12
    and 15 in the procedures it replaces, so those steps still read Installed;
-   if step 6, 12 or 15 is re-run afterwards, step 16 reads Partly.
+   if step 6, 12 or 15 is re-run afterwards, step 16 reads Partly. Step 17
+   keeps the texts of steps 6, 8, 15 and 16 in the procedures it replaces; if
+   step 6, 8, 15 or 16 is re-run afterwards, step 17 reads Partly.
 
    It has no USE line: select the database in SSMS first. It stops if the
    current database name does not start with "BMMS".
@@ -138,6 +140,13 @@ FROM (VALUES ('fn_AgendaChangeRefusal'), ('fn_CommitteeMemberDateCheck'), ('spr_
 INSERT INTO @M VALUES
 (16, 'App_Setting table', CASE WHEN OBJECT_ID('dbo.App_Setting', 'U') IS NOT NULL THEN 1 ELSE 0 END);
 
+-- 17. BMMS-Fix-UserStatus-Stage2b.sql (re-running step 6, 8, 15 or 16 replaces some of these)
+INSERT INTO @M
+SELECT 17, o.Name + ' (UserStatus2b-Step17)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%UserStatus2b-Step17%' THEN 1 ELSE 0 END
+FROM (VALUES ('spr_AddEditCommittee'), ('spr_AddEditMeeting'), ('spr_AddEditAgenda'), ('spr_AddEditAgendaByManager'),
+             ('spr_AddEditAgendaByController'), ('spr_UpdateAgendaByAgendaId'), ('spr_MinutesFinalizeByMeetingId'),
+             ('spr_UpdateMinutes'), ('spr_GetAlertMailId')) o(Name);
+
 DECLARE @Steps TABLE (Step INT, Script VARCHAR(60), IfPartly VARCHAR(200));
 INSERT INTO @Steps VALUES
 (1, 'BMMS-Fix-Login-Procedures.sql', ''),
@@ -151,11 +160,12 @@ INSERT INTO @Steps VALUES
 (9, 'BMMS-Add-ForeignKeys-Step4.sql', ''),
 (10, 'BMMS-Fix-UserDelete-Procedure.sql', 'step 10 or 13 replaced: run step 13 again, then 14'),
 (11, 'BMMS-Add-ForeignKeys-Step5.sql', 'some keys refused: run BMMS-Check-Orphans.sql, then step 11 again'),
-(12, 'BMMS-Fix-Attendance-FutureMeeting.sql', 'run step 12 again, then step 15'),
+(12, 'BMMS-Fix-Attendance-FutureMeeting.sql', 'run step 12 again, then steps 15, 16 and 17'),
 (13, 'BMMS-Fix-UserProtection-Stage1.sql', 'step 2, 6 or 10 was re-run: run step 13 again, then 14'),
 (14, 'BMMS-Fix-UserStatus-Stage2a.sql', 'step 13 was re-run: run step 14 again'),
-(15, 'BMMS-Fix-MeetingLocks.sql', 'step 6, 8 or 12 was re-run: run step 15 again, then step 16'),
-(16, 'BMMS-Fix-MeetingLocks-Step16.sql', 'step 6, 12 or 15 was re-run: run step 16 again');
+(15, 'BMMS-Fix-MeetingLocks.sql', 'step 6, 8 or 12 was re-run: run step 15 again, then steps 16 and 17'),
+(16, 'BMMS-Fix-MeetingLocks-Step16.sql', 'step 6, 12 or 15 was re-run: run step 16 again, then step 17'),
+(17, 'BMMS-Fix-UserStatus-Stage2b.sql', 'step 6, 8, 15 or 16 was re-run: run step 17 again');
 
 SELECT s.Step, s.Script,
        CASE WHEN COUNT(m.Step) = 0 THEN 'Not detectable'

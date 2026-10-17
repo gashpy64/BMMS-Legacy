@@ -64,7 +64,9 @@ DECLARE @Later DATETIME = DATEADD(MINUTE, 5, GETDATE());
 DECLARE @Admin INT = (SELECT TOP 1 u.UserId FROM Users u JOIN Roles r ON r.RoleId = u.RoleId WHERE r.RoleCode = 'admin' AND u.AccountStatus = 1 ORDER BY u.UserId);
 DECLARE @Ctrl INT = (SELECT TOP 1 u.UserId FROM Users u JOIN Roles r ON r.RoleId = u.RoleId WHERE r.RoleCode = 'controller' AND u.AccountStatus = 1 ORDER BY u.UserId);
 DECLARE @Mgr INT = (SELECT TOP 1 u.UserId FROM Users u JOIN Roles r ON r.RoleId = u.RoleId WHERE r.RoleCode = 'manager' AND u.AccountStatus = 1 ORDER BY u.UserId);
-DECLARE @Usr INT = (SELECT TOP 1 u.UserId FROM Users u JOIN Roles r ON r.RoleId = u.RoleId WHERE r.RoleCode = 'user' AND u.AccountStatus = 1 ORDER BY u.UserId);
+-- The User adds agenda items: from step 17 that is refused (Reason 11) while their manager is inactive
+DECLARE @Usr INT = (SELECT TOP 1 u.UserId FROM Users u JOIN Roles r ON r.RoleId = u.RoleId WHERE r.RoleCode = 'user' AND u.AccountStatus = 1
+                    AND NOT EXISTS (SELECT 1 FROM Users m WHERE m.UserId = u.ManagerId AND m.AccountStatus <> 1) ORDER BY u.UserId);
 DECLARE @CtrlRoleId INT = (SELECT TOP 1 RoleId FROM Roles WHERE RoleCode = 'controller');
 DECLARE @AdminRoleId INT = (SELECT TOP 1 RoleId FROM Roles WHERE RoleCode = 'admin');
 DECLARE @DepartmentId INT = (SELECT TOP 1 DepartmentId FROM Department ORDER BY DepartmentId);

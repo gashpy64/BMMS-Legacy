@@ -303,8 +303,12 @@ BEGIN TRY
         FROM Action_Item WHERE MinutesId = @MinutesId;
 
         INSERT INTO @T
-        SELECT 17, 'Minutes finalize: every user mapped once to it',
-               CAST((SELECT COUNT(*) FROM Users) AS VARCHAR(12)), CAST(COUNT(*) AS VARCHAR(12))
+        -- From step 17 only active users are mapped; the row saved above stays even if that user is inactive
+        SELECT 17, 'Minutes finalize: every user mapped once (step 17: active users + the saved row)',
+               CAST(CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_MinutesFinalizeByMeetingId')), '') LIKE '%UserStatus2b-Step17%'
+                         THEN (SELECT COUNT(*) FROM Users WHERE AccountStatus = 1 OR UserId = @AnyUserId)
+                         ELSE (SELECT COUNT(*) FROM Users) END AS VARCHAR(12)),
+               CAST(COUNT(*) AS VARCHAR(12))
         FROM ActionItem_User_Map WHERE ActionItemId = @ActionItemId;
 
         INSERT INTO @T
