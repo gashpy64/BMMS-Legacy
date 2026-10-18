@@ -25,6 +25,7 @@
      * all 21 keys still exist and are trusted
      * a new user and a new committee can be added by user 1
      * the new, unused user can be deleted; admin (who has history) cannot
+     * with step 19 installed: the organisation settings are unchanged
 
    Result: one grid, one row per check. Status should be PASS for every row.
 
@@ -101,12 +102,27 @@ END
 CLOSE TableCursor;
 DEALLOCATE TableCursor;
 
+-- Step 19: the organisation settings before the reset (they must survive it)
+DECLARE @Step19 INT = CASE WHEN OBJECT_ID('dbo.spr_GetOrganisationSettings', 'P') IS NOT NULL THEN 1 ELSE 0 END;
+DECLARE @OrgBefore VARCHAR(MAX) = '';
+DECLARE @OrgAfter VARCHAR(MAX) = '';
+DECLARE @OrgSql NVARCHAR(MAX) = N'SELECT @s = ISNULL(STUFF((SELECT ''|'' + SettingCode + ''='' + SettingValue FROM dbo.App_Setting
+    WHERE SettingCode <> ''AgendaControllerBypass'' ORDER BY SettingCode FOR XML PATH(''''), TYPE).value(''.'', ''VARCHAR(MAX)''), 1, 1, ''''), '''')';
+
 -------------------------------------------------------------------------------
 -- The reset, inside a transaction that is rolled back
 -------------------------------------------------------------------------------
 BEGIN TRANSACTION;
 
 BEGIN TRY
+
+    -- Step 19: two sample values (rolled back), then the settings as they are before the reset
+    IF (@Step19 = 1)
+    BEGIN
+        UPDATE App_Setting SET SettingValue = 'Example Company Limited' WHERE SettingCode = 'OrganisationName';
+        UPDATE App_Setting SET SettingValue = 'Sampletown' WHERE SettingCode = 'RegisteredOfficeCity';
+        EXEC sp_executesql @OrgSql, N'@s VARCHAR(MAX) OUTPUT', @s = @OrgBefore OUTPUT;
+    END
 
     EXEC spr_sys_ResetDatabase;
 
@@ -125,6 +141,17 @@ BEGIN TRY
         EXEC sp_executesql N'SELECT @s = CAST(COUNT(*) AS VARCHAR(4)) + '' '' + ISNULL(MAX(CASE WHEN IsSystem = 1 THEN LOWER(LoginName) + '' '' + CAST(UserId AS VARCHAR(12)) END), ''none'') FROM dbo.Users WHERE IsSystem = 1',
              N'@s VARCHAR(40) OUTPUT', @s = @SystemAfterReset OUTPUT;
         INSERT INTO @T SELECT 'After reset: exactly one system account, the admin seed (count, login, id) [step 18]', '1 admin 1', @SystemAfterReset;
+    END
+
+    -- Step 19: Reset Database keeps the organisation settings
+    IF (@Step19 = 1)
+    BEGIN
+        EXEC sp_executesql @OrgSql, N'@s VARCHAR(MAX) OUTPUT', @s = @OrgAfter OUTPUT;
+        INSERT INTO @T SELECT 'After reset: organisation settings unchanged [step 19]', '12 rows, same values',
+               CAST((SELECT COUNT(*) FROM App_Setting WHERE SettingCode IN ('OrganisationName', 'OrganisationShortName', 'OrganisationTerm',
+                     'CertificateSignOff', 'RegisteredOfficeLabel', 'RegisteredOfficeLine1', 'RegisteredOfficeLine2', 'RegisteredOfficeCity',
+                     'RegisteredOfficePinCode', 'OrganisationPhone', 'OrganisationFax', 'OrganisationEmail')) AS VARCHAR(4)) + ' rows, '
+             + CASE WHEN @OrgAfter = @OrgBefore THEN 'same values' ELSE 'values changed' END;
     END
 
     INSERT INTO @T

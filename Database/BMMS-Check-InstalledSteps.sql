@@ -1,5 +1,5 @@
 /* ============================================================================
-   BMMS - Which numbered steps (README run order 1 to 18) are installed
+   BMMS - Which numbered steps (README run order 1 to 19) are installed
    ----------------------------------------------------------------------------
    READ ONLY. It reads object definitions and constraint names; it creates,
    changes and deletes nothing, and it can run on BMMS as well as on a copy.
@@ -11,7 +11,7 @@
                      the re-run notes in Database/README.md)
      Missing         none is present
      Not detectable  the step leaves nothing that can be checked (none of
-                     steps 1 to 18 today; kept for future steps)
+                     steps 1 to 19 today; kept for future steps)
 
    A step that is replaced by a later one is checked by what survives: for
    example step 10 by the "FK#5-UserDelete-AllColumns" text that step 13 kept
@@ -24,6 +24,9 @@
    keeps the texts of steps 3, 6, 8, 13 to 17 in the objects it replaces; if
    step 3, 6, 8, 13, 14, 15, 16 or 17 is re-run afterwards, step 18 reads
    Partly. Step 18 also checks that exactly one user is the system account.
+   Step 19 replaces nothing and no earlier script contains its procedures, so
+   no re-run of an earlier step changes it; it also checks that its 12
+   setting rows exist.
 
    It has no USE line: select the database in SSMS first. It stops if the
    current database name does not start with "BMMS".
@@ -165,6 +168,18 @@ INSERT INTO @M VALUES
 (18, 'CK_Users_IsSystem', CASE WHEN EXISTS (SELECT 1 FROM sys.check_constraints WHERE parent_object_id = OBJECT_ID('dbo.Users') AND name = 'CK_Users_IsSystem') THEN 1 ELSE 0 END),
 (18, 'Exactly one system account (found ' + CAST(@SystemAccounts AS VARCHAR(12)) + ')', CASE WHEN @SystemAccounts = 1 THEN 1 ELSE 0 END);
 
+-- 19. BMMS-Fix-OrganisationSettings-Step19.sql (replaces nothing; no earlier script contains these)
+DECLARE @OrgRows INT = 0;
+IF (OBJECT_ID('dbo.App_Setting', 'U') IS NOT NULL)
+    EXEC sp_executesql N'SELECT @n = COUNT(*) FROM dbo.App_Setting WHERE SettingCode IN (''OrganisationName'', ''OrganisationShortName'', ''OrganisationTerm'',
+        ''CertificateSignOff'', ''RegisteredOfficeLabel'', ''RegisteredOfficeLine1'', ''RegisteredOfficeLine2'', ''RegisteredOfficeCity'',
+        ''RegisteredOfficePinCode'', ''OrganisationPhone'', ''OrganisationFax'', ''OrganisationEmail'')', N'@n INT OUTPUT', @n = @OrgRows OUTPUT;
+INSERT INTO @M VALUES
+(19, 'spr_GetOrganisationSettings', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetOrganisationSettings')), '') LIKE '%OrganisationSettings-Step19%' THEN 1 ELSE 0 END),
+(19, 'spr_SetOrganisationSettings', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_SetOrganisationSettings')), '') LIKE '%OrganisationSettings-Step19%' THEN 1 ELSE 0 END),
+(19, 'spr_RecordOrganisationLogo', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_RecordOrganisationLogo')), '') LIKE '%OrganisationSettings-Step19%' THEN 1 ELSE 0 END),
+(19, 'The 12 organisation setting rows (found ' + CAST(@OrgRows AS VARCHAR(12)) + ')', CASE WHEN @OrgRows = 12 THEN 1 ELSE 0 END);
+
 DECLARE @Steps TABLE (Step INT, Script VARCHAR(60), IfPartly VARCHAR(200));
 INSERT INTO @Steps VALUES
 (1, 'BMMS-Fix-Login-Procedures.sql', ''),
@@ -184,7 +199,8 @@ INSERT INTO @Steps VALUES
 (15, 'BMMS-Fix-MeetingLocks.sql', 'step 6, 8 or 12 was re-run: run step 15 again, then steps 16, 17 and 18'),
 (16, 'BMMS-Fix-MeetingLocks-Step16.sql', 'step 6, 12 or 15 was re-run: run step 16 again, then steps 17 and 18'),
 (17, 'BMMS-Fix-UserStatus-Stage2b.sql', 'step 6, 8, 15 or 16 was re-run: run step 17 again, then step 18'),
-(18, 'BMMS-Fix-SystemAccount-Stage3.sql', 'step 3, 6, 8, 13, 14, 15, 16 or 17 was re-run, or the system account count is not 1: see README step 18');
+(18, 'BMMS-Fix-SystemAccount-Stage3.sql', 'step 3, 6, 8, 13, 14, 15, 16 or 17 was re-run, or the system account count is not 1: see README step 18'),
+(19, 'BMMS-Fix-OrganisationSettings-Step19.sql', 'a procedure or setting row is missing: run step 19 again (the values already set are kept)');
 
 SELECT s.Step, s.Script,
        CASE WHEN COUNT(m.Step) = 0 THEN 'Not detectable'
