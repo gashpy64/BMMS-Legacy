@@ -111,12 +111,7 @@ namespace BMMS.Report
 
                     BodyText += "<table>";
 
-                    BodyText += "<tr>";
-                    BodyText += "<td colspan='2' style='text-align:center; font-weight:bold;'>";
-                    BodyText += "LAKSHMI VILAS BANK <br />";
-                    BodyText += "REGD & ADMIN OFFICE, KARUR";
-                    BodyText += "</td>";
-                    BodyText += "</tr>";
+                    BodyText += OrganisationDetails.Current.MailHeaderRowHtml();
 
                     BodyText += "<tr>";
                     BodyText += "<td colspan='2' style='text-align:right'>";
@@ -293,10 +288,11 @@ namespace BMMS.Report
                 
                 htmlTxt += "<div style='float:left; width: 650px;'>";
 
-                htmlTxt += "<div style='float:left; width:100%; text-align:center;'><img src='../Images/report_banner-top.jpg' /></div>";
+                htmlTxt += OrganisationDetails.ReportBannerHtml();
                 //htmlTxt += "<div style='float:left; width:100%; text-align:center;'><img src='" + strReportBanner.ToString() + "' /></div>";
 
-                htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:13pt; padding-top:10px;'>THE LAKSHMI VILAS BANK LIMITED., REGD & ADMIN OFFICE, KARUR - 6</div>";
+                if (OrganisationDetails.Current.HeaderLine != string.Empty)
+                    htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:13pt; padding-top:10px;'>" + OrganisationDetails.Html(OrganisationDetails.Current.HeaderLine) + "</div>";
 
                 htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:11pt;'><br /></div>";
 

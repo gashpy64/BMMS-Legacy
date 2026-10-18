@@ -104,12 +104,7 @@ namespace BMMS.Report
 
                             BodyText += "<table>";
 
-                            BodyText += "<tr>";
-                            BodyText += "<td colspan='2' style='text-align:center; font-weight:bold;'>";
-                            BodyText += "LAKSHMI VILAS BANK <br />";
-                            BodyText += "REGD & ADMIN OFFICE, KARUR";
-                            BodyText += "</td>";
-                            BodyText += "</tr>";
+                            BodyText += OrganisationDetails.Current.MailHeaderRowHtml();
 
                             BodyText += "<tr>";
                             BodyText += "<td colspan='2' style='text-align:right'>";
@@ -256,11 +251,12 @@ namespace BMMS.Report
                         Paragraph paragraph = new Paragraph(" ");
                         pdfDocument.Add(paragraph);
 
-                        pdfDocument.Add((PDFUtilities.PrintCompanyLogo()));
+                        PDFUtilities.AddCompanyLogo(pdfDocument);
 
-                        Paragraph para = new Paragraph("REGD & ADMIN OFFICE, KARUR");
+                        Paragraph para = new Paragraph(OrganisationDetails.Current.OfficeLineUpper);
                         para.Alignment = Element.ALIGN_CENTER;
-                        pdfDocument.Add(para);
+                        if (OrganisationDetails.Current.OfficeLineUpper != string.Empty)
+                            pdfDocument.Add(para);
 
                         pdfDocument.Add(new Paragraph(Environment.NewLine));
 

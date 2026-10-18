@@ -63,11 +63,12 @@ namespace BMMS.Report
                         Paragraph paragraph = new Paragraph(" ");
                         pdfDocument.Add(paragraph);
 
-                        pdfDocument.Add((PDFUtilities.PrintCompanyLogo()));
+                        PDFUtilities.AddCompanyLogo(pdfDocument);
 
-                        Paragraph para = new Paragraph("REGD & ADMIN OFFICE, KARUR");
+                        Paragraph para = new Paragraph(OrganisationDetails.Current.OfficeLineUpper);
                         para.Alignment = Element.ALIGN_CENTER;
-                        pdfDocument.Add(para);
+                        if (OrganisationDetails.Current.OfficeLineUpper != string.Empty)
+                            pdfDocument.Add(para);
 
                         pdfDocument.Add(new Paragraph(Environment.NewLine));
                         pdfDocument.Add(new Paragraph(Environment.NewLine));

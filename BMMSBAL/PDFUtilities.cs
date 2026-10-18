@@ -63,24 +63,36 @@ namespace BMMSBAL
         }
         #endregion
 
-        #region PrintCompanyLogo
-        public static iTextSharp.text.Image PrintCompanyLogo()
+        #region AddCompanyLogo
+        // The organisation logo uploaded on System Settings; without one, the organisation name in
+        // its place; with neither, nothing (OrganisationDetails, BMMS-Fix-OrganisationSettings-Step19.sql)
+        public static void AddCompanyLogo(Document Pdf_Document)
         {
-            string imageFilePath = HttpContext.Current.Server.MapPath("~/Images") + "\\logo.jpg";
-            iTextSharp.text.Image logo = iTextSharp.text.Image.GetInstance(imageFilePath);
+            if (OrganisationDetails.HasLogo)
+            {
+                iTextSharp.text.Image logo = iTextSharp.text.Image.GetInstance(OrganisationDetails.LogoFilePath);
 
-            logo.ScaleToFit(500f, 260f);
+                logo.ScaleToFit(500f, 260f);
 
-            //Give space before image
-            logo.SpacingBefore = 30f;
+                //Give space before image
+                logo.SpacingBefore = 30f;
 
-            //Give some space after the image
-            logo.SpacingAfter = 1f;
-            logo.Alignment = Element.ALIGN_CENTER;
+                //Give some space after the image
+                logo.SpacingAfter = 1f;
+                logo.Alignment = Element.ALIGN_CENTER;
 
-            return logo;
+                Pdf_Document.Add(logo);
+            }
+            else if (OrganisationDetails.Current.Name != string.Empty)
+            {
+                Paragraph name = new Paragraph(OrganisationDetails.Current.NameUpper,
+                    FontFactory.GetFont(FontFactory.TIMES_ROMAN, 14, Font.BOLD));
+                name.SpacingBefore = 30f;
+                name.SpacingAfter = 1f;
+                name.Alignment = Element.ALIGN_CENTER;
 
-
+                Pdf_Document.Add(name);
+            }
         }
         #endregion
 

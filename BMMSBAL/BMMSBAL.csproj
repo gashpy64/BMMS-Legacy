@@ -68,6 +68,7 @@
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Security" />
     <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
@@ -86,6 +87,7 @@
     <Compile Include="PDF_Reports.cs" />
     <Compile Include="DocToString.cs" />
     <Compile Include="Mail_Mgr.cs" />
+    <Compile Include="OrganisationDetails.cs" />
     <Compile Include="HtmlToPdfBuilder.cs" />
     <Compile Include="Sql_Backup_Mgr.cs" />
     <Compile Include="WordUtilities.cs" />

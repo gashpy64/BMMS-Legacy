@@ -76,6 +76,18 @@ namespace BMMSBAL
         #endregion
 
 
+        #region ProductFooter
+        // The fixed product footer of every master page; the version is the web application's
+        // assembly version, three parts (1.0.0.0 -> 1.0.0)
+        public static string ProductFooter(System.Reflection.Assembly WebAssembly)
+        {
+            Version version = WebAssembly.GetName().Version;
+            return "Copyright © 2026 BMMS-" + version.Major + "." + version.Minor + "." + version.Build
+                 + ". All Rights Reserved. Gashpy Software";
+        }
+        #endregion
+
+
         #region GetAppSetting
         public static string GetAppSetting(string KeyName)
         {

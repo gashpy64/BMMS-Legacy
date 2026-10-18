@@ -66,12 +66,12 @@ namespace BMMS.Report
 
         protected void btnExportToWord_Click(object sender, EventArgs e)
         {
-            string strReportBanner = Server.MapPath("~/Images") + "\\report_banner-top.jpg";
-            strReportBanner = "src='" + strReportBanner + "'";
+            // The organisation logo (OrganisationDetails.ReportBannerHtml), as a file path for Word
+            string strReportBanner = "src='" + OrganisationDetails.LogoFilePath + "'";
 
             string strHTML = Session["ViewReport"].ToString();
 
-            strHTML = strHTML.Replace("src='../Images/report_banner-top.jpg'", strReportBanner);
+            strHTML = strHTML.Replace("src='" + OrganisationDetails.LogoReportSrc + "'", strReportBanner);
             strHTML = strHTML.Replace("<o:p>", "");
             strHTML = strHTML.Replace("</o:p>", "");
 

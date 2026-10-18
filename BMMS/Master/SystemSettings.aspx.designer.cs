@@ -23,6 +23,11 @@ namespace BMMS.Master {
         protected global::System.Web.UI.HtmlControls.HtmlGenericControl spanErrLogin;
 
         /// <summary>
+        /// divOrgNotSet control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl divOrgNotSet;
+
+        /// <summary>
         /// chkAgendaControllerBypass control.
         /// </summary>
         protected global::System.Web.UI.WebControls.CheckBox chkAgendaControllerBypass;
@@ -41,5 +46,100 @@ namespace BMMS.Master {
         /// btnCancel control.
         /// </summary>
         protected global::System.Web.UI.WebControls.Button btnCancel;
+
+        /// <summary>
+        /// txtOrganisationName control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.TextBox txtOrganisationName;
+
+        /// <summary>
+        /// txtOrganisationShortName control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.TextBox txtOrganisationShortName;
+
+        /// <summary>
+        /// txtOrganisationTerm control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.TextBox txtOrganisationTerm;
+
+        /// <summary>
+        /// txtCertificateSignOff control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.TextBox txtCertificateSignOff;
+
+        /// <summary>
+        /// txtRegisteredOfficeLabel control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.TextBox txtRegisteredOfficeLabel;
+
+        /// <summary>
+        /// txtRegisteredOfficeLine1 control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.TextBox txtRegisteredOfficeLine1;
+
+        /// <summary>
+        /// txtRegisteredOfficeLine2 control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.TextBox txtRegisteredOfficeLine2;
+
+        /// <summary>
+        /// txtRegisteredOfficeCity control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.TextBox txtRegisteredOfficeCity;
+
+        /// <summary>
+        /// txtRegisteredOfficePinCode control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.TextBox txtRegisteredOfficePinCode;
+
+        /// <summary>
+        /// txtOrganisationPhone control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.TextBox txtOrganisationPhone;
+
+        /// <summary>
+        /// txtOrganisationFax control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.TextBox txtOrganisationFax;
+
+        /// <summary>
+        /// txtOrganisationEmail control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.TextBox txtOrganisationEmail;
+
+        /// <summary>
+        /// litOrgLastChanged control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Literal litOrgLastChanged;
+
+        /// <summary>
+        /// btnSaveOrganisation control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Button btnSaveOrganisation;
+
+        /// <summary>
+        /// imgLogo control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Image imgLogo;
+
+        /// <summary>
+        /// litNoLogo control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Literal litNoLogo;
+
+        /// <summary>
+        /// fuLogo control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.FileUpload fuLogo;
+
+        /// <summary>
+        /// btnUploadLogo control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Button btnUploadLogo;
+
+        /// <summary>
+        /// btnRemoveLogo control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Button btnRemoveLogo;
     }
 }

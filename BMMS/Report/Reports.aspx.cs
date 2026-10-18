@@ -555,7 +555,8 @@ namespace BMMS.Report
                         //htmlTxt += "<div style='float:left; width:100%; text-align:center;'><img src='../Images/report_banner-top.jpg' /></div>";
                         //htmlTxt += "<div style='float:left; width:100%; text-align:center;'><img src='" + strReportBanner.ToString() + "' /></div>";
 
-                        htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:11pt; padding-top:10px;'>THE LAKSHMI VILAS BANK LIMITED., REGD & ADMIN OFFICE, KARUR - 6</div>";
+                        if (OrganisationDetails.Current.HeaderLine != string.Empty)
+                            htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:11pt; padding-top:10px;'>" + OrganisationDetails.Html(OrganisationDetails.Current.HeaderLine) + "</div>";
 
                         htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:11pt;'><br /></div>";
 
@@ -889,13 +890,16 @@ namespace BMMS.Report
 
                     for (int i = 0; i < dtMinutes.Rows.Count; i++)
                     {
-                        htmlTxt += "<div style='float:left; width:100%; text-align:center;'><img src='../Images/report_banner-top.jpg' /></div>";
+                        htmlTxt += OrganisationDetails.ReportBannerHtml();
 
-                        htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:13pt;'>THE LAKSHMI VILAS BANK LIMITED</div>";
+                        if (OrganisationDetails.Current.Name != string.Empty)
+                            htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:13pt;'>" + OrganisationDetails.Html(OrganisationDetails.Current.NameUpper) + "</div>";
 
-                        htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:11pt;'>REGD & ADMIN OFFICE, KATHAPARAI</div>";
+                        if (OrganisationDetails.Current.OfficeLabel != string.Empty)
+                            htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:11pt;'>" + OrganisationDetails.Html(OrganisationDetails.Current.OfficeLabelUpper) + "</div>";
 
-                        htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:11pt;'>SALEM ROAD, KARUR 639 006<br /></div>";
+                        if (OrganisationDetails.Current.Address != string.Empty)
+                            htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:11pt;'>" + OrganisationDetails.Html(OrganisationDetails.Current.AddressUpper) + "<br /></div>";
 
                         htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:11pt;'><br /></div>";
 
@@ -994,7 +998,7 @@ namespace BMMS.Report
                 Paragraph paragraph = new Paragraph(" ");
                 pdfDocument.Add(paragraph);
 
-                pdfDocument.Add((PDFUtilities.PrintCompanyLogo()));
+                PDFUtilities.AddCompanyLogo(pdfDocument);
 
                 PDFUtilities.AddHeaderPageNo(pdfDocument);
 
@@ -1003,7 +1007,8 @@ namespace BMMS.Report
                 header.Alignment = Element.ALIGN_RIGHT;
                 pdfDocument.Header = header;
 
-                PDFUtilities.AddParagraph(pdfDocument, "THE LAKSHMI VILAS BANK LTD., REGD & ADMIN OFFICE, KARUR - 6", fnt12Normal, Element.ALIGN_CENTER);
+                if (OrganisationDetails.Current.HeaderLine != string.Empty)
+                    PDFUtilities.AddParagraph(pdfDocument, OrganisationDetails.Current.HeaderLine, fnt12Normal, Element.ALIGN_CENTER);
 
 
                 PDFUtilities.AddParagraph(pdfDocument, "-".PadRight(150, '-'), fnt10Normal, Element.ALIGN_CENTER);
@@ -1101,8 +1106,11 @@ namespace BMMS.Report
 
                 pdfDocument.Add(new Paragraph(Environment.NewLine));
 
-                paragraph = new Paragraph("KARUR", fnt12Normal);
-                pdfDocument.Add(paragraph);
+                if (OrganisationDetails.Current.City != string.Empty)
+                {
+                    paragraph = new Paragraph(OrganisationDetails.Current.CityUpper, fnt12Normal);
+                    pdfDocument.Add(paragraph);
+                }
 
                 paragraph = new Paragraph(System.DateTime.Now.ToString("dd-MM-yyyy"), fnt12Normal);
                 pdfDocument.Add(paragraph);
@@ -1153,11 +1161,12 @@ namespace BMMS.Report
                     dvAgenda.RowFilter = "DepartmentId = " + int.Parse(dtDepartment.Rows[i]["DepartmentId"].ToString());
                     dtAgendaFilter = dvAgenda.ToTable("dtAgenda");
 
-                    pdfDocument.Add((PDFUtilities.PrintCompanyLogo()));
+                    PDFUtilities.AddCompanyLogo(pdfDocument);
 
-                    Paragraph para = new Paragraph("REGD & ADMIN OFFICE, KARUR");
+                    Paragraph para = new Paragraph(OrganisationDetails.Current.OfficeLineUpper);
                     para.Alignment = Element.ALIGN_CENTER;
-                    pdfDocument.Add(para);
+                    if (OrganisationDetails.Current.OfficeLineUpper != string.Empty)
+                        pdfDocument.Add(para);
 
                     htmlTxt = "<div style='float:left; width:100%; text-align:center'>";
                     htmlTxt += "Subject wise report for the Department : " + dtDepartment.Rows[i]["DepartmentName"].ToString();
@@ -1267,11 +1276,12 @@ namespace BMMS.Report
                     Paragraph paragraph = new Paragraph(" ");
                     pdfDocument.Add(paragraph);
 
-                    pdfDocument.Add((PDFUtilities.PrintCompanyLogo()));
+                    PDFUtilities.AddCompanyLogo(pdfDocument);
 
-                    Paragraph para = new Paragraph("REGD & ADMIN OFFICE, KARUR");
+                    Paragraph para = new Paragraph(OrganisationDetails.Current.OfficeLineUpper);
                     para.Alignment = Element.ALIGN_CENTER;
-                    pdfDocument.Add(para);
+                    if (OrganisationDetails.Current.OfficeLineUpper != string.Empty)
+                        pdfDocument.Add(para);
 
                     pdfDocument.Add(new Paragraph(Environment.NewLine));
                     pdfDocument.Add(new Paragraph(Environment.NewLine));

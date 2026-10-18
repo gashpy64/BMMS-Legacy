@@ -55,6 +55,9 @@ BMMS/Files/MemberResume/
 !/BMMS/Files/Temp/.gitkeep
 BMMS/Files/SqlBackup/
 
+# The organisation logo uploaded on System Settings (back it up with the database)
+/BMMS/Files/Branding/
+
 # Windows thumbnails, Visual Studio upgrade leftovers
 Thumbs.db
 /Backup/

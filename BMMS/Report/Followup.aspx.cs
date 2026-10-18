@@ -589,12 +589,7 @@ namespace BMMS.Report
 
                     BodyText += "<table>";
 
-                    BodyText += "<tr>";
-                    BodyText += "<td colspan='2' style='text-align:center; font-weight:bold;'>";
-                    BodyText += "LAKSHMI VILAS BANK <br />";
-                    BodyText += "REGD & ADMIN OFFICE, KARUR";
-                    BodyText += "</td>";
-                    BodyText += "</tr>";
+                    BodyText += OrganisationDetails.Current.MailHeaderRowHtml();
 
                     BodyText += "<tr>";
                     BodyText += "<td colspan='2' style='text-align:right'>";
