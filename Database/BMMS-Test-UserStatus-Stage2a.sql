@@ -65,22 +65,22 @@ DECLARE @Missing INT;
 DECLARE @Rows INT;
 DECLARE @Text VARCHAR(400);
 
+-- The capture tables are built from View_Users, so they follow its columns (step 18 adds IsSystem)
 -- View_Users columns (spr_GetUser, spr_GetActiveUserList)
-CREATE TABLE #V (UserId INT, UserName VARCHAR(50), DepartmentId INT, DesignationId INT, DepartmentCode VARCHAR(50), DepartmentName VARCHAR(250),
-                 DesignationCode VARCHAR(50), DesignationName VARCHAR(250), ManagerId INT, RoleId INT, RoleName VARCHAR(250), RoleDescription VARCHAR(250),
-                 DOB VARCHAR(50), EmailId VARCHAR(50), LoginName VARCHAR(50), [Password] VARCHAR(MAX), RoleCode VARCHAR(50), AccountStatus INT);
+SELECT TOP 0 * INTO #V FROM View_Users;
 
 -- spr_GetUserListForUserPage: View_Users plus the flags
-CREATE TABLE #List (UserId INT, UserName VARCHAR(50), DepartmentId INT, DesignationId INT, DepartmentCode VARCHAR(50), DepartmentName VARCHAR(250),
-                    DesignationCode VARCHAR(50), DesignationName VARCHAR(250), ManagerId INT, RoleId INT, RoleName VARCHAR(250), RoleDescription VARCHAR(250),
-                    DOB VARCHAR(50), EmailId VARCHAR(50), LoginName VARCHAR(50), [Password] VARCHAR(MAX), RoleCode VARCHAR(50), AccountStatus INT,
-                    CanEdit INT, CanChangeRole INT, CanDelete INT, Status VARCHAR(10), CanDeactivate INT, CanActivate INT, ManagedCount INT);
+SELECT TOP 0 v.*, CAST(NULL AS INT) AS CanEdit, CAST(NULL AS INT) AS CanChangeRole, CAST(NULL AS INT) AS CanDelete,
+       CAST(NULL AS VARCHAR(10)) AS Status, CAST(NULL AS INT) AS CanDeactivate, CAST(NULL AS INT) AS CanActivate, CAST(NULL AS INT) AS ManagedCount
+INTO #List FROM View_Users v;
 
 -- spr_GetMgrControllerByDeptId: View_Users plus ManagerText
-CREATE TABLE #Mgr (UserId INT, UserName VARCHAR(50), DepartmentId INT, DesignationId INT, DepartmentCode VARCHAR(50), DepartmentName VARCHAR(250),
-                   DesignationCode VARCHAR(50), DesignationName VARCHAR(250), ManagerId INT, RoleId INT, RoleName VARCHAR(250), RoleDescription VARCHAR(250),
-                   DOB VARCHAR(50), EmailId VARCHAR(50), LoginName VARCHAR(50), [Password] VARCHAR(MAX), RoleCode VARCHAR(50), AccountStatus INT,
-                   ManagerText VARCHAR(80));
+SELECT TOP 0 v.*, CAST(NULL AS VARCHAR(80)) AS ManagerText INTO #Mgr FROM View_Users v;
+
+-- Step 18: the protected system account (NULL before step 18)
+DECLARE @SystemUser INT;
+IF (COL_LENGTH('dbo.Users', 'IsSystem') IS NOT NULL)
+    EXEC sp_executesql N'SELECT @id = UserId FROM dbo.Users WHERE IsSystem = 1', N'@id INT OUTPUT', @id = @SystemUser OUTPUT;
 
 CREATE TABLE #St (AccountStatus INT);
 
@@ -272,13 +272,19 @@ BEGIN TRY
     INSERT INTO @T SELECT 'Active list: active User in, inactive User out', '1 0',
            CAST((SELECT COUNT(*) FROM #V WHERE UserId = @U) AS VARCHAR(2)) + ' ' + CAST((SELECT COUNT(*) FROM #V WHERE UserId = @U2) AS VARCHAR(2));
     INSERT INTO @T SELECT 'Active list: rows that are not active', '0', CAST(COUNT(*) AS VARCHAR(12)) FROM #V WHERE AccountStatus <> 1;
-    INSERT INTO @T SELECT 'Active list: keeps the admin-name filter', '0', CAST(COUNT(*) AS VARCHAR(12)) FROM #V WHERE UserName LIKE 'admin';
+    -- Step 18 replaces the admin-name filter: the system account is left out by IsSystem
+    IF (@SystemUser IS NULL)
+        INSERT INTO @T SELECT 'Active list: keeps the admin-name filter', '0', CAST(COUNT(*) AS VARCHAR(12)) FROM #V WHERE UserName LIKE 'admin';
+    ELSE
+        INSERT INTO @T SELECT 'Active list: leaves out the system account [step 18]', '0', CAST(COUNT(*) AS VARCHAR(12)) FROM #V WHERE UserId = @SystemUser;
     SET @Rows = (SELECT COUNT(*) FROM #V);
 
     DELETE FROM #V; INSERT INTO #V EXEC spr_GetUser;
     INSERT INTO @T SELECT 'spr_GetUser: still lists the inactive User', '1', CAST(COUNT(*) AS VARCHAR(12)) FROM #V WHERE UserId = @U2;
-    INSERT INTO @T SELECT 'Active list = spr_GetUser rows that are active', CAST(@Rows AS VARCHAR(12)),
-           CAST(COUNT(*) AS VARCHAR(12)) FROM #V WHERE AccountStatus = 1;
+    INSERT INTO @T SELECT 'Active list = spr_GetUser rows that are active'
+                          + CASE WHEN @SystemUser IS NOT NULL THEN ' [step 18: other than the system account]' ELSE '' END,
+           CAST(@Rows AS VARCHAR(12)),
+           CAST(COUNT(*) AS VARCHAR(12)) FROM #V WHERE AccountStatus = 1 AND UserId <> ISNULL(@SystemUser, -1);
 
     ---------------------------------------------------------------------------
     -- spr_GetMgrControllerByDeptId

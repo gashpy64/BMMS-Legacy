@@ -81,11 +81,15 @@ DECLARE @Actor INT, @Target INT, @Before INT, @After INT, @Changed VARCHAR(12), 
 DECLARE @UserName VARCHAR(50), @DepartmentId INT, @DesignationId INT, @ManagerId INT, @RoleId INT, @EmailId VARCHAR(50), @LoginName VARCHAR(50);
 DECLARE @OutResult INT, @OutReason INT, @OutDetail NVARCHAR(2000), @ErrText NVARCHAR(400);
 
--- Rows of spr_GetUserListForUserPage (View_Users plus the three flags)
-CREATE TABLE #List (UserId INT, UserName VARCHAR(50), DepartmentId INT, DesignationId INT, DepartmentCode VARCHAR(50), DepartmentName VARCHAR(250),
-                    DesignationCode VARCHAR(50), DesignationName VARCHAR(250), ManagerId INT, RoleId INT, RoleName VARCHAR(250), RoleDescription VARCHAR(250),
-                    DOB VARCHAR(50), EmailId VARCHAR(50), LoginName VARCHAR(50), [Password] VARCHAR(MAX), RoleCode VARCHAR(50), AccountStatus INT,
-                    CanEdit INT, CanChangeRole INT, CanDelete INT);
+-- Rows of spr_GetUserListForUserPage (View_Users plus the three flags). Built from View_Users, so it
+-- follows its columns (step 18 adds IsSystem)
+SELECT TOP 0 v.*, CAST(NULL AS INT) AS CanEdit, CAST(NULL AS INT) AS CanChangeRole, CAST(NULL AS INT) AS CanDelete
+INTO #List FROM View_Users v;
+
+-- Step 18: the protected system account (NULL before step 18)
+DECLARE @SystemUser INT;
+IF (COL_LENGTH('dbo.Users', 'IsSystem') IS NOT NULL)
+    EXEC sp_executesql N'SELECT @id = UserId FROM dbo.Users WHERE IsSystem = 1', N'@id INT OUTPUT', @id = @SystemUser OUTPUT;
 
 -- Step 14 (UserStatus-Stage2a): the list has four more columns, and an inactive acting user gets Reason 8
 DECLARE @Step14 INT = CASE WHEN OBJECT_DEFINITION(OBJECT_ID('dbo.fn_UserChangeRefusal')) LIKE '%UserStatus-Stage2a%' THEN 1 ELSE 0 END;
@@ -520,7 +524,11 @@ BEGIN
     BEGIN TRANSACTION;
 
     DELETE FROM @R; INSERT INTO @R EXEC spr_SetUserStatusByUserId @UserId = @Other, @AccountStatus = 0, @ActingUserId = @Other;
-    INSERT INTO @T SELECT 'Lock check: own-account deactivate refused', 'Result 0, Reason 1', 'Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(2)) FROM @R;
+    -- Step 18: when that Admin is the protected system account the refusal is Reason 7
+    INSERT INTO @T SELECT 'Lock check: own-account deactivate refused'
+                          + CASE WHEN @Other = ISNULL(@SystemUser, -1) THEN ' [step 18: system account, Reason 7]' ELSE '' END,
+                          CASE WHEN @Other = ISNULL(@SystemUser, -1) THEN 'Result 0, Reason 7' ELSE 'Result 0, Reason 1' END,
+                          'Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(2)) FROM @R;
 
     INSERT INTO @T
     SELECT 'Lock check: update / range locks on Users held until commit', 'Yes',

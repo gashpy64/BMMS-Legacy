@@ -50,6 +50,11 @@ DECLARE @ActionItemId INT;
 -- An existing user for the CreatedBy / UpdatedBy columns. Never a hard-coded id:
 -- since BMMS-Add-ForeignKeys-Step5.sql those columns must hold a real user.
 DECLARE @AnyUserId INT = (SELECT TOP 1 UserId FROM Users ORDER BY UserId);
+
+-- Step 18: the protected system account (NULL before step 18)
+DECLARE @SystemUser INT;
+IF (COL_LENGTH('dbo.Users', 'IsSystem') IS NOT NULL)
+    EXEC sp_executesql N'SELECT @id = UserId FROM dbo.Users WHERE IsSystem = 1', N'@id INT OUTPUT', @id = @SystemUser OUTPUT;
 DECLARE @AdminId INT = (SELECT TOP 1 u.UserId FROM Users u JOIN Roles r ON r.RoleId = u.RoleId
                         WHERE r.RoleCode = 'admin' AND u.AccountStatus = 1 ORDER BY u.UserId);   -- acting user for the protected procedures
 
@@ -303,10 +308,11 @@ BEGIN TRY
         FROM Action_Item WHERE MinutesId = @MinutesId;
 
         INSERT INTO @T
-        -- From step 17 only active users are mapped; the row saved above stays even if that user is inactive
-        SELECT 17, 'Minutes finalize: every user mapped once (step 17: active users + the saved row)',
+        -- From step 17 only active users are mapped; the row saved above stays even if that user is inactive.
+        -- From step 18 the protected system account is not mapped either (unless it holds the saved row)
+        SELECT 17, 'Minutes finalize: every user mapped once (step 17/18: active, not system + saved row)',
                CAST(CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_MinutesFinalizeByMeetingId')), '') LIKE '%UserStatus2b-Step17%'
-                         THEN (SELECT COUNT(*) FROM Users WHERE AccountStatus = 1 OR UserId = @AnyUserId)
+                         THEN (SELECT COUNT(*) FROM Users WHERE (AccountStatus = 1 AND UserId <> ISNULL(@SystemUser, -1)) OR UserId = @AnyUserId)
                          ELSE (SELECT COUNT(*) FROM Users) END AS VARCHAR(12)),
                CAST(COUNT(*) AS VARCHAR(12))
         FROM ActionItem_User_Map WHERE ActionItemId = @ActionItemId;

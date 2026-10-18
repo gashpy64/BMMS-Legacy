@@ -83,10 +83,15 @@ BEGIN TRY
     -- Step 17: alerts, action items and alert mail go to active users only, and a user's agenda is
     -- refused while their manager is inactive. The three test users are switched on (rolled back)
     -- and "every other user" counts active users only.
+    -- Step 18: the protected system account gets no workflow alerts either, so it is not counted
+    DECLARE @SystemUser INT;
+    IF (COL_LENGTH('dbo.Users', 'IsSystem') IS NOT NULL)
+        EXEC sp_executesql N'SELECT @id = UserId FROM dbo.Users WHERE IsSystem = 1', N'@id INT OUTPUT', @id = @SystemUser OUTPUT;
+
     IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetAlertMailId')), '') LIKE '%UserStatus2b-Step17%')
     BEGIN
         UPDATE Users SET AccountStatus = 1 WHERE UserId IN (@Usr, @Mgr, @Ctl);
-        SET @OtherUsers = (SELECT COUNT(*) FROM Users WHERE AccountStatus = 1) - 1;
+        SET @OtherUsers = (SELECT COUNT(*) FROM Users WHERE AccountStatus = 1 AND UserId <> ISNULL(@SystemUser, -1)) - 1;
     END
     ELSE
         SET @OtherUsers = (SELECT COUNT(*) FROM Users) - 1;

@@ -117,6 +117,16 @@ BEGIN TRY
     INSERT INTO @T
     SELECT 'User 1 is admin', 'admin', ISNULL((SELECT LoginName FROM Users WHERE UserId = 1), 'no user 1');
 
+    -- Step 18: the "admin" seed is the protected system account, the other three are not
+    DECLARE @Step18 INT = CASE WHEN COL_LENGTH('dbo.Users', 'IsSystem') IS NOT NULL THEN 1 ELSE 0 END;
+    DECLARE @SystemAfterReset VARCHAR(40) = 'step 18 not installed';
+    IF (@Step18 = 1)
+    BEGIN
+        EXEC sp_executesql N'SELECT @s = CAST(COUNT(*) AS VARCHAR(4)) + '' '' + ISNULL(MAX(CASE WHEN IsSystem = 1 THEN LOWER(LoginName) + '' '' + CAST(UserId AS VARCHAR(12)) END), ''none'') FROM dbo.Users WHERE IsSystem = 1',
+             N'@s VARCHAR(40) OUTPUT', @s = @SystemAfterReset OUTPUT;
+        INSERT INTO @T SELECT 'After reset: exactly one system account, the admin seed (count, login, id) [step 18]', '1 admin 1', @SystemAfterReset;
+    END
+
     INSERT INTO @T
     SELECT 'Seeded users: ManagerId points at a real user or is empty', '0', CAST(COUNT(*) AS VARCHAR(12))
     FROM Users u WHERE u.ManagerId IS NOT NULL AND NOT EXISTS (SELECT 1 FROM Users m WHERE m.UserId = u.ManagerId);
@@ -183,7 +193,9 @@ BEGIN TRY
 
     DELETE FROM @R;
     INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = 1, @ActingUserId = 1;
-    INSERT INTO @T SELECT 'After reset: admin cannot delete itself (own account)', 'Result 0, Reason 1',
+    -- Step 18: the admin seed is the protected system account, so the refusal is Reason 7
+    INSERT INTO @T SELECT 'After reset: admin cannot delete itself (own account)' + CASE WHEN @Step18 = 1 THEN ' [step 18: system account, Reason 7]' ELSE '' END,
+                          CASE WHEN @Step18 = 1 THEN 'Result 0, Reason 7' ELSE 'Result 0, Reason 1' END,
                           'Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(2)) FROM @R;
 
 END TRY

@@ -79,6 +79,13 @@ DECLARE @A INT, @ACC INT, @ACU INT, @AMC INT, @AMU INT, @AOff3 INT, @SavedRow IN
 DECLARE @Rows INT, @Rows2 INT;
 DECLARE @ActiveAdmins INT, @ActiveCtrls INT;
 
+-- Step 18: the protected system account (NULL before step 18). It gets no workflow alerts, so the
+-- counts of recipients below leave it out, and its own refusals are Reason 7
+DECLARE @SystemUser INT;
+IF (COL_LENGTH('dbo.Users', 'IsSystem') IS NOT NULL)
+    EXEC sp_executesql N'SELECT @id = UserId FROM dbo.Users WHERE IsSystem = 1', N'@id INT OUTPUT', @id = @SystemUser OUTPUT;
+DECLARE @Note18 VARCHAR(40) = CASE WHEN @SystemUser IS NOT NULL THEN ' [step 18: not the system account]' ELSE '' END;
+
 IF (@Admin IS NULL OR @AdminRoleId IS NULL OR @CtrlRoleId IS NULL OR @MgrRoleId IS NULL OR @UserRoleId IS NULL
     OR @DesignationId IS NULL OR @SubjectTypeId IS NULL OR @DecisionOther IS NULL OR @HasFollowup = 0)
 BEGIN
@@ -134,7 +141,7 @@ BEGIN TRY
 
     INSERT INTO @TU VALUES (@CtlA), (@CtlOff), (@AdmOff), (@MgrA), (@MgrOff), (@UsrA), (@UsrB), (@UsrC), (@DepA), (@DepOff), (@UsrOff);
 
-    SET @ActiveAdmins = (SELECT COUNT(*) FROM Users WHERE RoleId = 1 AND AccountStatus = 1);
+    SET @ActiveAdmins = (SELECT COUNT(*) FROM Users WHERE RoleId = 1 AND AccountStatus = 1 AND UserId <> ISNULL(@SystemUser, -1));
     SET @ActiveCtrls = (SELECT COUNT(*) FROM Users WHERE RoleId = 2 AND AccountStatus = 1);
 
     ---------------------------------------------------------------------------
@@ -226,7 +233,7 @@ BEGIN TRY
     SET @AgA = (SELECT TOP 1 AgendaId FROM Agenda WHERE MeetingId = @Mt AND CreatedBy = @UsrA ORDER BY AgendaId DESC);
     SET @A = (SELECT TOP 1 AlertId FROM Alert_Master WHERE SourceType = 'Agenda' AND SourceTypeId = @AgA ORDER BY AlertId DESC);
     INSERT INTO @T SELECT 'Agenda by User, manager active: AC alert to the manager', '1', CAST(COUNT(*) AS VARCHAR(12)) FROM Alert_User_Map WHERE AlertId = @A AND UserId = @MgrA;
-    INSERT INTO @T SELECT 'Agenda by User, manager active: active Admins mapped / inactive Admin mapped', CAST(@ActiveAdmins AS VARCHAR(12)) + ' 0',
+    INSERT INTO @T SELECT 'Agenda by User, manager active: active Admins mapped / inactive Admin mapped' + @Note18, CAST(@ActiveAdmins AS VARCHAR(12)) + ' 0',
            CAST((SELECT COUNT(*) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId WHERE m.AlertId = @A AND u.RoleId = 1 AND u.AccountStatus = 1) AS VARCHAR(12)) + ' '
          + CAST((SELECT COUNT(*) FROM Alert_User_Map WHERE AlertId = @A AND UserId = @AdmOff) AS VARCHAR(12));
     INSERT INTO @T SELECT 'Agenda by User, manager active: inactive users anywhere in the alert', '0',
@@ -255,7 +262,7 @@ BEGIN TRY
     INSERT INTO @T SELECT 'Agenda by User, no manager (NULL): saved as before', 'Result 1, Reason 0', Txt FROM @R;
     SET @AgC = (SELECT TOP 1 AgendaId FROM Agenda WHERE MeetingId = @Mt AND CreatedBy = @UsrC ORDER BY AgendaId DESC);
     SET @A = (SELECT TOP 1 AlertId FROM Alert_Master WHERE SourceType = 'Agenda' AND SourceTypeId = @AgC ORDER BY AlertId DESC);
-    INSERT INTO @T SELECT 'Agenda by User, no manager: AC alert to the active Admins only', 'admins ' + CAST(@ActiveAdmins AS VARCHAR(12)) + ', others 0',
+    INSERT INTO @T SELECT 'Agenda by User, no manager: AC alert to the active Admins only' + @Note18, 'admins ' + CAST(@ActiveAdmins AS VARCHAR(12)) + ', others 0',
            'admins ' + CAST((SELECT COUNT(*) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId WHERE m.AlertId = @A AND u.RoleId = 1 AND u.AccountStatus = 1) AS VARCHAR(12))
          + ', others ' + CAST((SELECT COUNT(*) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId WHERE m.AlertId = @A AND NOT (u.RoleId = 1 AND u.AccountStatus = 1)) AS VARCHAR(12));
 
@@ -449,7 +456,7 @@ BEGIN TRY
                  WHERE a.MinutesId = @MinF1 AND u.AccountStatus = 1) AS VARCHAR(12)) + ' '
          + CAST((SELECT COUNT(*) FROM ActionItem_User_Map m JOIN Action_Item a ON a.ActionItemId = m.ActionItemId JOIN @TU t ON t.UserId = m.UserId JOIN Users u ON u.UserId = m.UserId
                  WHERE a.MinutesId = @MinF1 AND u.AccountStatus <> 1) AS VARCHAR(12));
-    INSERT INTO @T SELECT 'Minutes finalize, new item: inactive users anywhere / all active users mapped', '0 ' + CAST((SELECT COUNT(*) FROM Users WHERE AccountStatus = 1) AS VARCHAR(12)),
+    INSERT INTO @T SELECT 'Minutes finalize, new item: inactive users anywhere / all active users mapped' + @Note18, '0 ' + CAST((SELECT COUNT(*) FROM Users WHERE AccountStatus = 1 AND UserId <> ISNULL(@SystemUser, -1)) AS VARCHAR(12)),
            CAST((SELECT COUNT(*) FROM ActionItem_User_Map m JOIN Action_Item a ON a.ActionItemId = m.ActionItemId JOIN Users u ON u.UserId = m.UserId
                  WHERE a.MinutesId = @MinF1 AND u.AccountStatus <> 1) AS VARCHAR(12)) + ' '
          + CAST((SELECT COUNT(*) FROM ActionItem_User_Map m JOIN Action_Item a ON a.ActionItemId = m.ActionItemId JOIN Users u ON u.UserId = m.UserId
@@ -540,9 +547,14 @@ BEGIN TRY
     -- Only @Admin left as active Admin: nobody else can deactivate it, and it cannot deactivate itself
     UPDATE Users SET AccountStatus = 0 WHERE RoleId = 1 AND AccountStatus = 1 AND UserId <> @Admin;
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_SetUserStatusByUserId @UserId = @Admin, @AccountStatus = 0, @ActingUserId = @Admin;
-    INSERT INTO @T SELECT 'Last active Admin: deactivation refused (only it could act, own account)', 'Result 0, Reason 1', Txt FROM @R;
+    -- Step 18: when that Admin is the protected system account both refusals are Reason 7
+    INSERT INTO @T SELECT 'Last active Admin: deactivation refused (only it could act, own account)'
+                          + CASE WHEN @Admin = ISNULL(@SystemUser, -1) THEN ' [step 18: system account, Reason 7]' ELSE '' END,
+                          CASE WHEN @Admin = ISNULL(@SystemUser, -1) THEN 'Result 0, Reason 7' ELSE 'Result 0, Reason 1' END, Txt FROM @R;
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_SetUserStatusByUserId @UserId = @Admin, @AccountStatus = 0, @ActingUserId = @CtlA;
-    INSERT INTO @T SELECT 'Last active Admin: deactivation by the Controller refused', 'Result 0, Reason 4', Txt FROM @R;
+    INSERT INTO @T SELECT 'Last active Admin: deactivation by the Controller refused'
+                          + CASE WHEN @Admin = ISNULL(@SystemUser, -1) THEN ' [step 18: system account, Reason 7]' ELSE '' END,
+                          CASE WHEN @Admin = ISNULL(@SystemUser, -1) THEN 'Result 0, Reason 7' ELSE 'Result 0, Reason 4' END, Txt FROM @R;
 
     -- Re-activation: nothing missed is added, the next alert arrives
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_SetUserStatusByUserId @UserId = @DepOff, @AccountStatus = 1, @ActingUserId = @Admin;
