@@ -338,6 +338,21 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region IsSystemAccountSession / IsSystemAccountRow
+        // The protected system account (BMMS-Fix-SystemAccount-Stage3.sql): Session["IsSystem"] is set at login
+        public static bool IsSystemAccountSession()
+        {
+            object flag = HttpContext.Current == null || HttpContext.Current.Session == null ? null : HttpContext.Current.Session["IsSystem"];
+            return flag != null && flag.ToString() == "1";
+        }
+
+        // A row of View_Users (or a list built on it); false when the column is not there
+        public static bool IsSystemAccountRow(DataRow row)
+        {
+            return row.Table.Columns.Contains("IsSystem") && row["IsSystem"] != DBNull.Value && Convert.ToBoolean(row["IsSystem"]);
+        }
+        #endregion
+
         #region CreateRandomPassword
         public static string CreateRandomPassword(int PasswordLength)
         {

@@ -496,6 +496,14 @@ namespace BMMS.DashBoard
                         break;
 
                 }
+
+                // The protected system account takes no part in the workflow (BMMS-Fix-SystemAccount-Stage3.sql)
+                if (Common.IsSystemAccountSession())
+                {
+                    btnApprove.Visible = false;
+                    btnReject.Visible = false;
+                    btnDeleteAgendaAlert.Visible = true;
+                }
             }
         }
         #endregion

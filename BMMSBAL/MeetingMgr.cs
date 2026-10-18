@@ -62,6 +62,8 @@ namespace BMMSBAL
                     return "Agenda items are recorded for this meeting, so its committee cannot be changed.";
                 case MeetingChangeReason.ManagerInactive:
                     return MeetingChangeReason.ManagerInactiveMessage(ReasonDetail);
+                case MeetingChangeReason.SystemAccount:
+                    return MeetingChangeReason.SystemAccountMessage;
                 default:
                     return "Record Not Saved";
             }
@@ -82,6 +84,10 @@ namespace BMMSBAL
         public const int NotOnCommittee = 9;           // step 16: chairman
         public const int AgendaLocksCommittee = 10;    // step 16: meeting committee
         public const int ManagerInactive = 11;         // step 17: the user's manager is inactive (new agenda item)
+        public const int SystemAccount = 12;           // step 18: the protected system account cannot approve or reject
+
+        public const string SystemAccountMessage =
+            "The system account takes no part in the agenda workflow and cannot approve or reject agenda items.";
 
         /// <summary>A user's new agenda item waits for their manager, who is inactive (BMMS-Fix-UserStatus-Stage2b.sql).</summary>
         public static string ManagerInactiveMessage(string managerName)

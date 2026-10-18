@@ -120,6 +120,8 @@ namespace BMMS
                     Session["RoleCode"] = dtUser.Rows[0]["RoleCode"].ToString();
                     Session["RoleName"] = dtUser.Rows[0]["RoleName"].ToString();
                     Session["NoRecord"] = Common.GetAppSetting("NoRecord");
+                    // The protected system account (BMMS-Fix-SystemAccount-Stage3.sql): "1" or "0"
+                    Session["IsSystem"] = dtUser.Columns.Contains("IsSystem") && Convert.ToBoolean(dtUser.Rows[0]["IsSystem"]) ? "1" : "0";
 
                     if (txtPassword.Text.Trim() == "lvb@123")
                         Response.Redirect(@"~\ChangePasswordFirst.aspx", false);

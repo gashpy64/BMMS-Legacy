@@ -182,6 +182,21 @@ namespace BMMS.Master
                         }
                     }
 
+                    // The protected system account (BMMS-Fix-SystemAccount-Stage3.sql): shown greyed with a label;
+                    // the flags above are already 0, and the procedures refuse it anyway (Reason 7)
+                    if (Common.IsSystemAccountRow(drv.Row))
+                    {
+                        e.Row.CssClass = (e.Row.CssClass + " wb-row-inactive").Trim();
+
+                        Label lblStatus = (Label)e.Row.FindControl("lblStatus");
+                        lblStatus.Text = HttpUtility.HtmlEncode(drv["Status"].ToString()) + " (System account)";
+
+                        string tip = "Protected system account";
+                        ((Button)e.Row.FindControl("btnEdit")).ToolTip = tip;
+                        ((Button)e.Row.FindControl("btnDelete")).ToolTip = tip;
+                        btnStatus.ToolTip = tip;
+                    }
+
                     //e.Row.Attributes.Add("onmouseover", "MouseEvents(this, event)");
                     //e.Row.Attributes.Add("onmouseout", "MouseEvents(this, event)");
 

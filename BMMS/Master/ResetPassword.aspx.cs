@@ -39,6 +39,11 @@ namespace BMMS.Master
                 DataTable dtUser = new DataTable();
                 dtUser = UserMgr.GetUserList();
 
+                // The protected system account changes its own password only (BMMS-Fix-SystemAccount-Stage3.sql)
+                for (int i = dtUser.Rows.Count - 1; i >= 0; i--)
+                    if (Common.IsSystemAccountRow(dtUser.Rows[i]))
+                        dtUser.Rows.RemoveAt(i);
+
                 Common.LoadDropdownlist(ddlLoginUser, dtUser, "LoginName", "UserId", true);
             }
             catch (Exception ex)

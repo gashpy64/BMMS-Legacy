@@ -54,6 +54,9 @@ namespace BMMSBAL
                          + System.Web.HttpUtility.HtmlEncode(ReasonDetail) + ".";
                 case UserChangeReason.HasHistory:
                     return "This user cannot be deleted because they have history: " + System.Web.HttpUtility.HtmlEncode(ReasonDetail) + ".";
+                case UserChangeReason.SystemAccount:
+                    // BMMS-Fix-SystemAccount-Stage3.sql
+                    return UserChangeReason.SystemAccountMessage;
                 case UserChangeReason.ActingUserMissing:
                     // missing or inactive acting user (BMMS-Fix-UserStatus-Stage2a.sql)
                     return "Your session is no longer valid. Please log in again.";
@@ -75,9 +78,13 @@ namespace BMMSBAL
         public const int NotAllowedForRole = 4;
         public const int ReferencedByUsers = 5;
         public const int HasHistory = 6;
-        public const int SystemAccount = 7;
+        public const int SystemAccount = 7;       // the protected system account (stage 3)
         public const int ActingUserMissing = 8;   // missing or inactive (stage 2a)
         public const int Other = 9;
+
+        public const string SystemAccountMessage =
+            "This is the protected system account. It cannot be edited, deactivated, deleted, or have its role or Login ID changed, "
+          + "and only the account itself can change its password (Change Password).";
     }
     #endregion
 
