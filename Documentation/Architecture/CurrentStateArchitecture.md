@@ -199,7 +199,7 @@ Production-Like Legacy Baseline Established
 ---
 
 Document Owner:
-Ganesh Shankar
+Ganesh Shankar C S, Consultant
 
 Repository:
 BMMS-Legacy
@@ -301,7 +301,7 @@ Modernization Readiness:
 ---
 
 Owner:
-Ganesh Shankar
+Ganesh Shankar C S, Consultant
 
 Modernization Program:
 BMMS Transformation Program

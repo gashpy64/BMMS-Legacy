@@ -53,4 +53,9 @@ BMMS/Files/MemberResume/
 # Upload leftovers; .gitkeep keeps the folder, which the Send Mail page needs
 /BMMS/Files/Temp/*
 !/BMMS/Files/Temp/.gitkeep
-BMMS/Files/SqlBackup/ 
+BMMS/Files/SqlBackup/
+
+# Windows thumbnails, Visual Studio upgrade leftovers
+Thumbs.db
+/Backup/
+UpgradeLog*.htm

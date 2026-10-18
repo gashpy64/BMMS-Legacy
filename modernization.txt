@@ -5,7 +5,7 @@ Switch to modernization
 Make changes
 Commit
 
-git add .
+Stage files by explicit path (git add <path>); never git add . or git add -A
 git commit -m "Description of Change"
 git push origin modernization
 

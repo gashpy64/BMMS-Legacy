@@ -496,7 +496,7 @@
     <Content Include="Images\login-box.gif" />
     <Content Include="Images\login-btn.gif" />
     <Content Include="Images\login-btn-workbench.svg" />
-    <Content Include="Images\login-lvb-logo.gif" />
+    <Content Include="Images\login-logo.gif" />
     <Content Include="Images\logo.jpg" />
     <Content Include="Images\tableft.gif" />
     <Content Include="Images\tabright.gif" />

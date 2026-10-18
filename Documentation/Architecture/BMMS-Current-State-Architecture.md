@@ -145,7 +145,7 @@ All modernization efforts must maintain behavioral parity with the recovered BMM
 
 | Field | Value |
 |---|---|
-| Document Owner | Ganesh Shankar |
+| Document Owner | Ganesh Shankar C S, Consultant |
 | Repository | BMMS-Legacy |
 | Active Branch | `modernization` |
 | Modernization Program | BMMS Transformation Program |
