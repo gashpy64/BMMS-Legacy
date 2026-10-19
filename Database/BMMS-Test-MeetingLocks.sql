@@ -56,7 +56,8 @@ DECLARE @CommitteeId INT = (SELECT TOP 1 CommitteeId FROM Committee ORDER BY Com
 DECLARE @OtherCommitteeId INT = (SELECT TOP 1 CommitteeId FROM Committee WHERE CommitteeId <> (SELECT TOP 1 CommitteeId FROM Committee ORDER BY CommitteeId) ORDER BY CommitteeId);
 DECLARE @Member1 INT = (SELECT TOP 1 MemberId FROM Member ORDER BY MemberId);
 DECLARE @Member2 INT = (SELECT TOP 1 MemberId FROM Member WHERE MemberId <> (SELECT TOP 1 MemberId FROM Member ORDER BY MemberId) ORDER BY MemberId);
-DECLARE @MemberTypeId INT = (SELECT TOP 1 MemberTypeId FROM Member_Type ORDER BY MemberTypeId);
+-- A meeting type (2, 3 or 6) first: since step 21 a meeting member needs one
+DECLARE @MemberTypeId INT = (SELECT TOP 1 MemberTypeId FROM Member_Type ORDER BY CASE WHEN MemberTypeId IN (2, 3, 6) THEN 0 ELSE 1 END, MemberTypeId);
 DECLARE @UserId INT = (SELECT TOP 1 UserId FROM Users ORDER BY UserId);
 DECLARE @HasFollowup INT = CASE WHEN EXISTS (SELECT 1 FROM Decision_Type WHERE DecisionTypeId = 1) THEN 1 ELSE 0 END;
 

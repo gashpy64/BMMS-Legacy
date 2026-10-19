@@ -130,6 +130,12 @@ ELSE PRINT '  No unreferenced Designation found — skipped delete test.';
 -------------------------------------------------------------------------------
 PRINT '=== 4. Member_Type ===';
 -------------------------------------------------------------------------------
+-- Since step 21 the procedure needs an acting Admin or Controller and refuses the
+-- reserved types (2, 3 and 6): the unreferenced row is then a free type, and one
+-- is added for the test (rolled back) when none exists.
+DECLARE @Step21 INT = CASE WHEN COL_LENGTH('dbo.Member_Type', 'IsReserved') IS NOT NULL THEN 1 ELSE 0 END;
+DECLARE @MemberTypeActing INT = (SELECT TOP 1 u.UserId FROM Users u JOIN Roles r ON r.RoleId = u.RoleId
+                                 WHERE r.RoleCode = 'admin' AND u.AccountStatus = 1 ORDER BY u.UserId);
 DECLARE @RefMemberTypeId INT = (
     SELECT TOP 1 MemberTypeId FROM (
         SELECT MemberTypeId FROM Committee_Member
@@ -137,23 +143,54 @@ DECLARE @RefMemberTypeId INT = (
         SELECT MemberTypeId FROM Meeting_Member
     ) x WHERE MemberTypeId IS NOT NULL
 );
-DECLARE @UnrefMemberTypeId INT = (
-    SELECT TOP 1 mt.MemberTypeId FROM Member_Type mt
-    WHERE NOT EXISTS (SELECT 1 FROM Committee_Member cm WHERE cm.MemberTypeId = mt.MemberTypeId)
-      AND NOT EXISTS (SELECT 1 FROM Meeting_Member mm WHERE mm.MemberTypeId = mt.MemberTypeId)
-);
+DECLARE @UnrefMemberTypeId INT;
+DECLARE @ReservedMemberTypeId INT;
+
+IF (@Step21 = 0)
+    SET @UnrefMemberTypeId = (
+        SELECT TOP 1 mt.MemberTypeId FROM Member_Type mt
+        WHERE NOT EXISTS (SELECT 1 FROM Committee_Member cm WHERE cm.MemberTypeId = mt.MemberTypeId)
+          AND NOT EXISTS (SELECT 1 FROM Meeting_Member mm WHERE mm.MemberTypeId = mt.MemberTypeId)
+    );
+ELSE
+BEGIN
+    EXEC sp_executesql N'SELECT @u = (SELECT TOP 1 mt.MemberTypeId FROM dbo.Member_Type mt WHERE mt.IsReserved = 0
+              AND NOT EXISTS (SELECT 1 FROM dbo.Committee_Member cm WHERE cm.MemberTypeId = mt.MemberTypeId)
+              AND NOT EXISTS (SELECT 1 FROM dbo.Meeting_Member mm WHERE mm.MemberTypeId = mt.MemberTypeId)),
+          @r = (SELECT TOP 1 MemberTypeId FROM dbo.Member_Type WHERE IsReserved = 1 ORDER BY MemberTypeId)',
+         N'@u INT OUTPUT, @r INT OUTPUT', @u = @UnrefMemberTypeId OUTPUT, @r = @ReservedMemberTypeId OUTPUT;
+    IF (@UnrefMemberTypeId IS NULL)
+    BEGIN
+        INSERT INTO Member_Type (MemberTypeCode, MemberTypeName, StatusId, CreatedOn, CreatedBy)
+        VALUES ('ZZDEL', 'ZZ delete test', 1, GETDATE(), @MemberTypeActing);
+        SET @UnrefMemberTypeId = SCOPE_IDENTITY();
+        PRINT '  Added a free member type for the test (rolled back).';
+    END
+END
 
 IF @RefMemberTypeId IS NOT NULL
 BEGIN
     PRINT '  Referenced MemberTypeId = ' + CAST(@RefMemberTypeId AS VARCHAR) + ' (expect Result = 0):';
-    EXEC spr_DeleteMemberTypeByMemberTypeId @MemberTypeId = @RefMemberTypeId;
+    IF (@Step21 = 0)
+        EXEC spr_DeleteMemberTypeByMemberTypeId @MemberTypeId = @RefMemberTypeId;
+    ELSE
+        EXEC spr_DeleteMemberTypeByMemberTypeId @MemberTypeId = @RefMemberTypeId, @ActingUserId = @MemberTypeActing;
 END
 ELSE PRINT '  No referenced Member_Type found to test.';
+
+IF @ReservedMemberTypeId IS NOT NULL
+BEGIN
+    PRINT '  Reserved MemberTypeId = ' + CAST(@ReservedMemberTypeId AS VARCHAR) + ' (step 21; expect Result = 0, Reason 7):';
+    EXEC spr_DeleteMemberTypeByMemberTypeId @MemberTypeId = @ReservedMemberTypeId, @ActingUserId = @MemberTypeActing;
+END
 
 IF @UnrefMemberTypeId IS NOT NULL
 BEGIN
     PRINT '  Unreferenced MemberTypeId = ' + CAST(@UnrefMemberTypeId AS VARCHAR) + ' (expect Result = 1):';
-    EXEC spr_DeleteMemberTypeByMemberTypeId @MemberTypeId = @UnrefMemberTypeId;
+    IF (@Step21 = 0)
+        EXEC spr_DeleteMemberTypeByMemberTypeId @MemberTypeId = @UnrefMemberTypeId;
+    ELSE
+        EXEC spr_DeleteMemberTypeByMemberTypeId @MemberTypeId = @UnrefMemberTypeId, @ActingUserId = @MemberTypeActing;
     PRINT '  Row count after (expect 0):';
     SELECT COUNT(*) AS RemainingRows FROM Member_Type WHERE MemberTypeId = @UnrefMemberTypeId;
 END

@@ -26,6 +26,8 @@
      * a new user and a new committee can be added by user 1
      * the new, unused user can be deleted; admin (who has history) cannot
      * with step 19 installed: the organisation settings are unchanged
+     * with step 21 installed: the six member types are seeded with their
+       scope, display order and reserved flag
 
    Result: one grid, one row per check. Status should be PASS for every row.
 
@@ -152,6 +154,20 @@ BEGIN TRY
                      'CertificateSignOff', 'RegisteredOfficeLabel', 'RegisteredOfficeLine1', 'RegisteredOfficeLine2', 'RegisteredOfficeCity',
                      'RegisteredOfficePinCode', 'OrganisationPhone', 'OrganisationFax', 'OrganisationEmail')) AS VARCHAR(4)) + ' rows, '
              + CASE WHEN @OrgAfter = @OrgBefore THEN 'same values' ELSE 'values changed' END;
+    END
+
+    -- Step 21: the six member types with their scope, display order and reserved flag (2, 3 and 6 reserved)
+    IF (COL_LENGTH('dbo.Member_Type', 'MemberScope') IS NOT NULL)
+    BEGIN
+        DECLARE @TypesAfterReset VARCHAR(400) = '';
+        EXEC sp_executesql N'SELECT @s = STUFF((SELECT ''|'' + CAST(MemberTypeId AS VARCHAR(12)) + '' '' + MemberTypeName + '' '' + MemberScope + '' ''
+                 + CAST(DisplayOrder AS VARCHAR(12)) + '' '' + CAST(CAST(IsReserved AS INT) AS VARCHAR(1)) + '' '' + CAST(StatusId AS VARCHAR(2))
+                 FROM dbo.Member_Type ORDER BY MemberTypeId FOR XML PATH(''''), TYPE).value(''.'', ''VARCHAR(400)''), 1, 1, '''')',
+             N'@s VARCHAR(400) OUTPUT', @s = @TypesAfterReset OUTPUT;
+        -- Each row: id, name, scope, display order, reserved, status
+        INSERT INTO @T SELECT 'After reset: member types with scope, order, reserved flag, status [step 21]', 'as seeded',
+               CASE WHEN @TypesAfterReset = '1 Member C 1 0 1|2 Invitee M 2 1 1|3 In Attendance M 3 1 1|4 Chairman C 4 0 1|5 Managing Director C 5 0 1|6 Special Invitee M 6 1 1'
+                    THEN 'as seeded' ELSE LEFT(ISNULL(@TypesAfterReset, 'none'), 250) END;
     END
 
     INSERT INTO @T

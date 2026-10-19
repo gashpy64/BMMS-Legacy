@@ -1,5 +1,5 @@
 /* ============================================================================
-   BMMS - Which numbered steps (README run order 1 to 19) are installed
+   BMMS - Which numbered steps (README run order 1 to 21) are installed
    ----------------------------------------------------------------------------
    READ ONLY. It reads object definitions and constraint names; it creates,
    changes and deletes nothing, and it can run on BMMS as well as on a copy.
@@ -11,7 +11,7 @@
                      the re-run notes in Database/README.md)
      Missing         none is present
      Not detectable  the step leaves nothing that can be checked (none of
-                     steps 1 to 19 today; kept for future steps)
+                     the steps checked today; kept for future steps)
 
    A step that is replaced by a later one is checked by what survives: for
    example step 10 by the "FK#5-UserDelete-AllColumns" text that step 13 kept
@@ -26,7 +26,11 @@
    Partly. Step 18 also checks that exactly one user is the system account.
    Step 19 replaces nothing and no earlier script contains its procedures, so
    no re-run of an earlier step changes it; it also checks that its 12
-   setting rows exist.
+   setting rows exist. Step 20 is not released yet and has no row. Step 21
+   keeps the texts of steps 3, 15 and 18 in the procedures it replaces; if
+   step 2, 3, 15 or 18 is re-run afterwards, step 21 reads Partly. Step 21
+   also checks that every existing type 2, 3 and 6 is reserved, a meeting
+   type and active.
 
    It has no USE line: select the database in SSMS first. It stops if the
    current database name does not start with "BMMS".
@@ -180,6 +184,26 @@ INSERT INTO @M VALUES
 (19, 'spr_RecordOrganisationLogo', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_RecordOrganisationLogo')), '') LIKE '%OrganisationSettings-Step19%' THEN 1 ELSE 0 END),
 (19, 'The 12 organisation setting rows (found ' + CAST(@OrgRows AS VARCHAR(12)) + ')', CASE WHEN @OrgRows = 12 THEN 1 ELSE 0 END);
 
+-- 21. BMMS-Fix-MemberTypes-Step21.sql (re-running step 2, 3, 15 or 18 replaces some of these)
+INSERT INTO @M
+SELECT 21, o.Name + ' (MemberTypes-Step21)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%MemberTypes-Step21%' THEN 1 ELSE 0 END
+FROM (VALUES ('spr_GetMemberType'), ('spr_GetMemberTypeByMemberTypeId'), ('spr_GetMemberTypeForTagging'), ('spr_AddEditMemberType'),
+             ('spr_DeleteMemberTypeByMemberTypeId'), ('spr_AddEditCommitteeMember'), ('spr_AddEditMeetingMember'),
+             ('spr_sys_ResetDatabase')) o(Name);
+DECLARE @ReservedWrong INT = -1;
+IF (COL_LENGTH('dbo.Member_Type', 'IsReserved') IS NOT NULL AND COL_LENGTH('dbo.Member_Type', 'MemberScope') IS NOT NULL)
+    EXEC sp_executesql N'SELECT @n = COUNT(*) FROM dbo.Member_Type WHERE MemberTypeId IN (2, 3, 6) AND (IsReserved <> 1 OR MemberScope <> ''M'' OR StatusId <> 1)',
+         N'@n INT OUTPUT', @n = @ReservedWrong OUTPUT;
+INSERT INTO @M VALUES
+(21, 'Member_Type.IsReserved NOT NULL', CASE WHEN EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.Member_Type') AND name = 'IsReserved' AND is_nullable = 0) THEN 1 ELSE 0 END),
+(21, 'Member_Type.MemberScope NOT NULL', CASE WHEN EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.Member_Type') AND name = 'MemberScope' AND is_nullable = 0) THEN 1 ELSE 0 END),
+(21, 'CK_Member_Type_MemberScope', CASE WHEN EXISTS (SELECT 1 FROM sys.check_constraints WHERE parent_object_id = OBJECT_ID('dbo.Member_Type') AND name = 'CK_Member_Type_MemberScope') THEN 1 ELSE 0 END),
+(21, 'CK_Member_Type_Reserved', CASE WHEN EXISTS (SELECT 1 FROM sys.check_constraints WHERE parent_object_id = OBJECT_ID('dbo.Member_Type') AND name = 'CK_Member_Type_Reserved') THEN 1 ELSE 0 END),
+(21, 'UX_Member_Type_Code', CASE WHEN EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID('dbo.Member_Type') AND name = 'UX_Member_Type_Code' AND is_unique = 1) THEN 1 ELSE 0 END),
+(21, 'UX_Member_Type_Name', CASE WHEN EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID('dbo.Member_Type') AND name = 'UX_Member_Type_Name' AND is_unique = 1) THEN 1 ELSE 0 END),
+(21, 'Types 2, 3, 6 (where present) reserved, meeting, active'
+     + CASE WHEN @ReservedWrong > 0 THEN ' (' + CAST(@ReservedWrong AS VARCHAR(12)) + ' not)' ELSE '' END, CASE WHEN @ReservedWrong = 0 THEN 1 ELSE 0 END);
+
 DECLARE @Steps TABLE (Step INT, Script VARCHAR(60), IfPartly VARCHAR(200));
 INSERT INTO @Steps VALUES
 (1, 'BMMS-Fix-Login-Procedures.sql', ''),
@@ -193,14 +217,15 @@ INSERT INTO @Steps VALUES
 (9, 'BMMS-Add-ForeignKeys-Step4.sql', ''),
 (10, 'BMMS-Fix-UserDelete-Procedure.sql', 'step 10 or 13 replaced: run step 13 again, then 14'),
 (11, 'BMMS-Add-ForeignKeys-Step5.sql', 'some keys refused: run BMMS-Check-Orphans.sql, then step 11 again'),
-(12, 'BMMS-Fix-Attendance-FutureMeeting.sql', 'run step 12 again, then steps 15, 16, 17 and 18'),
-(13, 'BMMS-Fix-UserProtection-Stage1.sql', 'step 2, 6 or 10 was re-run: run step 13 again, then 14 and 18'),
+(12, 'BMMS-Fix-Attendance-FutureMeeting.sql', 'run step 12 again, then steps 15, 16, 17, 18 and 21'),
+(13, 'BMMS-Fix-UserProtection-Stage1.sql', 'step 2, 6 or 10 was re-run: run step 13 again, then 14, 18 and 21'),
 (14, 'BMMS-Fix-UserStatus-Stage2a.sql', 'step 13 was re-run: run step 14 again, then 18'),
-(15, 'BMMS-Fix-MeetingLocks.sql', 'step 6, 8 or 12 was re-run: run step 15 again, then steps 16, 17 and 18'),
+(15, 'BMMS-Fix-MeetingLocks.sql', 'step 6, 8 or 12 was re-run: run step 15 again, then steps 16, 17, 18 and 21'),
 (16, 'BMMS-Fix-MeetingLocks-Step16.sql', 'step 6, 12 or 15 was re-run: run step 16 again, then steps 17 and 18'),
 (17, 'BMMS-Fix-UserStatus-Stage2b.sql', 'step 6, 8, 15 or 16 was re-run: run step 17 again, then step 18'),
 (18, 'BMMS-Fix-SystemAccount-Stage3.sql', 'step 3, 6, 8, 13, 14, 15, 16 or 17 was re-run, or the system account count is not 1: see README step 18'),
-(19, 'BMMS-Fix-OrganisationSettings-Step19.sql', 'a procedure or setting row is missing: run step 19 again (the values already set are kept)');
+(19, 'BMMS-Fix-OrganisationSettings-Step19.sql', 'a procedure or setting row is missing: run step 19 again (the values already set are kept)'),
+(21, 'BMMS-Fix-MemberTypes-Step21.sql', 'step 2, 3, 15 or 18 was re-run, or a reserved type was changed by hand: run step 21 again');
 
 SELECT s.Step, s.Script,
        CASE WHEN COUNT(m.Step) = 0 THEN 'Not detectable'
