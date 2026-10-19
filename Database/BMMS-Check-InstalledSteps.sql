@@ -1,5 +1,5 @@
 /* ============================================================================
-   BMMS - Which numbered steps (README run order 1 to 21) are installed
+   BMMS - Which numbered steps (README run order 1 to 22) are installed
    ----------------------------------------------------------------------------
    READ ONLY. It reads object definitions and constraint names; it creates,
    changes and deletes nothing, and it can run on BMMS as well as on a copy.
@@ -32,7 +32,8 @@
    keeps the texts of steps 3, 15 and 18 in the procedures it replaces; if
    step 2, 3, 15 or 18 is re-run afterwards, step 21 reads Partly. Step 21
    also checks that every existing type 2, 3 and 6 is reserved, a meeting
-   type and active.
+   type and active. Step 22 replaces nothing and no earlier script contains
+   its two procedures, so no re-run of an earlier step changes it.
 
    It has no USE line: select the database in SSMS first. It stops if the
    current database name does not start with "BMMS".
@@ -212,6 +213,11 @@ INSERT INTO @M VALUES
 (21, 'Types 2, 3, 6 (where present) reserved, meeting, active'
      + CASE WHEN @ReservedWrong > 0 THEN ' (' + CAST(@ReservedWrong AS VARCHAR(12)) + ' not)' ELSE '' END, CASE WHEN @ReservedWrong = 0 THEN 1 ELSE 0 END);
 
+-- 22. BMMS-Fix-MinutesGating-Step22.sql (replaces nothing)
+INSERT INTO @M
+SELECT 22, o.Name + ' (MinutesGating-Step22)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%MinutesGating-Step22%' THEN 1 ELSE 0 END
+FROM (VALUES ('spr_GetMinutesReportMeetings'), ('spr_GetMinutesReport')) o(Name);
+
 DECLARE @Steps TABLE (Step INT, Script VARCHAR(60), IfPartly VARCHAR(200));
 INSERT INTO @Steps VALUES
 (1, 'BMMS-Fix-Login-Procedures.sql', ''),
@@ -234,7 +240,8 @@ INSERT INTO @Steps VALUES
 (18, 'BMMS-Fix-SystemAccount-Stage3.sql', 'step 3, 6, 8, 13, 14, 15, 16 or 17 was re-run, or the system account count is not 1: see README step 18 (then steps 20 and 21)'),
 (19, 'BMMS-Fix-OrganisationSettings-Step19.sql', 'a procedure or setting row is missing: run step 19 again (the values already set are kept)'),
 (20, 'BMMS-Fix-AgendaRouting-Step20.sql', 'step 16, 17 or 18 was re-run: run step 20 again (the re-route moves nothing a second time)'),
-(21, 'BMMS-Fix-MemberTypes-Step21.sql', 'step 2, 3, 15 or 18 was re-run, or a reserved type was changed by hand: run step 21 again');
+(21, 'BMMS-Fix-MemberTypes-Step21.sql', 'step 2, 3, 15 or 18 was re-run, or a reserved type was changed by hand: run step 21 again'),
+(22, 'BMMS-Fix-MinutesGating-Step22.sql', 'a procedure is missing: run step 22 again');
 
 SELECT s.Step, s.Script,
        CASE WHEN COUNT(m.Step) = 0 THEN 'Not detectable'
