@@ -48,38 +48,39 @@ namespace BMMSBAL
         #endregion
 
         #region WriteErrorLog
+        // One writer at a time within the application: two requests can fail at the same moment
+        private static readonly object ErrorLogLock = new object();
+
+        // Never throws: a logging failure must not hide the caller's own error. File.AppendText creates the
+        // file when it is missing; the File.Create used before left a stream open on the new file, so the
+        // first entry of each day was lost (step 28)
         public static void WriteErrorLog(string ClassName, string MethodName, string ErrorMessage)
         {
-            StreamWriter SW = null;
             try
             {
-                if (!Directory.Exists(AppDomain.CurrentDomain.BaseDirectory + "Log"))
-                    Directory.CreateDirectory(AppDomain.CurrentDomain.BaseDirectory + "Log");
+                lock (ErrorLogLock)
+                {
+                    if (!Directory.Exists(AppDomain.CurrentDomain.BaseDirectory + "Log"))
+                        Directory.CreateDirectory(AppDomain.CurrentDomain.BaseDirectory + "Log");
 
-                string _FileName = DateTime.Now.ToString("yyyy_MM_dd") + "_ErrorLog";
-                string _FilePath = AppDomain.CurrentDomain.BaseDirectory + "Log\\" + _FileName + ".txt";
+                    string _FileName = DateTime.Now.ToString("yyyy_MM_dd") + "_ErrorLog";
+                    string _FilePath = AppDomain.CurrentDomain.BaseDirectory + "Log\\" + _FileName + ".txt";
 
-                if (!File.Exists(_FilePath))
-                    File.Create(_FilePath);
-
-                SW = File.AppendText(_FilePath);
-                string _LineRow = "-".PadRight(125, '-');
-                SW.WriteLine(_LineRow);
-                SW.WriteLine("Date & Time : " + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString());
-                SW.WriteLine("Class  Name : " + ClassName);
-                SW.WriteLine("Method Name : " + MethodName);
-                SW.WriteLine("Description : " + ErrorMessage);
-                SW.WriteLine(_LineRow);
-                SW.Close();
+                    using (StreamWriter SW = File.AppendText(_FilePath))
+                    {
+                        string _LineRow = "-".PadRight(125, '-');
+                        SW.WriteLine(_LineRow);
+                        SW.WriteLine("Date & Time : " + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString());
+                        SW.WriteLine("Class  Name : " + ClassName);
+                        SW.WriteLine("Method Name : " + MethodName);
+                        SW.WriteLine("Description : " + ErrorMessage);
+                        SW.WriteLine(_LineRow);
+                    }
+                }
             }
             catch (Exception ex)
             {
                 ErrorMessage = ex.Message;
-            }
-            finally
-            {
-                if (SW != null)
-                    SW.Dispose();
             }
         }
         #endregion

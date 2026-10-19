@@ -768,9 +768,28 @@ Manual checks on the test copy (http://localhost:49573, Chrome or Edge):
 5. Blocked: /Files/PDF/Notice.pdf, a file under /Files/SqlBackup and today's /Log/<yyyy_MM_dd>_ErrorLog.txt each give 404. Still served: /Files/Branding/report-logo.png and an agenda attachment opened from the Dashboard.
 6. Two Controllers in two browsers, Notice for two meetings at the same time: each sees their own PDF.
 
+## Step 28: Notice, Send Mail (code only, no database script)
+
+Reports, Notice, Send Mail did nothing on screen and sent no mail. It read the members from spr_GetCommitteeMemberByCommitteeId (View_Committee_Member), which has no CityName and no State_Name, so the mail body failed on the first member; the click is an UpdatePanel postback, so the error was neither shown nor logged. This existed before the modernization (the recovered baseline has the same code and procedure).
+
+From step 28 Send Mail uses the same members as Create PDF (spr_GetCommitteeMemberByMeetingId, View_Member: address, city and state; the step 16 rule on the meeting date), mails every member with an e-mail address and shows "Notice sent to N of M members." (M = members with an e-mail address), the names of members without one, and how many mails could not be sent (see the error log). A meeting without members shows only the existing alert. Any other error is written to the error log and shown as "The notice could not be sent: ...". No rule about meetings in the past.
+
+Also in step 28: the first error of each day was not written to the error log (fixed). WriteErrorLog (BMMSBAL/Utilities.cs) left the stream of a newly created log file open, so the entry that created the file was lost; it now appends in one step, lets one request write at a time and never throws to the caller. The log file name, folder and format are unchanged.
+
+Manual checks on the test copy (smtp4dev running):
+
+1. Notice, Board Meeting 00001, Send Mail: one mail per member with an address in smtp4dev, the address in the mail includes city and state, and the page shows "Notice sent to N of M members."
+2. A meeting where one member has no e-mail address: that member is named on the page.
+3. With smtp4dev stopped: the page reports the mails that could not be sent, and the error log has an entry.
+
 ## Known items for later steps
 
 - Step 27: a login-checked download page for agenda attachments and agenda text, member photos and CVs, and Send Mail attachments (move `~/Files/Temp` to App_Data); then add Temp to the hidden segments in Web.config. Until then these files can be fetched by URL without logging in.
 - Send Mail deletes every file in `~/Files/Temp` when anyone attaches a new file, so two Controllers composing at once lose each other's attachment (SendMail.aspx.cs).
 - Agenda Approval, an agenda whose text was uploaded as a file: it is read with WordUtilities.ReadWordDocument on a relative path through Word, while uploaded agenda texts are PDF files, so that text is probably missing from the PDF (AgendaApproval.aspx.cs).
 - Database backups should later be written outside the web root (Backup Database writes to `~/Files/SqlBackup`, now hidden but still inside the site folder).
+- Unhandled errors on UpdatePanel pages are not logged or shown (no Application_Error, AJAX 1.0 ScriptManager): add a ScriptManager OnAsyncPostBackError handler in Main.Master that logs and shows a message.
+- Notice Send Mail: no rule yet about meetings in the past.
+- Sitting Fees can still crash on a missing GetTotAmtByMemberId row, a deleted member, an empty From/To date, and a damaged logo file.
+- A damaged logo file makes the Notice, Agenda Approval and Sitting Fees PDFs throw (PDFUtilities.AddCompanyLogo).
+- Notice page shows no confirmation (fixed in step 28).
