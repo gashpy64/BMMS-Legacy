@@ -86,6 +86,10 @@ IF (COL_LENGTH('dbo.Users', 'IsSystem') IS NOT NULL)
     EXEC sp_executesql N'SELECT @id = UserId FROM dbo.Users WHERE IsSystem = 1', N'@id INT OUTPUT', @id = @SystemUser OUTPUT;
 DECLARE @Note18 VARCHAR(40) = CASE WHEN @SystemUser IS NOT NULL THEN ' [step 18: not the system account]' ELSE '' END;
 
+-- Step 20: a user without a manager goes straight to the Controllers (AMA), and a Manager may approve or
+-- reject only an item routed to them; checks that change say "[step 20: ...]"
+DECLARE @Step20 INT = CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateAgendaByAgendaId')), '') LIKE '%AgendaRouting-Step20%' THEN 1 ELSE 0 END;
+
 IF (@Admin IS NULL OR @AdminRoleId IS NULL OR @CtrlRoleId IS NULL OR @MgrRoleId IS NULL OR @UserRoleId IS NULL
     OR @DesignationId IS NULL OR @SubjectTypeId IS NULL OR @DecisionOther IS NULL OR @HasFollowup = 0)
 BEGIN
@@ -262,9 +266,17 @@ BEGIN TRY
     INSERT INTO @T SELECT 'Agenda by User, no manager (NULL): saved as before', 'Result 1, Reason 0', Txt FROM @R;
     SET @AgC = (SELECT TOP 1 AgendaId FROM Agenda WHERE MeetingId = @Mt AND CreatedBy = @UsrC ORDER BY AgendaId DESC);
     SET @A = (SELECT TOP 1 AlertId FROM Alert_Master WHERE SourceType = 'Agenda' AND SourceTypeId = @AgC ORDER BY AlertId DESC);
-    INSERT INTO @T SELECT 'Agenda by User, no manager: AC alert to the active Admins only' + @Note18, 'admins ' + CAST(@ActiveAdmins AS VARCHAR(12)) + ', others 0',
-           'admins ' + CAST((SELECT COUNT(*) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId WHERE m.AlertId = @A AND u.RoleId = 1 AND u.AccountStatus = 1) AS VARCHAR(12))
-         + ', others ' + CAST((SELECT COUNT(*) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId WHERE m.AlertId = @A AND NOT (u.RoleId = 1 AND u.AccountStatus = 1)) AS VARCHAR(12));
+    IF (@Step20 = 0)
+        INSERT INTO @T SELECT 'Agenda by User, no manager: AC alert to the active Admins only' + @Note18, 'admins ' + CAST(@ActiveAdmins AS VARCHAR(12)) + ', others 0',
+               'admins ' + CAST((SELECT COUNT(*) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId WHERE m.AlertId = @A AND u.RoleId = 1 AND u.AccountStatus = 1) AS VARCHAR(12))
+             + ', others ' + CAST((SELECT COUNT(*) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId WHERE m.AlertId = @A AND NOT (u.RoleId = 1 AND u.AccountStatus = 1)) AS VARCHAR(12));
+    ELSE
+        INSERT INTO @T SELECT 'Agenda by User, no manager: AMA alert to the active Admins and Controllers only [step 20: straight to the Controllers]' + @Note18,
+               'AMA; admins ' + CAST(@ActiveAdmins AS VARCHAR(12)) + ', controllers ' + CAST(@ActiveCtrls AS VARCHAR(12)) + ', others 0',
+               ISNULL((SELECT AlertTypeCode FROM Alert_Master WHERE AlertId = @A), 'none') + '; admins '
+             + CAST((SELECT COUNT(*) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId WHERE m.AlertId = @A AND u.RoleId = 1 AND u.AccountStatus = 1) AS VARCHAR(12))
+             + ', controllers ' + CAST((SELECT COUNT(*) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId WHERE m.AlertId = @A AND u.RoleId = 2 AND u.AccountStatus = 1) AS VARCHAR(12))
+             + ', others ' + CAST((SELECT COUNT(*) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId WHERE m.AlertId = @A AND NOT (u.RoleId IN (1, 2) AND u.AccountStatus = 1)) AS VARCHAR(12));
 
     -- An item UsrB saved before the manager was deactivated can still be edited
     INSERT INTO Agenda (AgendaNo, CommitteeId, MeetingId, DepartmentId, SubjectTypeId, ShortText, AgendaType, AgendaText, ProposedResolution, AgendaStatusCode, CreatedOn, CreatedBy)
@@ -381,11 +393,17 @@ BEGIN TRY
 
     SET @Rows = (SELECT COUNT(*) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId JOIN Alert_Master am ON am.AlertId = m.AlertId
                  WHERE am.SourceType = 'Agenda' AND am.SourceTypeId IN (@AgOff1, @AgOff2, @AgOff3, @AgOff4) AND u.AccountStatus <> 1);
+    -- Step 20: a Manager acts only on an item routed to them. These items were inserted directly for a creator
+    -- whose manager is inactive, so route the first two to MgrA as the alert would (rolled back)
+    IF (@Step20 = 1)
+        INSERT INTO Alert_User_Map (AlertId, UserId, ReadStatus, StatusId)
+        SELECT AlertId, @MgrA, 0, 1 FROM Alert_Master WHERE SourceType = 'Agenda' AND SourceTypeId IN (@AgOff1, @AgOff2);
 
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_UpdateAgendaByAgendaId @AgendaId = @AgOff1, @ShortText = 'ZZ17 off 1', @ProposedResolution = 'ZZ',
          @MgrComments = 'ok', @ControllerComments = '', @ControllerApprovedStatus = '', @MgrApprovedStatus = 'Approved', @UpdatedBy = @MgrA;
     SET @A = (SELECT AlertId FROM Alert_Master WHERE SourceType = 'Agenda' AND SourceTypeId = @AgOff1);
-    INSERT INTO @T SELECT 'Manager approves, creator inactive: creator rows (saved only) / test Controller active / inactive', 'Result 1, Reason 0; 1 1 0',
+    INSERT INTO @T SELECT 'Manager approves, creator inactive: creator rows (saved only) / test Controller active / inactive'
+                          + CASE WHEN @Step20 = 1 THEN ' [step 20: item routed to the Manager]' ELSE '' END, 'Result 1, Reason 0; 1 1 0',
            (SELECT Txt FROM @R) + '; '
          + CAST((SELECT COUNT(*) FROM Alert_User_Map WHERE AlertId = @A AND UserId = @UsrOff) AS VARCHAR(12)) + ' '
          + CAST((SELECT COUNT(*) FROM Alert_User_Map WHERE AlertId = @A AND UserId = @CtlA) AS VARCHAR(12)) + ' '
@@ -397,7 +415,8 @@ BEGIN TRY
 
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_UpdateAgendaByAgendaId @AgendaId = @AgOff2, @ShortText = 'ZZ17 off 2', @ProposedResolution = 'ZZ',
          @MgrComments = 'no', @ControllerComments = '', @ControllerApprovedStatus = '', @MgrApprovedStatus = 'Rejected', @UpdatedBy = @MgrA;
-    INSERT INTO @T SELECT 'Manager rejects, creator inactive: done, no row for the creator, status AMR', 'Result 1, Reason 0; 0 AMR',
+    INSERT INTO @T SELECT 'Manager rejects, creator inactive: done, no row for the creator, status AMR'
+                          + CASE WHEN @Step20 = 1 THEN ' [step 20: item routed to the Manager]' ELSE '' END, 'Result 1, Reason 0; 0 AMR',
            (SELECT Txt FROM @R) + '; '
          + CAST((SELECT COUNT(*) FROM Alert_User_Map m JOIN Alert_Master am ON am.AlertId = m.AlertId WHERE am.SourceType = 'Agenda' AND am.SourceTypeId = @AgOff2 AND m.UserId = @UsrOff) AS VARCHAR(12)) + ' '
          + (SELECT AgendaStatusCode FROM Agenda WHERE AgendaId = @AgOff2);

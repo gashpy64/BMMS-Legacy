@@ -353,8 +353,13 @@ BEGIN TRY
 
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_UpdateAgendaByAgendaId @AgendaId = @AgA, @ShortText = 'ZZ18 user', @ProposedResolution = 'ZZ',
          @MgrComments = '', @ControllerComments = '', @ControllerApprovedStatus = '', @MgrApprovedStatus = '', @UpdatedBy = @AdmA;
-    INSERT INTO @T SELECT 'Ordinary Admin approve: unchanged behaviour (done, no status change)', 'Result 1, Reason 0; AC',
-           (SELECT Txt FROM @R) + '; ' + (SELECT ISNULL(AgendaStatusCode, 'NULL') FROM Agenda WHERE AgendaId = @AgA);
+    -- Step 20: an Admin cannot approve or reject (Reason 14); before it the call did nothing and reported success
+    IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateAgendaByAgendaId')), '') LIKE '%AgendaRouting-Step20%')
+        INSERT INTO @T SELECT 'Ordinary Admin approve: refused, no status change [step 20: Reason 14]', 'Result 0, Reason 14, Agenda Creation; AC',
+               (SELECT Txt FROM @R) + '; ' + (SELECT ISNULL(AgendaStatusCode, 'NULL') FROM Agenda WHERE AgendaId = @AgA);
+    ELSE
+        INSERT INTO @T SELECT 'Ordinary Admin approve: unchanged behaviour (done, no status change)', 'Result 1, Reason 0; AC',
+               (SELECT Txt FROM @R) + '; ' + (SELECT ISNULL(AgendaStatusCode, 'NULL') FROM Agenda WHERE AgendaId = @AgA);
 
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_UpdateAgendaByAgendaId @AgendaId = @AgA, @ShortText = 'ZZ18 user', @ProposedResolution = 'ZZ',
          @MgrComments = 'ok', @ControllerComments = '', @ControllerApprovedStatus = '', @MgrApprovedStatus = 'Approved', @UpdatedBy = @MgrA;

@@ -468,9 +468,20 @@ BEGIN TRY
     INSERT INTO App_Setting (SettingCode, SettingValue, Description) VALUES ('AgendaControllerBypass', '1', 'test');
 
     -- Approve / reject
+    -- Step 20: a Manager approves only an item at AC that was routed to them. @AOpen2 was inserted
+    -- directly, so give it that state and the Manager's alert row (rolled back)
+    DECLARE @Step20 INT = CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateAgendaByAgendaId')), '') LIKE '%AgendaRouting-Step20%' THEN 1 ELSE 0 END;
+    IF (@Step20 = 1)
+    BEGIN
+        UPDATE Agenda SET AgendaStatusCode = 'AC' WHERE AgendaId = @AOpen2;
+        INSERT INTO Alert_Master (SourceType, DepartmentId, SourceTypeId, DisplayText, AlertTypeCode, AlertSendOption, CommitteeId, CreatedOn, CreatedBy)
+        VALUES ('Agenda', @DepartmentId, @AOpen2, 'Agenda (Z16-99904-002)', 'AC', 3, @C16, @Now, @Usr);
+        INSERT INTO Alert_User_Map (AlertId, UserId, ReadStatus, StatusId) VALUES (SCOPE_IDENTITY(), @Mgr, 0, 1);
+    END
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_UpdateAgendaByAgendaId @AgendaId = @AOpen2, @ShortText = 'ZZ', @ProposedResolution = 'ZZ',
          @MgrComments = 'ok', @ControllerComments = @E, @ControllerApprovedStatus = @E, @MgrApprovedStatus = 'Approved', @UpdatedBy = @Mgr;
-    INSERT INTO @T SELECT 'Approve, agenda Open: Manager approves', 'Result 1, Reason 0', Txt FROM @R;
+    INSERT INTO @T SELECT 'Approve, agenda Open: Manager approves' + CASE WHEN @Step20 = 1 THEN ' [step 20: item at AC, routed to the Manager]' ELSE '' END,
+           'Result 1, Reason 0', Txt FROM @R;
 
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_UpdateAgendaByAgendaId @AgendaId = @AClose, @ShortText = 'ZZ', @ProposedResolution = 'ZZ',
          @MgrComments = @E, @ControllerComments = 'ok', @ControllerApprovedStatus = 'Rejected', @MgrApprovedStatus = @E, @UpdatedBy = @Ctrl;

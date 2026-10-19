@@ -26,7 +26,9 @@
    Partly. Step 18 also checks that exactly one user is the system account.
    Step 19 replaces nothing and no earlier script contains its procedures, so
    no re-run of an earlier step changes it; it also checks that its 12
-   setting rows exist. Step 20 is not released yet and has no row. Step 21
+   setting rows exist. Step 20 keeps the texts of steps 16, 17 and 18 in the
+   two agenda procedures it replaces; if step 16, 17 or 18 is re-run
+   afterwards, step 20 reads Partly. Step 21
    keeps the texts of steps 3, 15 and 18 in the procedures it replaces; if
    step 2, 3, 15 or 18 is re-run afterwards, step 21 reads Partly. Step 21
    also checks that every existing type 2, 3 and 6 is reserved, a meeting
@@ -184,6 +186,12 @@ INSERT INTO @M VALUES
 (19, 'spr_RecordOrganisationLogo', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_RecordOrganisationLogo')), '') LIKE '%OrganisationSettings-Step19%' THEN 1 ELSE 0 END),
 (19, 'The 12 organisation setting rows (found ' + CAST(@OrgRows AS VARCHAR(12)) + ')', CASE WHEN @OrgRows = 12 THEN 1 ELSE 0 END);
 
+-- 20. BMMS-Fix-AgendaRouting-Step20.sql (re-running step 16, 17 or 18 replaces the two agenda procedures)
+INSERT INTO @M
+SELECT 20, o.Name + ' (AgendaRouting-Step20)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%AgendaRouting-Step20%' THEN 1 ELSE 0 END
+FROM (VALUES ('fn_AgendaRoute'), ('spr_GetAgendaCreationMailId'), ('spr_AddEditAgenda'), ('spr_UpdateAgendaByAgendaId'),
+             ('spr_RerouteWaitingAgendas'), ('spr_GetCompanySecretary'), ('spr_GetMeetingMemberByMeetingIdMemberTypeId')) o(Name);
+
 -- 21. BMMS-Fix-MemberTypes-Step21.sql (re-running step 2, 3, 15 or 18 replaces some of these)
 INSERT INTO @M
 SELECT 21, o.Name + ' (MemberTypes-Step21)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%MemberTypes-Step21%' THEN 1 ELSE 0 END
@@ -217,14 +225,15 @@ INSERT INTO @Steps VALUES
 (9, 'BMMS-Add-ForeignKeys-Step4.sql', ''),
 (10, 'BMMS-Fix-UserDelete-Procedure.sql', 'step 10 or 13 replaced: run step 13 again, then 14'),
 (11, 'BMMS-Add-ForeignKeys-Step5.sql', 'some keys refused: run BMMS-Check-Orphans.sql, then step 11 again'),
-(12, 'BMMS-Fix-Attendance-FutureMeeting.sql', 'run step 12 again, then steps 15, 16, 17, 18 and 21'),
-(13, 'BMMS-Fix-UserProtection-Stage1.sql', 'step 2, 6 or 10 was re-run: run step 13 again, then 14, 18 and 21'),
+(12, 'BMMS-Fix-Attendance-FutureMeeting.sql', 'run step 12 again, then steps 15, 16, 17, 18, 20 and 21'),
+(13, 'BMMS-Fix-UserProtection-Stage1.sql', 'step 2, 6 or 10 was re-run: run step 13 again, then 14, 18, 20 and 21'),
 (14, 'BMMS-Fix-UserStatus-Stage2a.sql', 'step 13 was re-run: run step 14 again, then 18'),
-(15, 'BMMS-Fix-MeetingLocks.sql', 'step 6, 8 or 12 was re-run: run step 15 again, then steps 16, 17, 18 and 21'),
-(16, 'BMMS-Fix-MeetingLocks-Step16.sql', 'step 6, 12 or 15 was re-run: run step 16 again, then steps 17 and 18'),
-(17, 'BMMS-Fix-UserStatus-Stage2b.sql', 'step 6, 8, 15 or 16 was re-run: run step 17 again, then step 18'),
-(18, 'BMMS-Fix-SystemAccount-Stage3.sql', 'step 3, 6, 8, 13, 14, 15, 16 or 17 was re-run, or the system account count is not 1: see README step 18'),
+(15, 'BMMS-Fix-MeetingLocks.sql', 'step 6, 8 or 12 was re-run: run step 15 again, then steps 16, 17, 18, 20 and 21'),
+(16, 'BMMS-Fix-MeetingLocks-Step16.sql', 'step 6, 12 or 15 was re-run: run step 16 again, then steps 17, 18 and 20'),
+(17, 'BMMS-Fix-UserStatus-Stage2b.sql', 'step 6, 8, 15 or 16 was re-run: run step 17 again, then steps 18 and 20'),
+(18, 'BMMS-Fix-SystemAccount-Stage3.sql', 'step 3, 6, 8, 13, 14, 15, 16 or 17 was re-run, or the system account count is not 1: see README step 18 (then steps 20 and 21)'),
 (19, 'BMMS-Fix-OrganisationSettings-Step19.sql', 'a procedure or setting row is missing: run step 19 again (the values already set are kept)'),
+(20, 'BMMS-Fix-AgendaRouting-Step20.sql', 'step 16, 17 or 18 was re-run: run step 20 again (the re-route moves nothing a second time)'),
 (21, 'BMMS-Fix-MemberTypes-Step21.sql', 'step 2, 3, 15 or 18 was re-run, or a reserved type was changed by hand: run step 21 again');
 
 SELECT s.Step, s.Script,

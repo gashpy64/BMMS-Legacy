@@ -223,6 +223,11 @@ BEGIN TRY
     ---------------------------------------------------------------------------
     -- Approval, finalize and confirm history (through the real procedures)
     ---------------------------------------------------------------------------
+    -- Step 20: the approval needs an active Controller at AMA; checks that change say "[step 20: ...]"
+    DECLARE @Step20 INT = CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateAgendaByAgendaId')), '') LIKE '%AgendaRouting-Step20%' THEN 1 ELSE 0 END;
+    DECLARE @CtrlRoleId20 INT = (SELECT TOP 1 RoleId FROM Roles WHERE RoleCode = 'controller');
+    DECLARE @Note20 VARCHAR(80) = CASE WHEN @Step20 = 1 THEN ' [step 20: approved as an active Controller at AMA]' ELSE '' END;
+
     SELECT TOP 1 @AgendaId = AgendaId, @MeetingId = MeetingId,
                  @ShortText = ShortText, @ProposedResolution = ProposedResolution
     FROM Agenda ORDER BY AgendaId;
@@ -242,14 +247,24 @@ BEGIN TRY
         -- Step 16: approve / reject only while the agenda is not finalized (rolled back)
         UPDATE Meeting SET AgendaStatus = 'Open' WHERE MeetingId = @MeetingId;
 
+        -- Step 20: only an active Controller approves, and only at AMA: UserC acts as one for this call (rolled back)
+        IF (@Step20 = 1)
+        BEGIN
+            UPDATE Users SET RoleId = @CtrlRoleId20, AccountStatus = 1 WHERE UserId = @UserC;
+            UPDATE Agenda SET AgendaStatusCode = 'AMA', ControllerApprovedStatus = NULL WHERE AgendaId = @AgendaId;
+        END
+
         DELETE FROM @R;
         INSERT INTO @R EXEC spr_UpdateAgendaByAgendaId @AgendaId = @AgendaId, @ShortText = @ShortText,
              @ProposedResolution = @ProposedResolution, @MgrComments = '', @ControllerComments = 'ZZ delete test',
              @ControllerApprovedStatus = 'Approved', @MgrApprovedStatus = '', @UpdatedBy = @UserC;
 
+        IF (@Step20 = 1)
+            UPDATE Users SET RoleId = @RoleId, AccountStatus = 0 WHERE UserId = @UserC;
+
         DELETE FROM @R;
         INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @UserC, @ActingUserId = @AdminId;
-        INSERT INTO @T SELECT 'Delete of a user who approved an agenda: Result', '0', CAST(Result AS VARCHAR(12)) FROM @R;
+        INSERT INTO @T SELECT 'Delete of a user who approved an agenda: Result' + @Note20, '0', CAST(Result AS VARCHAR(12)) FROM @R;
 
         ROLLBACK TRANSACTION HistoryTest;
         SAVE TRANSACTION HistoryTest;
@@ -281,10 +296,20 @@ BEGIN TRY
         -- Step 16: approve / reject only while the agenda is not finalized (rolled back)
         UPDATE Meeting SET AgendaStatus = 'Open' WHERE MeetingId = @MeetingId;
 
+        -- Step 20: only an active Controller approves, and only at AMA: UserC acts as one for this call (rolled back)
+        IF (@Step20 = 1)
+        BEGIN
+            UPDATE Users SET RoleId = @CtrlRoleId20, AccountStatus = 1 WHERE UserId = @UserC;
+            UPDATE Agenda SET AgendaStatusCode = 'AMA', ControllerApprovedStatus = NULL WHERE AgendaId = @AgendaId;
+        END
+
         DELETE FROM @R;
         INSERT INTO @R EXEC spr_UpdateAgendaByAgendaId @AgendaId = @AgendaId, @ShortText = @ShortText,
              @ProposedResolution = @ProposedResolution, @MgrComments = '', @ControllerComments = 'ZZ delete test',
              @ControllerApprovedStatus = 'Approved', @MgrApprovedStatus = '', @UpdatedBy = @UserC;
+
+        IF (@Step20 = 1)
+            UPDATE Users SET RoleId = @RoleId, AccountStatus = 0 WHERE UserId = @UserC;
 
         UPDATE Meeting SET MinutesStatus = 'Open' WHERE MeetingId = @MeetingId;
 
@@ -292,7 +317,7 @@ BEGIN TRY
 
         DELETE FROM @R;
         INSERT INTO @R EXEC spr_DeleteUserByUserId @UserId = @UserC, @ActingUserId = @AdminId;
-        INSERT INTO @T SELECT 'Delete of a user who approved and finalized: Result', '0', CAST(Result AS VARCHAR(12)) FROM @R;
+        INSERT INTO @T SELECT 'Delete of a user who approved and finalized: Result' + @Note20, '0', CAST(Result AS VARCHAR(12)) FROM @R;
         INSERT INTO @T SELECT 'That user still exists', '1', CAST(COUNT(*) AS VARCHAR(12)) FROM Users WHERE UserId = @UserC;
 
         ROLLBACK TRANSACTION HistoryTest;
