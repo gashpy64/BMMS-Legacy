@@ -297,28 +297,36 @@ namespace BMMS.Master
                     myMeeting.UpdatedBy = int.Parse(Session["UserId"].ToString());
 
 
-                    string strResult = "Success";
-
-                    // Date / committee locked by attendance: say so before any mail goes out.
+                    // Date / committee locked by attendance: say so without calling the procedure.
                     // The procedure checks again under a lock (BMMS-Fix-MeetingLocks-Step16.sql).
                     bool dateChanged = hdnMeetingDate.Value != string.Empty
                         && Convert.ToDateTime(hdnMeetingDate.Value).Date != myMeeting.MeetingDate.Date;
 
                     if (btnSave.Text == "Update" && dateChanged && MeetingMgr.HasAttendance(myMeeting.MeetingId))
-                        strResult = MeetingChangeReason.AttendanceLocksMeetingMessage;
-                    else if (btnSave.Text == "Save")
-                        strResult = GenerateMail("Created");
-                    else if (btnSave.Text == "Update")
-                        strResult = GenerateMail("Updated");
-
-                    if (strResult == "Success")
                     {
-                        MeetingChangeResult result = MeetingMgr.AddEditMeeting(myMeeting);
-                        sMsg = result.Result == 1 ? "Successfully Saved" : result.RefusalMessage();
+                        sMsg = MeetingChangeReason.AttendanceLocksMeetingMessage;
                     }
                     else
                     {
-                        sMsg = strResult;
+                        // Save first; the "Meeting Created / Updated" mail goes out only when the database
+                        // accepted the save (BMMS-Fix-MeetingDates-Step24.sql)
+                        MeetingChangeResult result = MeetingMgr.AddEditMeeting(myMeeting);
+
+                        if (result.Result != 1)
+                        {
+                            sMsg = result.RefusalMessage();
+                        }
+                        else
+                        {
+                            string strResult = "Success";
+
+                            if (btnSave.Text == "Save")
+                                strResult = GenerateMail("Created");
+                            else if (btnSave.Text == "Update")
+                                strResult = GenerateMail("Updated");
+
+                            sMsg = strResult == "Success" ? "Successfully Saved" : strResult;
+                        }
                     }
 
 
@@ -364,10 +372,39 @@ namespace BMMS.Master
                 }
             }
 
-            if (MeetingDate <= AgendaSubmissionDate)
+            // The rules of spr_AddEditMeeting, checked here first for a quick message (BMMS-Fix-MeetingDates-Step24.sql):
+            // on create neither date before today; on edit only a changed date; the submission date always
+            // on or before the meeting date. The database checks again with its own date.
+            bool meetingDateChanged = true;
+            bool submissionDateChanged = true;
+
+            if (btnSave.Text == "Update")
             {
-                MsgDisplay("Agenda Submission Date should be less than Meeting Date");
-                ScriptManager.GetCurrent(this).SetFocus(txtAgendaSubmissionDate.ClientID);
+                DataTable dtSaved = MeetingMgr.GetMeetingByMeetingId(MeetingId);
+
+                if (dtSaved.Rows.Count > 0)
+                {
+                    meetingDateChanged = dtSaved.Rows[0]["MeetingDate"] == DBNull.Value
+                        || Convert.ToDateTime(dtSaved.Rows[0]["MeetingDate"]).Date != MeetingDate.Date;
+                    submissionDateChanged = dtSaved.Rows[0]["AgendaSubmissionDate"] == DBNull.Value
+                        || Convert.ToDateTime(dtSaved.Rows[0]["AgendaSubmissionDate"]).Date != AgendaSubmissionDate.Date;
+                }
+            }
+
+            string dateRule = string.Empty;
+
+            if (meetingDateChanged && MeetingDate.Date < DateTime.Today)
+                dateRule = MeetingChangeReason.MeetingBeforeToday;
+            else if (submissionDateChanged && AgendaSubmissionDate.Date < DateTime.Today)
+                dateRule = MeetingChangeReason.SubmissionBeforeToday;
+            else if (AgendaSubmissionDate.Date > MeetingDate.Date)
+                dateRule = MeetingChangeReason.SubmissionAfterMeeting;
+
+            if (dateRule != string.Empty)
+            {
+                MsgDisplay(MeetingChangeReason.MeetingDateNotValidMessage(dateRule));
+                ScriptManager.GetCurrent(this).SetFocus(dateRule == MeetingChangeReason.MeetingBeforeToday
+                    ? txtMeetingDate.ClientID : txtAgendaSubmissionDate.ClientID);
                 return false;
             }
 

@@ -70,6 +70,8 @@ namespace BMMSBAL
                     return MeetingChangeReason.AgendaStepNotAllowedMessage(ReasonDetail);
                 case MeetingChangeReason.NoActiveController:
                     return MeetingChangeReason.NoActiveControllerMessage;
+                case MeetingChangeReason.MeetingDateNotValid:
+                    return MeetingChangeReason.MeetingDateNotValidMessage(ReasonDetail);
                 default:
                     return "Record Not Saved";
             }
@@ -94,6 +96,29 @@ namespace BMMSBAL
         public const int MemberTypeNotAllowed = 13;    // step 21: member type inactive, of the other scope or missing
         public const int AgendaStepNotAllowed = 14;    // step 20: approve / reject not allowed for you at this stage
         public const int NoActiveController = 15;      // step 20: the item would go to the Controllers and none is active
+        public const int MeetingDateNotValid = 16;     // step 24: meeting / agenda submission date; ReasonDetail says which rule
+
+        // ReasonDetail of Reason 16 (BMMS-Fix-MeetingDates-Step24.sql)
+        public const string DatesMissing = "Missing";
+        public const string MeetingBeforeToday = "MeetingBeforeToday";
+        public const string SubmissionBeforeToday = "SubmissionBeforeToday";
+        public const string SubmissionAfterMeeting = "SubmissionAfterMeeting";
+
+        /// <summary>A meeting date or agenda submission date the rules refuse (BMMS-Fix-MeetingDates-Step24.sql).</summary>
+        public static string MeetingDateNotValidMessage(string detail)
+        {
+            switch (detail)
+            {
+                case MeetingBeforeToday:
+                    return "The Meeting Date cannot be before today.";
+                case SubmissionBeforeToday:
+                    return "The Agenda Submission Date cannot be before today.";
+                case SubmissionAfterMeeting:
+                    return "The Agenda Submission Date must be on or before the Meeting Date.";
+                default:
+                    return "Meeting Date and Agenda Submission Date are required.";
+            }
+        }
 
         /// <summary>An approve or reject the acting user may not do at the item's stage (BMMS-Fix-AgendaRouting-Step20.sql).</summary>
         public static string AgendaStepNotAllowedMessage(string statusName)
