@@ -187,7 +187,7 @@ namespace BMMSDAL
         #endregion
 
         #region AddEditCommitteeMember
-        public static int AddEditCommitteeMember(CommitteeMemberDAL CommitteeMemberDAL)
+        public static DataTable AddEditCommitteeMember(CommitteeMemberDAL CommitteeMemberDAL)
         {
             SqlParameter[] parameter = new SqlParameter[13];
             parameter[0] = new SqlParameter("@Code", CommitteeMemberDAL.Code);
@@ -204,7 +204,8 @@ namespace BMMSDAL
             parameter[11] = new SqlParameter("@UpdatedOn", CommitteeMemberDAL.UpdatedOn);
             parameter[12] = new SqlParameter("@UpdatedBy", CommitteeMemberDAL.UpdatedBy);
 
-            return CommonDB.ExecuteProcedure("spr_AddEditCommitteeMember", parameter);
+            // One row Result, Reason, ReasonDetail (BMMS-Fix-MemberTypes-Step21.sql)
+            return CommonDB.GetDataTable("spr_AddEditCommitteeMember", parameter);
         }
         #endregion
 

@@ -49,6 +49,23 @@
                                 </HeaderTemplate>
                                 <ItemTemplate>
                                     <asp:Label ID="lblEmployeName" runat="server" SkinID="lblskingen" Text='<%#Eval("MemberTypeName")%>'></asp:Label>
+                                    <asp:Label ID="lblReserved" runat="server" SkinID="lblskingen" Text=" (reserved)" Visible="false"></asp:Label>
+                                </ItemTemplate>
+                            </asp:TemplateField>
+                            <asp:TemplateField SortExpression="ScopeName">
+                                <HeaderTemplate>
+                                    <asp:LinkButton ID="lnk3" runat="server" Text="Used On" CommandName="Sort" CommandArgument="ScopeName"></asp:LinkButton>
+                                </HeaderTemplate>
+                                <ItemTemplate>
+                                    <asp:Label ID="lblScopeName" runat="server" SkinID="lblskingen" Text='<%#Eval("ScopeName")%>'></asp:Label>
+                                </ItemTemplate>
+                            </asp:TemplateField>
+                            <asp:TemplateField SortExpression="DisplayOrder">
+                                <HeaderTemplate>
+                                    <asp:LinkButton ID="lnk5" runat="server" Text="Display Order" CommandName="Sort" CommandArgument="DisplayOrder"></asp:LinkButton>
+                                </HeaderTemplate>
+                                <ItemTemplate>
+                                    <asp:Label ID="lblDisplayOrder" runat="server" SkinID="lblskingen" Text='<%#Eval("DisplayOrder")%>'></asp:Label>
                                 </ItemTemplate>
                             </asp:TemplateField>
                             <asp:TemplateField SortExpression="StatusName">
@@ -83,8 +100,11 @@
                     </asp:GridView>
                 </div>
                 <p class="wb-help">
-                    Click a column heading to sort. Delete asks for confirmation; a member type that is
-                    in use cannot be deleted.</p>
+                    Click a column heading to sort. "Used On" says which page offers the type: Committee
+                    (Committee Member Tag / UnTag) or Meeting (Meeting - Member Tag / UnTag); each page lists
+                    the active types in display order. Reserved types are used by the minutes and the notices
+                    and cannot be changed or deleted. A type that is in use cannot be deleted or moved to the
+                    other page; make it inactive instead. Delete asks for confirmation.</p>
             </div>
         </asp:Panel>
         <asp:Panel ID="pnlEditMemberType" runat="server">
@@ -96,7 +116,7 @@
                         <label class="wb-label" for="ctl00_ContentPlaceHolder1_txtMemberTypeCode">
                             Member Type Code <span class="wb-req">*</span></label>
                         <div class="wb-field">
-                            <asp:TextBox ID="txtMemberTypeCode" runat="server"></asp:TextBox>
+                            <asp:TextBox ID="txtMemberTypeCode" runat="server" MaxLength="50"></asp:TextBox>
                             <asp:HiddenField ID="hdnMemberTypeId" runat="server" />
                         </div>
                     </div>
@@ -104,7 +124,30 @@
                         <label class="wb-label" for="ctl00_ContentPlaceHolder1_txtMemberTypeName">
                             Member Type Name <span class="wb-req">*</span></label>
                         <div class="wb-field">
-                            <asp:TextBox ID="txtMemberTypeName" runat="server"></asp:TextBox>
+                            <asp:TextBox ID="txtMemberTypeName" runat="server" MaxLength="50"></asp:TextBox>
+                        </div>
+                    </div>
+                    <div class="wb-row">
+                        <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlMemberScope">
+                            Used On <span class="wb-req">*</span></label>
+                        <div class="wb-field">
+                            <asp:DropDownList ID="ddlMemberScope" runat="server">
+                                <asp:ListItem Text="- Select -" Value="0"></asp:ListItem>
+                                <asp:ListItem Text="Committee" Value="C"></asp:ListItem>
+                                <asp:ListItem Text="Meeting" Value="M"></asp:ListItem>
+                            </asp:DropDownList>
+                            <asp:Label ID="lblScopeNote" runat="server" CssClass="wb-help" Visible="false"></asp:Label>
+                        </div>
+                    </div>
+                    <div class="wb-row">
+                        <label class="wb-label" for="ctl00_ContentPlaceHolder1_txtDisplayOrder">
+                            Display Order</label>
+                        <div class="wb-field">
+                            <asp:TextBox ID="txtDisplayOrder" runat="server" MaxLength="4"></asp:TextBox>
+                            <cc1:FilteredTextBoxExtender ID="FilteredTextBoxExtender1" runat="server" TargetControlID="txtDisplayOrder"
+                                FilterMode="ValidChars" FilterType="Numbers" ValidChars="1234567890">
+                            </cc1:FilteredTextBoxExtender>
+                            <span class="wb-help">0 to 9999; lower numbers come first in the drop-downs and the minutes</span>
                         </div>
                     </div>
                     <div class="wb-row">

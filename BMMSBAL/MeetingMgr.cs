@@ -64,6 +64,8 @@ namespace BMMSBAL
                     return MeetingChangeReason.ManagerInactiveMessage(ReasonDetail);
                 case MeetingChangeReason.SystemAccount:
                     return MeetingChangeReason.SystemAccountMessage;
+                case MeetingChangeReason.MemberTypeNotAllowed:
+                    return MeetingChangeReason.MemberTypeNotAllowedMessage(ReasonDetail);
                 default:
                     return "Record Not Saved";
             }
@@ -85,6 +87,14 @@ namespace BMMSBAL
         public const int AgendaLocksCommittee = 10;    // step 16: meeting committee
         public const int ManagerInactive = 11;         // step 17: the user's manager is inactive (new agenda item)
         public const int SystemAccount = 12;           // step 18: the protected system account cannot approve or reject
+        public const int MemberTypeNotAllowed = 13;    // step 21: member type inactive, of the other scope or missing
+
+        /// <summary>A committee or meeting member saved with a type the page does not offer (BMMS-Fix-MemberTypes-Step21.sql).</summary>
+        public static string MemberTypeNotAllowedMessage(string typeName)
+        {
+            return "The member type " + System.Web.HttpUtility.HtmlEncode(typeName)
+                 + " cannot be used here: it is inactive or belongs to the other tagging page. Reload the page and choose another type.";
+        }
 
         public const string SystemAccountMessage =
             "The system account takes no part in the agenda workflow and cannot approve or reject agenda items.";

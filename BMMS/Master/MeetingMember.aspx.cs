@@ -46,14 +46,7 @@ namespace BMMS.Master
         {
             try
             {
-                DataTable dtMemberType = MemberTypeMgr.GetMemberTypeList(1);
-
-                DataView dv = new DataView(dtMemberType);
-                dv.RowFilter = "MemberTypeId = 2 OR MemberTypeId = 3 OR MemberTypeId = 6";
-
-                dtMemberType = dv.ToTable("dtMemberType");
-
-                Common.LoadDropdownlist(ddlMemberType, dtMemberType, "MemberTypeName", "MemberTypeId", true);
+                LoadMemberTypes(0);
             }
             catch (Exception ex)
             {
@@ -63,6 +56,17 @@ namespace BMMS.Master
             {
 
             }
+        }
+        #endregion
+
+        #region LoadMemberTypes
+        // Active meeting types in display order; on an edit also the row's current type,
+        // marked when it is inactive or a committee type (BMMS-Fix-MemberTypes-Step21.sql)
+        private void LoadMemberTypes(int CurrentMemberTypeId)
+        {
+            DataTable dtMemberType = MemberTypeMgr.GetMemberTypeForTagging(MemberTypeMgr.MeetingScope, CurrentMemberTypeId);
+
+            Common.LoadDropdownlist(ddlMemberType, dtMemberType, "DisplayName", "MemberTypeId", true);
         }
         #endregion
 
@@ -293,6 +297,7 @@ namespace BMMS.Master
                     hdnMeetingMemberId.Value = "0";
 
                     ddlMemberName.Text = "0";
+                    LoadMemberTypes(0);
                     ddlMemberType.Text = "0";
                     txtMemberName.Visible = false;
                     hdnMemberId.Value = "0";
@@ -356,12 +361,13 @@ namespace BMMS.Master
                     myMeetingMember = null;
                 }
 
-                MsgDisplay(sMsg);
-
                 ltrlMemberDetails.Text = string.Empty;
                 pnlViewMeetingMember.Visible = true;
                 pnlEditMeetingMember.Visible = false;
                 ddlMeeting_SelectedIndexChanged(this,e);
+
+                // After the list refresh, which hides the message
+                MsgDisplay(sMsg);
             }
         }
         #endregion
@@ -448,6 +454,7 @@ namespace BMMS.Master
                     txtMemberName.Visible = true;
                     txtMemberName.Text = dtMeetingMember.Rows[0]["MemberName"].ToString();
                     hdnMemberId.Value = dtMeetingMember.Rows[0]["MemberId"].ToString();
+                    LoadMemberTypes(Convert.ToInt32(dtMeetingMember.Rows[0]["MemberTypeId"]));
                     ddlMemberType.Text = dtMeetingMember.Rows[0]["MemberTypeId"].ToString();
 
                     ddlStatus.Enabled = true;
