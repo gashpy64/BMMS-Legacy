@@ -443,6 +443,18 @@ namespace BMMSDAL
         }
         #endregion
 
+        #region GetAgendaCreationMailId
+        // The creator's route and the Bcc of the "agenda created" mail: Route, ManagerName,
+        // ActiveControllers, EmailId; at least one row (BMMS-Fix-AgendaRouting-Step20.sql)
+        public static DataTable GetAgendaCreationMailId(int UserId)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@UserId", UserId);
+
+            return CommonDB.GetDataTable("spr_GetAgendaCreationMailId", parameter);
+        }
+        #endregion
+
         #region GetAgendaLockByMeetingId
         // One row: AllowChange, Reason, ReasonDetail - may the acting user add / edit / delete
         // agenda items of the meeting (BMMS-Fix-MeetingLocks-Step16.sql)

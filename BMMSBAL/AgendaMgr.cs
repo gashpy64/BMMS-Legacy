@@ -387,6 +387,20 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region GetAgendaCreationMailId
+        // Route M (the manager step), C (straight to the Controllers) or I (manager inactive: refused),
+        // with the Bcc addresses of the "agenda created" mail (BMMS-Fix-AgendaRouting-Step20.sql)
+        public static DataTable GetAgendaCreationMailId(int UserId)
+        {
+            DataTable dt = AgendaDB.GetAgendaCreationMailId(UserId);
+
+            if (dt == null || dt.Rows.Count == 0 || !dt.Columns.Contains("Route"))
+                throw new InvalidOperationException("spr_GetAgendaCreationMailId returned no row. Run Database/BMMS-Fix-AgendaRouting-Step20.sql.");
+
+            return dt;
+        }
+        #endregion
+
         #region GetAgendaLock
         // May the acting user add / edit / delete agenda items of this meeting? Result 1 = yes;
         // otherwise Reason / ReasonDetail as the agenda procedures would refuse (BMMS-Fix-MeetingLocks-Step16.sql)

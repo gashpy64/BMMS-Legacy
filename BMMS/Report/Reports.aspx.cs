@@ -639,25 +639,18 @@ namespace BMMS.Report
                             }
                         }
 
-                        for (int n = 0; n < dtSpecialInviteeMember.Rows.Count; n++)
-                        {
-                            htmlTxt += "<tr>";
-                            htmlTxt += "<td>";
-                            htmlTxt += dtSpecialInviteeMember.Rows[n]["MemberName"].ToString();
-                            htmlTxt += "</td>";
-                            htmlTxt += "<td>";
-                            htmlTxt += "-  " + dtSpecialInviteeMember.Rows[n]["DesignationName"].ToString();
-                            htmlTxt += "</td>";
-                            htmlTxt += "</tr>";
-                        }
-
                         htmlTxt += "<tr>";
                         htmlTxt += "<td colspan='2'>";
                         htmlTxt += "<br />";
                         htmlTxt += "</td>";
                         htmlTxt += "</tr>";
 
-                        if (dtInviteeMember.Rows.Count > 0)
+                        // ON INVITATION: the Invitees (type 2, where it exists), then the Special Invitees (type 6),
+                        // each in the order tagged (BMMS-Fix-AgendaRouting-Step20.sql)
+                        DataTable[] dtInvitationLists = { dtInviteeMember, dtSpecialInviteeMember };
+                        int InvitationCount = dtInviteeMember.Rows.Count + dtSpecialInviteeMember.Rows.Count;
+
+                        if (InvitationCount > 0)
                         {
                             htmlTxt += "<tr>";
                             htmlTxt += "<td colspan='2'>";
@@ -666,22 +659,25 @@ namespace BMMS.Report
                             htmlTxt += "</tr>";
                         }
 
-                        for (int n1 = 0; n1 < dtInviteeMember.Rows.Count; n1++)
+                        foreach (DataTable dtInvitation in dtInvitationLists)
                         {
-                            if (CompanySecretary != dtInviteeMember.Rows[n1]["MemberName"].ToString())
+                            for (int n1 = 0; n1 < dtInvitation.Rows.Count; n1++)
                             {
-                                htmlTxt += "<tr>";
-                                htmlTxt += "<td>";
-                                htmlTxt += dtInviteeMember.Rows[n1]["MemberName"].ToString();
-                                htmlTxt += "</td>";
-                                htmlTxt += "<td>";
-                                htmlTxt += "-  " + dtInviteeMember.Rows[n1]["DesignationName"].ToString();
-                                htmlTxt += "</td>";
-                                htmlTxt += "</tr>";
+                                if (CompanySecretary != dtInvitation.Rows[n1]["MemberName"].ToString())
+                                {
+                                    htmlTxt += "<tr>";
+                                    htmlTxt += "<td>";
+                                    htmlTxt += dtInvitation.Rows[n1]["MemberName"].ToString();
+                                    htmlTxt += "</td>";
+                                    htmlTxt += "<td>";
+                                    htmlTxt += "-  " + dtInvitation.Rows[n1]["DesignationName"].ToString();
+                                    htmlTxt += "</td>";
+                                    htmlTxt += "</tr>";
+                                }
                             }
                         }
 
-                        if (dtInviteeMember.Rows.Count > 0)
+                        if (InvitationCount > 0)
                         {
                             htmlTxt += "<tr>";
                             htmlTxt += "<td colspan='2'>";
@@ -698,14 +694,18 @@ namespace BMMS.Report
                             htmlTxt += "</td>";
                             htmlTxt += "</tr>";
 
-                            htmlTxt += "<tr>";
-                            htmlTxt += "<td>";
-                            htmlTxt += CompanySecretary;
-                            htmlTxt += "</td>";
-                            htmlTxt += "<td>";
-                            htmlTxt += "-  " + CompanySecretaryDesign;
-                            htmlTxt += "</td>";
-                            htmlTxt += "</tr>";
+                            // Every In Attendance member, the first tagged first; the first one also signs below
+                            for (int n2 = 0; n2 < dtCompanySecretary.Rows.Count; n2++)
+                            {
+                                htmlTxt += "<tr>";
+                                htmlTxt += "<td>";
+                                htmlTxt += dtCompanySecretary.Rows[n2]["CompanySecretary"].ToString();
+                                htmlTxt += "</td>";
+                                htmlTxt += "<td>";
+                                htmlTxt += "-  " + dtCompanySecretary.Rows[n2]["DesignationName"].ToString();
+                                htmlTxt += "</td>";
+                                htmlTxt += "</tr>";
+                            }
 
                         }
 

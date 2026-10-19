@@ -66,6 +66,10 @@ namespace BMMSBAL
                     return MeetingChangeReason.SystemAccountMessage;
                 case MeetingChangeReason.MemberTypeNotAllowed:
                     return MeetingChangeReason.MemberTypeNotAllowedMessage(ReasonDetail);
+                case MeetingChangeReason.AgendaStepNotAllowed:
+                    return MeetingChangeReason.AgendaStepNotAllowedMessage(ReasonDetail);
+                case MeetingChangeReason.NoActiveController:
+                    return MeetingChangeReason.NoActiveControllerMessage;
                 default:
                     return "Record Not Saved";
             }
@@ -88,6 +92,19 @@ namespace BMMSBAL
         public const int ManagerInactive = 11;         // step 17: the user's manager is inactive (new agenda item)
         public const int SystemAccount = 12;           // step 18: the protected system account cannot approve or reject
         public const int MemberTypeNotAllowed = 13;    // step 21: member type inactive, of the other scope or missing
+        public const int AgendaStepNotAllowed = 14;    // step 20: approve / reject not allowed for you at this stage
+        public const int NoActiveController = 15;      // step 20: the item would go to the Controllers and none is active
+
+        /// <summary>An approve or reject the acting user may not do at the item's stage (BMMS-Fix-AgendaRouting-Step20.sql).</summary>
+        public static string AgendaStepNotAllowedMessage(string statusName)
+        {
+            return "You cannot approve or reject this agenda item at its current stage"
+                 + (string.IsNullOrEmpty(statusName) ? "" : " (" + System.Web.HttpUtility.HtmlEncode(statusName) + ")")
+                 + ". Reload the Dashboard to see its current state.";
+        }
+
+        public const string NoActiveControllerMessage =
+            "No Controller is active, so this agenda item cannot be sent for approval. Ask the administrator to activate a Controller.";
 
         /// <summary>A committee or meeting member saved with a type the page does not offer (BMMS-Fix-MemberTypes-Step21.sql).</summary>
         public static string MemberTypeNotAllowedMessage(string typeName)

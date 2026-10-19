@@ -729,7 +729,6 @@ namespace BMMS.Master
             string Bcc = string.Empty;
 
             int mgrUserId = 0;
-            bool mgrActive = false;
 
             DataTable dtUser = UserMgr.GetActiveUserList();   // active users only (stage 2a)
             if (dtUser.Rows.Count > 0)
@@ -753,20 +752,34 @@ namespace BMMS.Master
                     if (dtUser.Rows[i]["UserId"].ToString() == mgrUserId.ToString())
                     {
                         Bcc += dtUser.Rows[i]["EmailId"].ToString();
-                        mgrActive = true;
                         break;
                     }
                 }
             }
 
-            // A user's new item waits for their manager: refused while that manager is inactive, before
-            // any mail goes out. No manager is unchanged. The procedure checks again (BMMS-Fix-UserStatus-Stage2b.sql).
+            // A user's new item follows the route of BMMS-Fix-AgendaRouting-Step20.sql: it waits for an active
+            // Manager (Bcc the manager), or goes straight to the Controllers (Bcc the active Controllers). Refused,
+            // before any mail goes out, while the manager is inactive (BMMS-Fix-UserStatus-Stage2b.sql) or when it
+            // would go to the Controllers and none is active. The procedure checks again.
             string roleCode = Session["RoleCode"].ToString();
-            if (mgrUserId != 0 && !mgrActive && roleCode != "controller" && roleCode != "manager")
+            if (roleCode != "controller" && roleCode != "manager")
             {
-                DataTable dtMgr = UserMgr.GetUserDataTableByUserId(mgrUserId);
-                string mgrName = dtMgr.Rows.Count > 0 ? dtMgr.Rows[0]["UserName"].ToString() : string.Empty;
-                return MeetingChangeReason.ManagerInactiveMessage(mgrName);
+                DataTable dtRoute = AgendaMgr.GetAgendaCreationMailId(int.Parse(Session["UserId"].ToString()));
+                string route = dtRoute.Rows[0]["Route"].ToString();
+
+                if (route == "I")
+                    return MeetingChangeReason.ManagerInactiveMessage(dtRoute.Rows[0]["ManagerName"].ToString());
+
+                if (route == "C" && Convert.ToInt32(dtRoute.Rows[0]["ActiveControllers"]) == 0)
+                    return MeetingChangeReason.NoActiveControllerMessage;
+
+                Bcc = string.Empty;
+                for (int i = 0; i <= dtRoute.Rows.Count - 1; i++)
+                {
+                    string emailId = dtRoute.Rows[i]["EmailId"].ToString().Trim();
+                    if (emailId != string.Empty)
+                        Bcc += (Bcc == string.Empty ? "" : ", ") + emailId;
+                }
             }
 
             string Subject = "Agenda (" + txtAgendaNo.Text.Trim() + ") has been Created";

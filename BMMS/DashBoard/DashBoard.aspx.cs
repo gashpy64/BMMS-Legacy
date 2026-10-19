@@ -485,14 +485,13 @@ namespace BMMS.DashBoard
                         btnDeleteAgendaAlert.Visible = true;
                         break;
                     default:
-                        ftxtManagerComments.ReadOnly = false;
-                        ftxtControllerComments.ReadOnly = false;
-                        if (dtAgendaEdit.Rows[0]["ControllerApprovedStatus"].ToString() != "Approved" && dtAgendaEdit.Rows[0]["ControllerApprovedStatus"].ToString() != "Rejected")
-                        {
-                            btnApprove.Visible = true;
-                            btnReject.Visible = true;
-                            btnDeleteAgendaAlert.Visible = false;
-                        }
+                        // Admin, mgmt and md_sect do not sign off agenda items: view only
+                        // (BMMS-Fix-AgendaRouting-Step20.sql refuses them too, Reason 14)
+                        ftxtManagerComments.ReadOnly = true;
+                        ftxtControllerComments.ReadOnly = true;
+                        btnApprove.Visible = false;
+                        btnReject.Visible = false;
+                        btnDeleteAgendaAlert.Visible = true;
                         break;
 
                 }
@@ -554,23 +553,26 @@ namespace BMMS.DashBoard
             }
 
             if (Session["RoleCode"].ToString() == "manager")
-            {
                 agendaBal.MgrApprovedStatus = "Approved";
-                GenerateMail("approved by Manager", "AMA");
-            }
 
             if (Session["RoleCode"].ToString() == "controller")
-            {
                 agendaBal.ControllerApprovedStatus = "Approved";
-                GenerateMail("approved by Controller", "ACA");
-            }
 
             agendaBal.UpdatedBy = Convert.ToInt16(Session["UserId"].ToString());
 
+            // Who may approve at which stage is checked by the procedure (BMMS-Fix-AgendaRouting-Step20.sql);
+            // the mail goes out only once it is done
             MeetingChangeResult approveResult = AgendaMgr.UpdateAgendaByAgendaId(agendaBal);
 
             if (approveResult.Result == 1)
+            {
+                if (agendaBal.MgrApprovedStatus == "Approved")
+                    GenerateMail("approved by Manager", "AMA");
+                if (agendaBal.ControllerApprovedStatus == "Approved")
+                    GenerateMail("approved by Controller", "ACA");
+
                 AgendaMgr.GenerateSubjectNoByMeetingId(MeetingId, AgendaId);
+            }
             else
                 ShowAlert(approveResult.RefusalMessage());
 
@@ -606,22 +608,25 @@ namespace BMMS.DashBoard
             }
 
             if (Session["RoleCode"].ToString() == "manager")
-            {
                 agendaBal.MgrApprovedStatus = "Rejected";
-                GenerateMail("rejected by Manager", "AMR");
-            }
 
             if (Session["RoleCode"].ToString() == "controller")
-            {
                 agendaBal.ControllerApprovedStatus = "Rejected";
-                GenerateMail("rejected by Controller", "ACR");
-            }
 
             agendaBal.UpdatedBy = Convert.ToInt16(Session["UserId"].ToString());
 
+            // Who may reject at which stage is checked by the procedure (BMMS-Fix-AgendaRouting-Step20.sql);
+            // the mail goes out only once it is done
             MeetingChangeResult rejectResult = AgendaMgr.UpdateAgendaByAgendaId(agendaBal);
 
-            if (rejectResult.Result != 1)
+            if (rejectResult.Result == 1)
+            {
+                if (agendaBal.MgrApprovedStatus == "Rejected")
+                    GenerateMail("rejected by Manager", "AMR");
+                if (agendaBal.ControllerApprovedStatus == "Rejected")
+                    GenerateMail("rejected by Controller", "ACR");
+            }
+            else
                 ShowAlert(rejectResult.RefusalMessage());
 
             pnlAgenda.Visible = false;
