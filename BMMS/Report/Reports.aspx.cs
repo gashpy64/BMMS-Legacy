@@ -128,11 +128,14 @@ namespace BMMS.Report
                 {
                     ddlMeetingNo.Enabled = true;
 
-                    DataTable dtMeetingNo = MeetingMgr.GetMeetingByCommitteeId(CommitteeId);
+                    DataTable dtMeetingNo = GetReportMeetings(CommitteeId);
                     Common.LoadDDLwithAllNew(ddlMeetingNo, dtMeetingNo, "MeetingNo", "MeetingId", true);
 
                     if (dtMeetingNo.Rows.Count > 0)
                         ddlMeetingNo.SelectedIndex = 0;
+
+                    if (IsMinutesReport() && dtMeetingNo.Rows.Count <= 0)
+                        MsgDisplay(MeetingChangeReason.NoMinutesFinalizedMessage);
 
                 }
                 if (rdoMeatingNoSearch.SelectedValue == "1")
@@ -142,7 +145,7 @@ namespace BMMS.Report
                     ddlMeetingNoFrom.Enabled = true;
                     ddlMeetingNoTo.Enabled = true;
 
-                    DataTable dtMeetingNo = MeetingMgr.GetMeetingByCommitteeId(CommitteeId);
+                    DataTable dtMeetingNo = GetReportMeetings(CommitteeId);
                     Common.LoadDDLwithAllNew(ddlMeetingNoFrom, dtMeetingNo, "MeetingNo", "MeetingId", false);
                     Common.LoadDDLwithAllNew(ddlMeetingNoTo, dtMeetingNo, "MeetingNo", "MeetingId", false);
 
@@ -151,8 +154,30 @@ namespace BMMS.Report
                         ddlMeetingNoFrom.SelectedIndex = 0;
                         ddlMeetingNoTo.SelectedIndex = ddlMeetingNoTo.Items.Count - 1;
                     }
+
+                    if (IsMinutesReport() && dtMeetingNo.Rows.Count <= 0)
+                        MsgDisplay(MeetingChangeReason.NoMinutesFinalizedMessage);
                 }
             }
+        }
+        #endregion
+
+        #region IsMinutesReport
+        // Minutes and Minutes Extract: only meetings with finalized or confirmed minutes (BMMS-Fix-MinutesGating-Step22.sql)
+        private bool IsMinutesReport()
+        {
+            return reportCode == "minutes" || reportCode == "minutes_extract";
+        }
+        #endregion
+
+        #region GetReportMeetings
+        // The meeting lists: finalized or confirmed meetings for the minutes reports, every meeting for the agenda reports
+        private DataTable GetReportMeetings(int CommitteeId)
+        {
+            if (IsMinutesReport())
+                return MeetingMgr.GetMinutesReportMeetings(CommitteeId);
+
+            return MeetingMgr.GetMeetingByCommitteeId(CommitteeId);
         }
         #endregion
 
@@ -243,6 +268,25 @@ namespace BMMS.Report
                     ScriptManager.GetCurrent(this).SetFocus(ddlCommittee.ClientID);
                     result = false;
                 }
+                else if (IsMinutesReport())
+                {
+                    // Minutes and Minutes Extract only after Finalize Minutes (BMMS-Fix-MinutesGating-Step22.sql);
+                    // the procedure leaves the other meetings out anyway
+                    bool particular = rdoMeatingNoSearch.SelectedValue == "0";
+
+                    if ((particular && ddlMeetingNo.Items.Count <= 1) || (!particular && ddlMeetingNoFrom.Items.Count <= 0))
+                    {
+                        MsgDisplay(MeetingChangeReason.NoMinutesFinalizedMessage);
+                        result = false;
+                    }
+                    else if (particular && int.Parse(ddlMeetingNo.SelectedValue) > 0
+                             && !MeetingMgr.IsMinutesFinalized(int.Parse(ddlMeetingNo.SelectedValue)))
+                    {
+                        MsgDisplay(MeetingChangeReason.MinutesNotFinalizedMessage);
+                        ScriptManager.GetCurrent(this).SetFocus(ddlMeetingNo.ClientID);
+                        result = false;
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -255,6 +299,9 @@ namespace BMMS.Report
         #region btnView_Click
         protected void btnView_Click(object sender, EventArgs e)
         {
+            MsgHide();
+            pnlViewReport.Visible = false;
+
             if (CheckValidataion())
             {
                 pnlViewReport.Visible = true;
@@ -864,6 +911,10 @@ namespace BMMS.Report
                 {
 
                     int MeetingId = int.Parse(dtMeetingList.Rows[j]["MeetingId"].ToString());
+
+                    // No rows for this meeting (its minutes are not finalized): no heading for it (BMMS-Fix-MinutesGating-Step22.sql)
+                    if (dtMinutes.Select("MeetingId = " + MeetingId).Length == 0)
+                        continue;
 
                     DataTable dtMeeting = MeetingMgr.GetMeetingByMeetingId(MeetingId);
 

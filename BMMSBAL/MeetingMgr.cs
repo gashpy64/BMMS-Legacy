@@ -134,6 +134,13 @@ namespace BMMSBAL
 
         public const string MinutesConfirmedMessage =
             "The minutes of this meeting are confirmed and can no longer be changed.";
+
+        // Minutes and Minutes Extract reports, page messages only: the report procedures read and return no Reason (BMMS-Fix-MinutesGating-Step22.sql)
+        public const string MinutesNotFinalizedMessage =
+            "The minutes of this meeting are not finalized yet. Finalize them (Minutes, Finalize Minutes) before viewing or generating the minutes or the minutes extract.";
+
+        public const string NoMinutesFinalizedMessage =
+            "No meeting of this committee has finalized minutes yet, so there are no minutes or minutes extracts to view or generate.";
     }
     #endregion
 
@@ -403,6 +410,15 @@ namespace BMMSBAL
             DataTable dt = MeetingDB.GetMeetingStatusByMeetingId(MeetingId);
 
             return dt.Rows.Count > 0 && Convert.ToInt32(dt.Rows[0]["IsMinutesFinalized"]) == 1;
+        }
+        #endregion
+
+        #region GetMinutesReportMeetings
+        // Meetings of the committee with finalized or confirmed minutes, by MeetingNo: the lists of the
+        // Minutes and Minutes Extract reports (BMMS-Fix-MinutesGating-Step22.sql)
+        public static DataTable GetMinutesReportMeetings(int CommitteeId)
+        {
+            return MinutesDB.GetMinutesReportMeetings(CommitteeId);
         }
         #endregion
 
