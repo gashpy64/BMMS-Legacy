@@ -24,14 +24,26 @@ namespace BMMSBAL
         private static Font font10N = FontFactory.GetFont(FontFactory.TIMES_ROMAN, 10, Font.NORMAL);
 
         #region GenerateSittingFeeIndividual
-        public static void GenerateSittingFeeIndividual(DataTable dt, DateTime FromDate, DateTime ToDate, string AuthorityPersion,
+        public static byte[] GenerateSittingFeeIndividual(DataTable dt, DateTime FromDate, DateTime ToDate, string AuthorityPersion,
             string AuthorityPersionDesign)
         {
 
             string FinancialYear = FromDate.ToString("yyyy") + "-" + ToDate.ToString("yyyy");
             string DatePeriod = " (" + FromDate.ToString("dd.MM.yyyy") + " to " + ToDate.ToString("dd.MM.yyyy") + ") ";
 
-            string sFilePDF = HttpContext.Current.Server.MapPath("~/Files/PDF") + "\\SFR_Individual.pdf";
+            // A certificate is written only for a member with a sitting fee in the period. When no member
+            // has one, return null and create no document: iText refuses to close an empty one (step 26)
+            bool anyFee = false;
+            for (int i = 0; i < dt.Rows.Count && !anyFee; i++)
+            {
+                string total = AttendanceMgr.GetTotAmtByMemberId(int.Parse(dt.Rows[i]["MemberId"].ToString()), FromDate, ToDate).Rows[0]["TOTAMT"].ToString();
+                anyFee = total != string.Empty && Convert.ToDouble(total) != 0;
+            }
+            if (!anyFee)
+                return null;
+
+            // Built in memory and returned; nothing is written to ~/Files/PDF (step 26)
+            MemoryStream pdfStream = new MemoryStream();
 
             OrganisationDetails org = OrganisationDetails.Current;
 
@@ -39,8 +51,7 @@ namespace BMMSBAL
 
             try
             {
-                PdfWriter writer = PdfWriter.GetInstance(document,
-                                 new FileStream(sFilePDF, FileMode.Create));
+                PdfWriter writer = PdfWriter.GetInstance(document, pdfStream);
 
                 document.Open();
                 //Paragraph paragraph = new Paragraph(" ");
@@ -279,6 +290,7 @@ namespace BMMSBAL
                 document.Close();
             }
 
+            return pdfStream.ToArray();
         }
         #endregion
 
@@ -419,7 +431,7 @@ namespace BMMSBAL
         #endregion
 
         #region GenerateSittingFeeDesignation
-        public static void GenerateSittingFeeDesignation(DataTable dt, DateTime FromDate, DateTime ToDate, string AuthorityPersion,
+        public static byte[] GenerateSittingFeeDesignation(DataTable dt, DateTime FromDate, DateTime ToDate, string AuthorityPersion,
             string AuthorityPersionDesign)
         {
 
@@ -427,14 +439,14 @@ namespace BMMSBAL
             string FinancialYear = FromDate.ToString("yyyy") + "-" + ToDate.ToString("yyyy");
             string DatePeriod = " (" + FromDate.ToString("dd.MM.yyyy") + " to " + ToDate.ToString("dd.MM.yyyy") + ") ";
 
-            string sFilePDF = HttpContext.Current.Server.MapPath("~/Files/PDF") + "\\SFR_Designation.pdf";
+            // Built in memory and returned; nothing is written to ~/Files/PDF (step 26)
+            MemoryStream pdfStream = new MemoryStream();
 
             Document document = new Document(PageSize.A4, 50, 50, 30, 30);
 
             try
             {
-                PdfWriter writer = PdfWriter.GetInstance(document,
-                                 new FileStream(sFilePDF, FileMode.Create));
+                PdfWriter writer = PdfWriter.GetInstance(document, pdfStream);
 
                 document.Open();
                 Paragraph paragraph = new Paragraph(" ");
@@ -594,11 +606,12 @@ namespace BMMSBAL
                 document.Close();
             }
 
+            return pdfStream.ToArray();
         }
         #endregion
 
         #region GenerateSittingFeeConsolidated
-        public static void GenerateSittingFeeConsolidated(DataTable dtMeeting, DataTable dtMember, DateTime FromDate, DateTime ToDate, string AuthorityPersion,
+        public static byte[] GenerateSittingFeeConsolidated(DataTable dtMeeting, DataTable dtMember, DateTime FromDate, DateTime ToDate, string AuthorityPersion,
             string AuthorityPersionDesign)
         {
 
@@ -606,14 +619,14 @@ namespace BMMSBAL
             string FinancialYear = FromDate.ToString("yyyy") + "-" + ToDate.ToString("yyyy");
             string DatePeriod = " (" + FromDate.ToString("dd.MM.yyyy") + " to " + ToDate.ToString("dd.MM.yyyy") + ") ";
 
-            string sFilePDF = HttpContext.Current.Server.MapPath("~/Files/PDF") + "\\SFR_Consolidated.pdf";
+            // Built in memory and returned; nothing is written to ~/Files/PDF (step 26)
+            MemoryStream pdfStream = new MemoryStream();
 
             Document document = new Document(PageSize.A4.Rotate(), 50, 50, 50, 50);
 
             try
             {
-                PdfWriter writer = PdfWriter.GetInstance(document,
-                                 new FileStream(sFilePDF, FileMode.Create));
+                PdfWriter writer = PdfWriter.GetInstance(document, pdfStream);
 
                 document.Open();
                 Paragraph paragraph = new Paragraph(" ");
@@ -758,6 +771,7 @@ namespace BMMSBAL
                 document.Close();
             }
 
+            return pdfStream.ToArray();
         }
         #endregion
 
