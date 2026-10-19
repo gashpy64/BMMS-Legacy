@@ -55,6 +55,7 @@ DECLARE @TU TABLE (UserId INT PRIMARY KEY);
 
 DECLARE @Now DATETIME = GETDATE();
 DECLARE @MDate DATETIME = DATEADD(DAY, -10, CAST(CAST(GETDATE() AS date) AS DATETIME));
+DECLARE @Today DATETIME = CAST(CAST(GETDATE() AS date) AS DATETIME);  -- [step 24] for meeting 99971, saved through spr_AddEditMeeting
 DECLARE @E VARCHAR(10) = '';
 
 DECLARE @Admin INT = (SELECT TOP 1 u.UserId FROM Users u JOIN Roles r ON r.RoleId = u.RoleId WHERE r.RoleCode = 'admin' AND u.AccountStatus = 1 ORDER BY u.UserId);
@@ -205,8 +206,9 @@ BEGIN TRY
     ---------------------------------------------------------------------------
     -- 3. Meeting
     ---------------------------------------------------------------------------
+    -- [step 24] meeting 99971 is dated today: from step 24 a create with a past date is refused (Reason 16)
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_AddEditMeeting @Code = 'Save', @MeetingId = 0, @MeetingNo = '99971', @CommitteeId = @C,
-         @Place = 'ZZ', @Venue = 'ZZ', @MeetingDate = @MDate, @MeetingTime = '10:00', @AgendaSubmissionDate = @MDate, @MeetingColorCode = '',
+         @Place = 'ZZ', @Venue = 'ZZ', @MeetingDate = @Today, @MeetingTime = '10:00', @AgendaSubmissionDate = @Today, @MeetingColorCode = '',
          @CreatedOn = @Now, @CreatedBy = @CtlA, @UpdatedOn = @Now, @UpdatedBy = @CtlA;
     INSERT INTO @T SELECT 'Meeting created', 'Result 1, Reason 0', Txt FROM @R;
     SET @Mt = (SELECT MeetingId FROM Meeting WHERE CommitteeId = @C AND MeetingNo = '99971');
@@ -217,8 +219,9 @@ BEGIN TRY
     INSERT INTO @T SELECT 'Meeting MC: inactive users anywhere in the alert', '0',
            CAST(COUNT(*) AS VARCHAR(12)) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId WHERE m.AlertId = @AMC AND u.AccountStatus <> 1;
 
+    -- [step 24] the same dates as saved (today): only venue and time change
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_AddEditMeeting @Code = 'Update', @MeetingId = @Mt, @MeetingNo = '99971', @CommitteeId = @C,
-         @Place = 'ZZ', @Venue = 'ZZ venue 2', @MeetingDate = @MDate, @MeetingTime = '11:00', @AgendaSubmissionDate = @MDate, @MeetingColorCode = '',
+         @Place = 'ZZ', @Venue = 'ZZ venue 2', @MeetingDate = @Today, @MeetingTime = '11:00', @AgendaSubmissionDate = @Today, @MeetingColorCode = '',
          @CreatedOn = @Now, @CreatedBy = @CtlA, @UpdatedOn = @Now, @UpdatedBy = @CtlA;
     SET @AMU = (SELECT TOP 1 AlertId FROM Alert_Master WHERE SourceType = 'Meeting' AND SourceTypeId = @Mt AND AlertTypeCode = 'MU' ORDER BY AlertId DESC);
     INSERT INTO @T SELECT 'Meeting MU: saved; active test users / inactive users anywhere', 'Result 1, Reason 0; 5 0',
@@ -321,8 +324,9 @@ BEGIN TRY
 
     -- A refused meeting edit (committee change with agenda items, Reason 10) still writes no alert
     SET @Rows = (SELECT COUNT(*) FROM Alert_Master WHERE SourceType = 'Meeting' AND SourceTypeId = @Mt);
+    -- [step 24] the same dates as saved (today), so only the committee change is refused
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_AddEditMeeting @Code = 'Update', @MeetingId = @Mt, @MeetingNo = '99971', @CommitteeId = @C2,
-         @Place = 'ZZ', @Venue = 'ZZ', @MeetingDate = @MDate, @MeetingTime = '10:00', @AgendaSubmissionDate = @MDate, @MeetingColorCode = '',
+         @Place = 'ZZ', @Venue = 'ZZ', @MeetingDate = @Today, @MeetingTime = '10:00', @AgendaSubmissionDate = @Today, @MeetingColorCode = '',
          @CreatedOn = @Now, @CreatedBy = @CtlA, @UpdatedOn = @Now, @UpdatedBy = @CtlA;
     INSERT INTO @T SELECT 'Meeting with agenda items: committee change refused, no alert written', 'Result 0, Reason 10, CommitteeId; ' + CAST(@Rows AS VARCHAR(12)),
            (SELECT Txt FROM @R) + '; ' + CAST((SELECT COUNT(*) FROM Alert_Master WHERE SourceType = 'Meeting' AND SourceTypeId = @Mt) AS VARCHAR(12));

@@ -58,6 +58,7 @@ DECLARE @ML TABLE (EmailId VARCHAR(100));
 
 DECLARE @Now DATETIME = GETDATE();
 DECLARE @MDate DATETIME = DATEADD(DAY, -10, CAST(CAST(GETDATE() AS date) AS DATETIME));
+DECLARE @Today DATETIME = CAST(CAST(GETDATE() AS date) AS DATETIME);  -- [step 24] for the meeting created through spr_AddEditMeeting
 DECLARE @E VARCHAR(10) = '';
 
 DECLARE @Sys INT = (SELECT TOP 1 UserId FROM Users WHERE IsSystem = 1 ORDER BY UserId);
@@ -291,8 +292,9 @@ BEGIN TRY
            CAST((SELECT COUNT(*) FROM Alert_User_Map WHERE AlertId = @A AND UserId = @Sys) AS VARCHAR(12)) + ' '
          + CAST((SELECT COUNT(*) FROM Alert_User_Map WHERE AlertId = @A AND UserId = @AdmA) AS VARCHAR(12));
 
+    -- [step 24] the new meeting is dated today: from step 24 a create with a past date is refused (Reason 16)
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_AddEditMeeting @Code = 'Save', @MeetingId = 0, @MeetingNo = '99981', @CommitteeId = @C,
-         @Place = 'ZZ', @Venue = 'ZZ', @MeetingDate = @MDate, @MeetingTime = '10:00', @AgendaSubmissionDate = @MDate, @MeetingColorCode = '',
+         @Place = 'ZZ', @Venue = 'ZZ', @MeetingDate = @Today, @MeetingTime = '10:00', @AgendaSubmissionDate = @Today, @MeetingColorCode = '',
          @CreatedOn = @Now, @CreatedBy = @CtlA, @UpdatedOn = @Now, @UpdatedBy = @CtlA;
     SET @Mt = (SELECT MeetingId FROM Meeting WHERE CommitteeId = @C AND MeetingNo = '99981');
     SET @A = (SELECT TOP 1 AlertId FROM Alert_Master WHERE SourceType = 'Meeting' AND SourceTypeId = @Mt ORDER BY AlertId DESC);

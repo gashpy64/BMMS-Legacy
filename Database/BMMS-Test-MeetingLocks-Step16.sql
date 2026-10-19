@@ -225,8 +225,9 @@ BEGIN TRY
     ---------------------------------------------------------------------------
     -- 1. Meeting edit
     ---------------------------------------------------------------------------
+    -- [step 24] a new meeting is dated today: from step 24 a create with a past date is refused (Reason 16)
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_AddEditMeeting @Code = 'Save', @MeetingId = 0, @MeetingNo = '99910', @CommitteeId = @C16,
-         @Place = 'ZZ', @Venue = 'ZZ', @MeetingDate = @MDate, @MeetingTime = '10:00', @AgendaSubmissionDate = @MDate, @MeetingColorCode = '',
+         @Place = 'ZZ', @Venue = 'ZZ', @MeetingDate = @Today, @MeetingTime = '10:00', @AgendaSubmissionDate = @Today, @MeetingColorCode = '',
          @CreatedOn = @Now, @CreatedBy = @Admin, @UpdatedOn = @Now, @UpdatedBy = @Admin;
     INSERT INTO @T SELECT 'Meeting: new meeting saved', 'Result 1, Reason 0', Txt FROM @R;
     INSERT INTO @T SELECT 'Meeting: new meeting row exists', '1', CAST(COUNT(*) AS VARCHAR(12)) FROM Meeting WHERE MeetingNo = '99910' AND CommitteeId = @C16;
