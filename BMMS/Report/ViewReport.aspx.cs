@@ -19,40 +19,58 @@ namespace BMMS.Report
     {
         protected void Page_Load(object sender, EventArgs e)
         {
+            // ViewReport.aspx?pdf=1: the PDF report (Agenda Summary, Agenda Details) built by Generate
+            if (Request.QueryString["pdf"] == "1")
+            {
+                SendStoredPdf();
+                return;
+            }
+
             ltrlViewReport.Text = Session["ViewReport"].ToString();
-            btnPrint.Attributes.Add("onclick", "javascript:popupDialogHide(1,1,'ReportPrint.aspx','Report Print');");
         }
+
+        #region SendStoredPdf
+        // Streams the PDF that Generate kept in Session["ReportPdf"], inline, and clears it: nothing is
+        // written to ~/Files/PDF (step 25)
+        private void SendStoredPdf()
+        {
+            byte[] pdf = Session["ReportPdf"] as byte[];
+            string name = Session["ReportPdfName"] as string;
+
+            Session.Remove("ReportPdf");
+            Session.Remove("ReportPdfName");
+
+            Response.Clear();
+
+            if (pdf == null || pdf.Length == 0)
+            {
+                Response.ContentType = "text/html";
+                Response.Write("<html><head><title>Report</title></head><body><p>The report is no longer available. Close this window and click Generate again.</p></body></html>");
+            }
+            else
+            {
+                Response.ContentType = "application/pdf";
+                Response.AddHeader("Content-Disposition", "inline; filename=" + (string.IsNullOrEmpty(name) ? "Report" : name) + ".pdf");
+                Response.BinaryWrite(pdf);
+            }
+
+            Response.End();
+        }
+        #endregion
 
         protected void btnExportToPdf_Click(object sender, EventArgs e)
         {
-            string sFilePDF = Server.MapPath("~/Files/PDF") + "\\Followup.pdf";
+            // Built in memory from the report HTML and sent as a download; no file on disk (step 25)
+            string name = Session["ViewReportName"] as string;
+            Session.Remove("ViewReportName");
 
-            Document pdfDocument = new Document(PageSize.A4, 100f, 75f, 50f, 50f);
+            byte[] pdf = PDFUtilities.HtmlReportToPdf(Session["ViewReport"].ToString());
 
-            try
-            {
-
-                PdfWriter writer = PdfWriter.GetInstance(pdfDocument, new
-                    FileStream(sFilePDF, FileMode.Create));
-
-                pdfDocument.Open();
-
-                string htmlTxt = string.Empty;
-
-                Paragraph paragraph = new Paragraph(" ");
-                pdfDocument.Add(paragraph);
-
-                PDFUtilities.AddHTMLText(pdfDocument, ltrlViewReport.Text.ToString());
-
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-            finally
-            {
-                pdfDocument.Close();
-            }
+            Response.Clear();
+            Response.ContentType = "application/pdf";
+            Response.AddHeader("Content-Disposition", "attachment; filename=" + (string.IsNullOrEmpty(name) ? "Report" : name) + ".pdf");
+            Response.BinaryWrite(pdf);
+            Response.End();
 
             //Application.Lock();
             //Application["ctrl"] = pnlReport;
@@ -64,21 +82,52 @@ namespace BMMS.Report
             //ctrl.Dispose();
         }
 
-        protected void btnExportToWord_Click(object sender, EventArgs e)
+        #region WordDocument
+        // The report HTML as a document Word opens as HTML (step 25). The report HTML is a fragment
+        // (<div>, <style> ...); Word shows a fragment without a table as plain text, so it is wrapped in a
+        // full HTML document with the Office namespaces and UTF-8. HTML that already starts with <html>
+        // (or a doctype) is not wrapped again. The logo is linked by its file path, as before; when that
+        // file is missing the image is left out.
+        public static string WordDocument(string ReportHtml, string LogoFilePath)
         {
-            // The organisation logo (OrganisationDetails.ReportBannerHtml), as a file path for Word
-            string strReportBanner = "src='" + OrganisationDetails.LogoFilePath + "'";
+            string strHTML = ReportHtml == null ? string.Empty : ReportHtml;
 
-            string strHTML = Session["ViewReport"].ToString();
+            string logoSrc = "src='" + OrganisationDetails.LogoReportSrc + "'";
+            if (!string.IsNullOrEmpty(LogoFilePath) && System.IO.File.Exists(LogoFilePath))
+                strHTML = strHTML.Replace(logoSrc, "src='" + LogoFilePath + "'");
+            else
+                strHTML = strHTML.Replace("<img " + logoSrc + " />", string.Empty);
 
-            strHTML = strHTML.Replace("src='" + OrganisationDetails.LogoReportSrc + "'", strReportBanner);
             strHTML = strHTML.Replace("<o:p>", "");
             strHTML = strHTML.Replace("</o:p>", "");
 
+            string start = strHTML.TrimStart();
+            if (start.StartsWith("<html", StringComparison.OrdinalIgnoreCase)
+                || start.StartsWith("<!doctype", StringComparison.OrdinalIgnoreCase))
+                return strHTML;
+
+            return "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">"
+                 + "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'"
+                 + " xmlns='http://www.w3.org/TR/REC-html40'>"
+                 + "<head><meta http-equiv='Content-Type' content='text/html; charset=utf-8' /><meta charset='utf-8' />"
+                 + "<title>Report</title></head><body>"
+                 + strHTML
+                 + "</body></html>";
+        }
+        #endregion
+
+        protected void btnExportToWord_Click(object sender, EventArgs e)
+        {
+            string strHTML = WordDocument(Session["ViewReport"].ToString(), OrganisationDetails.LogoFilePath);
+
+            string name = Session["ViewReportName"] as string;
+
             HttpContext.Current.Response.Clear();
+            HttpContext.Current.Response.ContentType = "application/msword";
+            HttpContext.Current.Response.Charset = "utf-8";
+            HttpContext.Current.Response.ContentEncoding = System.Text.Encoding.UTF8;
+            HttpContext.Current.Response.AddHeader("Content-Disposition", "attachment; filename=" + (string.IsNullOrEmpty(name) ? "Report" : name) + ".doc");
             HttpContext.Current.Response.Write(strHTML);
-            HttpContext.Current.Response.ContentType = "application/ms-word";
-            HttpContext.Current.Response.AddHeader("Content-Disposition", "inline;filename=temp.doc");
             //HttpContext.Current.Response.Write("<script>window.print();</script>");
             HttpContext.Current.Response.End();
 

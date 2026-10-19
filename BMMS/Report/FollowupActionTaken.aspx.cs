@@ -245,6 +245,7 @@ namespace BMMS.Report
                 {
 
                     Session["ViewReport"] = CreateReportHTML(dtFollowup);
+                    Session["ViewReportName"] = "FollowupActionTaken";   // ViewReport.aspx, Export to Pdf (step 25)
                     pnlFollowupDownload.Visible = true;
                     //CreatePDF(dtFollowup);
                     ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(825,500,'ViewReport.aspx','Followup Report');", true);

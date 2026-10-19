@@ -667,7 +667,7 @@ Manual checks after deploying the build, on the test copy (made-up data only):
 7. A made-up ordinary Admin opens an agenda alert: no Approve / Reject. (`admin` is the system account and had no buttons already.)
 8. A made-up user whose manager is then made inactive tries to add an item: "Your manager ... is inactive" (unchanged).
 9. Agenda 138 of `BMMS_Test` (by `ituser`): Manager Approved after the script; the Controllers have the alert.
-10. On a made-up meeting tag two In Attendance members, one Special Invitee and, where type 2 exists, one Invitee. After Finalize Minutes (step 22), Reports, Minutes, Generate: ON INVITATION lists the Invitee then the Special Invitee; PRESENT does not; IN ATTENDANCE lists both members; the first tagged signs. The Notice, Followup and Action Taken show the same signer.
+10. On a made-up meeting tag two In Attendance members, one Special Invitee and, where type 2 exists, one Invitee. After Finalize Minutes (step 22), Reports, Minutes, Generate: ON INVITATION lists the Invitee then the Special Invitee; PRESENT does not; IN ATTENDANCE lists both members; the first tagged signs. The Notice and the Minutes show the same signer.
 11. A meeting without an In Attendance member: the Notice prints "Authorized Signatory".
 
 Smoke list per role (BMMS_Test users; mail to a catcher only, see above):

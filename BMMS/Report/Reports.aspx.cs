@@ -466,21 +466,22 @@ namespace BMMS.Report
         private void GenReport(DataTable dtReportsDetails)
         {
             reportCode = ViewState["reportCode"].ToString();
-            string sFilePDF = string.Empty;
 
+            // The PDF file name for ViewReport.aspx (Export to Pdf); the agenda PDFs are built in memory,
+            // kept in Session["ReportPdf"] and streamed by ViewReport.aspx?pdf=1, not written to ~/Files/PDF (step 25)
             switch (reportCode)
             {
                 case "minutes":
                     Session["ViewReport"] = CreateMinutesReportHTML(dtReportsDetails);
+                    Session["ViewReportName"] = "Minutes";
                     ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(" + Common.GetReportSettings("MinutesReport_Width") + ",500,'ViewReport.aspx','Minutes Report');", true);
                     break;
                 case "minutes_extract":
                     Session["ViewReport"] = CreateMinutesExtractReportHTML(dtReportsDetails);
+                    Session["ViewReportName"] = "MinutesExtract";
                     ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(" + Common.GetReportSettings("MinutesExtractReport_Width") + ",500,'ViewReport.aspx','Minutes Extract Report');", true);
                     break;
                 case "agenda_summary":
-                    sFilePDF = Server.MapPath("~/Files/PDF") + "\\AgendaSummary.pdf";
-
                     int MeetingNoSearch = int.Parse(rdoMeatingNoSearch.SelectedValue.ToString().Trim());
                     string fromMNO = string.Empty;
                     string toMNO = string.Empty;
@@ -502,16 +503,17 @@ namespace BMMS.Report
                     }
 
                     if (MeetingNoSearch == 1 || (MeetingNoSearch == 0 && MeetingId <= 0))
-                        CreateAgendaSummaryFullPDF(dtReportsDetails, sFilePDF, fromMNO, toMNO);
+                        Session["ReportPdf"] = CreateAgendaSummaryFullPDF(dtReportsDetails, fromMNO, toMNO);
                     else
-                        CreateAgendaSummaryPDF(dtReportsDetails, sFilePDF);
+                        Session["ReportPdf"] = CreateAgendaSummaryPDF(dtReportsDetails);
+                    Session["ReportPdfName"] = "AgendaSummary";
 
-                    ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(1000,600,'../Files/PDF/AgendaSummary.pdf','Agenda Summary Report');", true);
+                    ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(1000,600,'ViewReport.aspx?pdf=1','Agenda Summary Report');", true);
                     break;
                 case "agenda_details":
-                    sFilePDF = Server.MapPath("~/Files/PDF") + "\\AgendaDetails.pdf";
-                    CreateAgendaDetailsPDF(dtReportsDetails, sFilePDF);
-                    ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(1000,600,'../Files/PDF/AgendaDetails.pdf','Agenda Details Report');", true);
+                    Session["ReportPdf"] = CreateAgendaDetailsPDF(dtReportsDetails);
+                    Session["ReportPdfName"] = "AgendaDetails";
+                    ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(1000,600,'ViewReport.aspx?pdf=1','Agenda Details Report');", true);
                     break;
             }
 
@@ -1028,11 +1030,12 @@ namespace BMMS.Report
         #endregion
 
         #region CreateAgendaSummaryPDF
-        private void CreateAgendaSummaryPDF(DataTable dtAgenda, string sFilePDF)
+        // Built in memory; the bytes are returned (step 25)
+        private byte[] CreateAgendaSummaryPDF(DataTable dtAgenda)
         {
 
             Document pdfDocument = new Document(PageSize.A4, 45f, 45f, 30f, 30f);
-            ///string sFilePDF = Server.MapPath("~/Files/PDF") + "\\AgendaSummary.pdf";
+            MemoryStream pdfStream = new MemoryStream();
 
             try
             {
@@ -1042,8 +1045,7 @@ namespace BMMS.Report
                 Font fnt10Normal = new Font(Font.TIMES_ROMAN, 10, Font.NORMAL);
                 Font fnt12Bold = new Font(Font.TIMES_ROMAN, 12, Font.BOLD);
 
-                PdfWriter writer = PdfWriter.GetInstance(pdfDocument,
-                                             new FileStream(sFilePDF, FileMode.Create));
+                PdfWriter writer = PdfWriter.GetInstance(pdfDocument, pdfStream);
                 pdfDocument.Open();
 
                 Paragraph paragraph = new Paragraph(" ");
@@ -1180,12 +1182,13 @@ namespace BMMS.Report
                 pdfDocument.Close();
             }
 
-            //System.Diagnostics.Process.Start(sFilePDF);
+            return pdfStream.ToArray();
         }
         #endregion
 
         #region CreateAgendaSummaryFullPDF
-        private void CreateAgendaSummaryFullPDF(DataTable dtAgenda, string sFilePDF, string fromMNO, string toMNO)
+        // Built in memory; the bytes are returned (step 25)
+        private byte[] CreateAgendaSummaryFullPDF(DataTable dtAgenda, string fromMNO, string toMNO)
         {
 
             DataTable dtDepartment = new DataTable();
@@ -1195,10 +1198,11 @@ namespace BMMS.Report
             string htmlTxt = string.Empty;
 
             Document pdfDocument = new Document(PageSize.A4, 45f, 45f, 30f, 30f);
+            MemoryStream pdfStream = new MemoryStream();
 
             try
             {
-                PdfWriter writer = PdfWriter.GetInstance(pdfDocument, new FileStream(sFilePDF, FileMode.Create));
+                PdfWriter writer = PdfWriter.GetInstance(pdfDocument, pdfStream);
 
                 pdfDocument.Open();
 
@@ -1304,13 +1308,17 @@ namespace BMMS.Report
             {
                 pdfDocument.Close();
             }
+
+            return pdfStream.ToArray();
         }
         #endregion
 
         #region CreateAgendaDetailsPDF
-        private void CreateAgendaDetailsPDF(DataTable dtAgenda, string sFilePDF)
+        // Built in memory; the bytes are returned (step 25)
+        private byte[] CreateAgendaDetailsPDF(DataTable dtAgenda)
         {
             Document pdfDocument = new Document(PageSize.A4, 45f, 45f, 30f, 30f);
+            MemoryStream pdfStream = new MemoryStream();
 
             try
             {
@@ -1318,8 +1326,7 @@ namespace BMMS.Report
 
                 string htmlTxt = string.Empty;
 
-                PdfWriter writer = PdfWriter.GetInstance(pdfDocument,
-                                             new FileStream(sFilePDF, FileMode.Create));
+                PdfWriter writer = PdfWriter.GetInstance(pdfDocument, pdfStream);
                 pdfDocument.Open();
 
                 for (int j = 0; j < dtAgenda.Rows.Count; j++)
@@ -1450,6 +1457,8 @@ namespace BMMS.Report
             {
                 pdfDocument.Close();
             }
+
+            return pdfStream.ToArray();
         }
         #endregion
 
