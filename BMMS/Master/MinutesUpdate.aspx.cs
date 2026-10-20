@@ -153,6 +153,25 @@ namespace BMMS.Master
                 {
                     int MeetingId = int.Parse(ddlMeeting.SelectedValue.ToString());
 
+                    // A meeting created after step 23: the database's workflow state decides, with the same messages
+                    // as the procedures (BMMS-Fix-WorkflowOrder-Step23.sql). Older meetings keep the checks below.
+                    MeetingWorkflowState state = MeetingMgr.GetMeetingWorkflowState(MeetingId);
+
+                    if (state.IsNew)
+                    {
+                        if (!state.AgendaFinalized)
+                            MsgDisplay(MeetingChangeReason.AgendaNotFinalizedMessage);
+                        else if (!state.AttendanceRecorded)
+                            MsgDisplay(MeetingChangeReason.AttendanceNotRecordedMessage);
+                        else
+                        {
+                            pnlViewMinute.Visible = true;
+                            grvMinutes.DataSource = MinutesMgr.GetMinutesByMeetingId(MeetingId, -1, -1);
+                            grvMinutes.DataBind();
+                        }
+                        return;
+                    }
+
                     DataTable dtAgendaFinalize = new DataTable();
                     dtAgendaFinalize = AgendaMgr.CheckAgendaFinalizeByMeetingId(MeetingId); // MinutesMgr.GetMinutesByMeetingId(MeetingId);
 

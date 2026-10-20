@@ -118,6 +118,16 @@ namespace BMMS.Master
                 {
                     int MeetingId = int.Parse(ddlMeeting.SelectedValue.ToString());
 
+                    // A meeting created after step 23: the procedure checks the order (agenda finalized, attendance
+                    // entered, every minute updated) and its refusal is shown (BMMS-Fix-WorkflowOrder-Step23.sql).
+                    // Older meetings keep the checks below.
+                    if (MeetingMgr.GetMeetingWorkflowState(MeetingId).IsNew)
+                    {
+                        MeetingChangeResult newResult = AgendaMgr.MinutesFinalizeByMeetingId(MeetingId, int.Parse(Session["UserId"].ToString()));
+                        MsgDisplay(newResult.Result == 1 ? "Minutes Finalized" : newResult.RefusalMessage());
+                        return;
+                    }
+
                     DataTable dtAgenda = new DataTable();
                     dtAgenda = AgendaMgr.CheckMinutesByMeetingId(MeetingId);
 

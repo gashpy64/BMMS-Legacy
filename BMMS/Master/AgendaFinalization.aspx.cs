@@ -186,7 +186,11 @@ namespace BMMS.Master
 
                     if (dtAgenda.Rows.Count <= 0)
                     {
-                        sMsg = "No Agenda For the selected Committee/Meeting";
+                        // A meeting without agenda items can still be finalized, so its attendance can be entered
+                        // (step 23); it has no minutes to finalize later (Reason 19)
+                        MeetingChangeResult noItems = AgendaMgr.AgendaFinalizeByMeetingId(MeetingId);
+
+                        sMsg = noItems.Result == 1 ? "Agenda Finalized (no agenda items)." : noItems.RefusalMessage();
                         MsgDisplay(sMsg);
                     }
                     else

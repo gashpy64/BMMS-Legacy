@@ -181,7 +181,7 @@ namespace BMMS.Master
 
                     if (dtMeeting.Rows.Count <= 0)
                     {
-                        MsgDisplay("Minutes not finalize for this meeting.");
+                        MsgDisplay(MeetingChangeReason.MinutesNotFinalizedForConfirmMessage);   // step 23 wording
                         ScriptManager.GetCurrent(this).SetFocus(ddlMeeting.ClientID);
                         result = false;
                     }

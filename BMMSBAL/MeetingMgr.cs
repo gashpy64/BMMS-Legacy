@@ -42,8 +42,17 @@ namespace BMMSBAL
                 case MeetingChangeReason.AttendanceRecorded:
                     return "This member's attendance is recorded for the meeting, so they cannot be removed.";
                 case MeetingChangeReason.WrongState:
+                    // 'Open' comes only from Minutes Confirmation: the minutes are not finalized yet (step 23)
+                    if (ReasonDetail == "Open")
+                        return MeetingChangeReason.MinutesNotFinalizedForConfirmMessage;
                     return "This step has already been done for this meeting (status: "
                          + System.Web.HttpUtility.HtmlEncode(ReasonDetail) + "). Reload the page to see the current state.";
+                case MeetingChangeReason.AgendaNotFinalized:
+                    return MeetingChangeReason.AgendaNotFinalizedMessage;
+                case MeetingChangeReason.AttendanceNotRecorded:
+                    return MeetingChangeReason.AttendanceNotRecordedMessage;
+                case MeetingChangeReason.MinutesNotUpdated:
+                    return MeetingChangeReason.MinutesNotUpdatedMessage(ReasonDetail);
                 case MeetingChangeReason.NotFound:
                     return "The meeting or member no longer exists. Reload the page.";
                 case MeetingChangeReason.AgendaFinalized:
@@ -97,6 +106,36 @@ namespace BMMSBAL
         public const int AgendaStepNotAllowed = 14;    // step 20: approve / reject not allowed for you at this stage
         public const int NoActiveController = 15;      // step 20: the item would go to the Controllers and none is active
         public const int MeetingDateNotValid = 16;     // step 24: meeting / agenda submission date; ReasonDetail says which rule
+        public const int AgendaNotFinalized = 17;      // step 23: attendance, minutes before the agenda is finalized
+        public const int AttendanceNotRecorded = 18;   // step 23: minutes before the chairman and a member present are entered
+        public const int MinutesNotUpdated = 19;       // step 23: finalize with a minute never updated; ReasonDetail 'not updated/total'
+
+        public const string AgendaNotFinalizedMessage =
+            "The agenda of this meeting is not finalized yet. Finalize the agenda (Agenda, Agenda Finalize) first.";
+
+        public const string AttendanceNotRecordedMessage =
+            "Attendance has not been entered for this meeting. Enter the attendance and the chairman (Master, Attendance) first.";
+
+        public const string MinutesNotFinalizedForConfirmMessage =
+            "The minutes of this meeting are not finalized yet. Finalize them (Minutes, Finalize Minutes) first.";
+
+        /// <summary>Minutes finalize refused: ReasonDetail is 'not updated/total' (BMMS-Fix-WorkflowOrder-Step23.sql).</summary>
+        public static string MinutesNotUpdatedMessage(string detail)
+        {
+            string[] parts = (detail ?? string.Empty).Split('/');
+            int notUpdated, total;
+
+            if (parts.Length == 2 && int.TryParse(parts[0], out notUpdated) && int.TryParse(parts[1], out total))
+            {
+                if (total == 0)
+                    return "This meeting has no minutes to finalize (no agenda item was approved).";
+
+                return notUpdated + " of the " + total + " minutes have not been updated yet. "
+                     + "Update every item (Minutes, Update Minutes) before finalizing the minutes.";
+            }
+
+            return "Some minutes have not been updated yet. Update every item (Minutes, Update Minutes) before finalizing the minutes.";
+        }
 
         // ReasonDetail of Reason 16 (BMMS-Fix-MeetingDates-Step24.sql)
         public const string DatesMissing = "Missing";
@@ -166,6 +205,28 @@ namespace BMMSBAL
 
         public const string NoMinutesFinalizedMessage =
             "No meeting of this committee has finalized minutes yet, so there are no minutes or minutes extracts to view or generate.";
+    }
+    #endregion
+
+    #region MeetingWorkflowState
+    /// <summary>
+    /// A meeting's place in the workflow order (spr_GetMeetingWorkflowState, BMMS-Fix-WorkflowOrder-Step23.sql).
+    /// The order applies only when IsNew (created after step 23 was installed).
+    /// </summary>
+    public class MeetingWorkflowState
+    {
+        public bool Exists;
+        public bool IsNew;
+        public bool AgendaFinalized;
+        public bool AttendanceRecorded;   // chairman set and at least one member present
+        public int MinutesTotal;
+        public int MinutesUpdated;
+
+        /// <summary>Attendance and chairman wait for Agenda Finalisation.</summary>
+        public bool AttendanceBlocked
+        {
+            get { return IsNew && !AgendaFinalized; }
+        }
     }
     #endregion
 
@@ -424,6 +485,28 @@ namespace BMMSBAL
         public static MeetingChangeResult UpdateMeetingChairman(int MeetingId, int CommitteeId, int ChairmanNameId)
         {
             return MeetingChangeResult.FromTable(MeetingDB.UpdateMeetingChairman(MeetingId, CommitteeId, ChairmanNameId));
+        }
+        #endregion
+
+        #region GetMeetingWorkflowState
+        // The meeting's place in the workflow order (BMMS-Fix-WorkflowOrder-Step23.sql). IsNew: created after
+        // step 23 was installed, so the order applies; for an older meeting the pages keep their earlier checks.
+        public static MeetingWorkflowState GetMeetingWorkflowState(int MeetingId)
+        {
+            DataTable dt = MeetingDB.GetMeetingWorkflowState(MeetingId);
+            MeetingWorkflowState state = new MeetingWorkflowState();
+
+            if (dt.Rows.Count > 0)
+            {
+                state.Exists = true;
+                state.IsNew = Convert.ToInt32(dt.Rows[0]["IsNew"]) == 1;
+                state.AgendaFinalized = Convert.ToInt32(dt.Rows[0]["AgendaFinalized"]) == 1;
+                state.AttendanceRecorded = Convert.ToInt32(dt.Rows[0]["AttendanceRecorded"]) == 1;
+                state.MinutesTotal = Convert.ToInt32(dt.Rows[0]["MinutesTotal"]);
+                state.MinutesUpdated = Convert.ToInt32(dt.Rows[0]["MinutesUpdated"]);
+            }
+
+            return state;
         }
         #endregion
 

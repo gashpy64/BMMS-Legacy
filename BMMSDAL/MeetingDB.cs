@@ -295,6 +295,18 @@ namespace BMMSDAL
         }
         #endregion
 
+        #region GetMeetingWorkflowState
+        // IsNew, AgendaFinalized, AttendanceRecorded, MinutesTotal, MinutesUpdated; no row if the meeting
+        // does not exist (BMMS-Fix-WorkflowOrder-Step23.sql)
+        public static DataTable GetMeetingWorkflowState(int MeetingId)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@MeetingId", MeetingId);
+
+            return CommonDB.GetDataTable("spr_GetMeetingWorkflowState", parameter);
+        }
+        #endregion
+
         #region GetMeetingEditLockByMeetingId
         // HasAttendance, HasAgenda; no row if the meeting does not exist (BMMS-Fix-MeetingLocks-Step16.sql)
         public static DataTable GetMeetingEditLockByMeetingId(int MeetingId)

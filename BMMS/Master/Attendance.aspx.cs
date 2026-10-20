@@ -166,11 +166,15 @@ namespace BMMS.Master
                                 }
                     }
 
-                    // Read only once the minutes are finalized (BMMS-Fix-MeetingLocks.sql)
-                    bool locked = MeetingMgr.IsMinutesFinalized(MeetingId);
-                    SetAttendanceLocked(locked);
-                    if (locked)
+                    // Read only once the minutes are finalized (BMMS-Fix-MeetingLocks.sql), and, for a meeting created
+                    // after step 23, until its agenda is finalized (BMMS-Fix-WorkflowOrder-Step23.sql)
+                    bool finalized = MeetingMgr.IsMinutesFinalized(MeetingId);
+                    bool agendaOpen = !finalized && MeetingMgr.GetMeetingWorkflowState(MeetingId).AttendanceBlocked;
+                    SetAttendanceLocked(finalized || agendaOpen);
+                    if (finalized)
                         MsgDisplay(MeetingChangeReason.MinutesFinalizedMessage);
+                    else if (agendaOpen)
+                        MsgDisplay(MeetingChangeReason.AgendaNotFinalizedMessage);
                 }
             }
             catch (Exception ex)
@@ -277,6 +281,9 @@ namespace BMMS.Master
                         sMsg = "Attendance Successfully Updated";
                     else if (MeetingMgr.IsMinutesFinalized(MeetingId))
                         sMsg = MeetingChangeReason.MinutesFinalizedMessage;
+                    else if (MeetingMgr.GetMeetingWorkflowState(MeetingId).AttendanceBlocked)
+                        // BMMS-Fix-WorkflowOrder-Step23.sql (the chairman is normally refused first, Reason 17)
+                        sMsg = MeetingChangeReason.AgendaNotFinalizedMessage;
                     else if (MeetingMgr.IsMeetingHeld(MeetingId))
                         // a committee member not on the committee on the meeting date (BMMS-Fix-MeetingLocks-Step16.sql)
                         sMsg = "Some members are not on the committee on the meeting date, so their attendance was not saved. Reload the meeting to see the current list.";
