@@ -226,6 +226,13 @@ BEGIN TRY
     IF EXISTS (SELECT 1 FROM Decision_Type WHERE DecisionTypeId = 1)
         UPDATE Minutes SET DecisionTypeId = 1 WHERE MinutesId = @MinutesId;
 
+    -- [step 23] the meeting was saved through spr_AddEditMeeting, so from step 23 it follows the workflow
+    -- order: a chairman, one member present and the minute updated before Finalise (no check reads these)
+    UPDATE Meeting SET ChairmanNameId = (SELECT MIN(MemberId) FROM Member) WHERE MeetingId = @MeetingId;
+    INSERT INTO Attendance (CommitteeId, MeetingId, MemberOf, MemberId, Attendance, SittingFees, UpdatedOn, UpdatedBy)
+    SELECT @CommitteeId, @MeetingId, 'C', MIN(MemberId), 'P', 0, @Now, @Ctl FROM Member HAVING MIN(MemberId) IS NOT NULL;
+    UPDATE Minutes SET StatusId = 1 WHERE MinutesId = @MinutesId;
+
     EXEC spr_MinutesFinalizeByMeetingId @MeetingId = @MeetingId, @UserId = @Ctl;
 
     INSERT INTO @T

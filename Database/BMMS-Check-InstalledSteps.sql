@@ -1,5 +1,5 @@
 /* ============================================================================
-   BMMS - Which numbered steps (README run order 1 to 22 and 24) are installed
+   BMMS - Which numbered steps (README run order 1 to 24; step 23 is installed after step 28) are installed
    ----------------------------------------------------------------------------
    READ ONLY. It reads object definitions and constraint names; it creates,
    changes and deletes nothing, and it can run on BMMS as well as on a copy.
@@ -34,7 +34,10 @@
    also checks that every existing type 2, 3 and 6 is reserved, a meeting
    type and active. Step 22 replaces nothing and no earlier script contains
    its two procedures, so no re-run of an earlier step changes it. Step 23
-   is reserved and not listed. Step 24 keeps the texts of steps 16, 17 and
+   (installed after step 28) keeps the texts of steps 6, 8, 12, 15, 16, 17
+   and 18 in the five procedures it replaces; if one of those steps is re-run
+   afterwards, step 23 reads Partly: run step 23 again. It also checks that
+   the setting WorkflowOrderFrom exists. Step 24 keeps the texts of steps 16, 17 and
    18 in spr_AddEditMeeting; if step 16, 17 or 18 is re-run afterwards, its
    marker is gone and step 24 reads Missing: run step 24 again.
 
@@ -221,6 +224,19 @@ INSERT INTO @M
 SELECT 22, o.Name + ' (MinutesGating-Step22)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%MinutesGating-Step22%' THEN 1 ELSE 0 END
 FROM (VALUES ('spr_GetMinutesReportMeetings'), ('spr_GetMinutesReport')) o(Name);
 
+-- 23. BMMS-Fix-WorkflowOrder-Step23.sql, installed after step 28 (re-running step 6, 8, 12, 15, 16, 17 or 18 replaces
+--     one of its procedures)
+INSERT INTO @M
+SELECT 23, o.Name + ' (WorkflowOrder-Step23)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%WorkflowOrder-Step23%' THEN 1 ELSE 0 END
+FROM (VALUES ('fn_WorkflowState'), ('spr_GetMeetingWorkflowState'), ('spr_UpdateAttendance'), ('spr_UpdateMeetingChairman'),
+             ('spr_UpdateAgendaShortText'), ('spr_UpdateMinutes'), ('spr_MinutesFinalizeByMeetingId')) o(Name);
+DECLARE @WorkflowFromRows INT = 0;
+IF (OBJECT_ID('dbo.App_Setting', 'U') IS NOT NULL)
+    EXEC sp_executesql N'SELECT @n = COUNT(*) FROM dbo.App_Setting WHERE SettingCode = ''WorkflowOrderFrom''',
+         N'@n INT OUTPUT', @n = @WorkflowFromRows OUTPUT;
+INSERT INTO @M VALUES
+(23, 'Setting WorkflowOrderFrom', CASE WHEN @WorkflowFromRows = 1 THEN 1 ELSE 0 END);
+
 -- 24. BMMS-Fix-MeetingDates-Step24.sql (re-running step 16, 17 or 18 replaces spr_AddEditMeeting)
 INSERT INTO @M VALUES
 (24, 'spr_AddEditMeeting (MeetingDates-Step24)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_AddEditMeeting')), '') LIKE '%MeetingDates-Step24%' THEN 1 ELSE 0 END);
@@ -232,23 +248,24 @@ INSERT INTO @Steps VALUES
 (3, 'BMMS-Fix-ResetDatabase-Seeds.sql', ''),
 (4, 'BMMS-Add-PrimaryKeys.sql', ''),
 (5, 'BMMS-Add-ForeignKeys-Safe.sql', ''),
-(6, 'BMMS-Fix-FK-Procedures.sql', ''),
+(6, 'BMMS-Fix-FK-Procedures.sql', 'a later step replaced one of its procedures: see the README re-run notes (then step 23)'),
 (7, 'BMMS-Add-ForeignKeys-Step3.sql', ''),
-(8, 'BMMS-Fix-MinutesFinalize-Procedure.sql', ''),
+(8, 'BMMS-Fix-MinutesFinalize-Procedure.sql', 'a later step replaced spr_MinutesFinalizeByMeetingId: see the README re-run notes (then step 23)'),
 (9, 'BMMS-Add-ForeignKeys-Step4.sql', ''),
 (10, 'BMMS-Fix-UserDelete-Procedure.sql', 'step 10 or 13 replaced: run step 13 again, then 14'),
 (11, 'BMMS-Add-ForeignKeys-Step5.sql', 'some keys refused: run BMMS-Check-Orphans.sql, then step 11 again'),
-(12, 'BMMS-Fix-Attendance-FutureMeeting.sql', 'run step 12 again, then steps 15, 16, 17, 18, 20, 21 and 24'),
+(12, 'BMMS-Fix-Attendance-FutureMeeting.sql', 'run step 12 again, then steps 15, 16, 17, 18, 20, 21, 24 and 23'),
 (13, 'BMMS-Fix-UserProtection-Stage1.sql', 'step 2, 6 or 10 was re-run: run step 13 again, then 14, 18, 20, 21 and 24'),
 (14, 'BMMS-Fix-UserStatus-Stage2a.sql', 'step 13 was re-run: run step 14 again, then 18 and 24'),
-(15, 'BMMS-Fix-MeetingLocks.sql', 'step 6, 8 or 12 was re-run: run step 15 again, then steps 16, 17, 18, 20, 21 and 24'),
-(16, 'BMMS-Fix-MeetingLocks-Step16.sql', 'step 6, 12 or 15 was re-run: run step 16 again, then steps 17, 18, 20 and 24'),
-(17, 'BMMS-Fix-UserStatus-Stage2b.sql', 'step 6, 8, 15 or 16 was re-run: run step 17 again, then steps 18, 20 and 24'),
-(18, 'BMMS-Fix-SystemAccount-Stage3.sql', 'step 3, 6, 8, 13, 14, 15, 16 or 17 was re-run, or the system account count is not 1: see README step 18 (then steps 20, 21 and 24)'),
+(15, 'BMMS-Fix-MeetingLocks.sql', 'step 6, 8 or 12 was re-run: run step 15 again, then steps 16, 17, 18, 20, 21, 24 and 23'),
+(16, 'BMMS-Fix-MeetingLocks-Step16.sql', 'step 6, 12 or 15 was re-run: run step 16 again, then steps 17, 18, 20, 24 and 23'),
+(17, 'BMMS-Fix-UserStatus-Stage2b.sql', 'step 6, 8, 15 or 16 was re-run: run step 17 again, then steps 18, 20, 24 and 23'),
+(18, 'BMMS-Fix-SystemAccount-Stage3.sql', 'step 3, 6, 8, 13, 14, 15, 16 or 17 was re-run, or the system account count is not 1: see README step 18 (then steps 20, 21, 24 and 23)'),
 (19, 'BMMS-Fix-OrganisationSettings-Step19.sql', 'a procedure or setting row is missing: run step 19 again (the values already set are kept)'),
 (20, 'BMMS-Fix-AgendaRouting-Step20.sql', 'step 16, 17 or 18 was re-run: run step 20 again (the re-route moves nothing a second time)'),
 (21, 'BMMS-Fix-MemberTypes-Step21.sql', 'step 2, 3, 15 or 18 was re-run, or a reserved type was changed by hand: run step 21 again'),
 (22, 'BMMS-Fix-MinutesGating-Step22.sql', 'a procedure is missing: run step 22 again'),
+(23, 'BMMS-Fix-WorkflowOrder-Step23.sql', 'installed after step 28; step 6, 8, 12, 15, 16, 17 or 18 was re-run: run step 23 again'),
 (24, 'BMMS-Fix-MeetingDates-Step24.sql', 'Missing after a re-run of step 16, 17 or 18: run step 24 again');
 
 SELECT s.Step, s.Script,
