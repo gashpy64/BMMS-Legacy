@@ -267,9 +267,9 @@ namespace BMMSDAL
         #endregion
 
         #region AddEditAgenda
-        public static int AddEditAgenda(AgendaDAL AgendaDAL)
+        public static DataTable AddEditAgenda(AgendaDAL AgendaDAL, int ActingUserId)
         {
-            SqlParameter[] parameter = new SqlParameter[21];
+            SqlParameter[] parameter = new SqlParameter[22];
             parameter[0] = new SqlParameter("@Code", AgendaDAL.Code);
             parameter[1] = new SqlParameter("@AgendaId", AgendaDAL.AgendaId);
             parameter[2] = new SqlParameter("@AgendaNo", AgendaDAL.AgendaNo);
@@ -292,14 +292,17 @@ namespace BMMSDAL
             parameter[19] = new SqlParameter("@UpdatedBy", AgendaDAL.UpdatedBy);
             parameter[20] = new SqlParameter("@SubjectNo", AgendaDAL.SubjectNo);
 
-            return CommonDB.ExecuteProcedure("spr_AddEditAgenda", parameter);
+            parameter[21] = new SqlParameter("@ActingUserId", ActingUserId);
+
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks-Step16.sql)
+            return CommonDB.GetDataTable("spr_AddEditAgenda", parameter);
         }
         #endregion
 
         #region AddEditAgendaByController
-        public static int AddEditAgendaByController(AgendaDAL AgendaDAL)
+        public static DataTable AddEditAgendaByController(AgendaDAL AgendaDAL, int ActingUserId)
         {
-            SqlParameter[] parameter = new SqlParameter[21];
+            SqlParameter[] parameter = new SqlParameter[22];
             parameter[0] = new SqlParameter("@Code", AgendaDAL.Code);
             parameter[1] = new SqlParameter("@AgendaId", AgendaDAL.AgendaId);
             parameter[2] = new SqlParameter("@AgendaNo", AgendaDAL.AgendaNo);
@@ -322,14 +325,17 @@ namespace BMMSDAL
             parameter[19] = new SqlParameter("@UpdatedBy", AgendaDAL.UpdatedBy);
             parameter[20] = new SqlParameter("@SubjectNo", AgendaDAL.SubjectNo);
 
-            return CommonDB.ExecuteProcedure("spr_AddEditAgendaByController", parameter);
+            parameter[21] = new SqlParameter("@ActingUserId", ActingUserId);
+
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks-Step16.sql)
+            return CommonDB.GetDataTable("spr_AddEditAgendaByController", parameter);
         }
         #endregion
 
         #region AddEditAgendaByManager
-        public static int AddEditAgendaByManager(AgendaDAL AgendaDAL)
+        public static DataTable AddEditAgendaByManager(AgendaDAL AgendaDAL, int ActingUserId)
         {
-            SqlParameter[] parameter = new SqlParameter[21];
+            SqlParameter[] parameter = new SqlParameter[22];
             parameter[0] = new SqlParameter("@Code", AgendaDAL.Code);
             parameter[1] = new SqlParameter("@AgendaId", AgendaDAL.AgendaId);
             parameter[2] = new SqlParameter("@AgendaNo", AgendaDAL.AgendaNo);
@@ -352,22 +358,27 @@ namespace BMMSDAL
             parameter[19] = new SqlParameter("@UpdatedBy", AgendaDAL.UpdatedBy);
             parameter[20] = new SqlParameter("@SubjectNo", AgendaDAL.SubjectNo);
 
-            return CommonDB.ExecuteProcedure("spr_AddEditAgendaByManager", parameter);
+            parameter[21] = new SqlParameter("@ActingUserId", ActingUserId);
+
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks-Step16.sql)
+            return CommonDB.GetDataTable("spr_AddEditAgendaByManager", parameter);
         }
         #endregion
 
         #region DeleteAgendaByAgendaId
-        public static int DeleteAgendaByAgendaId(int AgendaId)
+        public static DataTable DeleteAgendaByAgendaId(int AgendaId, int ActingUserId)
         {
-            SqlParameter[] parameter = new SqlParameter[1];
+            SqlParameter[] parameter = new SqlParameter[2];
             parameter[0] = new SqlParameter("@AgendaId", AgendaId);
+            parameter[1] = new SqlParameter("@ActingUserId", ActingUserId);
 
-            return CommonDB.ExecuteProcedure("spr_DeleteAgendaByAgendaId", parameter); ;
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks-Step16.sql)
+            return CommonDB.GetDataTable("spr_DeleteAgendaByAgendaId", parameter);
         }
         #endregion
 
         #region UpdateAgendaByAgendaId
-        public static int UpdateAgendaByAgendaId(AgendaDAL AgendaDAL)  //int AgendaId, string MgrComments, string ControllerComments, string MgrApprovedStatus, string ControllerApprovedStatus, int UpdatedBy)
+        public static DataTable UpdateAgendaByAgendaId(AgendaDAL AgendaDAL)  //int AgendaId, string MgrComments, string ControllerComments, string MgrApprovedStatus, string ControllerApprovedStatus, int UpdatedBy)
         {
             SqlParameter[] parameter = new SqlParameter[8];
             parameter[0] = new SqlParameter("@AgendaId", AgendaDAL.AgendaId);
@@ -379,29 +390,32 @@ namespace BMMSDAL
             parameter[6] = new SqlParameter("@ControllerApprovedStatus", AgendaDAL.ControllerApprovedStatus);
             parameter[7] = new SqlParameter("@UpdatedBy", AgendaDAL.UpdatedBy);
 
-            return CommonDB.ExecuteProcedure("spr_UpdateAgendaByAgendaId", parameter); ;
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks-Step16.sql)
+            return CommonDB.GetDataTable("spr_UpdateAgendaByAgendaId", parameter);
         }
         #endregion
 
         #region UpdateAgendaShortText
-        public static int UpdateAgendaShortText(AgendaDAL AgendaDAL)
+        public static DataTable UpdateAgendaShortText(AgendaDAL AgendaDAL)
         {
             SqlParameter[] parameter = new SqlParameter[3];
             parameter[0] = new SqlParameter("@AgendaId", AgendaDAL.AgendaId);
             parameter[1] = new SqlParameter("@ShortText", AgendaDAL.ShortText);
             parameter[2] = new SqlParameter("@UpdatedBy", AgendaDAL.UpdatedBy);
 
-            return CommonDB.ExecuteProcedure("spr_UpdateAgendaShortText", parameter);
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks-Step16.sql)
+            return CommonDB.GetDataTable("spr_UpdateAgendaShortText", parameter);
         }
         #endregion
 
         #region AgendaFinalizeByMeetingId
-        public static int AgendaFinalizeByMeetingId(int MeetingId)
+        public static DataTable AgendaFinalizeByMeetingId(int MeetingId)
         {
             SqlParameter[] parameter = new SqlParameter[1];
             parameter[0] = new SqlParameter("@MeetingId", MeetingId);
 
-            return CommonDB.ExecuteProcedure("spr_AgendaFinalizeByMeetingId", parameter); ;
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks.sql)
+            return CommonDB.GetDataTable("spr_AgendaFinalizeByMeetingId", parameter);
         }
         #endregion
 
@@ -417,35 +431,64 @@ namespace BMMSDAL
         #endregion
 
         #region UpdateSubjectNoByAgendaId
-        public static int UpdateSubjectNoByAgendaId(int AgendaId, int SubjectNo)
+        public static DataTable UpdateSubjectNoByAgendaId(int AgendaId, int SubjectNo, int ActingUserId)
         {
-            SqlParameter[] parameter = new SqlParameter[2];
+            SqlParameter[] parameter = new SqlParameter[3];
             parameter[0] = new SqlParameter("@AgendaId", AgendaId);
             parameter[1] = new SqlParameter("@SubjectNo", SubjectNo);
+            parameter[2] = new SqlParameter("@ActingUserId", ActingUserId);
 
-            return CommonDB.ExecuteProcedure("spr_UpdateSubjectNoByAgendaId", parameter); ;
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks-Step16.sql)
+            return CommonDB.GetDataTable("spr_UpdateSubjectNoByAgendaId", parameter);
+        }
+        #endregion
+
+        #region GetAgendaCreationMailId
+        // The creator's route and the Bcc of the "agenda created" mail: Route, ManagerName,
+        // ActiveControllers, EmailId; at least one row (BMMS-Fix-AgendaRouting-Step20.sql)
+        public static DataTable GetAgendaCreationMailId(int UserId)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@UserId", UserId);
+
+            return CommonDB.GetDataTable("spr_GetAgendaCreationMailId", parameter);
+        }
+        #endregion
+
+        #region GetAgendaLockByMeetingId
+        // One row: AllowChange, Reason, ReasonDetail - may the acting user add / edit / delete
+        // agenda items of the meeting (BMMS-Fix-MeetingLocks-Step16.sql)
+        public static DataTable GetAgendaLockByMeetingId(int MeetingId, int ActingUserId)
+        {
+            SqlParameter[] parameter = new SqlParameter[2];
+            parameter[0] = new SqlParameter("@MeetingId", MeetingId);
+            parameter[1] = new SqlParameter("@ActingUserId", ActingUserId);
+
+            return CommonDB.GetDataTable("spr_GetAgendaLockByMeetingId", parameter);
         }
         #endregion
 
         #region MinutesFinalizeByMeetingId
-        public static int MinutesFinalizeByMeetingId(int MeetingId, int UserId)
+        public static DataTable MinutesFinalizeByMeetingId(int MeetingId, int UserId)
         {
             SqlParameter[] parameter = new SqlParameter[2];
             parameter[0] = new SqlParameter("@MeetingId", MeetingId);
             parameter[1] = new SqlParameter("@UserId", UserId);
 
-            return CommonDB.ExecuteProcedure("spr_MinutesFinalizeByMeetingId", parameter); ;
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks.sql)
+            return CommonDB.GetDataTable("spr_MinutesFinalizeByMeetingId", parameter);
         }
         #endregion
 
         #region MinutesConfirmByMeetingId
-        public static int MinutesConfirmByMeetingId(int MeetingId, int UserId)
+        public static DataTable MinutesConfirmByMeetingId(int MeetingId, int UserId)
         {
             SqlParameter[] parameter = new SqlParameter[2];
             parameter[0] = new SqlParameter("@MeetingId", MeetingId);
             parameter[1] = new SqlParameter("@UserId", UserId);
 
-            return CommonDB.ExecuteProcedure("spr_MinutesConfirmByMeetingId", parameter); ;
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks.sql)
+            return CommonDB.GetDataTable("spr_MinutesConfirmByMeetingId", parameter);
         }
         #endregion
 

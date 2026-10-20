@@ -11,249 +11,205 @@
 
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
         <ContentTemplate>
-            <asp:UpdateProgress ID="UpdateProgress1" runat="server">
-                <ProgressTemplate>
-                    <div class="divProgress">
-                        <div class="divProgressBackground">
+            <div class="wb-page">
+                <asp:UpdateProgress ID="UpdateProgress1" runat="server">
+                    <ProgressTemplate>
+                        <div class="divProgress">
+                            <div class="divProgressBackground">
+                            </div>
+                            <div class="divProgressImg">
+                                Loading ...</div>
                         </div>
-                        <div class="divProgressImg">
-                            Loading ...</div>
+                    </ProgressTemplate>
+                </asp:UpdateProgress>
+                <div class="wb-breadcrumb">
+                    Master<span class="wb-breadcrumb-sep">/</span>Committee Master</div>
+                <h1 class="wb-h1">
+                    Committee Master</h1>
+                <div aria-live="polite">
+                    <div id="divErrLogin" runat="server" class="divErrorHide">
+                        <span id="spanErrLogin" runat="server" class="lblError"></span>
                     </div>
-                </ProgressTemplate>
-            </asp:UpdateProgress>
-            <div class="formContent">
-                <div class="formPanel">
-                    <div class="divHeader">
-                        :: Committee Master</div>
-                    <div class="divRowFixed">
-                    </div>
-                    <div class="divRow" style="height: 25px">
-                        <div id="divErrLogin" runat="server" class="divErrorHide">
-                            <span id="spanErrLogin" runat="server" class="lblError"></span>
-                        </div>
-                    </div>
-                    <asp:Panel ID="pnlViewCommittee" runat="server">
-                        <div class="divRow" style="margin: auto; float: none; width: 700px;">
-                            <div class="divRow">
-                                <asp:Button ID="btnAdd" runat="server" CssClass="button" Text="Add" OnClick="btnAdd_Click" />
-                            </div>
-                            <div class="divRow">
-                                <div class="divRowGridScroll">
-                                    <asp:GridView ID="grvCommittee" runat="server" SkinID="grvSkinNoPaging" AutoGenerateColumns="false"
-                                        CssClass="contentTable1" AllowSorting="true" CellPadding="4" DataKeyNames="CommitteeId"
-                                        Font-Names="Verdana, Arial, Helvetica, sans-serif" Font-Size="X-Small" ForeColor="#333333"
-                                        GridLines="Horizontal" Height="32px" Width="100%" OnRowDataBound="grvCommittee_RowDataBound"
-                                        OnSorting="grvRecord_Sorting" OnRowCommand="grvCommittee_RowCommand">
-                                        <HeaderStyle CssClass="contentTableHeader" HorizontalAlign="Center" Font-Bold="true" />
-                                        <Columns>
-                                            <asp:TemplateField HeaderText="S.No.">
-                                                <ItemTemplate>
-                                                    <%# Container.DataItemIndex+1 + "."%>
-                                                </ItemTemplate>
-                                                <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center"
-                                                    Width="10px" />
-                                            </asp:TemplateField>
-                                            <asp:TemplateField SortExpression="CommitteeCode">
-                                                <HeaderTemplate>
-                                                    <asp:LinkButton ID="lnk1" runat="server" Text="Committee Code" CommandName="Sort"
-                                                        Style="color: White" CommandArgument="CommitteeCode"></asp:LinkButton>
-                                                </HeaderTemplate>
-                                                <ItemTemplate>
-                                                    <asp:Label ID="lblCommitteeCode" SkinID="lblSkinGen" Text='<%#Eval("CommitteeCode")%>'
-                                                        runat="server" />
-                                                    <asp:HiddenField ID="hdnCommitteeCode" runat="server" />
-                                                </ItemTemplate>
-                                                <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
-                                            </asp:TemplateField>
-                                            <asp:TemplateField SortExpression="CommitteeName">
-                                                <HeaderTemplate>
-                                                    <asp:LinkButton ID="lnk2" runat="server" Text="Committee Name" CommandName="Sort"
-                                                        Style="color: White" CommandArgument="CommitteeName"></asp:LinkButton>
-                                                </HeaderTemplate>
-                                                <ItemTemplate>
-                                                    <asp:Label ID="lblEmployeName" runat="server" SkinID="lblskingen" Text='<%#Eval("CommitteeName")%>'></asp:Label>
-                                                </ItemTemplate>
-                                                <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Left" />
-                                            </asp:TemplateField>
-                                            <asp:TemplateField SortExpression="IncorporationDate">
-                                                <HeaderTemplate>
-                                                    <asp:LinkButton ID="lnk3" runat="server" Text="Incorporation Date" CommandName="Sort"
-                                                        Style="color: White" CommandArgument="IncorporationDate"></asp:LinkButton>
-                                                </HeaderTemplate>
-                                                <ItemTemplate>
-                                                    <asp:Label ID="lblIncorporationDate" runat="server" SkinID="lblskingen" Text='<%#Eval("IncorporationDate", "{0:dd-MMM-yyyy}")%>'></asp:Label>
-                                                </ItemTemplate>
-                                                <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Left" />
-                                            </asp:TemplateField>
-                                            <asp:TemplateField SortExpression="CessationDate">
-                                                <HeaderTemplate>
-                                                    <asp:LinkButton ID="lnk4" runat="server" Text="Cessation Date" CommandName="Sort"
-                                                        Style="color: White" CommandArgument="CessationDate"></asp:LinkButton>
-                                                </HeaderTemplate>
-                                                <ItemTemplate>
-                                                    <asp:Label ID="lblCessationDate" runat="server" SkinID="lblskingen" Text='<%#Eval("CessationDate", "{0:dd-MMM-yyyy}")%>'></asp:Label>
-                                                </ItemTemplate>
-                                                <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Left" />
-                                            </asp:TemplateField>
-                                            <asp:TemplateField SortExpression="StatusName">
-                                                <HeaderTemplate>
-                                                    <asp:LinkButton ID="lnk5" runat="server" Text="Status" CommandName="Sort" Style="color: White"
-                                                        CommandArgument="StatusName"></asp:LinkButton>
-                                                </HeaderTemplate>
-                                                <ItemTemplate>
-                                                    <asp:Label ID="lblStatusName" runat="server" SkinID="lblskingen" Text='<%#Eval("StatusName")%>'></asp:Label>
-                                                </ItemTemplate>
-                                                <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Left" />
-                                            </asp:TemplateField>
-                                            <asp:TemplateField>
-                                                <ItemTemplate>
-                                                    <asp:Button ID="btnEdit" Width="18px" Height="18px" CssClass="buttonEdit" ToolTip="Edit"
-                                                        CommandArgument='<%#Eval("CommitteeId")%>' runat="server" CommandName="EditRec" />
-                                                </ItemTemplate>
-                                                <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center"
-                                                    Width="30px" />
-                                            </asp:TemplateField>
-                                            <asp:TemplateField>
-                                                <ItemTemplate>
-                                                    <asp:Button ID="btnDelete" Width="18px" Height="18px" CssClass="buttonDelete" ToolTip="Delete"
-                                                        CommandArgument='<%#Eval("CommitteeId")%>' runat="server" CommandName="DeleteRec"
-                                                        OnClientClick="return confirm('Are you sure you want to delete this Record?');" />
-                                                </ItemTemplate>
-                                                <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center"
-                                                    Width="30px" />
-                                            </asp:TemplateField>
-                                        </Columns>
-                                        <EmptyDataTemplate>
-                                            <div class="divNoRecord">
-                                                <%#Session["NoRecord"].ToString()%>
-                                            </div>
-                                        </EmptyDataTemplate>
-                                    </asp:GridView>
-                                </div>
-                            </div>
-                        </div>
-                    </asp:Panel>
-                    <asp:Panel ID="pnlEditCommittee" runat="server">
-                        <div class="divRow">
-                            <div class="divRow">
-                                <div class="divRow">
-                                    <div class="divRowLeft">
-                                        Committee Code :
-                                    </div>
-                                    <div class="divRowRight">
-                                        <asp:TextBox ID="txtCommitteeCode" runat="server" MaxLength="6" ReadOnly="true" Width="150px"></asp:TextBox>
-                                        <asp:HiddenField ID="hdnCommitteeId" runat="server" />
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="divRow">
-                                <div class="divRow">
-                                    <div class="divRowLeft">
-                                        Committee Name :
-                                    </div>
-                                    <div class="divRowRight">
-                                        <asp:TextBox ID="txtCommitteeName" runat="server" Width="150px"></asp:TextBox>
-                                        <span class="spanMandatory">*</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="divRow">
-                                <div class="divRow">
-                                    <div class="divRowLeft">
-                                        Is Board :
-                                    </div>
-                                    <div class="divRowRight">
-                                        <asp:CheckBox ID="chkBoard" runat="server" Checked="false" />
-                                        <span class="spanMandatory">*</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="divRow">
-                                <div class="divRow">
-                                    <div class="divRowLeft">
-                                        Incorporation Date :
-                                    </div>
-                                    <div class="divRowRight">
-                                        <asp:TextBox ID="txtIncorporationDate" runat="server" Width="100px" onfocus="this.blur();"
-                                            TabIndex="-1"></asp:TextBox>
-                                        <asp:ImageButton runat="Server" ID="imgIncorporationDate" Width="18px" ImageUrl="~/Images/Common/calendar.png" />
-                                        <span class="spanMandatory">*</span>
-                                        <cc1:CalendarExtender CssClass="cal_Theme1" ID="CalendarExtender2" runat="server"
-                                            TargetControlID="txtIncorporationDate" Animated="true" Format="dd-MMM-yyyy" PopupPosition="Right"
-                                            PopupButtonID="imgIncorporationDate">
-                                        </cc1:CalendarExtender>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="divRow">
-                                <div class="divRow">
-                                    <div class="divRowLeft">
-                                        MeetingStartNo :
-                                    </div>
-                                    <div class="divRowRight">
-                                        <asp:TextBox ID="txtMeetingStartNo" runat="server" Width="50px" MaxLength="5"
-                                            style="text-align:right;"></asp:TextBox>
-                                        <span class="spanMandatory">*</span>
-                                        <cc1:FilteredTextBoxExtender ID="FilteredTextBoxExtender1" runat="server" 
-                                            TargetControlID="txtMeetingStartNo"
-                                            ValidChars="0123456789" FilterMode="ValidChars" FilterType="Custom">
-                                        </cc1:FilteredTextBoxExtender>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="divRow">
-                                <div class="divRow">
-                                    <div class="divRowLeft">
-                                        Committee Color Code :
-                                    </div>
-                                    <div class="divRowRight">
-                                        <input id="txtColor" name="txtColor" runat="server" value="#FFFFFF" style="width: 80px;">
-                                        <input type="button" value="..." onclick="showColorPicker(this,ctl00_ContentPlaceHolder1_txtColor);	document.getElementById('ctl00_ContentPlaceHolder1_txtColor').style.backgroundColor = document.getElementById('ctl00_ContentPlaceHolder1_txtColor').value;">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="divRow">
-                                <div class="divRow">
-                                    <div class="divRowLeft">
-                                        Cessation Date :
-                                    </div>
-                                    <div class="divRowRight">
-                                        <asp:TextBox ID="txtCessationDate" runat="server" Width="100px" onfocus="this.blur();"
-                                            TabIndex="-1"></asp:TextBox>
-                                        <asp:ImageButton runat="Server" ID="imgCessationDate" Width="18px" ImageUrl="~/Images/Common/calendar.png" />
-                                        <cc1:CalendarExtender CssClass="cal_Theme1" ID="CalendarExtender1" runat="server"
-                                            TargetControlID="txtCessationDate" Animated="true" Format="dd-MMM-yyyy" PopupPosition="Right"
-                                            PopupButtonID="imgCessationDate">
-                                        </cc1:CalendarExtender>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="divRow">
-                                <div class="divRow">
-                                    <div class="divRowLeft">
-                                        Status :
-                                    </div>
-                                    <div class="divRowRight">
-                                        <asp:DropDownList ID="ddlStatus" runat="server" Width="155px">
-                                        </asp:DropDownList>
-                                        <span class="spanMandatory">*</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="divRow">
-                                <div class="divRow">
-                                    <div class="divRowLeft">
-                                        <span class="spanWhite">.</span>
-                                    </div>
-                                    <div class="divRowRight">
-                                        <asp:Button ID="btnSave" runat="server" CssClass="button" Text="Save" OnClick="btnSave_Click" />
-                                        <asp:Button ID="btnCancel" runat="server" CssClass="button" Text="Cancel" OnClick="btnCancel_Click" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </asp:Panel>
                 </div>
+                <asp:Panel ID="pnlViewCommittee" runat="server">
+                    <div class="wb-card">
+                        <div class="wb-card-header">
+                            Committees</div>
+                        <div class="wb-toolbar">
+                            <asp:Button ID="btnAdd" runat="server" CssClass="wb-btn" Text="Add" OnClick="btnAdd_Click" />
+                        </div>
+                        <div class="wb-table-scroll">
+                            <asp:GridView ID="grvCommittee" runat="server" SkinID="grvSkinNoPaging" AutoGenerateColumns="false"
+                                CssClass="wb-table" AllowSorting="true" DataKeyNames="CommitteeId" GridLines="None"
+                                OnRowDataBound="grvCommittee_RowDataBound" OnSorting="grvRecord_Sorting" OnRowCommand="grvCommittee_RowCommand">
+                                <Columns>
+                                    <asp:TemplateField HeaderText="S.No.">
+                                        <ItemTemplate>
+                                            <%# Container.DataItemIndex+1 + "."%>
+                                        </ItemTemplate>
+                                        <ItemStyle CssClass="wb-col-action" />
+                                    </asp:TemplateField>
+                                    <asp:TemplateField SortExpression="CommitteeCode">
+                                        <HeaderTemplate>
+                                            <asp:LinkButton ID="lnk1" runat="server" Text="Committee Code" CommandName="Sort"
+                                                CommandArgument="CommitteeCode"></asp:LinkButton>
+                                        </HeaderTemplate>
+                                        <ItemTemplate>
+                                            <asp:Label ID="lblCommitteeCode" SkinID="lblSkinGen" Text='<%#Eval("CommitteeCode")%>'
+                                                runat="server" />
+                                            <asp:HiddenField ID="hdnCommitteeCode" runat="server" />
+                                        </ItemTemplate>
+                                    </asp:TemplateField>
+                                    <asp:TemplateField SortExpression="CommitteeName">
+                                        <HeaderTemplate>
+                                            <asp:LinkButton ID="lnk2" runat="server" Text="Committee Name" CommandName="Sort"
+                                                CommandArgument="CommitteeName"></asp:LinkButton>
+                                        </HeaderTemplate>
+                                        <ItemTemplate>
+                                            <asp:Label ID="lblEmployeName" runat="server" SkinID="lblskingen" Text='<%#Eval("CommitteeName")%>'></asp:Label>
+                                        </ItemTemplate>
+                                    </asp:TemplateField>
+                                    <asp:TemplateField SortExpression="IncorporationDate">
+                                        <HeaderTemplate>
+                                            <asp:LinkButton ID="lnk3" runat="server" Text="Incorporation Date" CommandName="Sort"
+                                                CommandArgument="IncorporationDate"></asp:LinkButton>
+                                        </HeaderTemplate>
+                                        <ItemTemplate>
+                                            <asp:Label ID="lblIncorporationDate" runat="server" SkinID="lblskingen" Text='<%#Eval("IncorporationDate", "{0:dd-MMM-yyyy}")%>'></asp:Label>
+                                        </ItemTemplate>
+                                        <ItemStyle CssClass="wb-col-action" />
+                                    </asp:TemplateField>
+                                    <asp:TemplateField SortExpression="CessationDate">
+                                        <HeaderTemplate>
+                                            <asp:LinkButton ID="lnk4" runat="server" Text="Cessation Date" CommandName="Sort"
+                                                CommandArgument="CessationDate"></asp:LinkButton>
+                                        </HeaderTemplate>
+                                        <ItemTemplate>
+                                            <asp:Label ID="lblCessationDate" runat="server" SkinID="lblskingen" Text='<%#Eval("CessationDate", "{0:dd-MMM-yyyy}")%>'></asp:Label>
+                                        </ItemTemplate>
+                                        <ItemStyle CssClass="wb-col-action" />
+                                    </asp:TemplateField>
+                                    <asp:TemplateField SortExpression="StatusName">
+                                        <HeaderTemplate>
+                                            <asp:LinkButton ID="lnk5" runat="server" Text="Status" CommandName="Sort" CommandArgument="StatusName"></asp:LinkButton>
+                                        </HeaderTemplate>
+                                        <ItemTemplate>
+                                            <asp:Label ID="lblStatusName" runat="server" SkinID="lblskingen" Text='<%#Eval("StatusName")%>'></asp:Label>
+                                        </ItemTemplate>
+                                    </asp:TemplateField>
+                                    <asp:TemplateField>
+                                        <ItemTemplate>
+                                            <asp:Button ID="btnEdit" CssClass="wb-link-btn wb-link-edit" Text="Edit" ToolTip="Edit"
+                                                CommandArgument='<%#Eval("CommitteeId")%>' runat="server" CommandName="EditRec" />
+                                        </ItemTemplate>
+                                        <ItemStyle CssClass="wb-col-action" />
+                                    </asp:TemplateField>
+                                    <asp:TemplateField>
+                                        <ItemTemplate>
+                                            <asp:Button ID="btnDelete" CssClass="wb-link-btn wb-link-delete" Text="Delete" ToolTip="Delete"
+                                                CommandArgument='<%#Eval("CommitteeId")%>' runat="server" CommandName="DeleteRec"
+                                                OnClientClick="return confirm('Are you sure you want to delete this Record?');" />
+                                        </ItemTemplate>
+                                        <ItemStyle CssClass="wb-col-action" />
+                                    </asp:TemplateField>
+                                </Columns>
+                                <EmptyDataTemplate>
+                                    <div class="divNoRecord">
+                                        <%#Session["NoRecord"].ToString()%>
+                                    </div>
+                                </EmptyDataTemplate>
+                            </asp:GridView>
+                        </div>
+                        <p class="wb-help">
+                            Click a column heading to sort. Delete asks for confirmation; a committee that is
+                            in use cannot be deleted.</p>
+                    </div>
+                </asp:Panel>
+                <asp:Panel ID="pnlEditCommittee" runat="server">
+                    <div class="wb-card">
+                        <div class="wb-card-header">
+                            Committee details</div>
+                        <div class="wb-card-body">
+                            <div class="wb-row">
+                                <label class="wb-label" for="ctl00_ContentPlaceHolder1_txtCommitteeCode">
+                                    Committee Code</label>
+                                <div class="wb-field">
+                                    <asp:TextBox ID="txtCommitteeCode" runat="server" MaxLength="6" ReadOnly="true"></asp:TextBox>
+                                    <asp:HiddenField ID="hdnCommitteeId" runat="server" />
+                                </div>
+                            </div>
+                            <div class="wb-row">
+                                <label class="wb-label" for="ctl00_ContentPlaceHolder1_txtCommitteeName">
+                                    Committee Name <span class="wb-req">*</span></label>
+                                <div class="wb-field">
+                                    <asp:TextBox ID="txtCommitteeName" runat="server"></asp:TextBox>
+                                </div>
+                            </div>
+                            <div class="wb-row">
+                                <label class="wb-label" for="ctl00_ContentPlaceHolder1_chkBoard">
+                                    Is Board <span class="wb-req">*</span></label>
+                                <div class="wb-field">
+                                    <asp:CheckBox ID="chkBoard" runat="server" Checked="false" />
+                                </div>
+                            </div>
+                            <div class="wb-row">
+                                <div class="wb-label">
+                                    Incorporation Date <span class="wb-req">*</span></div>
+                                <div class="wb-field">
+                                    <asp:TextBox ID="txtIncorporationDate" runat="server" onfocus="this.blur();" TabIndex="-1"></asp:TextBox>
+                                    <asp:ImageButton runat="Server" ID="imgIncorporationDate" Width="18px" ImageUrl="~/Images/Common/calendar.png" />
+                                    <cc1:CalendarExtender CssClass="cal_Theme1" ID="CalendarExtender2" runat="server"
+                                        TargetControlID="txtIncorporationDate" Animated="true" Format="dd-MMM-yyyy" PopupPosition="Right"
+                                        PopupButtonID="imgIncorporationDate">
+                                    </cc1:CalendarExtender>
+                                </div>
+                            </div>
+                            <div class="wb-row">
+                                <label class="wb-label" for="ctl00_ContentPlaceHolder1_txtMeetingStartNo">
+                                    Meeting Start No <span class="wb-req">*</span></label>
+                                <div class="wb-field wb-field-short">
+                                    <asp:TextBox ID="txtMeetingStartNo" runat="server" MaxLength="5"></asp:TextBox>
+                                    <cc1:FilteredTextBoxExtender ID="FilteredTextBoxExtender1" runat="server" TargetControlID="txtMeetingStartNo"
+                                        ValidChars="0123456789" FilterMode="ValidChars" FilterType="Custom">
+                                    </cc1:FilteredTextBoxExtender>
+                                </div>
+                            </div>
+                            <div class="wb-row">
+                                <label class="wb-label" for="ctl00_ContentPlaceHolder1_txtColor">
+                                    Committee Color Code</label>
+                                <div class="wb-field">
+                                    <input id="txtColor" name="txtColor" runat="server" value="#FFFFFF" style="width: 80px;">
+                                    <input type="button" value="..." onclick="showColorPicker(this,ctl00_ContentPlaceHolder1_txtColor);	document.getElementById('ctl00_ContentPlaceHolder1_txtColor').style.backgroundColor = document.getElementById('ctl00_ContentPlaceHolder1_txtColor').value;">
+                                </div>
+                            </div>
+                            <div class="wb-row">
+                                <div class="wb-label">
+                                    Cessation Date</div>
+                                <div class="wb-field">
+                                    <asp:TextBox ID="txtCessationDate" runat="server" onfocus="this.blur();" TabIndex="-1"></asp:TextBox>
+                                    <asp:ImageButton runat="Server" ID="imgCessationDate" Width="18px" ImageUrl="~/Images/Common/calendar.png" />
+                                    <cc1:CalendarExtender CssClass="cal_Theme1" ID="CalendarExtender1" runat="server"
+                                        TargetControlID="txtCessationDate" Animated="true" Format="dd-MMM-yyyy" PopupPosition="Right"
+                                        PopupButtonID="imgCessationDate">
+                                    </cc1:CalendarExtender>
+                                </div>
+                            </div>
+                            <div class="wb-row">
+                                <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlStatus">
+                                    Status <span class="wb-req">*</span></label>
+                                <div class="wb-field">
+                                    <asp:DropDownList ID="ddlStatus" runat="server">
+                                    </asp:DropDownList>
+                                </div>
+                            </div>
+                            <div class="wb-actions">
+                                <asp:Button ID="btnSave" runat="server" CssClass="wb-btn" Text="Save" OnClick="btnSave_Click" />
+                                <asp:Button ID="btnCancel" runat="server" CssClass="wb-btn wb-btn-secondary" Text="Cancel"
+                                    OnClick="btnCancel_Click" />
+                            </div>
+                        </div>
+                    </div>
+                </asp:Panel>
             </div>
         </ContentTemplate>
     </asp:UpdatePanel>

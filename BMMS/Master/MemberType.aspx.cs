@@ -34,7 +34,9 @@ namespace BMMS.Master
         {
             btnSave.Attributes.Add("onclick", "return MemberTypeValidation()");
             txtMemberTypeCode.Attributes.Add("onkeydown", "javascript:ClearErrMsg('" + divErrLogin.ClientID + "','" + txtMemberTypeName.ClientID + "');GoToNxtTxtBox(event,'" + btnSave.ClientID + "')");
-            txtMemberTypeName.Attributes.Add("onkeydown", "javascript:ClearErrMsg('" + divErrLogin.ClientID + "','" + ddlStatus.ClientID + "');GoToNxtTxtBox(event,'" + btnSave.ClientID + "')");
+            txtMemberTypeName.Attributes.Add("onkeydown", "javascript:ClearErrMsg('" + divErrLogin.ClientID + "','" + ddlMemberScope.ClientID + "');GoToNxtTxtBox(event,'" + btnSave.ClientID + "')");
+            ddlMemberScope.Attributes.Add("onkeydown", "javascript:ClearErrMsg('" + divErrLogin.ClientID + "','" + txtDisplayOrder.ClientID + "');GoToNxtTxtBox(event,'" + btnSave.ClientID + "')");
+            txtDisplayOrder.Attributes.Add("onkeydown", "javascript:ClearErrMsg('" + divErrLogin.ClientID + "','" + ddlStatus.ClientID + "');GoToNxtTxtBox(event,'" + btnSave.ClientID + "')");
             ddlStatus.Attributes.Add("onkeydown", "javascript:ClearErrMsg('" + divErrLogin.ClientID + "','" + ddlStatus.ClientID + "');GoToNxtTxtBox(event,'" + btnSave.ClientID + "')");
            
         }
@@ -94,6 +96,14 @@ namespace BMMS.Master
         }
         #endregion
 
+        #region ActingUserId
+        private int ActingUserId()
+        {
+            int userId;
+            return (Session["UserId"] != null && int.TryParse(Session["UserId"].ToString(), out userId)) ? userId : 0;
+        }
+        #endregion
+
         #region grvMemberType_RowDataBound(object sender, GridViewRowEventArgs e)
         protected void grvMemberType_RowDataBound(object sender, GridViewRowEventArgs e)
         {
@@ -101,13 +111,29 @@ namespace BMMS.Master
             {
                 if (e.Row.RowType == DataControlRowType.DataRow)
                 {
-                    //e.Row.Attributes.Add("onmouseover", "MouseEvents(this, event)");
-                    //e.Row.Attributes.Add("onmouseout", "MouseEvents(this, event)");
+                    // Visual only: the procedures refuse these anyway (BMMS-Fix-MemberTypes-Step21.sql)
+                    DataRowView drv = (DataRowView)e.Row.DataItem;
+                    Button btnEdit = (Button)e.Row.FindControl("btnEdit");
+                    Button btnDelete = (Button)e.Row.FindControl("btnDelete");
 
-                    //Label LblEmployeeCode = (Label)e.Row.FindControl("LblEmployeeCode");
-                    //if (LblEmployeeCode.Text == string.Empty)
-                    //    for (int i = 0; i < e.Row.Cells.Count; i++)
-                    //        e.Row.Controls[i].Visible = false;
+                    if (Convert.ToInt32(drv["IsReserved"]) == 1)
+                    {
+                        ((Label)e.Row.FindControl("lblReserved")).Visible = true;
+
+                        btnEdit.Enabled = false;
+                        btnEdit.ToolTip = "Reserved member type: it cannot be changed";
+                        btnDelete.Enabled = false;
+                        btnDelete.ToolTip = "Reserved member type: it cannot be deleted";
+                    }
+                    else if (Convert.ToInt32(drv["CanDelete"]) != 1)
+                    {
+                        btnDelete.Enabled = false;
+                        btnDelete.ToolTip = "In use on " + drv["CommitteeUseCount"].ToString() + " committee and "
+                                          + drv["MeetingUseCount"].ToString() + " meeting member rows: it cannot be deleted";
+                    }
+
+                    if (Convert.ToInt32(drv["StatusId"]) != 1)
+                        e.Row.CssClass = (e.Row.CssClass + " wb-row-inactive").Trim();
                 }
             }
             catch (Exception ex)
@@ -155,7 +181,7 @@ namespace BMMS.Master
             {
                 MemberTypeMgr myMemberTypeMgr = new MemberTypeMgr();
                 MemberTypeBAL myMemberType = new MemberTypeBAL();
-                string sMsg = string.Empty;
+                MeetingChangeResult result = null;
 
                 try
                 {
@@ -164,21 +190,20 @@ namespace BMMS.Master
                     if (btnSave.Text == "Update")
                         myMemberType.Code = "Update";
 
-                    myMemberType.MemberTypeId = Convert.ToInt16(hdnMemberTypeId.Value);
+                    myMemberType.MemberTypeId = Convert.ToInt32(hdnMemberTypeId.Value);
                     myMemberType.MemberTypeCode = txtMemberTypeCode.Text.Trim();
                     myMemberType.MemberTypeName = txtMemberTypeName.Text.Trim();
+                    myMemberType.MemberScope = ddlMemberScope.SelectedValue;
+                    myMemberType.DisplayOrder = txtDisplayOrder.Text.Trim() == string.Empty ? 0 : Convert.ToInt32(txtDisplayOrder.Text.Trim());
                     myMemberType.StatusId = Convert.ToInt16(ddlStatus.SelectedValue);
                     myMemberType.CreatedOn = System.DateTime.Now;
-                    myMemberType.CreatedBy = int.Parse(Session["UserId"].ToString());
+                    myMemberType.CreatedBy = ActingUserId();
                     myMemberType.UpdatedOn = System.DateTime.Now;
-                    myMemberType.UpdatedBy = int.Parse(Session["UserId"].ToString());
+                    myMemberType.UpdatedBy = ActingUserId();
+                    myMemberType.ActingUserId = ActingUserId();
 
-                    int result = myMemberTypeMgr.AddEditMemberType(myMemberType);
-
-                    if (result == 1)
-                        sMsg = "Successfully Saved";
-                    else
-                        sMsg = "Record Not Saved";
+                    // Refused for a reserved type, a duplicate or a bad value (BMMS-Fix-MemberTypes-Step21.sql)
+                    result = myMemberTypeMgr.AddEditMemberType(myMemberType);
                 }
                 catch (Exception ex)
                 {
@@ -190,11 +215,24 @@ namespace BMMS.Master
                     myMemberType = null;
                 }
 
-                MsgDisplay(sMsg);
+                if (result == null)
+                    return;
 
-                pnlViewMemberType.Visible = true;
-                pnlEditMemberType.Visible = false;
-                LoadMemberType();
+                if (result.Result == 1)
+                {
+                    MsgDisplay("Successfully Saved");
+                    LoadMemberType();
+                }
+                else
+                {
+                    MsgDisplay(MemberTypeMgr.RefusalMessage(result, false));
+
+                    // A value the user can correct: keep the form open
+                    if ((result.Reason == 3 && result.ReasonDetail != "NotFound") || result.Reason == 5)
+                        return;
+
+                    LoadMemberType();
+                }
             }
         }
         #endregion
@@ -202,9 +240,20 @@ namespace BMMS.Master
         #region PageValidation
         private bool PageValidation()
         {
+            int displayOrder;
 
+            if (ddlMemberScope.SelectedValue != MemberTypeMgr.CommitteeScope && ddlMemberScope.SelectedValue != MemberTypeMgr.MeetingScope)
+            {
+                MsgDisplay("Used On is required field");
+                return false;
+            }
 
-
+            if (txtDisplayOrder.Text.Trim() != string.Empty
+                && (!int.TryParse(txtDisplayOrder.Text.Trim(), out displayOrder) || displayOrder < 0 || displayOrder > 9999))
+            {
+                MsgDisplay("Display Order must be a number from 0 to 9999.");
+                return false;
+            }
 
             return true;
         }
@@ -228,18 +277,33 @@ namespace BMMS.Master
                 {
                     int MemberTypeId = Convert.ToInt32(e.CommandArgument);
 
-                    pnlViewMemberType.Visible = false;
-                    pnlEditMemberType.Visible = true;
-                    
                     MemberTypeBAL myMemberType = new MemberTypeBAL();
                     myMemberType = MemberTypeMgr.GetMemberTypeByMemberTypeId(MemberTypeId);
+
+                    if (myMemberType.IsReserved == 1)
+                    {
+                        MsgDisplay(MemberTypeMgr.ReservedMessage);
+                        return;
+                    }
+
+                    pnlViewMemberType.Visible = false;
+                    pnlEditMemberType.Visible = true;
 
                     hdnMemberTypeId.Value = myMemberType.MemberTypeId.ToString();
                     txtMemberTypeCode.Text = myMemberType.MemberTypeCode;
                     txtMemberTypeName.Text = myMemberType.MemberTypeName;
+                    ddlMemberScope.SelectedValue = myMemberType.MemberScope;
+                    txtDisplayOrder.Text = myMemberType.DisplayOrder.ToString();
                     ddlStatus.Enabled = true;
                     ddlStatus.Text = myMemberType.StatusId.ToString();
-                    
+
+                    // A type in use keeps its scope: its rows would be on the wrong page
+                    int inUse = myMemberType.CommitteeUseCount + myMemberType.MeetingUseCount;
+                    ddlMemberScope.Enabled = (inUse == 0);
+                    lblScopeNote.Visible = (inUse > 0);
+                    lblScopeNote.Text = "In use on " + myMemberType.CommitteeUseCount + " committee and "
+                                      + myMemberType.MeetingUseCount + " meeting member rows, so it stays on this page.";
+
                     ScriptManager.GetCurrent(this).SetFocus(txtMemberTypeCode.ClientID);
                     btnSave.Text = "Update";
                     MsgHide();
@@ -247,24 +311,21 @@ namespace BMMS.Master
                 if (e.CommandName == "DeleteRec")
                 {
                     int MemberTypeId = Convert.ToInt32(e.CommandArgument);
-                    
-                    try
-                    {
-                        MemberTypeMgr.DeleteMemberTypeByMemberTypeId(MemberTypeId);
 
+                    // Refused for a reserved type or a type in use (BMMS-Fix-MemberTypes-Step21.sql)
+                    MeetingChangeResult Result = MemberTypeMgr.DeleteMemberTypeByMemberTypeId(MemberTypeId, ActingUserId());
+
+                    if (Result.Result == 1)
                         MsgDisplay("Record Deleted Successfully");
-                    }
-                    catch (Exception ex)
-                    {
-                        string _ErrMsg = Common.GetAppSetting("delete_reference");
-                        MsgDisplay(_ErrMsg);
-                    }
+                    else
+                        MsgDisplay(MemberTypeMgr.RefusalMessage(Result, true));
+
                     LoadMemberType();
                 }
             }
             catch (Exception ex)
             {
-                Utilities.GoToErrPage(className, "grvBranchDetails_RowCommand", ex);
+                Utilities.GoToErrPage(className, "grvMemberType_RowCommand", ex);
             }
         }
         #endregion
@@ -274,6 +335,10 @@ namespace BMMS.Master
         {
             txtMemberTypeCode.Text = string.Empty;
             txtMemberTypeName.Text = string.Empty;
+            ddlMemberScope.SelectedValue = "0";
+            ddlMemberScope.Enabled = true;
+            lblScopeNote.Visible = false;
+            txtDisplayOrder.Text = string.Empty;
             ddlStatus.Text = "1";
         }
         #endregion

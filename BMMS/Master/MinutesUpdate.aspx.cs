@@ -153,6 +153,25 @@ namespace BMMS.Master
                 {
                     int MeetingId = int.Parse(ddlMeeting.SelectedValue.ToString());
 
+                    // A meeting created after step 23: the database's workflow state decides, with the same messages
+                    // as the procedures (BMMS-Fix-WorkflowOrder-Step23.sql). Older meetings keep the checks below.
+                    MeetingWorkflowState state = MeetingMgr.GetMeetingWorkflowState(MeetingId);
+
+                    if (state.IsNew)
+                    {
+                        if (!state.AgendaFinalized)
+                            MsgDisplay(MeetingChangeReason.AgendaNotFinalizedMessage);
+                        else if (!state.AttendanceRecorded)
+                            MsgDisplay(MeetingChangeReason.AttendanceNotRecordedMessage);
+                        else
+                        {
+                            pnlViewMinute.Visible = true;
+                            grvMinutes.DataSource = MinutesMgr.GetMinutesByMeetingId(MeetingId, -1, -1);
+                            grvMinutes.DataBind();
+                        }
+                        return;
+                    }
+
                     DataTable dtAgendaFinalize = new DataTable();
                     dtAgendaFinalize = AgendaMgr.CheckAgendaFinalizeByMeetingId(MeetingId); // MinutesMgr.GetMinutesByMeetingId(MeetingId);
 
@@ -397,7 +416,7 @@ namespace BMMS.Master
             myMinutesBAL.ActualResolution = "";
             myMinutesBAL.UpdatedBy = int.Parse(Session["UserId"].ToString());
 
-            MinutesMgr.UpdateMinutes(myMinutesBAL);
+            ShowRefusal(MinutesMgr.UpdateMinutes(myMinutesBAL));
 
             pnlDirections.Visible = false;
         }
@@ -436,7 +455,7 @@ namespace BMMS.Master
             //myMinutesBAL.ActualResolution = txtaActualResolution.InnerHtml.ToString();
             myMinutesBAL.UpdatedBy = int.Parse(Session["UserId"].ToString());
 
-            MinutesMgr.UpdateMinutes(myMinutesBAL);
+            ShowRefusal(MinutesMgr.UpdateMinutes(myMinutesBAL));
 
             pnlActualResolution.Visible = false;
         }
@@ -451,9 +470,21 @@ namespace BMMS.Master
             myAgenda.ShortText = txtShortText.Text.Trim();
             myAgenda.UpdatedBy = Convert.ToInt16(Session["UserId"].ToString());
 
-            AgendaMgr.UpdateAgendaShortText(myAgenda);
-            
+            ShowRefusal(AgendaMgr.UpdateAgendaShortText(myAgenda));
+
             pnlShortText.Visible = false;
+        }
+        #endregion
+
+        #region ShowRefusal
+        // Minutes confirmed in another tab since the list was shown (BMMS-Fix-MeetingLocks-Step16.sql)
+        private void ShowRefusal(MeetingChangeResult result)
+        {
+            if (result.Result != 1)
+            {
+                MsgDisplay(result.RefusalMessage());
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "scroll", "window.scrollTo(0,0);", true);
+            }
         }
         #endregion
 
@@ -496,7 +527,14 @@ namespace BMMS.Master
                     myMinutesBAL.ActualResolution = "";
                     myMinutesBAL.UpdatedBy = int.Parse(Session["UserId"].ToString());
 
-                    MinutesMgr.UpdateMinutes(myMinutesBAL);
+                    MeetingChangeResult result = MinutesMgr.UpdateMinutes(myMinutesBAL);
+
+                    if (result.Result != 1)
+                    {
+                        // Confirmed in another tab: every row is refused the same way
+                        strMsg = result.RefusalMessage();
+                        break;
+                    }
 
                     int MeetingId = Convert.ToInt16(ddlMeeting.SelectedValue.ToString());
                     AlertMgr.UpdateAlertByMeetingId(MeetingId);

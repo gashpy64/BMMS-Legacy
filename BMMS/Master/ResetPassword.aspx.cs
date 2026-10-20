@@ -39,6 +39,11 @@ namespace BMMS.Master
                 DataTable dtUser = new DataTable();
                 dtUser = UserMgr.GetUserList();
 
+                // The protected system account changes its own password only (BMMS-Fix-SystemAccount-Stage3.sql)
+                for (int i = dtUser.Rows.Count - 1; i >= 0; i--)
+                    if (Common.IsSystemAccountRow(dtUser.Rows[i]))
+                        dtUser.Rows.RemoveAt(i);
+
                 Common.LoadDropdownlist(ddlLoginUser, dtUser, "LoginName", "UserId", true);
             }
             catch (Exception ex)
@@ -90,26 +95,36 @@ namespace BMMS.Master
             BodyText += "Please change your password after login.";
 
             string result = string.Empty;
-            result = Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, null);
-            
-            
-
             string errMsg = string.Empty;
 
-            if (result == "Success")
+            int UserId = Convert.ToInt16(ddlLoginUser.SelectedValue);
+            // Acting user: the server-side session only
+            int UpdatedBy = Session["UserId"] == null ? 0 : Convert.ToInt16(Session["UserId"].ToString());
+
+            // Check the rule, reset, and only then send the mail
+            UserChangeResult check = UserMgr.CheckUserChange(UpdatedBy, UserId, "ResetPassword", 0);
+
+            if (check.Result != 1)
             {
-                int UserId = Convert.ToInt16(ddlLoginUser.SelectedValue);
-                int UpdatedBy = Convert.ToInt16(Session["UserId"].ToString());
-
-                string Password = Common.EncryptVal(NewPassword);
-
-                errMsg = "New passward was sent through mail.";
-
-                UserMgr.ResetPasswordByUserId(UserId, Password, UpdatedBy);
+                errMsg = check.RefusalMessage("reset this user's password", className);
+            }
+            else if (UserMgr.ResetPasswordByUserId(UserId, Common.HashPassword(NewPassword), UpdatedBy) != 1)
+            {
+                errMsg = "The password was not reset. Please try again.";
+            }
+            else if (UserMgr.GetUserStatusByUserId(UserId) != 1)
+            {
+                // An inactive user receives no mail (BMMS-Fix-UserStatus-Stage2b.sql)
+                errMsg = "Password reset; no mail sent because the account is inactive.";
             }
             else
             {
-                errMsg = "Error : " + result;
+                result = Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, null);
+
+                if (result == "Success")
+                    errMsg = "New passward was sent through mail.";
+                else
+                    errMsg = "The password was reset to the default password, but the mail could not be sent. Error : " + result;
             }
 
             MsgDisplay(errMsg);

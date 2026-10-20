@@ -285,9 +285,12 @@ namespace BMMS.Master
 
                     try
                     {
-                        DepartmentMgr.DeleteDepartmentByDeptId(DeptId);
+                        int Result = DepartmentMgr.DeleteDepartmentByDeptId(DeptId);
 
-                        MsgDisplay("Record Deleted Successfully");
+                        if (Result == 1)
+                            MsgDisplay("Record Deleted Successfully");
+                        else
+                            MsgDisplay(Common.GetAppSetting("delete_reference"));
                     }
                     catch (Exception ex)
                     {

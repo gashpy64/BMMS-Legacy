@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Reaal")]
 [assembly: AssemblyProduct("BMMSBAL")]
-[assembly: AssemblyCopyright("Copyright © Reaal 2010")]
+[assembly: AssemblyCopyright("Copyright © 2026 Gashpy Software. All Rights Reserved.")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

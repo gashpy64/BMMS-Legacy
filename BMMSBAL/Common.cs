@@ -76,6 +76,18 @@ namespace BMMSBAL
         #endregion
 
 
+        #region ProductFooter
+        // The fixed product footer of every master page; the version is the web application's
+        // assembly version, three parts (1.0.0.0 -> 1.0.0)
+        public static string ProductFooter(System.Reflection.Assembly WebAssembly)
+        {
+            Version version = WebAssembly.GetName().Version;
+            return "Copyright © 2026 BMMS-" + version.Major + "." + version.Minor + "." + version.Build
+                 + ". All Rights Reserved. Gashpy Software";
+        }
+        #endregion
+
+
         #region GetAppSetting
         public static string GetAppSetting(string KeyName)
         {
@@ -338,6 +350,21 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region IsSystemAccountSession / IsSystemAccountRow
+        // The protected system account (BMMS-Fix-SystemAccount-Stage3.sql): Session["IsSystem"] is set at login
+        public static bool IsSystemAccountSession()
+        {
+            object flag = HttpContext.Current == null || HttpContext.Current.Session == null ? null : HttpContext.Current.Session["IsSystem"];
+            return flag != null && flag.ToString() == "1";
+        }
+
+        // A row of View_Users (or a list built on it); false when the column is not there
+        public static bool IsSystemAccountRow(DataRow row)
+        {
+            return row.Table.Columns.Contains("IsSystem") && row["IsSystem"] != DBNull.Value && Convert.ToBoolean(row["IsSystem"]);
+        }
+        #endregion
+
         #region CreateRandomPassword
         public static string CreateRandomPassword(int PasswordLength)
         {
@@ -388,6 +415,105 @@ namespace BMMSBAL
 
         }
 
+        #endregion
+
+        #region HashPassword / VerifyPassword
+        // PBKDF2 (RFC 2898), 100,000 iterations, 16-byte random salt per password.
+        // Stored format: "100000.<base64 salt>.<base64 hash>" — self-describing,
+        // so the iteration count can be raised later without breaking old hashes.
+        private const int HashIterations = 100000;
+        private const int HashSaltSize = 16;
+        private const int HashKeySize = 32;
+
+        public static string HashPassword(string plainPassword)
+        {
+            using (var rng = new RNGCryptoServiceProvider())
+            {
+                byte[] salt = new byte[HashSaltSize];
+                rng.GetBytes(salt);
+                using (var pbkdf2 = new Rfc2898DeriveBytes(plainPassword, salt, HashIterations))
+                {
+                    return HashIterations + "." + Convert.ToBase64String(salt) + "." +
+                           Convert.ToBase64String(pbkdf2.GetBytes(HashKeySize));
+                }
+            }
+        }
+        // Old format = a single base64 blob. New format = "iterations.salt.hash".
+        public static bool IsLegacyFormat(string stored)
+        {
+            if (string.IsNullOrEmpty(stored)) return false;
+            string[] parts = stored.Split('.');
+            int n;
+            return !(parts.Length == 3 && int.TryParse(parts[0], out n));
+        }
+        public static bool VerifyPassword(string plainPassword, string stored)
+        {
+            if (string.IsNullOrEmpty(stored)) return false;
+
+            if (IsLegacyFormat(stored)) return false;
+           
+            string[] parts = stored.Split('.');
+            int iterations;
+            byte[] salt, expected;
+            try
+            {
+                iterations = int.Parse(parts[0]);
+                salt = Convert.FromBase64String(parts[1]);
+                expected = Convert.FromBase64String(parts[2]);
+            }
+            catch (FormatException) { return false; }
+
+            using (var pbkdf2 = new Rfc2898DeriveBytes(plainPassword, salt, iterations))
+            {
+                byte[] actual = pbkdf2.GetBytes(expected.Length);
+                if (actual.Length != expected.Length) return false;
+                int diff = 0;                       // constant-time compare
+                for (int i = 0; i < actual.Length; i++) diff |= actual[i] ^ expected[i];
+                return diff == 0;
+            }
+        }
+
+        // Constant-time comparison — a plain == or SequenceEqual leaks timing
+        // information about how many leading bytes matched, which is the kind
+        // of side channel password-verification code should avoid.
+        private static bool FixedTimeEquals(byte[] a, byte[] b)
+        {
+            if (a.Length != b.Length) return false;
+            int diff = 0;
+            for (int i = 0; i < a.Length; i++)
+                diff |= a[i] ^ b[i];
+            return diff == 0;
+        }
+
+
+        #endregion
+        #region ProtectSecret / UnprotectSecret
+        // For secrets that must stay recoverable (e.g. the SMTP password).
+        // Windows DPAPI, machine scope: no key in code or config. The stored value
+        // can only be decrypted on this machine, so after restoring the database on
+        // another server the SMTP password must be re-entered once.
+        private static readonly byte[] SecretEntropy = Encoding.UTF8.GetBytes("BMMS.Secret.v1");
+        private const string SecretPrefix = "dpapi:";
+
+        public static string ProtectSecret(string plainText)
+        {
+            byte[] data = Encoding.UTF8.GetBytes(plainText);
+            byte[] enc = ProtectedData.Protect(data, SecretEntropy, DataProtectionScope.LocalMachine);
+            return SecretPrefix + Convert.ToBase64String(enc);
+        }
+
+        public static string UnprotectSecret(string stored)
+        {
+            if (string.IsNullOrEmpty(stored)) return stored;
+
+            // TRANSITIONAL: a value saved before this change has no prefix. Remove
+            // this line once the SMTP password has been re-saved.
+            if (!stored.StartsWith(SecretPrefix)) return DecryptVal(stored);
+
+            byte[] enc = Convert.FromBase64String(stored.Substring(SecretPrefix.Length));
+            byte[] data = ProtectedData.Unprotect(enc, SecretEntropy, DataProtectionScope.LocalMachine);
+            return Encoding.UTF8.GetString(data);
+        }
         #endregion
     }
 }

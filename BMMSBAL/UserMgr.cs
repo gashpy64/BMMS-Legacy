@@ -6,6 +6,88 @@ using BMMSDAL;
 
 namespace BMMSBAL
 {
+    #region UserChangeResult
+    /// <summary>
+    /// Answer of the protected user procedures (BMMS-Fix-UserProtection-Stage1.sql).
+    /// Result 1 = done, 0 = refused. Reason says why (see UserChangeReason).
+    /// ReasonDetail: user names (5), history groups (6), or the SQL Server
+    /// message (9, for the error log only - never shown on a page).
+    /// </summary>
+    public class UserChangeResult
+    {
+        public int Result;
+        public int Reason;
+        public string ReasonDetail = string.Empty;
+
+        public static UserChangeResult FromTable(DataTable dt)
+        {
+            if (dt == null || dt.Rows.Count == 0 || !dt.Columns.Contains("Reason"))
+                throw new InvalidOperationException("The user procedure returned no Reason. Run Database/BMMS-Fix-UserProtection-Stage1.sql.");
+
+            UserChangeResult r = new UserChangeResult();
+            r.Result = Convert.ToInt32(dt.Rows[0]["Result"]);
+            r.Reason = Convert.ToInt32(dt.Rows[0]["Reason"]);
+            r.ReasonDetail = dt.Rows[0]["ReasonDetail"].ToString();
+            return r;
+        }
+
+        /// <summary>
+        /// Message for the page when Result = 0. ActionText completes "You are not
+        /// allowed to ...", e.g. "delete this user". Reason 9 detail goes to the
+        /// error log, never to the page.
+        /// </summary>
+        public string RefusalMessage(string ActionText, string ClassName)
+        {
+            switch (Reason)
+            {
+                case UserChangeReason.OwnAccount:
+                    return "You cannot delete, deactivate or change the role of your own account.";
+                case UserChangeReason.LastAdmin:
+                    return "This is the last active Admin. It cannot be deleted, deactivated or given another role.";
+                case UserChangeReason.LastController:
+                    return "This is the last active Controller. It cannot be deleted, deactivated or given another role.";
+                case UserChangeReason.NotAllowedForRole:
+                    return "You are not allowed to " + ActionText + ". A Controller cannot change Admin or Controller accounts, "
+                         + "or give anyone the Admin or Controller role.";
+                case UserChangeReason.ReferencedByUsers:
+                    return "This user cannot be deleted: these users have them as reporting person, or were created or last updated by them: "
+                         + System.Web.HttpUtility.HtmlEncode(ReasonDetail) + ".";
+                case UserChangeReason.HasHistory:
+                    return "This user cannot be deleted because they have history: " + System.Web.HttpUtility.HtmlEncode(ReasonDetail) + ".";
+                case UserChangeReason.SystemAccount:
+                    // BMMS-Fix-SystemAccount-Stage3.sql
+                    return UserChangeReason.SystemAccountMessage;
+                case UserChangeReason.ActingUserMissing:
+                    // missing or inactive acting user (BMMS-Fix-UserStatus-Stage2a.sql)
+                    return "Your session is no longer valid. Please log in again.";
+                case UserChangeReason.Other:
+                    Utilities.WriteErrorLog(ClassName, "UserChange", "Refused by the database: " + ReasonDetail);
+                    return "This user cannot be deleted because other data still refers to them. The details were written to the error log.";
+                default:
+                    return Common.GetAppSetting("delete_reference");
+            }
+        }
+    }
+
+    public static class UserChangeReason
+    {
+        public const int None = 0;
+        public const int OwnAccount = 1;
+        public const int LastAdmin = 2;
+        public const int LastController = 3;
+        public const int NotAllowedForRole = 4;
+        public const int ReferencedByUsers = 5;
+        public const int HasHistory = 6;
+        public const int SystemAccount = 7;       // the protected system account (stage 3)
+        public const int ActingUserMissing = 8;   // missing or inactive (stage 2a)
+        public const int Other = 9;
+
+        public const string SystemAccountMessage =
+            "This is the protected system account. It cannot be edited, deactivated, deleted, or have its role or Login ID changed, "
+          + "and only the account itself can change its password (Change Password).";
+    }
+    #endregion
+
     #region UserBAL
     public class UserBAL
     {
@@ -136,6 +218,13 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region RecordLogin
+        public static void RecordLogin(int UserId, string User_IP_Address, string Server_Url)
+        {
+            UserDB.RecordLogin(UserId, User_IP_Address, Server_Url);
+        }
+        #endregion
+
         #region GetUserList
         public static DataTable GetUserList()
         {
@@ -143,10 +232,36 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region GetActiveUserList
+        public static DataTable GetActiveUserList()
+        {
+            return UserDB.GetActiveUserList();
+        }
+        #endregion
+
         #region GetMgrController
         public static DataTable GetMgrControllerByDeptId(int DepartmentId)
         {
             return UserDB.GetMgrControllerByDeptId(DepartmentId);
+        }
+
+        public static DataTable GetMgrControllerByDeptId(int DepartmentId, int IncludeUserId)
+        {
+            return UserDB.GetMgrControllerByDeptId(DepartmentId, IncludeUserId);
+        }
+        #endregion
+
+        #region GetUserStatusByUserId
+        public static int GetUserStatusByUserId(int UserId)
+        {
+            return UserDB.GetUserStatusByUserId(UserId);
+        }
+        #endregion
+
+        #region SetUserStatusByUserId
+        public static UserChangeResult SetUserStatusByUserId(int UserId, int AccountStatus, int ActingUserId)
+        {
+            return UserChangeResult.FromTable(UserDB.SetUserStatusByUserId(UserId, AccountStatus, ActingUserId));
         }
         #endregion
 
@@ -187,7 +302,7 @@ namespace BMMSBAL
         #endregion
 
         #region AddEditUser
-        public int AddEditUser(UserBAL UserBAL)
+        public UserChangeResult AddEditUser(UserBAL UserBAL)
         {
             UserDAL UserDAL = new UserDAL();
             UserDAL.Code = UserBAL.Code;
@@ -205,14 +320,28 @@ namespace BMMSBAL
             UserDAL.UpdatedOn = UserBAL.UpdatedOn;
             UserDAL.UpdatedBy = UserBAL.UpdatedBy;
 
-            return UserDB.AddEditUser(UserDAL);
+            return UserChangeResult.FromTable(UserDB.AddEditUser(UserDAL));
         }
         #endregion
 
         #region DeleteUserByUserId
-        public static int DeleteUserByUserId(int UserId)
+        public static UserChangeResult DeleteUserByUserId(int UserId, int ActingUserId)
         {
-            return UserDB.DeleteUserByUserId(UserId);
+            return UserChangeResult.FromTable(UserDB.DeleteUserByUserId(UserId, ActingUserId));
+        }
+        #endregion
+
+        #region CheckUserChange
+        public static UserChangeResult CheckUserChange(int ActingUserId, int TargetUserId, string Action, int NewRoleId)
+        {
+            return UserChangeResult.FromTable(UserDB.CheckUserChange(ActingUserId, TargetUserId, Action, NewRoleId));
+        }
+        #endregion
+
+        #region GetUserListForUserPage
+        public static DataTable GetUserListForUserPage(int ActingUserId)
+        {
+            return UserDB.GetUserListForUserPage(ActingUserId);
         }
         #endregion
 

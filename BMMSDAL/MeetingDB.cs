@@ -248,7 +248,7 @@ namespace BMMSDAL
         #endregion
 
         #region AddEditMeeting
-        public static int AddEditMeeting(MeetingDAL MeetingDAL)
+        public static DataTable AddEditMeeting(MeetingDAL MeetingDAL)
         {
             SqlParameter[] parameter = new SqlParameter[14];
             parameter[0] = new SqlParameter("@Code", MeetingDAL.Code);
@@ -266,19 +266,55 @@ namespace BMMSDAL
             parameter[12] = new SqlParameter("@UpdatedOn", MeetingDAL.UpdatedOn);
             parameter[13] = new SqlParameter("@UpdatedBy", MeetingDAL.UpdatedBy);
 
-            return CommonDB.ExecuteProcedure("spr_AddEditMeeting", parameter);
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks-Step16.sql)
+            return CommonDB.GetDataTable("spr_AddEditMeeting", parameter);
         }
         #endregion
 
         #region UpdateMeetingChairman
-        public static int UpdateMeetingChairman(int MeetingId, int CommitteeId, int ChairmanNameId)
+        public static DataTable UpdateMeetingChairman(int MeetingId, int CommitteeId, int ChairmanNameId)
         {
             SqlParameter[] parameter = new SqlParameter[3];
             parameter[0] = new SqlParameter("@MeetingId", MeetingId);
             parameter[1] = new SqlParameter("@CommitteeId", CommitteeId);
             parameter[2] = new SqlParameter("@ChairmanNameId", ChairmanNameId);
 
-            return CommonDB.ExecuteProcedure("spr_UpdateMeetingChairman", parameter);
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks.sql)
+            return CommonDB.GetDataTable("spr_UpdateMeetingChairman", parameter);
+        }
+        #endregion
+
+        #region GetMeetingStatusByMeetingId
+        // AgendaStatus, MinutesStatus, IsHeld, IsMinutesFinalized; no row if the meeting does not exist
+        public static DataTable GetMeetingStatusByMeetingId(int MeetingId)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@MeetingId", MeetingId);
+
+            return CommonDB.GetDataTable("spr_GetMeetingStatusByMeetingId", parameter);
+        }
+        #endregion
+
+        #region GetMeetingWorkflowState
+        // IsNew, AgendaFinalized, AttendanceRecorded, MinutesTotal, MinutesUpdated; no row if the meeting
+        // does not exist (BMMS-Fix-WorkflowOrder-Step23.sql)
+        public static DataTable GetMeetingWorkflowState(int MeetingId)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@MeetingId", MeetingId);
+
+            return CommonDB.GetDataTable("spr_GetMeetingWorkflowState", parameter);
+        }
+        #endregion
+
+        #region GetMeetingEditLockByMeetingId
+        // HasAttendance, HasAgenda; no row if the meeting does not exist (BMMS-Fix-MeetingLocks-Step16.sql)
+        public static DataTable GetMeetingEditLockByMeetingId(int MeetingId)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@MeetingId", MeetingId);
+
+            return CommonDB.GetDataTable("spr_GetMeetingEditLockByMeetingId", parameter);
         }
         #endregion
 

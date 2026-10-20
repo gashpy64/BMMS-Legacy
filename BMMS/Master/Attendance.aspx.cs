@@ -15,6 +15,7 @@ namespace BMMS.Master
     public partial class Attendance : System.Web.UI.Page
     {
         private string className = "Attendance";
+        private const string MeetingNotHeldMsg = "Attendance cannot be marked for a meeting that has not yet taken place.";
 
         #region Page_Load
         protected void Page_Load(object sender, EventArgs e)
@@ -164,6 +165,16 @@ namespace BMMS.Master
                                         chkAttend.Checked = true;
                                 }
                     }
+
+                    // Read only once the minutes are finalized (BMMS-Fix-MeetingLocks.sql), and, for a meeting created
+                    // after step 23, until its agenda is finalized (BMMS-Fix-WorkflowOrder-Step23.sql)
+                    bool finalized = MeetingMgr.IsMinutesFinalized(MeetingId);
+                    bool agendaOpen = !finalized && MeetingMgr.GetMeetingWorkflowState(MeetingId).AttendanceBlocked;
+                    SetAttendanceLocked(finalized || agendaOpen);
+                    if (finalized)
+                        MsgDisplay(MeetingChangeReason.MinutesFinalizedMessage);
+                    else if (agendaOpen)
+                        MsgDisplay(MeetingChangeReason.AgendaNotFinalizedMessage);
                 }
             }
             catch (Exception ex)
@@ -201,6 +212,32 @@ namespace BMMS.Master
         }
         #endregion
 
+        #region SetAttendanceLocked
+        // Greys the chairman, the check boxes and Update; the procedures refuse anyway
+        private void SetAttendanceLocked(bool locked)
+        {
+            btnUpdate.Enabled = !locked;
+            ddlChairmanName.Enabled = !locked;
+
+            foreach (GridView grv in new GridView[] { grvCommitteeMember, grvMeetingMember })
+            {
+                if (grv.HeaderRow != null)
+                {
+                    CheckBox cbSelectAll = (CheckBox)grv.HeaderRow.FindControl("cbSelectAll");
+                    if (cbSelectAll != null)
+                        cbSelectAll.Enabled = !locked;
+                }
+
+                foreach (GridViewRow gr in grv.Rows)
+                {
+                    CheckBox chkAttend = (CheckBox)gr.FindControl("cbMember");
+                    if (chkAttend != null)
+                        chkAttend.Enabled = !locked;
+                }
+            }
+        }
+        #endregion
+
         #region btnUpdate_Click
         protected void btnUpdate_Click(object sender, EventArgs e)
         {
@@ -214,13 +251,44 @@ namespace BMMS.Master
                     int CommitteeId = int.Parse(ddlCommittee.SelectedValue.ToString());
                     int ChairmanNameId = int.Parse(ddlChairmanName.SelectedValue.ToString());
 
-                    MeetingMgr.UpdateMeetingChairman(MeetingId, CommitteeId, ChairmanNameId);
+                    // Not once the minutes are finalized (BMMS-Fix-MeetingLocks.sql)
+                    if (MeetingMgr.IsMinutesFinalized(MeetingId))
+                    {
+                        MsgDisplay(MeetingChangeReason.MinutesFinalizedMessage);
+                        return;
+                    }
 
-                    UpdateCommitteeMember();
+                    // Attendance only for a meeting dated today or earlier (database server date)
+                    if (!AttendanceMgr.IsMeetingHeld(MeetingId))
+                    {
+                        MsgDisplay(MeetingNotHeldMsg);
+                        return;
+                    }
 
-                    UpdateMeetingMember();
+                    // The procedure checks again under a lock; if it refuses, no attendance is saved
+                    MeetingChangeResult chairman = MeetingMgr.UpdateMeetingChairman(MeetingId, CommitteeId, ChairmanNameId);
+                    if (chairman.Result != 1)
+                    {
+                        MsgDisplay(chairman.RefusalMessage());
+                        return;
+                    }
 
-                    sMsg = "Attendance Successfully Updated";
+                    bool committeeSaved = UpdateCommitteeMember();
+
+                    bool meetingSaved = UpdateMeetingMember();
+
+                    if (committeeSaved && meetingSaved)
+                        sMsg = "Attendance Successfully Updated";
+                    else if (MeetingMgr.IsMinutesFinalized(MeetingId))
+                        sMsg = MeetingChangeReason.MinutesFinalizedMessage;
+                    else if (MeetingMgr.GetMeetingWorkflowState(MeetingId).AttendanceBlocked)
+                        // BMMS-Fix-WorkflowOrder-Step23.sql (the chairman is normally refused first, Reason 17)
+                        sMsg = MeetingChangeReason.AgendaNotFinalizedMessage;
+                    else if (MeetingMgr.IsMeetingHeld(MeetingId))
+                        // a committee member not on the committee on the meeting date (BMMS-Fix-MeetingLocks-Step16.sql)
+                        sMsg = "Some members are not on the committee on the meeting date, so their attendance was not saved. Reload the meeting to see the current list.";
+                    else
+                        sMsg = MeetingNotHeldMsg;
 
                     MsgDisplay(sMsg);
                 }
@@ -233,8 +301,9 @@ namespace BMMS.Master
         #endregion
 
         #region UpdateCommitteeMember
-        public void UpdateCommitteeMember()
+        public bool UpdateCommitteeMember()
         {
+            bool allSaved = true;
             int MeetingId = int.Parse(ddlMeeting.SelectedValue.ToString());
             int CommitteeId = int.Parse(ddlCommittee.SelectedValue.ToString());
 
@@ -261,16 +330,20 @@ namespace BMMS.Master
                     }
                     myAttendance.UpdatedBy = int.Parse(Session["UserId"].ToString());
 
-                    AttendanceMgr.UpdateAttendance(myAttendance);
+                    if (AttendanceMgr.UpdateAttendance(myAttendance) != 1)
+                        allSaved = false;
 
                 }
             }
+
+            return allSaved;
         }
         #endregion
 
         #region UpdateMeetingMember
-        public void UpdateMeetingMember()
+        public bool UpdateMeetingMember()
         {
+            bool allSaved = true;
             int MeetingId = int.Parse(ddlMeeting.SelectedValue.ToString());
             int CommitteeId = int.Parse(ddlCommittee.SelectedValue.ToString());
 
@@ -297,10 +370,13 @@ namespace BMMS.Master
                     }
                     myAttendance.UpdatedBy = int.Parse(Session["UserId"].ToString());
 
-                    AttendanceMgr.UpdateAttendance(myAttendance);
+                    if (AttendanceMgr.UpdateAttendance(myAttendance) != 1)
+                        allSaved = false;
 
                 }
             }
+
+            return allSaved;
         }
         #endregion
 

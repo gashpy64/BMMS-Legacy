@@ -1,2 +1,0 @@
-C:\BMMS\BMMS\Source\BMMSBAL\obj\Debug\BMMSBAL.dll
-C:\BMMS\BMMS\Source\BMMSBAL\obj\Debug\BMMSBAL.pdb

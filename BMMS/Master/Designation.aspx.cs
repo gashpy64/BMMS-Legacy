@@ -269,9 +269,12 @@ namespace BMMS.Master
 
                     try
                     {
-                        DesignationMgr.DeleteDesignationByDesignationId(DesignationId);
+                        int Result = DesignationMgr.DeleteDesignationByDesignationId(DesignationId);
 
-                        MsgDisplay("Record Deleted Successfully");
+                        if (Result == 1)
+                            MsgDisplay("Record Deleted Successfully");
+                        else
+                            MsgDisplay(Common.GetAppSetting("delete_reference"));
                     }
                     catch (Exception ex)
                     {

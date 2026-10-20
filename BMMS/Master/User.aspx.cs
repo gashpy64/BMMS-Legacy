@@ -94,7 +94,8 @@ namespace BMMS.Master
             try
             {
                 DataTable dtUser = new DataTable();
-                dtUser = UserMgr.GetUserList();
+                // Same rows as GetUserList, plus CanEdit / CanChangeRole / CanDelete for the logged-in user
+                dtUser = UserMgr.GetUserListForUserPage(ActingUserId());
 
                 ViewState["dtUser"] = dtUser;
                 BindGridView();
@@ -125,6 +126,77 @@ namespace BMMS.Master
             {
                 if (e.Row.RowType == DataControlRowType.DataRow)
                 {
+                    // Visual only: the procedures refuse these anyway
+                    DataRowView drv = (DataRowView)e.Row.DataItem;
+
+                    if (Convert.ToInt32(drv["CanEdit"]) != 1)
+                    {
+                        Button btnEdit = (Button)e.Row.FindControl("btnEdit");
+                        btnEdit.Enabled = false;
+                        btnEdit.ToolTip = "You cannot edit this user";
+                    }
+
+                    if (Convert.ToInt32(drv["CanDelete"]) != 1)
+                    {
+                        Button btnDelete = (Button)e.Row.FindControl("btnDelete");
+                        btnDelete.Enabled = false;
+                        btnDelete.ToolTip = "You cannot delete this user";
+                    }
+
+                    // Status (BMMS-Fix-UserStatus-Stage2a.sql): one button, Deactivate or Activate
+                    Button btnStatus = (Button)e.Row.FindControl("btnStatus");
+                    string login = HttpUtility.JavaScriptStringEncode(drv["LoginName"].ToString());
+
+                    if (Convert.ToInt32(drv["AccountStatus"]) == 1)
+                    {
+                        int managed = Convert.ToInt32(drv["ManagedCount"]);
+                        string confirmText = "Deactivate " + login + "? They will no longer be able to log in. Their history is kept.";
+                        if (managed > 0)
+                            confirmText += " They are the reporting person for " + managed + " active user" + (managed == 1 ? "" : "s")
+                                         + "; those users keep them as manager, and new agenda items from those who are not Managers or Controllers will be refused until they get an active manager.";
+
+                        btnStatus.Text = "Deactivate";
+                        btnStatus.ToolTip = "Deactivate";
+                        btnStatus.CommandName = "DeactivateRec";
+                        btnStatus.OnClientClick = "return confirm('" + confirmText + "');";
+
+                        if (Convert.ToInt32(drv["CanDeactivate"]) != 1)
+                        {
+                            btnStatus.Enabled = false;
+                            btnStatus.ToolTip = "You cannot deactivate this user";
+                        }
+                    }
+                    else
+                    {
+                        e.Row.CssClass = (e.Row.CssClass + " wb-row-inactive").Trim();
+
+                        btnStatus.Text = "Activate";
+                        btnStatus.ToolTip = "Activate";
+                        btnStatus.CommandName = "ActivateRec";
+                        btnStatus.OnClientClick = "return confirm('Activate " + login + "? They will be able to log in again.');";
+
+                        if (Convert.ToInt32(drv["CanActivate"]) != 1)
+                        {
+                            btnStatus.Enabled = false;
+                            btnStatus.ToolTip = "You cannot activate this user";
+                        }
+                    }
+
+                    // The protected system account (BMMS-Fix-SystemAccount-Stage3.sql): shown greyed with a label;
+                    // the flags above are already 0, and the procedures refuse it anyway (Reason 7)
+                    if (Common.IsSystemAccountRow(drv.Row))
+                    {
+                        e.Row.CssClass = (e.Row.CssClass + " wb-row-inactive").Trim();
+
+                        Label lblStatus = (Label)e.Row.FindControl("lblStatus");
+                        lblStatus.Text = HttpUtility.HtmlEncode(drv["Status"].ToString()) + " (System account)";
+
+                        string tip = "Protected system account";
+                        ((Button)e.Row.FindControl("btnEdit")).ToolTip = tip;
+                        ((Button)e.Row.FindControl("btnDelete")).ToolTip = tip;
+                        btnStatus.ToolTip = tip;
+                    }
+
                     //e.Row.Attributes.Add("onmouseover", "MouseEvents(this, event)");
                     //e.Row.Attributes.Add("onmouseout", "MouseEvents(this, event)");
 
@@ -157,13 +229,24 @@ namespace BMMS.Master
         }
         #endregion
 
+        #region ActingUserId
+        // The logged-in user, from the server-side session only (0 when missing; the procedures refuse 0)
+        private int ActingUserId()
+        {
+            int userId;
+            return (Session["UserId"] != null && int.TryParse(Session["UserId"].ToString(), out userId)) ? userId : 0;
+        }
+        #endregion
+
         #region btnAdd_Click
         protected void btnAdd_Click(object sender, EventArgs e)
         {
             MsgHide();
             LoadDDLlist();
             ClearText();
+            ddlRole.Enabled = true;
             hdnUserId.Value = "0";
+            ViewState["CurrentManagerId"] = 0;
             pnlViewUser.Visible = false;
             pnlEditUser.Visible = true;
             pnlPwd.Visible = true;
@@ -198,16 +281,22 @@ namespace BMMS.Master
                     myUser.RoleId = Convert.ToInt16(ddlRole.SelectedValue);
                     myUser.EmailId = txtEmailId.Text.Trim();
                     myUser.LoginName = txtLoginName.Text.Trim();
-                    myUser.Password = Common.EncryptVal(txtPassword.Text);
+
+                    myUser.Password = (btnSave.Text == "Save") ? Common.HashPassword(txtPassword.Text) : string.Empty;
+
+
+                    // Acting user: the server-side session only
                     myUser.CreatedOn = System.DateTime.Now;
-                    myUser.CreatedBy = int.Parse(Session["UserId"].ToString());
+                    myUser.CreatedBy = ActingUserId();
                     myUser.UpdatedOn = System.DateTime.Now;
-                    myUser.UpdatedBy = int.Parse(Session["UserId"].ToString());
+                    myUser.UpdatedBy = ActingUserId();
 
-                    int result = myUserMgr.AddEditUser(myUser);
+                    UserChangeResult result = myUserMgr.AddEditUser(myUser);
 
-                    if (result == 1)
+                    if (result.Result == 1)
                         sMsg = "Successfully Saved";
+                    else if (result.Reason != UserChangeReason.None)
+                        sMsg = result.RefusalMessage(myUser.Code == "Save" ? "create a user with this role" : "make this change to this user", className);
                     else
                         sMsg = "Record Not Saved";
                 }
@@ -289,6 +378,13 @@ namespace BMMS.Master
                 {
                     int UserId = Convert.ToInt32(e.CommandArgument);
 
+                    UserChangeResult canEdit = UserMgr.CheckUserChange(ActingUserId(), UserId, "Edit", 0);
+                    if (canEdit.Result != 1)
+                    {
+                        MsgDisplay(canEdit.RefusalMessage("edit this user", className));
+                        return;
+                    }
+
                     pnlViewUser.Visible = false;
                     pnlEditUser.Visible = true;
                     LoadDDLlist();
@@ -298,6 +394,8 @@ namespace BMMS.Master
                     hdnUserId.Value = myUser.UserId.ToString();
                     txtUserName.Text = myUser.UserName;
                     ddlDepartment.Text = myUser.DepartmentId.ToString();
+                    // keep the current manager in the list even if inactive (stage 2a)
+                    ViewState["CurrentManagerId"] = myUser.ManagerId;
                     LoadMgrController(myUser.DepartmentId);
                     ddlDesignation.Text = myUser.DesignationId.ToString();
                     ddlManager.Text = myUser.ManagerId.ToString();
@@ -308,11 +406,14 @@ namespace BMMS.Master
                     else
                         ddlManager.Enabled = false;
 
+                    // Visual only: spr_AddEditUser refuses a role change anyway
+                    ddlRole.Enabled = UserMgr.CheckUserChange(ActingUserId(), UserId, "RoleChange", 0).Result == 1;
+
                     txtEmailId.Text = myUser.EmailId;
                     txtLoginName.Text = myUser.LoginName;
                     txtLoginName.Enabled = false;
-                    txtPassword.Text = myUser.Password;
-                    txtConfirmPassword.Text = myUser.Password;
+                    txtPassword.Text = string.Empty;
+                    txtConfirmPassword.Text = string.Empty;
                     pnlPwd.Visible = false;
 
                     ScriptManager.GetCurrent(this).SetFocus(txtUserName.ClientID);
@@ -323,17 +424,29 @@ namespace BMMS.Master
                 {
                     int UserId = Convert.ToInt32(e.CommandArgument);
 
-                    try
-                    {
-                        UserMgr.DeleteUserByUserId(UserId);
+                    // An unexpected error is not "in use": it goes to the outer catch and the error page
+                    UserChangeResult result = UserMgr.DeleteUserByUserId(UserId, ActingUserId());
 
+                    if (result.Result == 1)
                         MsgDisplay("Record Deleted Successfully");
-                    }
-                    catch (Exception ex)
-                    {
-                        string _ErrMsg = Common.GetAppSetting("delete_reference");
-                        MsgDisplay(_ErrMsg);
-                    }
+                    else
+                        MsgDisplay(result.RefusalMessage("delete this user", className));
+
+                    LoadUser();
+                }
+                if (e.CommandName == "DeactivateRec" || e.CommandName == "ActivateRec")
+                {
+                    int UserId = Convert.ToInt32(e.CommandArgument);
+                    bool activate = e.CommandName == "ActivateRec";
+
+                    // spr_SetUserStatusByUserId checks the rules again under its lock
+                    UserChangeResult result = UserMgr.SetUserStatusByUserId(UserId, activate ? 1 : 0, ActingUserId());
+
+                    if (result.Result == 1)
+                        MsgDisplay(activate ? "User activated" : "User deactivated");
+                    else
+                        MsgDisplay(result.RefusalMessage(activate ? "activate this user" : "deactivate this user", className));
+
                     LoadUser();
                 }
             }
@@ -401,9 +514,11 @@ namespace BMMS.Master
         #region LoadMgrController
         private void LoadMgrController(int DepartmentId)
         {
-            DataTable dtMgrController = UserMgr.GetMgrControllerByDeptId(DepartmentId);
+            // Active Managers / Controllers, plus the edited user's current manager ("login (inactive)")
+            int currentManagerId = ViewState["CurrentManagerId"] == null ? 0 : (int)ViewState["CurrentManagerId"];
+            DataTable dtMgrController = UserMgr.GetMgrControllerByDeptId(DepartmentId, currentManagerId);
 
-            Common.LoadDropdownlist(ddlManager, dtMgrController, "LoginName", "UserId", true);
+            Common.LoadDropdownlist(ddlManager, dtMgrController, "ManagerText", "UserId", true);
         }
         #endregion
         

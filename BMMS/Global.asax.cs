@@ -30,11 +30,7 @@ namespace BMMS
                 Utilities.AddEditAuditTrialLogin(UserId);
             }
 
-            Session.Abandon();
-            Response.Cache.SetCacheability(HttpCacheability.Private);
-            Response.Cache.SetCacheability(HttpCacheability.NoCache);
-
-            Response.Redirect(@"~/Default.aspx", false);
+            
         }
     }
 }

@@ -186,7 +186,11 @@ namespace BMMS.Master
 
                     if (dtAgenda.Rows.Count <= 0)
                     {
-                        sMsg = "No Agenda For the selected Committee/Meeting";
+                        // A meeting without agenda items can still be finalized, so its attendance can be entered
+                        // (step 23); it has no minutes to finalize later (Reason 19)
+                        MeetingChangeResult noItems = AgendaMgr.AgendaFinalizeByMeetingId(MeetingId);
+
+                        sMsg = noItems.Result == 1 ? "Agenda Finalized (no agenda items)." : noItems.RefusalMessage();
                         MsgDisplay(sMsg);
                     }
                     else
@@ -203,9 +207,10 @@ namespace BMMS.Master
                             }
                         }
 
-                        int result = AgendaMgr.AgendaFinalizeByMeetingId(MeetingId);
+                        // Refused if another tab finalized it first (BMMS-Fix-MeetingLocks.sql)
+                        MeetingChangeResult result = AgendaMgr.AgendaFinalizeByMeetingId(MeetingId);
 
-                        sMsg = "Agenda Finalized";
+                        sMsg = result.Result == 1 ? "Agenda Finalized" : result.RefusalMessage();
 
                         MsgDisplay(sMsg);
 

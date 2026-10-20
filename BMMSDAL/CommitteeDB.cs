@@ -199,7 +199,10 @@ namespace BMMSDAL
             SqlParameter[] parameter = new SqlParameter[1];
             parameter[0] = new SqlParameter("@CommitteeId", CommitteeId);
 
-            return CommonDB.ExecuteProcedure("spr_DeleteCommitteeByCommitteeId", parameter); ;
+            DataTable dtResult = new DataTable();
+            dtResult = CommonDB.GetDataTable("spr_DeleteCommitteeByCommitteeId", parameter);
+
+            return Convert.ToInt16(dtResult.Rows[0]["Result"].ToString());
         }
         #endregion
     }

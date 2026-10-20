@@ -275,10 +275,12 @@ namespace BMMS.Report
             {
                 case "followup":
                     Session["ViewReport"] = CreateFollowupReportHTML(dtReportsDetails);
+                    Session["ViewReportName"] = "Followup";   // ViewReport.aspx, Export to Pdf (step 25)
                     ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(" + Common.GetReportSettings("FollowupReport_Width") + ",500,'ViewReport.aspx','Followup Report');", true);
                     break;
                 case "summary":
                     Session["ViewReport"] = CreateFollowupSummaryReportHTML(dtReportsDetails);
+                    Session["ViewReportName"] = "FollowupSummary";   // ViewReport.aspx, Export to Pdf (step 25)
                     ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(" + Common.GetReportSettings("FollowupReport_Width") + ",500,'ViewReport.aspx','Followup Summary Report');", true);
                     break;
             }
@@ -589,12 +591,7 @@ namespace BMMS.Report
 
                     BodyText += "<table>";
 
-                    BodyText += "<tr>";
-                    BodyText += "<td colspan='2' style='text-align:center; font-weight:bold;'>";
-                    BodyText += "LAKSHMI VILAS BANK <br />";
-                    BodyText += "REGD & ADMIN OFFICE, KARUR";
-                    BodyText += "</td>";
-                    BodyText += "</tr>";
+                    BodyText += OrganisationDetails.Current.MailHeaderRowHtml();
 
                     BodyText += "<tr>";
                     BodyText += "<td colspan='2' style='text-align:right'>";

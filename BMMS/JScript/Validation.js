@@ -304,6 +304,9 @@ function MemberTypeValidation() {
     if (errMsg.length <= 0)    
         errMsg = errMsg + (nullValidation('ctl00_ContentPlaceHolder1_txtMemberTypeName', "ctl00_ContentPlaceHolder1_spanErrLogin", "Member Type Name is required field"));
 
+    if (errMsg.length <= 0)
+        errMsg = errMsg + (zeroValidation('ctl00_ContentPlaceHolder1_ddlMemberScope', "ctl00_ContentPlaceHolder1_spanErrLogin", "Used On is required field"));
+
      return throwErr(errMsg,"ctl00_ContentPlaceHolder1_divErrLogin");
 
 }

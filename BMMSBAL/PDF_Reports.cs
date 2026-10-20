@@ -24,21 +24,34 @@ namespace BMMSBAL
         private static Font font10N = FontFactory.GetFont(FontFactory.TIMES_ROMAN, 10, Font.NORMAL);
 
         #region GenerateSittingFeeIndividual
-        public static void GenerateSittingFeeIndividual(DataTable dt, DateTime FromDate, DateTime ToDate, string AuthorityPersion,
+        public static byte[] GenerateSittingFeeIndividual(DataTable dt, DateTime FromDate, DateTime ToDate, string AuthorityPersion,
             string AuthorityPersionDesign)
         {
 
             string FinancialYear = FromDate.ToString("yyyy") + "-" + ToDate.ToString("yyyy");
             string DatePeriod = " (" + FromDate.ToString("dd.MM.yyyy") + " to " + ToDate.ToString("dd.MM.yyyy") + ") ";
 
-            string sFilePDF = HttpContext.Current.Server.MapPath("~/Files/PDF") + "\\SFR_Individual.pdf";
+            // A certificate is written only for a member with a sitting fee in the period. When no member
+            // has one, return null and create no document: iText refuses to close an empty one (step 26)
+            bool anyFee = false;
+            for (int i = 0; i < dt.Rows.Count && !anyFee; i++)
+            {
+                string total = AttendanceMgr.GetTotAmtByMemberId(int.Parse(dt.Rows[i]["MemberId"].ToString()), FromDate, ToDate).Rows[0]["TOTAMT"].ToString();
+                anyFee = total != string.Empty && Convert.ToDouble(total) != 0;
+            }
+            if (!anyFee)
+                return null;
+
+            // Built in memory and returned; nothing is written to ~/Files/PDF (step 26)
+            MemoryStream pdfStream = new MemoryStream();
+
+            OrganisationDetails org = OrganisationDetails.Current;
 
             Document document = new Document(PageSize.A4, 50, 50, 30, 30);
 
             try
             {
-                PdfWriter writer = PdfWriter.GetInstance(document,
-                                 new FileStream(sFilePDF, FileMode.Create));
+                PdfWriter writer = PdfWriter.GetInstance(document, pdfStream);
 
                 document.Open();
                 //Paragraph paragraph = new Paragraph(" ");
@@ -57,7 +70,7 @@ namespace BMMSBAL
                     {
                         DataTable dtMember = MemberMgr.GetMemberDTbyMemberId(MemberId);
 
-                        document.Add((PDFUtilities.PrintCompanyLogo()));
+                        PDFUtilities.AddCompanyLogo(document);
 
                         string strCert = string.Empty;
                         strCert += "<table style='width:100%; font-family:Times; font-size:12'>";
@@ -97,7 +110,7 @@ namespace BMMSBAL
 
                         string para = string.Empty;
                         para += "We are enclosing herewith a certificate for Sitting Fees paid to you, during the Financial Year " + FinancialYear + DatePeriod;
-                        para += " for attending the Bank's Board / Committee meeting(s) to enable you to file the Tax Return, if any, with the ";
+                        para += " for attending the " + OrganisationDetails.Html(org.TermText) + "'s Board / Committee meeting(s) to enable you to file the Tax Return, if any, with the ";
                         para += "Income Tax Department for the previous financial year.";
 
                         strCert += "<tr><td style='text-align:justify;'>";
@@ -110,7 +123,8 @@ namespace BMMSBAL
 
                         strCert += "<tr><td style='text-align:left;'>";
                         strCert += "Yours faithfully,<br />";
-                        strCert += "For The Lakshmi Vilas Bank Ltd.,";
+                        if (org.SignOffName != string.Empty)
+                            strCert += "For " + OrganisationDetails.Html(org.SignOffName);
                         strCert += "<br />";
                         strCert += "<br />";
                         strCert += AuthorityPersion;
@@ -127,20 +141,21 @@ namespace BMMSBAL
                         strCert += "</td></tr>";
 
                         strCert += "<tr><td style='text-align:center;'>";
-                        strCert += "<b>The Lakshmi Vilas Bank Limited</b>";
-                        strCert += "<br />";
-                        strCert += "Regd. & Admn. Office: Salem Road, Kathaparai, Karur - 639 006.";
-                        strCert += "<br />";
+                        if (org.Name != string.Empty)
+                            strCert += "<b>" + OrganisationDetails.Html(org.Name) + "</b><br />";
+                        if (org.CertificateOfficeLine != string.Empty)
+                            strCert += OrganisationDetails.Html(org.CertificateOfficeLine) + "<br />";
                         strCert += "<b><u>CERTIFICATE</u></b>";
                         strCert += "</td></tr>";
 
                         strCert += "<tr><td style='text-align:justify;'>";
                         strCert += "This is to certify that we have paid to Shri. " + dtMember.Rows[0]["MemberName"].ToString() + ", ";
-                        strCert += dtMember.Rows[0]["DesignationName"].ToString() + " of our Bank sum of Rs." + TotalAmount.ToString("N0") + "/-";
+                        strCert += dtMember.Rows[0]["DesignationName"].ToString() + " of our " + OrganisationDetails.Html(org.TermText) + " sum of Rs." + TotalAmount.ToString("N0") + "/-";
                         strCert += " toward Sitting Fees during the financial year " + FinancialYear + DatePeriod;
-                        strCert += " for attending the Bank's Board / Committee meeting(s).";
+                        strCert += " for attending the " + OrganisationDetails.Html(org.TermText) + "'s Board / Committee meeting(s).";
                         strCert += "<br /><br />";
-                        strCert += "For The Lakshmi Vilas Bank Ltd.,";
+                        if (org.SignOffName != string.Empty)
+                            strCert += "For " + OrganisationDetails.Html(org.SignOffName);
                         strCert += "<br />";
                         strCert += "<br />";
                         strCert += AuthorityPersion;
@@ -150,8 +165,7 @@ namespace BMMSBAL
                         strCert += "_________________________________________________________________________________";
                         strCert += "</td></tr>";
                         strCert += "<tr><td style='text-align:left; font-size:10pt; line-height:12px;'>";
-                        strCert += "<b>The Lakshmi Vilas Bank Ltd.,</b> Regd, & Admin. Office, Salem Road, Kathaparai, Karur-639006.";
-                        strCert += "<br />Phone: 04324-220051-60 Fax: 223607, E-Mail: secretarial@lvbank.in";
+                        strCert += org.CertificateFooterHtml();
                         strCert += "</td></tr>";
 
                         strCert += "</table>";
@@ -276,6 +290,7 @@ namespace BMMSBAL
                 document.Close();
             }
 
+            return pdfStream.ToArray();
         }
         #endregion
 
@@ -416,7 +431,7 @@ namespace BMMSBAL
         #endregion
 
         #region GenerateSittingFeeDesignation
-        public static void GenerateSittingFeeDesignation(DataTable dt, DateTime FromDate, DateTime ToDate, string AuthorityPersion,
+        public static byte[] GenerateSittingFeeDesignation(DataTable dt, DateTime FromDate, DateTime ToDate, string AuthorityPersion,
             string AuthorityPersionDesign)
         {
 
@@ -424,14 +439,14 @@ namespace BMMSBAL
             string FinancialYear = FromDate.ToString("yyyy") + "-" + ToDate.ToString("yyyy");
             string DatePeriod = " (" + FromDate.ToString("dd.MM.yyyy") + " to " + ToDate.ToString("dd.MM.yyyy") + ") ";
 
-            string sFilePDF = HttpContext.Current.Server.MapPath("~/Files/PDF") + "\\SFR_Designation.pdf";
+            // Built in memory and returned; nothing is written to ~/Files/PDF (step 26)
+            MemoryStream pdfStream = new MemoryStream();
 
             Document document = new Document(PageSize.A4, 50, 50, 30, 30);
 
             try
             {
-                PdfWriter writer = PdfWriter.GetInstance(document,
-                                 new FileStream(sFilePDF, FileMode.Create));
+                PdfWriter writer = PdfWriter.GetInstance(document, pdfStream);
 
                 document.Open();
                 Paragraph paragraph = new Paragraph(" ");
@@ -441,7 +456,7 @@ namespace BMMSBAL
                 Font font11N = FontFactory.GetFont(FontFactory.TIMES_ROMAN, 11, Font.NORMAL);
                 Font font12U = FontFactory.GetFont(FontFactory.TIMES_ROMAN, 12, Font.UNDERLINE);
 
-                document.Add((PDFUtilities.PrintCompanyLogo()));
+                PDFUtilities.AddCompanyLogo(document);
 
                 paragraph = new Paragraph(new Phrase(DateTime.Now.ToString("MMMM dd, yyyy"), font11N));
                 paragraph.Alignment = Element.ALIGN_RIGHT;
@@ -571,7 +586,8 @@ namespace BMMSBAL
                 document.Add(new Paragraph(new Phrase("This is for your kind information.", font11N)));
                 document.Add(new Paragraph(Environment.NewLine));
                 document.Add(new Paragraph(new Phrase("Yours faithfully,", font11N)));
-                document.Add(new Paragraph(new Phrase("For The Lakshmi Vilas Bank Ltd.,", font11N)));
+                if (OrganisationDetails.Current.SignOffName != string.Empty)
+                    document.Add(new Paragraph(new Phrase("For " + OrganisationDetails.Current.SignOffName, font11N)));
                 document.Add(new Paragraph(Environment.NewLine));
                 document.Add(new Paragraph(Environment.NewLine));
                 document.Add(new Paragraph(new Phrase(AuthorityPersion, font11N)));
@@ -590,11 +606,12 @@ namespace BMMSBAL
                 document.Close();
             }
 
+            return pdfStream.ToArray();
         }
         #endregion
 
         #region GenerateSittingFeeConsolidated
-        public static void GenerateSittingFeeConsolidated(DataTable dtMeeting, DataTable dtMember, DateTime FromDate, DateTime ToDate, string AuthorityPersion,
+        public static byte[] GenerateSittingFeeConsolidated(DataTable dtMeeting, DataTable dtMember, DateTime FromDate, DateTime ToDate, string AuthorityPersion,
             string AuthorityPersionDesign)
         {
 
@@ -602,14 +619,14 @@ namespace BMMSBAL
             string FinancialYear = FromDate.ToString("yyyy") + "-" + ToDate.ToString("yyyy");
             string DatePeriod = " (" + FromDate.ToString("dd.MM.yyyy") + " to " + ToDate.ToString("dd.MM.yyyy") + ") ";
 
-            string sFilePDF = HttpContext.Current.Server.MapPath("~/Files/PDF") + "\\SFR_Consolidated.pdf";
+            // Built in memory and returned; nothing is written to ~/Files/PDF (step 26)
+            MemoryStream pdfStream = new MemoryStream();
 
             Document document = new Document(PageSize.A4.Rotate(), 50, 50, 50, 50);
 
             try
             {
-                PdfWriter writer = PdfWriter.GetInstance(document,
-                                 new FileStream(sFilePDF, FileMode.Create));
+                PdfWriter writer = PdfWriter.GetInstance(document, pdfStream);
 
                 document.Open();
                 Paragraph paragraph = new Paragraph(" ");
@@ -619,7 +636,7 @@ namespace BMMSBAL
                 Font font11N = FontFactory.GetFont(FontFactory.TIMES_ROMAN, 11, Font.NORMAL);
                 Font font12U = FontFactory.GetFont(FontFactory.TIMES_ROMAN, 12, Font.UNDERLINE);
 
-                document.Add((PDFUtilities.PrintCompanyLogo()));
+                PDFUtilities.AddCompanyLogo(document);
 
                 paragraph = new Paragraph(new Phrase(DateTime.Now.ToString("MMMM dd, yyyy"), font11N));
                 paragraph.Alignment = Element.ALIGN_RIGHT;
@@ -754,6 +771,7 @@ namespace BMMSBAL
                 document.Close();
             }
 
+            return pdfStream.ToArray();
         }
         #endregion
 

@@ -63,24 +63,36 @@ namespace BMMSBAL
         }
         #endregion
 
-        #region PrintCompanyLogo
-        public static iTextSharp.text.Image PrintCompanyLogo()
+        #region AddCompanyLogo
+        // The organisation logo uploaded on System Settings; without one, the organisation name in
+        // its place; with neither, nothing (OrganisationDetails, BMMS-Fix-OrganisationSettings-Step19.sql)
+        public static void AddCompanyLogo(Document Pdf_Document)
         {
-            string imageFilePath = HttpContext.Current.Server.MapPath("~/Images") + "\\logo.jpg";
-            iTextSharp.text.Image logo = iTextSharp.text.Image.GetInstance(imageFilePath);
+            if (OrganisationDetails.HasLogo)
+            {
+                iTextSharp.text.Image logo = iTextSharp.text.Image.GetInstance(OrganisationDetails.LogoFilePath);
 
-            logo.ScaleToFit(500f, 260f);
+                logo.ScaleToFit(500f, 260f);
 
-            //Give space before image
-            logo.SpacingBefore = 30f;
+                //Give space before image
+                logo.SpacingBefore = 30f;
 
-            //Give some space after the image
-            logo.SpacingAfter = 1f;
-            logo.Alignment = Element.ALIGN_CENTER;
+                //Give some space after the image
+                logo.SpacingAfter = 1f;
+                logo.Alignment = Element.ALIGN_CENTER;
 
-            return logo;
+                Pdf_Document.Add(logo);
+            }
+            else if (OrganisationDetails.Current.Name != string.Empty)
+            {
+                Paragraph name = new Paragraph(OrganisationDetails.Current.NameUpper,
+                    FontFactory.GetFont(FontFactory.TIMES_ROMAN, 14, Font.BOLD));
+                name.SpacingBefore = 30f;
+                name.SpacingAfter = 1f;
+                name.Alignment = Element.ALIGN_CENTER;
 
-
+                Pdf_Document.Add(name);
+            }
         }
         #endregion
 
@@ -183,6 +195,110 @@ namespace BMMSBAL
             Paragraph para = new Paragraph(strMessage, fntFormat);
             para.Alignment = intAlign;
             pdfDocument.Add(para);
+        }
+        #endregion
+
+        #region HtmlReportToPdf
+        // An HTML report (Session["ViewReport"]: minutes, minutes extract, followup) as PDF bytes, built
+        // in memory; nothing is written to disk. HTMLWorker keeps the text and tables but not the page
+        // layout (widths, floats, borders); the browser's Print (Save as PDF) gives the faithful copy.
+        // The logo is read from its file; a missing or unreadable logo is left out. Each part between
+        // page breaks (HTML_Report.HTML_PageBreak) starts a new page, and a part that cannot be
+        // converted is replaced by a note without losing the others.
+        public static byte[] HtmlReportToPdf(string HtmlText)
+        {
+            return HtmlReportToPdf(HtmlText, OrganisationDetails.HasLogo ? OrganisationDetails.LogoFilePath : string.Empty);
+        }
+
+        public static byte[] HtmlReportToPdf(string HtmlText, string LogoFilePath)
+        {
+            string html = HtmlText == null ? string.Empty : HtmlText;
+
+            string logoSrc = "src='" + OrganisationDetails.LogoReportSrc + "'";
+            if (html.Contains(logoSrc))
+            {
+                if (CanReadImage(LogoFilePath))
+                    html = html.Replace(logoSrc, "src='" + LogoFilePath + "'");
+                else
+                    html = html.Replace("<img " + logoSrc + " />", string.Empty);
+            }
+
+            MemoryStream pdfStream = new MemoryStream();
+            Document pdfDocument = new Document(PageSize.A4, 50f, 50f, 40f, 40f);
+
+            try
+            {
+                PdfWriter.GetInstance(pdfDocument, pdfStream);
+                pdfDocument.Open();
+
+                // A document needs at least one element
+                pdfDocument.Add(new Paragraph(" "));
+
+                string[] parts = html.Split(new string[] { HTML_Report.HTML_PageBreak() }, StringSplitOptions.None);
+
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    if (i > 0)
+                        pdfDocument.NewPage();
+
+                    if (!AddHtmlPart(pdfDocument, parts[i])
+                        && !AddHtmlPart(pdfDocument, System.Text.RegularExpressions.Regex.Replace(parts[i], "<img[^>]*>", string.Empty,
+                                                         System.Text.RegularExpressions.RegexOptions.IgnoreCase)))
+                    {
+                        pdfDocument.Add(new Paragraph("[This part of the report could not be converted to PDF. Use Print instead.]"));
+                    }
+                }
+            }
+            finally
+            {
+                pdfDocument.Close();
+            }
+
+            return pdfStream.ToArray();
+        }
+
+        // False when the part cannot be parsed (for example an image that cannot be read)
+        private static bool AddHtmlPart(Document Pdf_Document, string HTML_Text)
+        {
+            ArrayList lt;
+
+            try
+            {
+                lt = HTMLWorker.ParseToList(new StringReader(HTML_Text), null);
+            }
+            catch
+            {
+                return false;
+            }
+
+            for (int l = 0; l < lt.Count; ++l)
+            {
+                try
+                {
+                    Pdf_Document.Add((IElement)lt[l]);
+                }
+                catch
+                {
+                }
+            }
+
+            return true;
+        }
+
+        private static bool CanReadImage(string FilePath)
+        {
+            if (string.IsNullOrEmpty(FilePath) || !File.Exists(FilePath))
+                return false;
+
+            try
+            {
+                iTextSharp.text.Image.GetInstance(FilePath);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
         #endregion
 

@@ -32,7 +32,7 @@ namespace BMMS.MasterPage
             else
                 Page.Title = Common.GetAppSetting("PageTitle");
 
-            lblFooter.Text = Common.GetAppSetting("FooterText");
+            lblFooter.Text = Common.ProductFooter(typeof(MainNoMenu).Assembly);
         }
         #endregion
         

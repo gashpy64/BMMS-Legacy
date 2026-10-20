@@ -272,7 +272,7 @@ namespace BMMS.Master
             string ToMailId = string.Empty;
             string Bcc = string.Empty;
 
-            DataTable dtUser = UserMgr.GetUserList();
+            DataTable dtUser = UserMgr.GetActiveUserList();   // active users only (stage 2a)
             if (dtUser.Rows.Count > 0)
             {
                 for (int i = 0; i <= dtUser.Rows.Count - 1; i++)
@@ -394,9 +394,12 @@ namespace BMMS.Master
                         }
                         else
                         {
-                            CommitteeMgr.DeleteCommitteeByCommitteeId(CommitteeId);
+                            int Result = CommitteeMgr.DeleteCommitteeByCommitteeId(CommitteeId);
 
-                            MsgDisplay(Common.GetAppSetting("delete_msg"));
+                            if (Result == 1)
+                                MsgDisplay(Common.GetAppSetting("delete_msg"));
+                            else
+                                MsgDisplay(Common.GetAppSetting("delete_reference"));
                         }
                     }
                     catch (Exception ex)

@@ -52,11 +52,7 @@
 <ul id="ddsubmenu1" class="ddsubmenustyle">
     <li><a href="../Master/Department.aspx">Department Master</a></li>
     <li><a href="../Master/Designation.aspx">Designation Master</a></li>
-    <%if (Session["RoleCode"].ToString() == "admin")
-      { %>
     <li><a href="../Master/MemberType.aspx">Member Type</a></li>
-    <%
-        } %>
     <li><a href="../Master/SubjectType.aspx">Subject Type</a></li>
     <li><a href="../Master/DecisionType.aspx">Decision Type</a></li>
     <li><a href="../Master/User.aspx">User Master</a></li>
@@ -74,6 +70,7 @@
     <li><a href="../Master/ResetPassword.aspx">Reset Password</a></li>
     <li><a href="../Master/BackupDatabase.aspx">Backup Database</a></li>
     <li><a href="../Master/SMTPServerConfig.aspx">SMTP Configuration</a></li>
+    <li><a href="../Master/SystemSettings.aspx">System Settings</a></li>
     <li><a href="../Master/ResetDatabase.aspx">Reset Database</a></li>
     <%
         } %>
