@@ -11,9 +11,40 @@ namespace BMMSDAL
     {
 
         #region ResetDatabase
-        public static int ResetDatabase()
+        // One row: Result, Reason, ReasonDetail; only an active Admin who names the current database
+        // (BMMS-Fix-ResetDatabase-Step29.sql). Its own command with a 300-second timeout: the reset
+        // runs in one transaction, and a timeout rolls all of it back.
+        public static DataTable ResetDatabase(int ActingUserId, string ConfirmDatabaseName)
         {
-            return CommonDB.ExecuteProcedure("spr_sys_ResetDatabase", null); ;
+            DataTable dt = new DataTable();
+
+            using (SqlConnection conn = new SqlConnection(ConnectDB.GetConnectionString()))
+            using (SqlCommand cmd = new SqlCommand("spr_sys_ResetDatabase", conn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.CommandTimeout = 300;
+                cmd.Parameters.Add(new SqlParameter("@ActingUserId", ActingUserId));
+                cmd.Parameters.Add(new SqlParameter("@ConfirmDatabaseName", SqlDbType.NVarChar, 128)).Value = ConfirmDatabaseName ?? string.Empty;
+
+                conn.Open();
+
+                using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                {
+                    da.Fill(dt);
+                }
+            }
+
+            return dt;
+        }
+        #endregion
+
+        #region GetDatabaseName
+        // The database the application is connected to (Reset Database asks the Admin to type it)
+        public static string GetDatabaseName()
+        {
+            DataTable dt = CommonDB.GetDataTableFromQuery("SELECT DB_NAME() AS DatabaseName");
+
+            return dt.Rows.Count == 0 ? string.Empty : dt.Rows[0]["DatabaseName"].ToString();
         }
         #endregion
 

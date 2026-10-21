@@ -425,6 +425,11 @@ namespace BMMSBAL
         private const int HashSaltSize = 16;
         private const int HashKeySize = 32;
 
+        // The default password: given by Reset Password and seeded by Reset Database
+        // (BMMS-Fix-ResetDatabase-Step29.sql holds its hashes). Signing in with it opens
+        // ChangePasswordFirst.
+        public const string DefaultPassword = "gashpy@123";
+
         public static string HashPassword(string plainPassword)
         {
             using (var rng = new RNGCryptoServiceProvider())

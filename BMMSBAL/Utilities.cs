@@ -121,9 +121,18 @@ namespace BMMSBAL
         #endregion
 
         #region ResetDatabase
-        public static int ResetDatabase()
+        // Result 1: reset; Result 0: refused, nothing changed (Reason 8 acting user missing or inactive,
+        // 4 not an Admin, 3 not the name of the current database). An error has rolled everything back.
+        public static MeetingChangeResult ResetDatabase(int ActingUserId, string ConfirmDatabaseName)
         {
-            return UtilitiesDB.ResetDatabase();
+            return MeetingChangeResult.FromTable(UtilitiesDB.ResetDatabase(ActingUserId, ConfirmDatabaseName));
+        }
+        #endregion
+
+        #region GetDatabaseName
+        public static string GetDatabaseName()
+        {
+            return UtilitiesDB.GetDatabaseName();
         }
         #endregion
 

@@ -87,7 +87,7 @@ namespace BMMS.Master
         protected void btnResetPassword_Click(object sender, EventArgs e)
         {
             int PasswordLength = 8; // Convert.ToInt16(Common.GetAppSetting("PasswordMaxLength"));
-            string NewPassword = "lvb@123"; // Common.CreateRandomPassword(PasswordLength);
+            string NewPassword = Common.DefaultPassword; // Common.CreateRandomPassword(PasswordLength);
 
             string ToMailId = hdnEmailId.Value.ToString();
             string Subject = "Your password has been reset to default password";

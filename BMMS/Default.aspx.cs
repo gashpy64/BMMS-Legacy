@@ -123,7 +123,7 @@ namespace BMMS
                     // The protected system account (BMMS-Fix-SystemAccount-Stage3.sql): "1" or "0"
                     Session["IsSystem"] = dtUser.Columns.Contains("IsSystem") && Convert.ToBoolean(dtUser.Rows[0]["IsSystem"]) ? "1" : "0";
 
-                    if (txtPassword.Text.Trim() == "lvb@123")
+                    if (sPasswordInput == Common.DefaultPassword)
                         Response.Redirect(@"~\ChangePasswordFirst.aspx", false);
                     else
                         Response.Redirect(@"~\DashBoard\Dashboard.aspx", false);
