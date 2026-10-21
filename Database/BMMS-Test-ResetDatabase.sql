@@ -1,22 +1,26 @@
 /* ============================================================================
    BMMS - Critical fix #5: Reset Database still works with the 21 user keys
+   (and, since step 29, refuses safely and rolls back on failure)
    ----------------------------------------------------------------------------
    TEST DATABASE ONLY. This script EXECUTES spr_sys_ResetDatabase, the
    procedure that wipes every table and re-creates the default rows.
 
    It refuses to run in a database named exactly "BMMS". Run it only in the
-   restored test copy (for example BMMS_bak1), after
-   BMMS-Fix-UserDelete-Procedure.sql and BMMS-Add-ForeignKeys-Step5.sql.
+   restored test copy (for example BMMS_Test), after
+   BMMS-Fix-UserDelete-Procedure.sql, BMMS-Add-ForeignKeys-Step5.sql and
+   BMMS-Fix-ResetDatabase-Step29.sql (step 29; it stops, changing nothing,
+   if step 29 is not installed).
 
    How it protects the test copy:
-     * the reset runs inside a transaction that is ROLLED BACK, so all rows
+     * every reset runs inside a transaction that is ROLLED BACK, so all rows
        come back;
      * identity counters are not reliably covered by a rollback, so every
-       table's counter is saved before the reset and reseeded afterwards.
+       table's counter is saved before the reset and reseeded afterwards
+       (after part 1 and again after part 2).
    The last rows of the result grid confirm that row counts and identity
    counters are the same as before the test.
 
-   What is checked while the database is in its reset state:
+   Part 1, checked while the database is in its reset state:
      * the procedure runs to completion with all keys in place
      * the 4 default users exist, admin is user 1, and the seeded manager link
        points at a real user
@@ -28,8 +32,23 @@
      * with step 19 installed: the organisation settings are unchanged
      * with step 21 installed: the six member types are seeded with their
        scope, display order and reserved flag
+     * step 29: the reset (database name typed in lower case) returns
+       Result 1; one audit row names the acting user; the send-mail audit is
+       cleared; the four seeded users have the hashes of the new default
+       password (the stored strings are compared; the hashes themselves are
+       checked against the password in C#, outside SQL)
+
+   Part 2 (step 29), each inside a rolled-back transaction:
+     * the procedure text keeps the texts of steps 3, 18 and 21
+     * refused without changing anything: a wrong database name (Reason 3),
+       an empty name (3), a user who is not an Admin (4), an unknown user (8)
+     * a forced failure (a test trigger on Committee that raises an error on
+       the last seed insert): the error reaches the caller, the procedure has
+       rolled back, every table has its rows and every identity counter its
+       value again (put back by the procedure itself), and the trigger is gone
 
    Result: one grid, one row per check. Status should be PASS for every row.
+   The procedure's own Result row of part 1 appears as a small grid above it.
 
    It has no USE line: select the TEST database in SSMS first.
    ============================================================================ */
@@ -43,11 +62,21 @@ BEGIN
     RAISERROR('Current database is "%s". This test runs spr_sys_ResetDatabase and is only allowed in a test copy whose name starts with "BMMS" but is not "BMMS" (for example BMMS_bak1). Nothing was changed.', 16, 1, @CurrentDatabase);
     SET NOEXEC ON;
 END
+ELSE IF NOT EXISTS (SELECT 1 FROM sys.parameters WHERE object_id = OBJECT_ID('dbo.spr_sys_ResetDatabase') AND name = '@ConfirmDatabaseName')
+BEGIN
+    RAISERROR('Step 29 (BMMS-Fix-ResetDatabase-Step29.sql) is not installed in "%s". Install it first; this test calls the step 29 procedure. Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
 GO
 
 IF OBJECT_ID('tempdb..#T') IS NOT NULL DROP TABLE #T;
 IF OBJECT_ID('tempdb..#Ident') IS NOT NULL DROP TABLE #Ident;
 IF OBJECT_ID('tempdb..#Counts') IS NOT NULL DROP TABLE #Counts;
+IF OBJECT_ID('tempdb..#ZZ_Step29_PutCountersBack') IS NOT NULL DROP PROCEDURE #ZZ_Step29_PutCountersBack;
+IF OBJECT_ID('tempdb..#ZZ_Step29_Changed') IS NOT NULL DROP PROCEDURE #ZZ_Step29_Changed;
+
+-- A test trigger left behind by an interrupted earlier run
+IF OBJECT_ID('dbo.trg_ZZ_Step29Test_Fail', 'TR') IS NOT NULL DROP TRIGGER dbo.trg_ZZ_Step29Test_Fail;
 
 -- Temporary tables, not table variables: the identity counters are put back
 -- and checked in separate batches further down.
@@ -55,28 +84,9 @@ CREATE TABLE #T (TestNo INT IDENTITY(1,1), Test VARCHAR(120), Expected VARCHAR(5
 CREATE TABLE #Ident (TableName SYSNAME, SavedValue BIGINT NULL, SeedValue BIGINT, IncrementValue BIGINT);
 CREATE TABLE #Counts (TableName SYSNAME, RowsBefore INT, RowsAfter INT NULL);
 
--- Checks made inside the transaction go into a table variable (it survives
--- the rollback) and are copied to #T afterwards.
-DECLARE @T TABLE (TestNo INT IDENTITY(1,1), Test VARCHAR(120), Expected VARCHAR(50), Actual VARCHAR(250));
-DECLARE @R TABLE (Result INT, Reason INT, ReasonDetail NVARCHAR(2000));   -- spr_DeleteUserByUserId returns Result, Reason, ReasonDetail
-
-DECLARE @Now DATETIME = GETDATE();
 DECLARE @Sql NVARCHAR(MAX);
 DECLARE @TableName SYSNAME;
 DECLARE @Rows INT;
-DECLARE @NewUserId INT;
-DECLARE @DepartmentId INT;
-DECLARE @DesignationId INT;
-DECLARE @RoleId INT;
-DECLARE @Orphans INT;
-
-DECLARE @KeyCols TABLE (TableName SYSNAME, ColumnName SYSNAME);
-
-INSERT INTO @KeyCols (TableName, ColumnName)
-SELECT OBJECT_NAME(fc.parent_object_id), COL_NAME(fc.parent_object_id, fc.parent_column_id)
-FROM sys.foreign_keys fk
-INNER JOIN sys.foreign_key_columns fc ON fc.constraint_object_id = fk.object_id
-WHERE fk.referenced_object_id = OBJECT_ID('dbo.Users');
 
 -------------------------------------------------------------------------------
 -- Before: identity counters and row counts of every table
@@ -103,6 +113,130 @@ END
 
 CLOSE TableCursor;
 DEALLOCATE TableCursor;
+GO
+
+-------------------------------------------------------------------------------
+-- Put the identity counters back (called after part 1 and after part 2).
+-- On SQL Server 2025 a rollback was seen to leave some counters at a wrong
+-- value while the catalog still showed the old one, so every counter that
+-- has ever been used is reseeded to its saved value, without comparing.
+-------------------------------------------------------------------------------
+CREATE PROCEDURE #ZZ_Step29_PutCountersBack
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @Sql NVARCHAR(MAX);
+    DECLARE @TableName SYSNAME;
+    DECLARE @SavedValue BIGINT;
+    DECLARE @SeedValue BIGINT;
+    DECLARE @IncrementValue BIGINT;
+    DECLARE @Reseed BIGINT;
+
+    DECLARE IdentCursor CURSOR LOCAL FAST_FORWARD FOR
+        SELECT TableName, SavedValue, SeedValue, IncrementValue FROM #Ident;
+
+    OPEN IdentCursor;
+    FETCH NEXT FROM IdentCursor INTO @TableName, @SavedValue, @SeedValue, @IncrementValue;
+
+    WHILE (@@FETCH_STATUS = 0)
+    BEGIN
+        -- A counter that was never used before the test and still has not been
+        -- used needs nothing (reseeding it would change its first value).
+        IF (@SavedValue IS NOT NULL
+            OR EXISTS (SELECT 1 FROM sys.identity_columns ic
+                       WHERE ic.object_id = OBJECT_ID('dbo.' + QUOTENAME(@TableName)) AND ic.last_value IS NOT NULL))
+        BEGIN
+            SET @Reseed = ISNULL(@SavedValue, @SeedValue - @IncrementValue);
+            SET @Sql = N'DBCC CHECKIDENT (''dbo.' + QUOTENAME(@TableName) + N''', RESEED, ' + CAST(@Reseed AS NVARCHAR(20)) + N') WITH NO_INFOMSGS';
+            EXEC sp_executesql @Sql;
+        END
+
+        FETCH NEXT FROM IdentCursor INTO @TableName, @SavedValue, @SeedValue, @IncrementValue;
+    END
+
+    CLOSE IdentCursor;
+    DEALLOCATE IdentCursor;
+END
+GO
+
+-------------------------------------------------------------------------------
+-- How many tables have another row count than before the test, and how many
+-- used identity counters another value (part 2: "nothing changed")
+-------------------------------------------------------------------------------
+CREATE PROCEDURE #ZZ_Step29_Changed
+    @Tables INT OUTPUT,
+    @Counters INT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @Sql NVARCHAR(MAX);
+    DECLARE @TableName SYSNAME;
+    DECLARE @RowsBefore INT;
+    DECLARE @Rows INT;
+
+    SET @Tables = 0;
+
+    DECLARE ChangedCursor CURSOR LOCAL FAST_FORWARD FOR SELECT TableName, RowsBefore FROM #Counts;
+
+    OPEN ChangedCursor;
+    FETCH NEXT FROM ChangedCursor INTO @TableName, @RowsBefore;
+
+    WHILE (@@FETCH_STATUS = 0)
+    BEGIN
+        SET @Sql = N'SELECT @n = COUNT(*) FROM dbo.' + QUOTENAME(@TableName);
+        EXEC sp_executesql @Sql, N'@n INT OUTPUT', @n = @Rows OUTPUT;
+        IF (@Rows <> @RowsBefore)
+            SET @Tables = @Tables + 1;
+        FETCH NEXT FROM ChangedCursor INTO @TableName, @RowsBefore;
+    END
+
+    CLOSE ChangedCursor;
+    DEALLOCATE ChangedCursor;
+
+    SELECT @Counters = COUNT(*)
+    FROM #Ident i
+    WHERE i.SavedValue IS NOT NULL
+    AND CAST(IDENT_CURRENT('dbo.' + QUOTENAME(i.TableName)) AS BIGINT) <> i.SavedValue;
+END
+GO
+
+-------------------------------------------------------------------------------
+-- Part 1: the reset, inside a transaction that is rolled back
+-------------------------------------------------------------------------------
+-- Checks made inside the transaction go into a table variable (it survives
+-- the rollback) and are copied to #T afterwards.
+DECLARE @T TABLE (TestNo INT IDENTITY(1,1), Test VARCHAR(120), Expected VARCHAR(50), Actual VARCHAR(250));
+DECLARE @R TABLE (Result INT, Reason INT, ReasonDetail NVARCHAR(2000));   -- spr_DeleteUserByUserId returns Result, Reason, ReasonDetail
+
+DECLARE @Now DATETIME = GETDATE();
+DECLARE @Sql NVARCHAR(MAX);
+DECLARE @TableName SYSNAME;
+DECLARE @Rows INT;
+DECLARE @NewUserId INT;
+DECLARE @DepartmentId INT;
+DECLARE @DesignationId INT;
+DECLARE @RoleId INT;
+DECLARE @Orphans INT;
+
+-- Step 29: the acting Admin and the database name (typed in lower case: the name is compared ignoring case)
+DECLARE @AdminId INT = (SELECT TOP 1 u.UserId FROM Users u JOIN Roles r ON r.RoleId = u.RoleId
+                        WHERE r.RoleCode = 'admin' AND u.AccountStatus = 1 ORDER BY u.UserId);
+DECLARE @AdminLogin VARCHAR(50) = (SELECT CAST(LoginName AS VARCHAR(50)) FROM Users WHERE UserId = @AdminId);
+DECLARE @TypedName NVARCHAR(128) = LOWER(DB_NAME());
+DECLARE @ResetResult INT;
+DECLARE @ResetReason INT;
+DECLARE @AuditAfterReset VARCHAR(250) = 'not read';
+DECLARE @SendMailAfterReset VARCHAR(12) = 'not read';
+
+DECLARE @KeyCols TABLE (TableName SYSNAME, ColumnName SYSNAME);
+
+INSERT INTO @KeyCols (TableName, ColumnName)
+SELECT OBJECT_NAME(fc.parent_object_id), COL_NAME(fc.parent_object_id, fc.parent_column_id)
+FROM sys.foreign_keys fk
+INNER JOIN sys.foreign_key_columns fc ON fc.constraint_object_id = fk.object_id
+WHERE fk.referenced_object_id = OBJECT_ID('dbo.Users');
 
 -- Step 19: the organisation settings before the reset (they must survive it)
 DECLARE @Step19 INT = CASE WHEN OBJECT_ID('dbo.spr_GetOrganisationSettings', 'P') IS NOT NULL THEN 1 ELSE 0 END;
@@ -111,9 +245,6 @@ DECLARE @OrgAfter VARCHAR(MAX) = '';
 DECLARE @OrgSql NVARCHAR(MAX) = N'SELECT @s = ISNULL(STUFF((SELECT ''|'' + SettingCode + ''='' + SettingValue FROM dbo.App_Setting
     WHERE SettingCode <> ''AgendaControllerBypass'' ORDER BY SettingCode FOR XML PATH(''''), TYPE).value(''.'', ''VARCHAR(MAX)''), 1, 1, ''''), '''')';
 
--------------------------------------------------------------------------------
--- The reset, inside a transaction that is rolled back
--------------------------------------------------------------------------------
 BEGIN TRANSACTION;
 
 BEGIN TRY
@@ -126,11 +257,33 @@ BEGIN TRY
         EXEC sp_executesql @OrgSql, N'@s VARCHAR(MAX) OUTPUT', @s = @OrgBefore OUTPUT;
     END
 
-    EXEC spr_sys_ResetDatabase;
+    EXEC spr_sys_ResetDatabase @ActingUserId = @AdminId, @ConfirmDatabaseName = @TypedName,
+         @Result = @ResetResult OUTPUT, @Reason = @ResetReason OUTPUT;
 
     INSERT INTO @T VALUES ('spr_sys_ResetDatabase ran to completion', 'Yes', 'Yes');
 
+    -- Step 29: read before the checks below add users and committees
+    SELECT @AuditAfterReset = CAST(COUNT(*) AS VARCHAR(12)) + ' row, user ' + ISNULL(CAST(MAX(Update_By) AS VARCHAR(12)), '-')
+                            + ', ' + ISNULL(MAX(CAST(New_Value AS VARCHAR(200))), '-')
+    FROM Audit_Trail_Master
+    WHERE Audit_Table = 'Database' AND Field_Name = 'Reset';
+    SELECT @SendMailAfterReset = CAST(COUNT(*) AS VARCHAR(12)) FROM Audit_Trail_SendMail;
+
     INSERT INTO @T SELECT 'Default users re-created', '4', CAST(COUNT(*) AS VARCHAR(12)) FROM Users;
+
+    -- Step 29: the seeds carry the hashes of the new default password (Common.DefaultPassword)
+    INSERT INTO @T
+    SELECT 'Seeded users: password hashes of the default password [step 29]', '4', CAST(COUNT(*) AS VARCHAR(12))
+    FROM Users u
+    JOIN (VALUES
+        ('admin',       '100000.gURba0Xwa3iXhBwkFEi/hA==.yxFedi3Cfs3FLcDlU7oWXp94eY15AGoU4AN+c3tf8j0='),
+        ('secuser',     '100000.QcDvazIat4fcHJw+tivVTg==.dLQDFP7A1cYcAcaYsIvwlXFsZv8lAYDJIVqwDUWNBJ8='),
+        ('credmanager', '100000.pJ5r7xUvCSnGHp+32dpp4w==.ity6i4nc8MrUUoy2nnHfxy17AZp61+bNYkvs1gYQLhI='),
+        ('creduser',    '100000.UfrmZn5v9zOs6DlxPdFy9Q==.qHS0QM1qZuYJfnITWbrNUucDryAyVLNz1HdnnDcxLbc=')
+    ) AS h (LoginName, PasswordHash)
+      -- Exact comparison: base64 and the login name are case sensitive
+      ON CAST(u.LoginName AS VARCHAR(50)) COLLATE Latin1_General_BIN2 = h.LoginName COLLATE Latin1_General_BIN2
+     AND CAST(u.[Password] AS VARCHAR(200)) COLLATE Latin1_General_BIN2 = h.PasswordHash COLLATE Latin1_General_BIN2;
 
     INSERT INTO @T
     SELECT 'User 1 is admin', 'admin', ISNULL((SELECT LoginName FROM Users WHERE UserId = 1), 'no user 1');
@@ -241,6 +394,13 @@ BEGIN TRY
                           CASE WHEN @Step18 = 1 THEN 'Result 0, Reason 7' ELSE 'Result 0, Reason 1' END,
                           'Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(2)) FROM @R;
 
+    -- Step 29
+    INSERT INTO @T SELECT 'Reset (database name typed in lower case) returns Result 1, Reason 0 [step 29]', 'Result 1, Reason 0',
+           'Result ' + ISNULL(CAST(@ResetResult AS VARCHAR(4)), 'NULL') + ', Reason ' + ISNULL(CAST(@ResetReason AS VARCHAR(4)), 'NULL');
+    INSERT INTO @T SELECT 'After reset: one audit row, by user 1, naming the acting user [step 29]',
+           LEFT('1 row, user 1, Reset by ' + ISNULL(@AdminLogin, '?'), 50), LEFT(@AuditAfterReset, 250);
+    INSERT INTO @T SELECT 'After reset: Audit_Trail_SendMail is empty [step 29]', '0', @SendMailAfterReset;
+
 END TRY
 BEGIN CATCH
     INSERT INTO @T VALUES ('Unexpected error - checks after this point did not run', 'No error',
@@ -257,43 +417,130 @@ SELECT Test, Expected, Actual FROM @T ORDER BY TestNo;
 
 GO
 
+EXEC #ZZ_Step29_PutCountersBack;
+GO
+
 -------------------------------------------------------------------------------
--- Put the identity counters back.
--- On SQL Server 2025 the rollback above was seen to leave some counters at a
--- wrong value while the catalog still showed the old one, so every counter
--- that has ever been used is reseeded to its saved value, without comparing.
+-- Part 2 (step 29): refusals and a forced failure, each rolled back
 -------------------------------------------------------------------------------
-DECLARE @Sql NVARCHAR(MAX);
-DECLARE @TableName SYSNAME;
-DECLARE @SavedValue BIGINT;
-DECLARE @SeedValue BIGINT;
-DECLARE @IncrementValue BIGINT;
-DECLARE @Reseed BIGINT;
+DECLARE @T TABLE (TestNo INT IDENTITY(1,1), Test VARCHAR(120), Expected VARCHAR(50), Actual VARCHAR(250));
+DECLARE @R TABLE (Result INT, Reason INT, ReasonDetail NVARCHAR(2000));
 
-DECLARE IdentCursor CURSOR LOCAL FAST_FORWARD FOR
-    SELECT TableName, SavedValue, SeedValue, IncrementValue FROM #Ident;
+DECLARE @Def NVARCHAR(MAX) = ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_sys_ResetDatabase')), '');
+DECLARE @AdminId INT = (SELECT TOP 1 u.UserId FROM Users u JOIN Roles r ON r.RoleId = u.RoleId
+                        WHERE r.RoleCode = 'admin' AND u.AccountStatus = 1 ORDER BY u.UserId);
+DECLARE @OtherId INT = (SELECT TOP 1 u.UserId FROM Users u JOIN Roles r ON r.RoleId = u.RoleId
+                        WHERE r.RoleCode <> 'admin' AND u.AccountStatus = 1 ORDER BY u.UserId);
+DECLARE @MissingId INT = (SELECT ISNULL(MAX(UserId), 0) + 1000 FROM Users);
+DECLARE @DbName NVARCHAR(128) = DB_NAME();
+DECLARE @WrongName NVARCHAR(128) = N'ZZ_not_this_database';
+DECLARE @EmptyName NVARCHAR(128) = N'';
+DECLARE @Tables INT;
+DECLARE @Counters INT;
+DECLARE @TranAfter INT;
+DECLARE @ErrNo INT;
+DECLARE @ErrMsg NVARCHAR(400);
+DECLARE @FailResult INT;
+DECLARE @FailReason INT;
 
-OPEN IdentCursor;
-FETCH NEXT FROM IdentCursor INTO @TableName, @SavedValue, @SeedValue, @IncrementValue;
+-- FK#5-ManagerId-NULL, SystemAccount3-Step18, MemberTypes-Step21, ResetSafe-Step29, XACT_ABORT, no App_Setting
+INSERT INTO @T SELECT 'Procedure text: texts of steps 3, 18, 21 and 29, XACT_ABORT, no App_Setting [step 29]',
+       '1 1 1 1 1 0',
+       CASE WHEN @Def LIKE '%FK#5-ManagerId-NULL%' THEN '1' ELSE '0' END + ' '
+     + CASE WHEN @Def LIKE '%SystemAccount3-Step18%' THEN '1' ELSE '0' END + ' '
+     + CASE WHEN @Def LIKE '%MemberTypes-Step21%' THEN '1' ELSE '0' END + ' '
+     + CASE WHEN @Def LIKE '%ResetSafe-Step29%' THEN '1' ELSE '0' END + ' '
+     + CASE WHEN @Def LIKE '%SET XACT_ABORT ON%' THEN '1' ELSE '0' END + ' '
+     + CASE WHEN @Def LIKE '%App_Setting%' THEN '1' ELSE '0' END;
 
-WHILE (@@FETCH_STATUS = 0)
-BEGIN
-    -- A counter that was never used before the test and still has not been
-    -- used needs nothing (reseeding it would change its first value).
-    IF (@SavedValue IS NOT NULL
-        OR EXISTS (SELECT 1 FROM sys.identity_columns ic
-                   WHERE ic.object_id = OBJECT_ID('dbo.' + QUOTENAME(@TableName)) AND ic.last_value IS NOT NULL))
+-- Refusals: inside a transaction that is rolled back, in case one of them were to clear anything
+BEGIN TRANSACTION;
+
+BEGIN TRY
+    DELETE FROM @R;
+    INSERT INTO @R EXEC spr_sys_ResetDatabase @ActingUserId = @AdminId, @ConfirmDatabaseName = @WrongName;
+    INSERT INTO @T SELECT 'Refused: a wrong database name (Result, Reason, Detail) [step 29]', 'Result 0, Reason 3, DatabaseName',
+           'Result ' + CAST(Result AS VARCHAR(4)) + ', Reason ' + CAST(Reason AS VARCHAR(4)) + ', ' + ISNULL(CAST(ReasonDetail AS VARCHAR(100)), '') FROM @R;
+
+    DELETE FROM @R;
+    INSERT INTO @R EXEC spr_sys_ResetDatabase @ActingUserId = @AdminId, @ConfirmDatabaseName = @EmptyName;
+    INSERT INTO @T SELECT 'Refused: an empty database name [step 29]', 'Result 0, Reason 3',
+           'Result ' + CAST(Result AS VARCHAR(4)) + ', Reason ' + CAST(Reason AS VARCHAR(4)) FROM @R;
+
+    IF (@OtherId IS NULL)
+        INSERT INTO @T VALUES ('Refused: a user who is not an Admin [step 29]', 'Result 0, Reason 4', 'SKIPPED');
+    ELSE
     BEGIN
-        SET @Reseed = ISNULL(@SavedValue, @SeedValue - @IncrementValue);
-        SET @Sql = N'DBCC CHECKIDENT (''dbo.' + QUOTENAME(@TableName) + N''', RESEED, ' + CAST(@Reseed AS NVARCHAR(20)) + N') WITH NO_INFOMSGS';
-        EXEC sp_executesql @Sql;
+        DELETE FROM @R;
+        INSERT INTO @R EXEC spr_sys_ResetDatabase @ActingUserId = @OtherId, @ConfirmDatabaseName = @DbName;
+        INSERT INTO @T SELECT 'Refused: a user who is not an Admin [step 29]', 'Result 0, Reason 4',
+               'Result ' + CAST(Result AS VARCHAR(4)) + ', Reason ' + CAST(Reason AS VARCHAR(4)) FROM @R;
     END
 
-    FETCH NEXT FROM IdentCursor INTO @TableName, @SavedValue, @SeedValue, @IncrementValue;
-END
+    DELETE FROM @R;
+    INSERT INTO @R EXEC spr_sys_ResetDatabase @ActingUserId = @MissingId, @ConfirmDatabaseName = @DbName;
+    INSERT INTO @T SELECT 'Refused: an unknown user [step 29]', 'Result 0, Reason 8',
+           'Result ' + CAST(Result AS VARCHAR(4)) + ', Reason ' + CAST(Reason AS VARCHAR(4)) FROM @R;
 
-CLOSE IdentCursor;
-DEALLOCATE IdentCursor;
+    EXEC #ZZ_Step29_Changed @Tables = @Tables OUTPUT, @Counters = @Counters OUTPUT;
+    INSERT INTO @T SELECT 'Refusals changed nothing (tables, counters, open transactions) [step 29]', '0 0 1',
+           CAST(@Tables AS VARCHAR(12)) + ' ' + CAST(@Counters AS VARCHAR(12)) + ' ' + CAST(@@TRANCOUNT AS VARCHAR(12));
+END TRY
+BEGIN CATCH
+    INSERT INTO @T VALUES ('Unexpected error in the refusal checks', 'No error',
+                           'Error ' + CAST(ERROR_NUMBER() AS VARCHAR(12)) + ': ' + LEFT(ERROR_MESSAGE(), 220));
+END CATCH
+
+IF (@@TRANCOUNT > 0)
+    ROLLBACK TRANSACTION;
+
+-- Forced failure: a test trigger makes the last seed insert (Committee) fail. The trigger is created
+-- inside this transaction, so the procedure's rollback removes it again.
+SET @ErrNo = 0;
+SET @ErrMsg = N'';
+
+BEGIN TRANSACTION;
+
+BEGIN TRY
+    EXEC (N'CREATE TRIGGER dbo.trg_ZZ_Step29Test_Fail ON dbo.Committee AFTER INSERT AS
+BEGIN
+    SET NOCOUNT ON;
+    THROW 50029, ''Step 29 test: forced failure'', 1;
+END');
+
+    EXEC spr_sys_ResetDatabase @ActingUserId = @AdminId, @ConfirmDatabaseName = @DbName,
+         @Result = @FailResult OUTPUT, @Reason = @FailReason OUTPUT;
+END TRY
+BEGIN CATCH
+    SET @ErrNo = ERROR_NUMBER();
+    SET @ErrMsg = LEFT(ERROR_MESSAGE(), 400);
+END CATCH
+
+SET @TranAfter = @@TRANCOUNT;
+
+-- If the procedure did not roll back, undo it here (the open-transaction check below then fails)
+IF (@@TRANCOUNT > 0)
+    ROLLBACK TRANSACTION;
+
+-- Measured before the test puts any counter back: the procedure must have done it itself
+EXEC #ZZ_Step29_Changed @Tables = @Tables OUTPUT, @Counters = @Counters OUTPUT;
+
+INSERT INTO @T SELECT 'Forced failure: the error reaches the caller (50029; 266 accepted) [step 29]', 'error',
+       CASE WHEN @ErrNo IN (50029, 266) THEN 'error' ELSE 'no error / ' + CAST(@ErrNo AS VARCHAR(12)) + ' ' + LEFT(@ErrMsg, 200) END;
+INSERT INTO @T SELECT 'Forced failure: the procedure rolled back (open transactions afterwards) [step 29]', '0', CAST(@TranAfter AS VARCHAR(12));
+INSERT INTO @T SELECT 'Forced failure: tables whose row count changed [step 29]', '0', CAST(@Tables AS VARCHAR(12));
+INSERT INTO @T SELECT 'Forced failure: identity counters put back by the procedure (changed) [step 29]', '0', CAST(@Counters AS VARCHAR(12));
+INSERT INTO @T SELECT 'Forced failure: the test trigger is gone [step 29]', '0',
+       CASE WHEN OBJECT_ID('dbo.trg_ZZ_Step29Test_Fail', 'TR') IS NULL THEN '0' ELSE '1' END;
+
+INSERT INTO #T (Test, Expected, Actual)
+SELECT Test, Expected, Actual FROM @T ORDER BY TestNo;
+GO
+
+-- A trigger left by a procedure that did not roll back (the check above has failed then)
+IF OBJECT_ID('dbo.trg_ZZ_Step29Test_Fail', 'TR') IS NOT NULL DROP TRIGGER dbo.trg_ZZ_Step29Test_Fail;
+
+EXEC #ZZ_Step29_PutCountersBack;
 GO
 
 -------------------------------------------------------------------------------
@@ -344,6 +591,8 @@ FROM #T;
 DROP TABLE #T;
 DROP TABLE #Ident;
 DROP TABLE #Counts;
+DROP PROCEDURE #ZZ_Step29_PutCountersBack;
+DROP PROCEDURE #ZZ_Step29_Changed;
 GO
 
 SET NOEXEC OFF;

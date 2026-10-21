@@ -12,9 +12,9 @@ Every change goes to a test copy before it goes to `BMMS`:
    `BACKUP DATABASE BMMS TO DISK = N'C:\Backups\BMMS_before_change.bak' WITH COPY_ONLY;`
 4. Run the same scripts on `BMMS`, in the same order, then the tests that are allowed on `BMMS`.
 
-Scripts 1 to 9 start with `USE [BMMS]`. To run one of them on the test copy, change that first line to `USE [BMMS_bak1]` in the SSMS window before running it, and do not save the change.
+Scripts 1, 2 and 4 to 9 start with `USE [BMMS]` (step 3 lost its `USE` line in step 29). To run one of them on the test copy, change that first line to `USE [BMMS_bak1]` in the SSMS window before running it, and do not save the change.
 
-Scripts 10 onwards and every test script have **no `USE` line**. They run in the database selected in the SSMS toolbar, print its name, and stop without changing anything if the name does not start with `BMMS`.
+Script 3, scripts 10 onwards and every test script have **no `USE` line**. They run in the database selected in the SSMS toolbar, print its name, and stop without changing anything if the name does not start with `BMMS`.
 
 ## Run order
 
@@ -28,7 +28,7 @@ On a database that does not have the changes yet:
 6. BMMS-Fix-FK-Procedures.sql             (7 procedures changed so the next 4 keys can be added; needs the MemberDB.cs NULL-state fix deployed)
 7. BMMS-Add-ForeignKeys-Step3.sql         (FK_Action_Item_Minutes, FK_ActionItem_User_Map_Users, FK_Meeting_Chairman, FK_Member_State_Master)
 8. BMMS-Fix-MinutesFinalize-Procedure.sql (minutes finalization no longer duplicates action items or maps users to other meetings' items)
-9. BMMS-Add-ForeignKeys-Step4.sql         (FK_Users_ManagerId; run after the build that stores "no manager" as NULL is deployed, and after re-running step 3 if it was applied before this change - the script refuses otherwise)
+9. BMMS-Add-ForeignKeys-Step4.sql         (FK_Users_ManagerId; run after the build that stores "no manager" as NULL is deployed, and after re-running step 3 if it was applied before this change - the script refuses otherwise. On a freshly restored baseline it refuses because the old seeds stored "no manager" as 0: in that database run `UPDATE dbo.Users SET ManagerId = NULL WHERE ManagerId = 0;`, then run step 9 again)
 10. BMMS-Fix-UserDelete-Procedure.sql     (a user with history cannot be deleted; replaces the version of spr_DeleteUserByUserId installed by steps 2 and 6, so always run it after them)
 11. BMMS-Add-ForeignKeys-Step5.sql        (21 keys from the user-id columns to Users; refuses until step 10 is installed, and refuses any key whose column holds an unknown user)
 12. BMMS-Fix-Attendance-FutureMeeting.sql (attendance only for a meeting dated today or earlier, by the database server date; run BEFORE deploying the build that reads its Result)
@@ -43,13 +43,19 @@ On a database that does not have the changes yet:
 21. BMMS-Fix-MemberTypes-Step21.sql        (Member Type Master for Admin and Controller: each type is a committee or a meeting type with a display order; types 2, 3 and 6 are reserved and cannot be edited, deactivated or deleted (Reason 7); a type in use cannot change scope or be deleted (Reason 5); committee and meeting members accept only an active type of their own scope (Reason 13); needs steps 18 and 19, not step 20; replaces spr_DeleteMemberTypeByMemberTypeId of step 2, spr_sys_ResetDatabase of steps 3 and 18 and spr_AddEditMeetingMember of step 15; SQL BEFORE deploying the build, and the build straight after: see its section)
 22. BMMS-Fix-MinutesGating-Step22.sql      (minutes reports only after Minutes Finalisation: Reports, Minutes and Reports, Minutes Extract list, view and generate only meetings whose minutes are finalized or confirmed (MinutesStatus F or C), through two new read-only procedures instead of a query in the code; needs step 15, not steps 16 to 21; replaces nothing; SQL BEFORE deploying the build: see its section)
 
+Step 21 is installed before step 20 (step 20 needs it). The list stays in number order; the install order is 19, 21, 20, 22.
+
 Step 23 is installed after step 28 (it was numbered before steps 24 to 28 were built). The list stays in number order:
 
 23. BMMS-Fix-WorkflowOrder-Step23.sql      (workflow order: attendance and chairman only after Agenda Finalisation (Reason 17); Update Minutes only after attendance is entered, chairman and at least one member present (18); Finalise Minutes only when every minute was updated (19, '0/0' when the meeting has no minutes); only for meetings created after the step is installed (setting WorkflowOrderFrom), older meetings unchanged; replaces spr_UpdateAttendance, spr_UpdateMeetingChairman and spr_UpdateAgendaShortText of step 16 and spr_UpdateMinutes and spr_MinutesFinalizeByMeetingId of step 18; needs steps 12 and 15 to 18; SQL BEFORE deploying the build: see its section)
 
 24. BMMS-Fix-MeetingDates-Step24.sql        (meeting dates: on create the meeting date and the agenda submission date not before today and the submission date on or before the meeting date (equal allowed), both required; on edit "not before today" only for a date that is changed; refused with Reason 16; today is the database server date; needs steps 16, 17 and 18; replaces spr_AddEditMeeting of steps 16, 17 and 18; SQL BEFORE deploying the build: see its section)
 
-Steps 1 to 18 are installed and verified on the local `BMMS` (steps 10, 11 and 13 on 2026-10-15). Steps 1 to 12 are applied to `BMMS_bak1` (step 13 too, if it was run there as its section says). Steps 1 to 22 are installed on `BMMS_Test` and `BMMS` (tags organisation-settings-19, member-types-21, agenda-routing-20, minutes-gating-22). Step 24 is tagged meeting-dates-24; steps 25, 26 and 28 are code only (step 28 also fixed the error log). Step 23 is written and not yet installed anywhere: install it after step 28, on `BMMS_Test` first (see its section). BMMS-Check-InstalledSteps.sql shows the real state of any database.
+Steps 25, 26 and 28 have no database script (code only); step 27 is not built yet (see Known items for later steps). Step 29 is installed last, after step 23:
+
+29. BMMS-Fix-ResetDatabase-Step29.sql       (Reset Database made safe: only an active Admin who types the name of the current database (Reasons 8, 4, 3), checked before anything is cleared; one transaction with XACT_ABORT ON, so an error or a timeout changes nothing, and the procedure puts the identity counters back after a rollback; the five TRUNCATEs become DELETE with the same next ids; Audit_Trail_SendMail is cleared too; one Audit_Trail_Master row "Reset by <login>" survives the reset; the four seeded users get the hashes of the new default password (Common.DefaultPassword); otherwise the re-created data is unchanged; needs steps 18 and 21; replaces spr_sys_ResetDatabase of step 21 (earlier 3 and 18) and keeps their texts; SQL BEFORE deploying the build: see its section)
+
+Steps 1 to 18 are installed and verified on the local `BMMS` (steps 10, 11 and 13 on 2026-10-15). Steps 1 to 12 are applied to `BMMS_bak1` (step 13 too, if it was run there as its section says). Steps 1 to 22 are installed on `BMMS_Test` and `BMMS` (tags organisation-settings-19, member-types-21, agenda-routing-20, minutes-gating-22). Step 24 is tagged meeting-dates-24; steps 25, 26 and 28 are code only (step 28 also fixed the error log). Step 23 is written and not yet installed anywhere: install it after step 28, on `BMMS_Test` first (see its section). Step 29 is written and installed only on `BMMS_Quality`, in its first text (before the new default password; it reads Partly there until step 29 is run again): install it after step 23 (see its section). BMMS-Check-InstalledSteps.sql shows the real state of any database.
 Re-running the fix scripts is safe; re-running the key scripts reports that the constraint already exists.
 If you install from the command line, use sqlcmd -I (quoted identifiers ON); installing from SSMS already does this.
 If step 2, 6 or 10 is ever re-run, run step 13 again afterwards: each contains an older spr_DeleteUserByUserId (and step 10 needs steps 2 and 6 to be followed by it as before).
@@ -65,6 +71,7 @@ If step 16, 17 or 18 is ever re-run, run step 20 again afterwards. Checked by se
 Step 22 replaces no object of an earlier step, and no numbered script contains spr_GetMinutesReportMeetings or spr_GetMinutesReport, so no re-run of an earlier step needs step 22 again. Re-running step 22 is safe (it only replaces its two read-only procedures).
 If step 16, 17 or 18 is ever re-run, run step 24 again afterwards. Checked by searching every numbered script for spr_AddEditMeeting, the only object step 24 replaces: steps 16, 17 and 18 each contain it; no other numbered script does. So, with the chains above, a re-run of step 6, 8, 12, 13, 14 or 15 needs the later steps up to 18 and then 24 as well (with 20 and 21 where listed). Re-running step 24 is safe (it changes no data).
 If step 6, 8, 12, 15, 16, 17 or 18 is ever re-run, run step 23 again afterwards (after the chains above, as the last step). Checked by searching every numbered script for each procedure step 23 replaces: spr_UpdateAttendance is in steps 12, 15 and 16; spr_UpdateMeetingChairman in steps 6, 15 and 16; spr_UpdateAgendaShortText in step 16; spr_UpdateMinutes in steps 6, 16, 17 and 18; spr_MinutesFinalizeByMeetingId in steps 8, 15, 17 and 18. fn_WorkflowState and spr_GetMeetingWorkflowState are new. If one of those steps was re-run, step 23 stops and names the step whose text is missing until the chain has been run again. Re-running step 23 is safe: it keeps the WorkflowOrderFrom value of its first run.
+If step 3, 18 or 21 is ever re-run, run step 29 again afterwards, as the last step (after the chains above, after step 23). Checked by searching every numbered script for spr_sys_ResetDatabase, the only object step 29 replaces: steps 3, 18 and 21 contain it; step 14 names it only in a comment; no other numbered script contains it. So any chain above that ends in step 18 or 21 ends in step 29. Step 29 keeps the texts of steps 3, 18 and 21 (FK#5-ManagerId-NULL, SystemAccount3-Step18, MemberTypes-Step21) and the seeded rows of step 21, so those steps still read Installed after it. Re-running step 29 is safe (it changes no data).
 To see which steps a database has, run BMMS-Check-InstalledSteps.sql (read only; one row per step: Installed, Partly, Missing or Not detectable, with the missing markers listed). "Partly" usually means one of the re-runs above happened; its Detail says which step to run again.
 
 ## Steps 10 and 11: what to run where
@@ -77,7 +84,7 @@ On `BMMS_bak1` (test copy):
 4. BMMS-Test-UserDelete.sql               (75 checks)
 5. BMMS-Test-UserKey-Workflows.sql        (23 checks)
 6. BMMS-Test-FK-Procedures.sql            (19 checks)
-7. BMMS-Test-ResetDatabase.sql            (14 checks; test copy ONLY)
+7. BMMS-Test-ResetDatabase.sql            (test copy ONLY; since step 29 it needs step 29 and has 32 checks: see the step 29 section)
 8. The manual checklist below, with the application pointed at the test copy (optional but recommended)
 
 Then on `BMMS`, after the backup:
@@ -96,12 +103,12 @@ Do NOT run BMMS-Test-ResetDatabase.sql on `BMMS`. It refuses to, by name.
 ## Test and check scripts
 
 - BMMS-Check-Orphans.sql                  (read-only check of candidate foreign keys, and of every user-id column)
-- BMMS-Check-InstalledSteps.sql           (read-only: which of steps 1 to 22 and 24 are installed in the selected database, for step 18 whether exactly one user is the system account, for step 19 whether the 12 setting rows exist, and for step 21 whether types 2, 3 and 6 are reserved; allowed on `BMMS`)
+- BMMS-Check-InstalledSteps.sql           (read-only: which of steps 1 to 24 and 29 are installed in the selected database, for step 18 whether exactly one user is the system account, for step 19 whether the 12 setting rows exist, and for step 21 whether types 2, 3 and 6 are reserved; allowed on `BMMS`)
 - BMMS-Test-Delete-Procedures.sql         (delete-procedure tests for the master tables; deletes real unreferenced rows, inside a transaction that is rolled back. With step 21 installed the member type part passes an active Admin, also tries a reserved type (expect Reason 7) and deletes a free type, adding one inside the transaction when none is unreferenced)
 - BMMS-Test-FK-Procedures.sql             (tests for steps 6 to 9; rolled back)
 - BMMS-Test-UserDelete.sql                (tests for steps 10 and 11, with step 13 installed: user delete rules, one test per protected column, one per key; rolled back)
 - BMMS-Test-UserKey-Workflows.sql         (committee, meeting, agenda, approvals, finalize, confirm, alerts, login / backup / mail audit, through the real procedures; rolled back)
-- BMMS-Test-ResetDatabase.sql             (runs spr_sys_ResetDatabase with all keys in place; TEST COPY ONLY; rolled back, and the identity counters are put back)
+- BMMS-Test-ResetDatabase.sql             (runs spr_sys_ResetDatabase with all keys in place; since step 29 also its refusals and a forced failure that must roll back; needs step 29; 32 checks; TEST COPY ONLY; rolled back, and the identity counters are put back)
 - BMMS-Test-Attendance-FutureMeeting.sql  (tests for step 12: past / today / future / no-date meetings, new attendance and edits; 23 checks; run on the test copy; rolled back)
 - BMMS-Test-UserProtection-Stage1.sql     (tests for step 13: every action by Admin / Controller / other roles, own account, last active Admin / Controller, acting user missing, reasons 5, 6 and 9, re-raised errors, list flags, locks; 142 checks; test copy only; rolled back. With step 14 installed, the three checks where an inactive Admin acts expect Reason 8 instead of 2, and their label says so)
 - BMMS-Test-MeetingLocks.sql             (tests for step 15: meeting member add / edit / delete in each state, delete with attendance, attendance and chairman on finalized minutes, each finalize / confirm step in order and twice, NULL statuses, status lookup; 43 checks; test copy only; rolled back)
@@ -130,6 +137,8 @@ Since step 19 BMMS-Test-ResetDatabase.sql sets two sample organisation values in
 Since step 20 four older tests follow the new routing, each adjusted check saying "[step 20: ...]" when step 20 is installed (counts unchanged): BMMS-Test-UserStatus-Stage2b.sql (the no-manager item is AMA with the Admins and Controllers alerted; the two items inserted for an inactive creator are routed to the Manager who approves them), BMMS-Test-SystemAccount-Stage3.sql (an ordinary Admin's approve is refused, Reason 14), BMMS-Test-UserDelete.sql (the approver acts as an active Controller at AMA for that call), BMMS-Test-MeetingLocks-Step16.sql (the item a Manager approves is at AC and routed to them). BMMS-Test-UserKey-Workflows.sql needs no change: its user has an active Manager, who approves at AC, then its Controller at AMA.
 
 Since step 21 BMMS-Test-ResetDatabase.sql checks the six member types the reset seeds, with their scope, display order, reserved flag and status ("[step 21]"): 17 checks with steps 18, 19 and 21 installed. BMMS-Test-MeetingLocks.sql saves its meeting members with a meeting type (2, 3 or 6 first), so it passes on a freshly reset copy too, where the lowest id is the committee type "Member".
+
+Since step 29 BMMS-Test-ResetDatabase.sql needs step 29 (it stops, changing nothing, without it) and calls the procedure as the page does, with an active Admin and the database name typed in lower case. Part 1 keeps the 17 checks and adds 4 ("[step 29]": Result 1, one audit row naming the acting user, Audit_Trail_SendMail empty, and the four seeded users stored with the hashes of the new default password, compared exactly as strings; that each hash belongs to the password is checked in C#, with the application's own Common.VerifyPassword). Part 2 adds 11: the procedure text (texts of steps 3, 18, 21 and 29, XACT_ABORT, no App_Setting); refusals for a wrong and an empty database name (Reason 3), a user who is not an Admin (4) and an unknown user (8), and that they changed nothing; a forced failure through a test trigger on Committee (dbo.trg_ZZ_Step29Test_Fail, created inside the transaction, so the procedure's rollback removes it): the error reaches the caller, no transaction is left open, every table has its rows and every identity counter its value again, put back by the procedure itself before the test reseeds, and the trigger is gone. The two "Test copy restored" checks now come last and cover both parts. 32 checks with steps 18, 19, 21 and 29 installed. The procedure's own Result row of part 1 appears as a small grid above the result grid.
 
 Since step 24 three older tests save the meetings they create through spr_AddEditMeeting dated today instead of 10 days ago, because a create with a past date is refused from step 24; each change says "[step 24]" in a comment. Checks and counts are unchanged, and they pass before and after step 24: BMMS-Test-MeetingLocks-Step16.sql (the new meeting 99910), BMMS-Test-SystemAccount-Stage3.sql (meeting 99981), BMMS-Test-UserStatus-Stage2b.sql (meeting 99971 and its two edits, which keep the saved dates). Meetings the tests insert directly keep their past dates; their edits that keep a date, or move it to today, still pass.
 
@@ -468,14 +477,14 @@ Recovering a lost password of the system account (DBA only):
 
 ```sql
 UPDATE Users
-SET [Password] = '100000.WADOkeW3PD8T+KGnhd13NA==.ykPBZLhjry5KbA3hGEQsf8hdO3yY8C23RTHKeAOfXWU=',
+SET [Password] = '100000.gURba0Xwa3iXhBwkFEi/hA==.yxFedi3Cfs3FLcDlU7oWXp94eY15AGoU4AN+c3tf8j0=',
     AccountStatus = 1,
     UpdatedOn = GETDATE()
 WHERE IsSystem = 1;
 SELECT @@ROWCOUNT AS UsersChanged;   -- must be 1
 ```
 
-4. Log in as "admin" with the application's default password (the application owner has it). The application sends the account straight to the first-login password change; choose the new password there.
+4. Log in as "admin" with the application's default password (the application owner has it). The application sends the account straight to the first-login password change; choose the new password there. Since step 29 the hash above is that of the new default password (Common.DefaultPassword in BMMSBAL/Common.cs): use it only with the step 29 build or later; the old default is not a default any more.
 5. Record the recovery (date, who asked, who ran it) in the change log. The UPDATE above is not written to the Audit Trail.
 
 Read-only queries for `BMMS` (they only read; the account is UserId 5 there today):
@@ -855,8 +864,75 @@ Manual checks on the test copy, on new made-up meetings created after the instal
 8. An older meeting (for example BMMS_Test meeting 3 or 343): Attendance, Update Minutes and Finalize Minutes behave as before.
 9. With the Controller option on, add an agenda item to a new meeting after its agenda is finalized: Finalize Minutes is refused until that item's minute is updated.
 
+## Step 29: Reset Database made safe (what to run where)
+
+Reset Database (Utilities, Admin only) ran spr_sys_ResetDatabase with no transaction: an error, or the 30-second command timeout, left the database half cleared. The confirm text said sign-in would not work afterwards (it does: admin with the default password). The session stayed open after the reset, still pointing at a user id that no longer existed or now belonged to another seeded user.
+
+From step 29:
+
+- The page shows the name of the connected database and asks the Admin to type it (capital letters do not matter). The browser compares first (trimmed, ignoring case): a wrong name shows "The name you typed is not the name of this database. Nothing was changed.", the dialog does not open and nothing is sent to the server. A correct name opens the confirm dialog with the correct text. After OK the page compares again on the server, and the procedure a third time.
+- The procedure first checks, changing nothing: the acting user exists and is active (Reason 8), is an Admin (4), and the typed name is the current database (3, ReasonDetail DatabaseName). Any active Admin may reset, as before.
+- Then everything runs in one transaction with XACT_ABORT ON: an error or a timeout rolls back every row. Identity counters are not covered by a rollback, so the procedure saves them first and puts them back after a rollback. All clearing comes first and every reseed only after it, just before COMMIT. The five tables TRUNCATE used to clear are cleared with DELETE; a used counter of theirs starts again at its seed, as with TRUNCATE. RESEED 0 elsewhere is unchanged.
+- Audit_Trail_SendMail is cleared too (DELETE, RESEED 0): its Mail_Send_By ids would otherwise point at the re-seeded users, and the user delete rule would treat them as history.
+- One Audit_Trail_Master row is written inside the transaction, after the seeds: Audit_Table "Database", Key_Value the database name, Field_Name "Reset", New_Value "Reset by <login>", Update_By 1 (the acting user no longer exists). It is the only row in that table after a reset.
+- The re-created rows are those of step 21, except the password hashes: the four seeded users get the hashes of the new default password. Organisation settings and the other settings are not touched.
+- The default password is new and kept in one place, `Common.DefaultPassword` (BMMSBAL/Common.cs). Reset Password gives it, Reset Database seeds its hashes, and signing in with it opens the change-password page (ChangePasswordFirst). The old default is not accepted as a default anywhere: there is no transition period. The seed hashes in steps 3, 18 and 21 were replaced too, so a re-run of any of them can no longer bring back the old default. Nobody needs to re-run step 18 or 21 because of this: step 29 owns the reset procedure and is the only script to run again. The re-run rules above are unchanged (step 21 after a re-run of 2, 3, 15 or 18; step 29 last). The procedure text carries a third marker, DefaultPassword-Step29.
+- A user whose password is still the old default can still sign in with it (the stored hash is checked, not the text), but is no longer sent to the change-password page. These users are reset by hand: an Admin uses Reset Password for each one (the user gets the new default and must change it at the next sign-in); the system account `admin` cannot be reset by another Admin (step 18) and changes its own password with Change Password. Users still holding one of the four old seeds can be found with this read-only query:
+
+```sql
+-- Read only: users whose stored password is still one of the four old seed hashes
+SELECT UserId, LoginName, AccountStatus
+FROM dbo.Users
+WHERE CAST([Password] AS VARCHAR(200)) COLLATE Latin1_General_BIN2 IN (
+    '100000.WADOkeW3PD8T+KGnhd13NA==.ykPBZLhjry5KbA3hGEQsf8hdO3yY8C23RTHKeAOfXWU=',
+    '100000.M/UxC7LnMnNnEZFfpnw6mg==.BjFpjTZvVXXXGN0NOfAyBgtqgpaTbE4rH41LJyBONSc=',
+    '100000.PsM4vZJAAQ9wtc5TyVtBcg==.g2/yOexqH1W/RQ33t0LmQ0eZYFQl6gPN7buM+M1bbqY=',
+    '100000.VqhtwYgekpXELBK53d/DLg==.haI/Qxp3EbSWTlfeUjLiqWbR30WATDUW5pazcR8k7tA=')
+ORDER BY UserId;
+```
+
+  A password you changed yourself (or one set through Reset Password) has its own random salt and cannot be found this way, even if it is the old default: reset each user by hand, or ask them to change their password.
+- The page calls the procedure with a 300-second command timeout (its own DAL method). On success it ends the session and opens the sign-in page. A refusal is shown on the page. An error is written to the error log (`~/Log`) and shown as "The reset did not run; nothing was changed. The error is in the error log."
+- The page waits as long as the procedure may run: on this page only, the browser waits 330 seconds for the answer (ScriptManager AsyncPostBackTimeout; the default is 90) and the server lets the request run 330 seconds (Server.ScriptTimeout; the default is 110). Before this, a reset that took longer than 90 seconds finished in the database while the page showed nothing and stayed signed in. While the reset runs, a "Reset in progress, please wait" message covers the page (bmms-workbench.css, wb-progress-overlay). If the request still fails or gets no answer, the page says "The page got no answer from the server. The reset may have finished: sign in again as admin to check." After a successful reset the page is not drawn again; the browser goes straight to the sign-in page.
+- The page lists how many files each upload folder holds (Files/AgendaAttach, AgendaText, MemberPhoto, MemberResume, SqlBackup): a reset does not remove them, and after a reset agenda numbers and member codes start again, so a new upload with the same number or code and file name replaces an old file. Deleting them is a later step.
+- BMMS-Fix-ResetDatabase-Seeds.sql (step 3) no longer has a `USE` line (it has the usual name check instead), and its header and seed e-mail addresses no longer carry the old organisation's name. Re-running it still installs the older procedure: run steps 18, 21 and 29 again afterwards.
+
+Permissions are unchanged: DELETE needs the delete permission and DBCC CHECKIDENT needs ALTER on the tables (or db_owner) for the application login. Without them the reset stops at the first reseed, rolls back and logs the error; nothing is changed.
+
+On the test copy (`BMMS_Test`): install the procedure and run the rolled-back tests only. Do NOT restore over `BMMS_Test` and do NOT run a real Reset there.
+
+1. BMMS-Check-InstalledSteps.sql          (steps 1 to 24 as before; step 29 Missing, 0 of 3 markers; on a database that has the first text of step 29: Partly, 2 of 3, DefaultPassword-Step29 missing)
+2. BMMS-Fix-ResetDatabase-Step29.sql      (stops, changing nothing, if step 18 or 21 is missing; prints "Reset Database (step 29) installed: ... (ResetSafe-Step29, DefaultPassword-Step29)")
+3. BMMS-Test-ResetDatabase.sql            (32 checks; test copy ONLY)
+4. The four tests that read the procedure's text, unchanged: BMMS-Test-SystemAccount-Stage3.sql (51), BMMS-Test-MemberTypes-Step21.sql (100), BMMS-Test-OrganisationSettings-Step19.sql (52), BMMS-Test-AgendaRouting-Step20.sql (56)
+5. BMMS-Check-InstalledSteps.sql          (step 29 Installed, 3 of 3 markers; steps 3, 18 and 21 still Installed)
+
+The real Reset through the page is tried on a separate database, `BMMS_Quality`, never on `BMMS_Test` or `BMMS`:
+
+1. SSMS: Restore Database from the baseline backup (the recovered legacy database, before any numbered step) as a new database named `BMMS_Quality`; change the database name and the two file names. Never restore over an existing database. If the application login cannot open it, map its user in `BMMS_Quality`: `ALTER USER bmms_app WITH LOGIN = bmms_app;`
+2. In `BMMS_Quality`, run the numbered scripts in README order, each as its section says. Scripts 1, 2 and 4 to 9: change the first line to `USE [BMMS_Quality]` in the SSMS window and do not save the change. Script 3 and scripts 10 onwards: select `BMMS_Quality` in the toolbar. The order: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 20, 22, 24, then 23 (installed after step 28; steps 25, 26 and 28 have no script, step 27 is not built yet), then 29 last. Step 21 comes before step 20 (step 20 needs it). Step 9 refuses on the baseline because the old seeds stored "no manager" as 0: run `UPDATE dbo.Users SET ManagerId = NULL WHERE ManagerId = 0;` in `BMMS_Quality`, then run step 9 again. Step 11 refuses a key whose column holds an unknown user: run BMMS-Check-Orphans.sql if it reports a refusal.
+3. BMMS-Check-InstalledSteps.sql on `BMMS_Quality`: steps 1 to 24 and 29 Installed (step 29: 3 of 3 markers). A `BMMS_Quality` that already has the first text of step 29 shows step 29 Partly, 2 of 3: run BMMS-Fix-ResetDatabase-Step29.sql there again, then the checker (Installed, 3 of 3).
+4. Point the application at it: in `BMMS/connectionStrings.config` (not tracked by git) change `database=BMMS` to `database=BMMS_Quality`; restart the site.
+5. Sign in as a user who is not an Admin and open /Master/ResetDatabase.aspx: "Access denied." (unchanged).
+6. Sign in as an Admin and open Utilities, Reset Database: the page shows `BMMS_Quality`, the three cards and the file counts per folder.
+7. Type `BMMS_Test` and press Reset Database: "The name you typed is not the name of this database. Nothing was changed." appears at once; no dialog opens and the page is not sent (the browser's network tab shows no request). The same with an empty box. The data is still there.
+8. Type `bmms_quality`, press Reset Database and Cancel in the dialog: nothing happens.
+9. Type `bmms_quality`, press Reset Database and OK: the "Reset in progress, please wait" message covers the page, then the sign-in page opens. Your old password no longer works.
+10. Sign in as `admin` (small letters; the login name is case sensitive) with the default password, typed (the password box does not accept paste): the change-password page opens at once; choose a new password.
+11. Check: the dashboard is empty; the Master lists show the default departments, designations, member types and the two committees; System Settings shows the organisation settings and logo unchanged; the four default users exist.
+12. In SSMS on `BMMS_Quality`: `SELECT * FROM Audit_Trail_Master;` gives one row "Reset by <your login>", by user 1; `SELECT COUNT(*) FROM Audit_Trail_SendMail;` gives 0. Today's error log (`~/Log/<yyyy_MM_dd>_ErrorLog.txt`) has no new ResetDatabase entry.
+13. If step 9 shows "The reset did not run; nothing was changed." instead: the error log names the cause (for example the permission for DBCC CHECKIDENT), and the data must be unchanged.
+14. A slow reset (longer than the old 90-second limit). Sign in as `admin` with the new password. Open a second SSMS query window on `BMMS_Quality` (window B) and run only:
+    `BEGIN TRANSACTION; SELECT COUNT(*) FROM dbo.Department WITH (TABLOCKX, HOLDLOCK);`
+    This holds a lock on Department until window B ends the transaction; the reset waits for it inside its own transaction. Leave window B open. In the browser, open Reset Database, type `bmms_quality`, press Reset Database and OK: the "Reset in progress, please wait" message stays. Optional, in a third window: `SELECT session_id, blocking_session_id, wait_time / 1000 AS wait_seconds FROM sys.dm_exec_requests WHERE blocking_session_id <> 0;` shows the reset waiting for window B. After about 120 seconds, release the lock in window B: `ROLLBACK TRANSACTION;` then `SELECT @@TRANCOUNT;` gives 0. Within a few seconds the sign-in page opens; sign in as `admin` with the default password (the change-password page opens). `SELECT * FROM Audit_Trail_Master;` gives one row "Reset by admin". If window B is closed or disconnected instead, SQL Server rolls its transaction back and the lock is released as well.
+15. Optional, a reset past the 300-second limit: as step 14, but release the lock only after about 320 seconds. At 300 seconds the page shows "The reset did not run; nothing was changed. The error is in the error log."; you are still signed in, the data is unchanged (Audit_Trail_Master still has the row of step 14), and the error log has a btnResetDatabase_Click timeout entry, unless an earlier error was already logged that day (the log keeps the first error of each day). Then run `ROLLBACK TRANSACTION;` in window B.
+16. Switch back: in `BMMS/connectionStrings.config` change `database=BMMS_Quality` back to `database=BMMS`; restart the site. `BMMS_Quality` can be dropped or kept for the next step.
+
+On `BMMS`, after the backup: BMMS-Fix-ResetDatabase-Step29.sql, then deploy the build. Do not run the tests on `BMMS`, and do not reset it. Until the build is deployed, the older page's Reset fails with "expects parameter" and nothing is cleared.
+
 ## Known items for later steps
 
+- Files left by a Reset Database: the upload folders (Files/AgendaAttach, AgendaText, MemberPhoto, MemberResume) and the backups in Files/SqlBackup are not removed; the page shows their counts (step 29). Deleting them is a later step.
 - Step 27: a login-checked download page for agenda attachments and agenda text, member photos and CVs, and Send Mail attachments (move `~/Files/Temp` to App_Data); then add Temp to the hidden segments in Web.config. Until then these files can be fetched by URL without logging in.
 - Send Mail deletes every file in `~/Files/Temp` when anyone attaches a new file, so two Controllers composing at once lose each other's attachment (SendMail.aspx.cs).
 - Agenda Approval, an agenda whose text was uploaded as a file: it is read with WordUtilities.ReadWordDocument on a relative path through Word, while uploaded agenda texts are PDF files, so that text is probably missing from the PDF (AgendaApproval.aspx.cs).

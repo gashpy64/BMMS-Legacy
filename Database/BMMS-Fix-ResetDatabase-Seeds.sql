@@ -1,6 +1,3 @@
-USE [BMMS];
-GO
-
 /* ============================================================================
    BMMS - seed users in the new password-hash format
    ----------------------------------------------------------------------------
@@ -10,8 +7,8 @@ GO
 
    This version is IDENTICAL to the original procedure except that the four
    seeded passwords are now PBKDF2 hashes (a different random salt for each)
-   of the application's built-in default password: lvb@123
-   Logging in with lvb@123 sends the user straight to ChangePasswordFirst, so
+   of the application's built-in default password (Common.DefaultPassword in BMMSBAL/Common.cs).
+   Logging in with that password sends the user straight to ChangePasswordFirst, so
    every seeded account must choose a new password at first login.
 
    Critical fix #5: the three seeded users without a manager are inserted with
@@ -21,7 +18,23 @@ GO
 
    This script only replaces the procedure. It does NOT run it and changes no
    data. Remember that executing the procedure wipes the whole database.
+
+   Step 29 (BMMS-Fix-ResetDatabase-Step29.sql) replaces this procedure; if
+   this script is re-run, run steps 18, 21 and 29 again afterwards.
+
+   It has no USE line (removed in step 29): select the database in SSMS first
+   (the test copy, then BMMS). It stops if the current database name does not
+   start with "BMMS".
    ============================================================================ */
+
+DECLARE @CurrentDatabase SYSNAME = DB_NAME();
+
+IF (@CurrentDatabase NOT LIKE 'BMMS%')
+BEGIN
+    RAISERROR('Current database is "%s". Select the BMMS database (or its test copy) and run again. Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
+GO
 
 CREATE OR ALTER PROCEDURE [dbo].[spr_sys_ResetDatabase]
 AS
@@ -229,13 +242,13 @@ SELECT 'md_sect', 'MD Secretariat', 'MD Secretariat', 6, GETDATE(), 1, GETDATE()
 INSERT INTO [Users]
 ([UserName],[DepartmentId],[DesignationId],[ManagerId],[RoleId],[EmailId],[LoginName],[Password]
            ,[AccountStatus],[CreatedOn],[CreatedBy],[UpdatedOn],[UpdatedBy])
-SELECT 'admin', 1, 1, NULL, 1, '', 'admin', '100000.WADOkeW3PD8T+KGnhd13NA==.ykPBZLhjry5KbA3hGEQsf8hdO3yY8C23RTHKeAOfXWU=', 1, GETDATE(), 1, GETDATE(), 1
+SELECT 'admin', 1, 1, NULL, 1, '', 'admin', '100000.gURba0Xwa3iXhBwkFEi/hA==.yxFedi3Cfs3FLcDlU7oWXp94eY15AGoU4AN+c3tf8j0=', 1, GETDATE(), 1, GETDATE(), 1
 UNION ALL
-SELECT 'Controller', 2, 3, NULL, 2, 'con@lvb.com', 'secuser', '100000.M/UxC7LnMnNnEZFfpnw6mg==.BjFpjTZvVXXXGN0NOfAyBgtqgpaTbE4rH41LJyBONSc=', 1, GETDATE(), 1, GETDATE(), 1
+SELECT 'Controller', 2, 3, NULL, 2, 'con@example.invalid', 'secuser', '100000.QcDvazIat4fcHJw+tivVTg==.dLQDFP7A1cYcAcaYsIvwlXFsZv8lAYDJIVqwDUWNBJ8=', 1, GETDATE(), 1, GETDATE(), 1
 UNION ALL
-SELECT 'Manager', 4, 4, NULL, 3, 'mgr@lvb.com', 'credmanager', '100000.PsM4vZJAAQ9wtc5TyVtBcg==.g2/yOexqH1W/RQ33t0LmQ0eZYFQl6gPN7buM+M1bbqY=', 1, GETDATE(), 1, GETDATE(), 1
+SELECT 'Manager', 4, 4, NULL, 3, 'mgr@example.invalid', 'credmanager', '100000.pJ5r7xUvCSnGHp+32dpp4w==.ity6i4nc8MrUUoy2nnHfxy17AZp61+bNYkvs1gYQLhI=', 1, GETDATE(), 1, GETDATE(), 1
 UNION ALL
-SELECT 'User', 4, 5, 3, 4, 'usr@lvb.com', 'creduser', '100000.VqhtwYgekpXELBK53d/DLg==.haI/Qxp3EbSWTlfeUjLiqWbR30WATDUW5pazcR8k7tA=', 1, GETDATE(), 1, GETDATE(), 1;
+SELECT 'User', 4, 5, 3, 4, 'usr@example.invalid', 'creduser', '100000.UfrmZn5v9zOs6DlxPdFy9Q==.qHS0QM1qZuYJfnITWbrNUucDryAyVLNz1HdnnDcxLbc=', 1, GETDATE(), 1, GETDATE(), 1;
 
 
 INSERT INTO [Committee]
@@ -247,4 +260,7 @@ SELECT 'C02', 'Audit Committee',0, GETDATE(), 1, 0, GETDATE(), 1, GETDATE(), 1;
 
 
 END
+GO
+
+SET NOEXEC OFF;
 GO
