@@ -25,6 +25,7 @@
             <ContentTemplate>
                 <div class="wb-page wb-login">
                     <h1 class="wb-h1">BMMS</h1>
+                    <p class="wb-help" style="text-align: center;">Board Minutes and Meeting Software</p>
                     <div class="wb-card">
                         <div class="wb-card-header">
                             Log in</div>

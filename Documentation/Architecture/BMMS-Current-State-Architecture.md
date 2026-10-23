@@ -1,6 +1,6 @@
 # BMMS Current State Architecture
 
-## Board Minutes and Management Software (BMMS)
+## Board Minutes and Meeting Software (BMMS)
 
 Version: Legacy Recovery Baseline
 Document Version: 1.1 (merge-conflict resolved)

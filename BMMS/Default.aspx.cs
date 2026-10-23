@@ -41,7 +41,7 @@ namespace BMMS
         #region InitSetup()
         private void InitSetup()
         {
-            Page.Title = Common.GetAppSetting("PageTitle") + "Login";
+            Page.Title = Common.GetAppSetting("PageTitle") + " - Login";
             Session["PageURL"] = "~/Default.aspx";
             txtLoginName.Attributes.Add("MaxLength", Common.GetAppSetting("LoginIdMaxLength"));
             txtPassword.Attributes.Add("MaxLength", Common.GetAppSetting("PasswordMaxLength"));

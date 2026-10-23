@@ -82,8 +82,8 @@ namespace BMMSBAL
         public static string ProductFooter(System.Reflection.Assembly WebAssembly)
         {
             Version version = WebAssembly.GetName().Version;
-            return "Copyright © 2026 BMMS-" + version.Major + "." + version.Minor + "." + version.Build
-                 + ". All Rights Reserved. Gashpy Software";
+            return "BMMS " + version.Major + "." + version.Minor + "." + version.Build
+                 + ", Board Minutes and Meeting Software. Copyright © 2026 Gashpy Software. All Rights Reserved.";
         }
         #endregion
 

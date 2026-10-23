@@ -597,12 +597,7 @@ namespace BMMS.Report
                             CompanySecretaryDesign = dtCompanySecretary.Rows[0]["DesignationName"].ToString();
                         }
 
-                        string strReportBanner = Server.MapPath("~/Images") + "\\report_banner-top.jpg";
-
                         htmlTxt += "<div style='font-size:12pt; font-family: Times New Roman; width: " + Common.GetReportSettings("MinutesReport_Width") + "px;'>";
-
-                        //htmlTxt += "<div style='float:left; width:100%; text-align:center;'><img src='../Images/report_banner-top.jpg' /></div>";
-                        //htmlTxt += "<div style='float:left; width:100%; text-align:center;'><img src='" + strReportBanner.ToString() + "' /></div>";
 
                         if (OrganisationDetails.Current.HeaderLine != string.Empty)
                             htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:11pt; padding-top:10px;'>" + OrganisationDetails.Html(OrganisationDetails.Current.HeaderLine) + "</div>";

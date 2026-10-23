@@ -19,13 +19,6 @@ div#mainContainer
 	position: relative;
 }
 
-div#logo
-{
-	background-image: url("../Images/banner-top.jpg" );
-	width: 1000px;
-	height: 88px;
-}
-
 /**************Navigation Main****************/
 
 #tabs

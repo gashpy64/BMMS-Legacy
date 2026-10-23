@@ -13,10 +13,13 @@
     <link href="../CSS/AjaxCalender.css" rel="stylesheet" type="text/css" />
     <link href="../CSS/PasswordCheck.css" rel="stylesheet" type="text/css" />
 
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="../CSS/bmms-workbench.css" rel="stylesheet" type="text/css" />
+
     <script type="text/javascript" language="javascript" src="../JScript/BrowserSecurity.js"></script>
 
 </head>
-<body>
+<body class="wb">
     <form id="form1" runat="server">
         <asp:ScriptManager ID="ScriptManager1" runat="server">
             <Scripts>
@@ -24,18 +27,16 @@
                 <asp:ScriptReference Path="~/JScript/Validation.js" />
             </Scripts>
         </asp:ScriptManager>
-        <div id="mainContainer" >
-            <div id="logo">
-                <p class="welcomeMsg">
-                    <br />
-                    <br />
-                    <br />
-                    <br />
-                    <a href="../Master/ChangePassword.aspx" style="color:White; font-weight:bold; ">Change Password</a>
-                    <b>Logged In :
-                        <%=Session["UserName"]%>
-                        &nbsp;&nbsp;<asp:LinkButton ID="lnkLogout" runat="server" Text="Logout" ForeColor="white"
-                            PostBackUrl="~/Logout.aspx"></asp:LinkButton></b></p>
+        <div id="mainContainer">
+            <%-- The header of Main.Master without the menu (step B2) --%>
+            <div class="wb-header">
+                <span class="wb-brand" title="Board Minutes and Meeting Software">BMMS</span>
+                <div class="wb-nav"></div>
+                <div class="wb-user">
+                    <span class="wb-user-name"><%: Session["UserName"] %> | <%: Session["RoleName"] %></span>
+                    <a href="../Master/ChangePassword.aspx">Change Password</a>
+                    <asp:LinkButton ID="lnkLogout" runat="server" Text="Logout" PostBackUrl="~/Logout.aspx"></asp:LinkButton>
+                </div>
             </div>
 <%--            <div id="divMenu">
                 <uc1:MenuUserControl ID="MenuUserControl1" runat="server"></uc1:MenuUserControl>

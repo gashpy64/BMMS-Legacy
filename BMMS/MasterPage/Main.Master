@@ -29,7 +29,7 @@
         </asp:ScriptManager>
         <div id="mainContainer">
             <div class="wb-header">
-                <span class="wb-brand">BMMS</span>
+                <span class="wb-brand" title="Board Minutes and Meeting Software">BMMS</span>
                 <div id="divMenu" class="wb-nav">
                     <uc1:MenuUserControl ID="MenuUserControl1" runat="server"></uc1:MenuUserControl>
                 </div>
