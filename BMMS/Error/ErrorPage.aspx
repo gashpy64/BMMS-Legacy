@@ -15,15 +15,7 @@
                     </div>
                     <%-- Fixed text only (step E2): no exception message, nothing taken from the address --%>
                     <div class="divRowAlignCenter">
-                        <asp:Label ID="Label1" runat="server" Text="This action could not be completed because of an error on the server. The error is in the error log. Go back, then check what was saved before you try again."></asp:Label>
-                    </div>
-                    <div class="divRowSpace">
-                    </div>
-                    <div class="divRowSpace">
-                    </div>
-                    <div class="divRowAlignCenter">
-                        <asp:Label ID="lblBack" runat="server" Text="Use Exit to return to the previous page."
-                            SkinID="lblErrorpage"></asp:Label>
+                        <asp:Label ID="Label1" runat="server" Text="This action could not be completed because of an error on the server. The error is in the error log. Use Exit to return to the page, and check what was saved before you try again."></asp:Label>
                     </div>
                     <div class="divRowSpace">
                     </div>

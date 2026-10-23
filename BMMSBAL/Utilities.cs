@@ -39,11 +39,59 @@ namespace BMMSBAL
 
         #region GoToErrPage
         // The error page shows a fixed text only (step E2): no exception message in the session and no text in
-        // the address; the exception is in the error log.
+        // the address; the exception is in the error log. Its Exit button returns to the page that failed
+        // (Session["ErrorReturnPage"], step E2b).
         public static void GoToErrPage(string ClassName, string MethodName, Exception ErrMsg)
         {
             WriteErrorLog(ClassName, MethodName, DescribeForLog(ErrMsg));
+            RememberErrorReturnPage();
             HttpContext.Current.Response.Redirect(@"~/Error/ErrorPage.aspx", false);
+        }
+        #endregion
+
+        #region ErrorReturnPage
+        // The page Exit on Error/ErrorPage.aspx returns to (step E2b): the app-relative path of the page that
+        // failed plus its original query string (~/Report/Reports.aspx?rc=minutes); no error text. Exit no longer
+        // uses Session["PageURL"], which can be stale or (Department) wrong.
+        public const string ErrorReturnPageKey = "ErrorReturnPage";
+
+        // Stored only for a normal .aspx page; any other request clears it, so Exit goes to the Dashboard
+        private static void RememberErrorReturnPage()
+        {
+            try
+            {
+                HttpContext context = HttpContext.Current;
+                if (context.Session == null)
+                    return;
+
+                string path = context.Request.AppRelativeCurrentExecutionFilePath;
+                if (IsReturnablePage(path))
+                    context.Session[ErrorReturnPageKey] = path + context.Request.Url.Query;
+                else
+                    context.Session.Remove(ErrorReturnPageKey);
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        // A page Exit may return to: starts with ~/, a non-empty file name ending in .aspx, never the error page,
+        // and nothing that could point to another site (// or \ or :). The error page also checks that the file
+        // exists. AppRelativePath is without the query string.
+        public static bool IsReturnablePage(string AppRelativePath)
+        {
+            if (string.IsNullOrEmpty(AppRelativePath) || !AppRelativePath.StartsWith("~/", StringComparison.Ordinal))
+                return false;
+
+            string rest = AppRelativePath.Substring(2);
+            if (rest.Contains("//") || rest.Contains("\\") || rest.Contains(":") || rest.StartsWith("/", StringComparison.Ordinal))
+                return false;
+
+            string fileName = rest.Substring(rest.LastIndexOf('/') + 1);
+            if (fileName.Length <= ".aspx".Length || !fileName.EndsWith(".aspx", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            return !string.Equals(AppRelativePath, "~/Error/ErrorPage.aspx", StringComparison.OrdinalIgnoreCase);
         }
         #endregion
 

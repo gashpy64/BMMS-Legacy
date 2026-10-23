@@ -34,9 +34,10 @@ namespace BMMS
         }
 
         #region Application_Error
-        // The text of the safe error page (step E2); the guarded pages' Error/ErrorPage.aspx says the same
+        // The text of the safe error page (step E2, E2b); the guarded pages' Error/ErrorPage.aspx starts with the
+        // same sentence
         private const string SafeErrorText = "This action could not be completed because of an error on the server. "
-            + "The error is in the error log. Go back, then check what was saved before you try again.";
+            + "The error is in the error log. Open the page again and check what was saved before you try again.";
 
         // Step E2: an unhandled error that reaches the application (a page that posts back in full, an error
         // before the page starts such as request validation, a dangerous URL path with HTTP 400) is written once
@@ -103,13 +104,26 @@ namespace BMMS
                 }
                 else
                 {
+                    // "Open the page again": the same path with a normal GET, no query string (step E2b); no link
+                    // for a dangerous URL path (400), for the error page itself (it would point at itself), and
+                    // for a path that could point to another site (//, \)
+                    string openAgain = string.Empty;
+                    string path = context.Request.Path;
+                    bool isErrorPage = string.Equals(context.Request.AppRelativeCurrentExecutionFilePath,
+                        "~/Error/ErrorPage.aspx", StringComparison.OrdinalIgnoreCase);
+                    if (status != 400 && !isErrorPage && !string.IsNullOrEmpty(path) && path.StartsWith("/", StringComparison.Ordinal)
+                        && !path.StartsWith("//", StringComparison.Ordinal) && path.IndexOf('\\') < 0)
+                        openAgain = "<a href=\"" + HttpUtility.HtmlAttributeEncode(HttpUtility.UrlPathEncode(path))
+                            + "\">Open the page again</a> | ";
+
                     response.ContentType = "text/html";
                     response.Write(
                         "<!DOCTYPE html><html><head><meta charset=\"utf-8\" /><title>BMMS - Error</title></head>" +
                         "<body style=\"font-family:Arial,sans-serif;margin:40px\">" +
                         "<h3>Error</h3>" +
                         "<p>" + SafeErrorText + "</p>" +
-                        "<p><a href=\"" + VirtualPathUtility.ToAbsolute("~/DashBoard/DashBoard.aspx") + "\">Back to home</a></p>" +
+                        "<p>" + openAgain +
+                        "<a href=\"" + VirtualPathUtility.ToAbsolute("~/DashBoard/DashBoard.aspx") + "\">Back to home</a></p>" +
                         "</body></html>");
                 }
 
