@@ -47,24 +47,6 @@ namespace BMMS.Error {
         protected global::System.Web.UI.WebControls.Label Label1;
         
         /// <summary>
-        /// lblMsg1 control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblMsg1;
-        
-        /// <summary>
-        /// lblError control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblError;
-        
-        /// <summary>
         /// lblBack control.
         /// </summary>
         /// <remarks>
@@ -72,15 +54,6 @@ namespace BMMS.Error {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Label lblBack;
-        
-        /// <summary>
-        /// lblErrDesc control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblErrDesc;
         
         /// <summary>
         /// btnExit control.

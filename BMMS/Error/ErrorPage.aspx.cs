@@ -16,24 +16,10 @@ namespace BMMS.Error
     {
         private string className = "ErrorPage";
 
+        // The page shows a fixed text only (step E2): it no longer reads the "Error" query string or
+        // Session["ErrMsg"], so no exception text and nothing from the address reaches the browser
         protected void Page_Load(object sender, EventArgs e)
         {
-            try
-            {
-                string error = "";
-                if (Request.QueryString["Error"] != null)
-                {
-                    error = Request.QueryString["Error"].ToString();
-                    if (error != null)
-                        lblError.Text = error;
-                    if (Session["ErrMsg"] != null)
-                        lblErrDesc.Text = Session["ErrMsg"].ToString();
-                }
-            }
-            catch (Exception ex)
-            {
-                Utilities.GoToErrPage(className, "Page_Load", ex);
-            }
         }
 
         #region btnExit_Click

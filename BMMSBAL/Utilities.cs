@@ -38,12 +38,85 @@ namespace BMMSBAL
         #endregion
 
         #region GoToErrPage
+        // The error page shows a fixed text only (step E2): no exception message in the session and no text in
+        // the address; the exception is in the error log.
         public static void GoToErrPage(string ClassName, string MethodName, Exception ErrMsg)
         {
-            WriteErrorLog(ClassName, MethodName, ErrMsg.ToString());
-            HttpContext.Current.Session["ErrMsg"] = ErrMsg.Message;
-            string _ErrMsg = Common.GetAppSetting("CommonErrMsg");
-            HttpContext.Current.Response.Redirect(@"~/Error/ErrorPage.aspx?Error=" + _ErrMsg, false);
+            WriteErrorLog(ClassName, MethodName, DescribeForLog(ErrMsg));
+            HttpContext.Current.Response.Redirect(@"~/Error/ErrorPage.aspx", false);
+        }
+        #endregion
+
+        #region LogUnhandledError
+        // Set on HttpContext.Items once an unhandled error of the request is in the log, so Application_Error
+        // does not write a second entry for an error the E1 handler already logged (step E2)
+        public const string ErrorLoggedKey = "BMMS.ErrorLogged";
+
+        // An unhandled error (Application_Error, step E2; the E1 handler): one error log entry with the exception,
+        // the page path (no query string) and the user id when a session exists. Form values (passwords, the mail
+        // password) are never written; a request-validation value is replaced (DescribeForLog). Never throws:
+        // it must not replace the error it reports.
+        public static void LogUnhandledError(HttpContext Context, string ClassName, string MethodName, Exception Error)
+        {
+            try
+            {
+                string userId = (Context.Session != null && Context.Session["UserId"] != null)
+                    ? Context.Session["UserId"].ToString() : "(none)";
+
+                WriteErrorLog(ClassName, MethodName,
+                    DescribeForLog(Error) + " | Page: " + Context.Request.Path + " | UserId: " + userId);
+
+                Context.Items[ErrorLoggedKey] = true;
+            }
+            catch (Exception)
+            {
+            }
+        }
+        #endregion
+
+        #region DescribeForLog
+        public const string RedactedValue = "(value not logged)";
+
+        // The text written to the error log for an exception: Exception.ToString(), except when request
+        // validation refused a value. Its message quotes what the user typed
+        // (... from the client (ctl00$ContentPlaceHolder1$txtUserName="<x").), so each message of the chain keeps
+        // the field name and loses the value, and only types, messages and stack traces are written (step E2).
+        private static string DescribeForLog(Exception Error)
+        {
+            if (Error == null)
+                return "(no exception)";
+
+            bool validation = false;
+            for (Exception e = Error; e != null; e = e.InnerException)
+                if (e is HttpRequestValidationException)
+                    validation = true;
+
+            if (!validation)
+                return Error.ToString();
+
+            StringBuilder text = new StringBuilder();
+            for (Exception e = Error; e != null; e = e.InnerException)
+            {
+                if (text.Length > 0)
+                    text.Append(Environment.NewLine + " ---> ");
+                text.Append(e.GetType().FullName + ": " + RedactValidationValue(e.Message));
+                if (e.StackTrace != null)
+                    text.Append(Environment.NewLine + e.StackTrace);
+            }
+            return text.ToString();
+        }
+
+        // "... from the client (name="value")." -> "... from the client (name="(value not logged)")."
+        private static string RedactValidationValue(string Message)
+        {
+            if (Message == null)
+                return string.Empty;
+
+            int start = Message.IndexOf("=\"", StringComparison.Ordinal);
+            if (start < 0)
+                return Message;
+
+            return Message.Substring(0, start + 2) + RedactedValue + "\").";
         }
         #endregion
 
@@ -53,22 +126,16 @@ namespace BMMSBAL
 
         // An unhandled error during an UpdatePanel postback (OnAsyncPostBackError of the masters and the login
         // page, step E1): one error log entry with the exception, the page path (no query string), the control
-        // that posted and the user id. Form values (passwords, the mail password) are never written, and the
-        // exception text goes to the log only. Never throws: it must not replace the error it reports.
+        // that posted and the user id (LogUnhandledError: no form values, request-validation values replaced).
+        // The exception text goes to the log only. Never throws: it must not replace the error it reports.
         public static void LogAsyncPostBackError(System.Web.UI.Page Page, Exception Error, string SourceElementId)
         {
             try
             {
-                HttpContext context = HttpContext.Current;
-                string userId = (context.Session != null && context.Session["UserId"] != null)
-                    ? context.Session["UserId"].ToString() : "(none)";
-
                 // The code-behind class (BMMS.Master.Committee), not the generated ASP.* class
                 string className = Page.GetType().BaseType.FullName;
 
-                WriteErrorLog(className, "AsyncPostBack " + (SourceElementId ?? string.Empty),
-                    (Error == null ? "(no exception)" : Error.ToString())
-                    + " | Page: " + context.Request.Path + " | UserId: " + userId);
+                LogUnhandledError(HttpContext.Current, className, "AsyncPostBack " + (SourceElementId ?? string.Empty), Error);
             }
             catch (Exception)
             {

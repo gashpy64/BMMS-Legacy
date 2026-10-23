@@ -13,36 +13,17 @@
                     </div>
                     <div class="divRowSpace">
                     </div>
+                    <%-- Fixed text only (step E2): no exception message, nothing taken from the address --%>
                     <div class="divRowAlignCenter">
-                        <asp:Label ID="Label1" runat="server" Text="An unexpected error has raised!"></asp:Label>
-                    </div>
-                    <div class="divRowSpace">
-                    </div>
-                    <div class="divRowSpace">
-                    </div>
-                    <div class="divRowAlignCenter">
-                        <asp:Label ID="lblMsg1" runat="server" Text="Please note down the below message and Forward it to the Technical Support Team"></asp:Label>
-                    </div>
-                    <div class="divRowSpace">
-                    </div>
-                    <div class="divRowSpace">
-                    </div>
-                    <div class="divRowAlignCenter" style="font-weight: bold;">
-                        <asp:Label ID="lblError" runat="server" ForeColor="Red" Font-Names="Verdana, Arial, Helvetica, sans-serif"
-                            Font-Size="medium" />
-                    </div>
-                    <div class="divRowSpace">
+                        <asp:Label ID="Label1" runat="server" Text="This action could not be completed because of an error on the server. The error is in the error log. Go back, then check what was saved before you try again."></asp:Label>
                     </div>
                     <div class="divRowSpace">
                     </div>
                     <div class="divRowSpace">
                     </div>
                     <div class="divRowAlignCenter">
-                        <asp:Label ID="lblBack" runat="server" Text="Please Click Exit to go to the Previous Screen <br /> Or <br /> Click on the menu to go Through the next Transaction"
+                        <asp:Label ID="lblBack" runat="server" Text="Use Exit to return to the previous page."
                             SkinID="lblErrorpage"></asp:Label>
-                    </div>
-                    <div class="divRowAlignCenter" style="color: #fee2c3; font-size: xx-small">
-                        <asp:Label ID="lblErrDesc" runat="server" Text="-"></asp:Label>
                     </div>
                     <div class="divRowSpace">
                     </div>
