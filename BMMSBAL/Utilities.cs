@@ -47,6 +47,35 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region LogAsyncPostBackError
+        // What the browser gets instead of the exception text (ScriptManager.AsyncPostBackErrorMessage, step E1)
+        public const string AsyncPostBackErrorMessage = "The action could not be completed. The error is in the error log.";
+
+        // An unhandled error during an UpdatePanel postback (OnAsyncPostBackError of the masters and the login
+        // page, step E1): one error log entry with the exception, the page path (no query string), the control
+        // that posted and the user id. Form values (passwords, the mail password) are never written, and the
+        // exception text goes to the log only. Never throws: it must not replace the error it reports.
+        public static void LogAsyncPostBackError(System.Web.UI.Page Page, Exception Error, string SourceElementId)
+        {
+            try
+            {
+                HttpContext context = HttpContext.Current;
+                string userId = (context.Session != null && context.Session["UserId"] != null)
+                    ? context.Session["UserId"].ToString() : "(none)";
+
+                // The code-behind class (BMMS.Master.Committee), not the generated ASP.* class
+                string className = Page.GetType().BaseType.FullName;
+
+                WriteErrorLog(className, "AsyncPostBack " + (SourceElementId ?? string.Empty),
+                    (Error == null ? "(no exception)" : Error.ToString())
+                    + " | Page: " + context.Request.Path + " | UserId: " + userId);
+            }
+            catch (Exception)
+            {
+            }
+        }
+        #endregion
+
         #region WriteErrorLog
         // One writer at a time within the application: two requests can fail at the same moment
         private static readonly object ErrorLogLock = new object();

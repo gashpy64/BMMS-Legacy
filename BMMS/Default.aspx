@@ -16,9 +16,10 @@
 </head>
 <body class="wb">
     <form id="form1" runat="server">
-        <asp:ScriptManager ID="ScriptManager1" runat="server">
+        <asp:ScriptManager ID="ScriptManager1" runat="server" OnAsyncPostBackError="ScriptManager1_AsyncPostBackError">
             <Scripts>
                 <asp:ScriptReference Path="~/JScript/Validation.js" />
+                <asp:ScriptReference Path="~/JScript/AsyncPostBackError.js" />
             </Scripts>
         </asp:ScriptManager>
         <asp:UpdatePanel ID="UpdatePanel1" runat="server">
@@ -26,6 +27,8 @@
                 <div class="wb-page wb-login">
                     <h1 class="wb-h1">BMMS</h1>
                     <p class="wb-help" style="text-align: center;">Board Minutes and Meeting Software</p>
+                    <%-- A failed UpdatePanel postback (JScript/AsyncPostBackError.js, step E1) --%>
+                    <div id="wbAsyncError" class="wb-async-error" role="alert" style="display: none;"></div>
                     <div class="wb-card">
                         <div class="wb-card-header">
                             Log in</div>

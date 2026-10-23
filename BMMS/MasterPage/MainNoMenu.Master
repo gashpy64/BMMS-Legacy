@@ -21,10 +21,11 @@
 </head>
 <body class="wb">
     <form id="form1" runat="server">
-        <asp:ScriptManager ID="ScriptManager1" runat="server">
+        <asp:ScriptManager ID="ScriptManager1" runat="server" OnAsyncPostBackError="ScriptManager1_AsyncPostBackError">
             <Scripts>
                 <asp:ScriptReference Path="~/JScript/ddlevelsmenu.js" />
                 <asp:ScriptReference Path="~/JScript/Validation.js" />
+                <asp:ScriptReference Path="~/JScript/AsyncPostBackError.js" />
             </Scripts>
         </asp:ScriptManager>
         <div id="mainContainer">
@@ -42,6 +43,8 @@
                 <uc1:MenuUserControl ID="MenuUserControl1" runat="server"></uc1:MenuUserControl>
             </div>--%>
             <div id="contentArea">
+                <%-- A failed UpdatePanel postback (JScript/AsyncPostBackError.js, step E1) --%>
+                <div id="wbAsyncError" class="wb-async-error" role="alert" style="display: none;"></div>
                 <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server">
                 </asp:ContentPlaceHolder>
             </div>

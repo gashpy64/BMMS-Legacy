@@ -154,6 +154,16 @@ namespace BMMS
         }
         #endregion
 
+        #region ScriptManager1_AsyncPostBackError
+        // An unhandled error in an UpdatePanel postback: written to the error log, and the browser gets a fixed
+        // text instead of the exception (JScript/AsyncPostBackError.js shows the message bar; step E1)
+        protected void ScriptManager1_AsyncPostBackError(object sender, AsyncPostBackErrorEventArgs e)
+        {
+            ScriptManager1.AsyncPostBackErrorMessage = Utilities.AsyncPostBackErrorMessage;
+            Utilities.LogAsyncPostBackError(Page, e.Exception, ScriptManager1.AsyncPostBackSourceElementID);
+        }
+        #endregion
+
 
     }
 }

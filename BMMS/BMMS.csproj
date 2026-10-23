@@ -85,6 +85,7 @@
     <Content Include="CSS\CommonHTML.css" />
     <Content Include="Default.aspx" />
     <Content Include="JScript\Validation.js" />
+    <Content Include="JScript\AsyncPostBackError.js" />
     <Content Include="XML\PageAccess.xml" />
     <Content Include="UserControl\MenuUserControl.ascx" />
   </ItemGroup>
