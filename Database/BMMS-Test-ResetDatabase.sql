@@ -47,6 +47,21 @@
        rolled back, every table has its rows and every identity counter its
        value again (put back by the procedure itself), and the trigger is gone
 
+   Step 30 (safe SMTP default), only when BMMS-Fix-SmtpDefault-Step30.sql is
+   installed (32 checks without it, 40 with it):
+     * part 1: the mail settings are set to sample values in two rows (rolled
+       back); after the reset SMTP_Master has exactly one row, the safe
+       default (localhost, 25, no user, no password, noreply@example.invalid,
+       no Bcc)
+     * part 2: the marker in the three procedures and the reset asks the
+       helper for no result row; the forced failure leaves SMTP_Master as it
+       was before the test; spr_sys_SetSmtpDefault on an empty table writes
+       the one default row, and with a wrong database name is refused
+       (Reason 3) and changes nothing; spr_UpdateSMTPMaster on an empty table
+       inserts the row and a second save updates it (each rolled back)
+     * last: SMTP_Master rows and values are as before the test
+   The mail settings of the test copy are only compared, never shown.
+
    Result: one grid, one row per check. Status should be PASS for every row.
    The procedure's own Result row of part 1 appears as a small grid above it.
 
@@ -74,6 +89,8 @@ IF OBJECT_ID('tempdb..#Ident') IS NOT NULL DROP TABLE #Ident;
 IF OBJECT_ID('tempdb..#Counts') IS NOT NULL DROP TABLE #Counts;
 IF OBJECT_ID('tempdb..#ZZ_Step29_PutCountersBack') IS NOT NULL DROP PROCEDURE #ZZ_Step29_PutCountersBack;
 IF OBJECT_ID('tempdb..#ZZ_Step29_Changed') IS NOT NULL DROP PROCEDURE #ZZ_Step29_Changed;
+IF OBJECT_ID('tempdb..#Smtp') IS NOT NULL DROP TABLE #Smtp;
+IF OBJECT_ID('tempdb..#ZZ_Step30_Smtp') IS NOT NULL DROP PROCEDURE #ZZ_Step30_Smtp;
 
 -- A test trigger left behind by an interrupted earlier run
 IF OBJECT_ID('dbo.trg_ZZ_Step29Test_Fail', 'TR') IS NOT NULL DROP TRIGGER dbo.trg_ZZ_Step29Test_Fail;
@@ -83,6 +100,7 @@ IF OBJECT_ID('dbo.trg_ZZ_Step29Test_Fail', 'TR') IS NOT NULL DROP TRIGGER dbo.tr
 CREATE TABLE #T (TestNo INT IDENTITY(1,1), Test VARCHAR(120), Expected VARCHAR(50), Actual VARCHAR(250));
 CREATE TABLE #Ident (TableName SYSNAME, SavedValue BIGINT NULL, SeedValue BIGINT, IncrementValue BIGINT);
 CREATE TABLE #Counts (TableName SYSNAME, RowsBefore INT, RowsAfter INT NULL);
+CREATE TABLE #Smtp (RowsBefore INT, SnapshotBefore VARCHAR(MAX));
 
 DECLARE @Sql NVARCHAR(MAX);
 DECLARE @TableName SYSNAME;
@@ -203,6 +221,42 @@ END
 GO
 
 -------------------------------------------------------------------------------
+-- Step 30: the mail settings as one string, to compare (never shown): per row
+-- server|port|user|password|from|bcc, NULL as (null), rows sorted (SMTP_Master
+-- has no key) and joined by #
+-------------------------------------------------------------------------------
+CREATE PROCEDURE #ZZ_Step30_Smtp
+    @Rows INT OUTPUT,
+    @Snapshot VARCHAR(MAX) OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT @Rows = COUNT(*) FROM dbo.SMTP_Master;
+
+    SELECT @Snapshot = ISNULL(STUFF((
+        SELECT '#' + r.Line
+        FROM (SELECT ISNULL(RTRIM(CAST(SMTPServer AS VARCHAR(MAX))), '(null)') + '|'
+                   + ISNULL(RTRIM(CAST(SMTPServerPort AS VARCHAR(MAX))), '(null)') + '|'
+                   + ISNULL(RTRIM(CAST(UserName AS VARCHAR(MAX))), '(null)') + '|'
+                   + ISNULL(RTRIM(CAST([Password] AS VARCHAR(MAX))), '(null)') + '|'
+                   + ISNULL(RTRIM(CAST(FromMailId AS VARCHAR(MAX))), '(null)') + '|'
+                   + ISNULL(RTRIM(CAST(Bcc AS VARCHAR(MAX))), '(null)') AS Line
+              FROM dbo.SMTP_Master) r
+        ORDER BY r.Line
+        FOR XML PATH(''), TYPE).value('.', 'VARCHAR(MAX)'), 1, 1, ''), '');
+END
+GO
+
+-- Step 30: the mail settings before the test
+DECLARE @SmtpRows INT;
+DECLARE @SmtpSnapshot VARCHAR(MAX);
+
+EXEC #ZZ_Step30_Smtp @Rows = @SmtpRows OUTPUT, @Snapshot = @SmtpSnapshot OUTPUT;
+INSERT INTO #Smtp (RowsBefore, SnapshotBefore) VALUES (@SmtpRows, @SmtpSnapshot);
+GO
+
+-------------------------------------------------------------------------------
 -- Part 1: the reset, inside a transaction that is rolled back
 -------------------------------------------------------------------------------
 -- Checks made inside the transaction go into a table variable (it survives
@@ -229,6 +283,12 @@ DECLARE @ResetResult INT;
 DECLARE @ResetReason INT;
 DECLARE @AuditAfterReset VARCHAR(250) = 'not read';
 DECLARE @SendMailAfterReset VARCHAR(12) = 'not read';
+
+-- Step 30: the reset replaces the mail settings by the safe default
+DECLARE @Step30 INT = CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_sys_ResetDatabase')), '') LIKE '%SmtpDefault-Step30%' THEN 1 ELSE 0 END;
+DECLARE @SmtpDefault VARCHAR(100) = 'localhost|25|||noreply@example.invalid|';
+DECLARE @SmtpRowsAfterReset INT;
+DECLARE @SmtpAfterReset VARCHAR(MAX);
 
 DECLARE @KeyCols TABLE (TableName SYSNAME, ColumnName SYSNAME);
 
@@ -257,6 +317,15 @@ BEGIN TRY
         EXEC sp_executesql @OrgSql, N'@s VARCHAR(MAX) OUTPUT', @s = @OrgBefore OUTPUT;
     END
 
+    -- Step 30: sample settings in two rows (rolled back); the reset must leave one default row
+    IF (@Step30 = 1)
+    BEGIN
+        UPDATE SMTP_Master SET SMTPServer = 'smtp.sample.invalid', SMTPServerPort = '587', UserName = 'sampleuser',
+               [Password] = 'sample-not-a-secret', FromMailId = 'sample@example.invalid', Bcc = 'copy@example.invalid';
+        INSERT INTO SMTP_Master (SMTPServer, SMTPServerPort, UserName, [Password], FromMailId, Bcc)
+        VALUES ('smtp2.sample.invalid', '2525', 'sampleuser2', 'sample-not-a-secret', 'sample2@example.invalid', '');
+    END
+
     EXEC spr_sys_ResetDatabase @ActingUserId = @AdminId, @ConfirmDatabaseName = @TypedName,
          @Result = @ResetResult OUTPUT, @Reason = @ResetReason OUTPUT;
 
@@ -268,6 +337,10 @@ BEGIN TRY
     FROM Audit_Trail_Master
     WHERE Audit_Table = 'Database' AND Field_Name = 'Reset';
     SELECT @SendMailAfterReset = CAST(COUNT(*) AS VARCHAR(12)) FROM Audit_Trail_SendMail;
+
+    -- Step 30
+    IF (@Step30 = 1)
+        EXEC #ZZ_Step30_Smtp @Rows = @SmtpRowsAfterReset OUTPUT, @Snapshot = @SmtpAfterReset OUTPUT;
 
     INSERT INTO @T SELECT 'Default users re-created', '4', CAST(COUNT(*) AS VARCHAR(12)) FROM Users;
 
@@ -401,6 +474,17 @@ BEGIN TRY
            LEFT('1 row, user 1, Reset by ' + ISNULL(@AdminLogin, '?'), 50), LEFT(@AuditAfterReset, 250);
     INSERT INTO @T SELECT 'After reset: Audit_Trail_SendMail is empty [step 29]', '0', @SendMailAfterReset;
 
+    -- Step 30
+    IF (@Step30 = 1)
+    BEGIN
+        INSERT INTO @T SELECT 'After reset: SMTP_Master has exactly one row (two sample rows before) [step 30]', '1',
+               ISNULL(CAST(@SmtpRowsAfterReset AS VARCHAR(12)), 'not read');
+        INSERT INTO @T SELECT 'After reset: the mail settings are the safe default (server|port|user|password|from|bcc) [step 30]', @SmtpDefault,
+               CASE WHEN @SmtpAfterReset COLLATE Latin1_General_BIN2 = @SmtpDefault COLLATE Latin1_General_BIN2 THEN @SmtpDefault
+                    WHEN @SmtpAfterReset IS NULL THEN 'not read'
+                    ELSE 'other values' END;
+    END
+
 END TRY
 BEGIN CATCH
     INSERT INTO @T VALUES ('Unexpected error - checks after this point did not run', 'No error',
@@ -443,6 +527,17 @@ DECLARE @ErrMsg NVARCHAR(400);
 DECLARE @FailResult INT;
 DECLARE @FailReason INT;
 
+-- Step 30
+DECLARE @Step30 INT = CASE WHEN @Def LIKE '%SmtpDefault-Step30%' THEN 1 ELSE 0 END;
+DECLARE @SmtpDefault VARCHAR(100) = 'localhost|25|||noreply@example.invalid|';
+DECLARE @SmtpBefore VARCHAR(MAX) = (SELECT TOP 1 SnapshotBefore FROM #Smtp);
+DECLARE @SmtpRows INT;
+DECLARE @SmtpRows2 INT;
+DECLARE @SmtpSnap VARCHAR(MAX);
+DECLARE @SmtpSnap2 VARCHAR(MAX);
+DECLARE @HelperResult INT;
+DECLARE @HelperReason INT;
+
 -- FK#5-ManagerId-NULL, SystemAccount3-Step18, MemberTypes-Step21, ResetSafe-Step29, XACT_ABORT, no App_Setting
 INSERT INTO @T SELECT 'Procedure text: texts of steps 3, 18, 21 and 29, XACT_ABORT, no App_Setting [step 29]',
        '1 1 1 1 1 0',
@@ -452,6 +547,16 @@ INSERT INTO @T SELECT 'Procedure text: texts of steps 3, 18, 21 and 29, XACT_ABO
      + CASE WHEN @Def LIKE '%ResetSafe-Step29%' THEN '1' ELSE '0' END + ' '
      + CASE WHEN @Def LIKE '%SET XACT_ABORT ON%' THEN '1' ELSE '0' END + ' '
      + CASE WHEN @Def LIKE '%App_Setting%' THEN '1' ELSE '0' END;
+
+-- Step 30: the marker in the reset, the helper and the save; the reset asks the helper for no result row
+-- (the page reads the reset's own row)
+IF (@Step30 = 1)
+    INSERT INTO @T SELECT 'Procedure text: SmtpDefault-Step30 in reset, helper and save; no helper row in the reset [step 30]',
+           '1 1 1 1',
+           CASE WHEN @Def LIKE '%SmtpDefault-Step30%' THEN '1' ELSE '0' END + ' '
+         + CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_sys_SetSmtpDefault')), '') LIKE '%SmtpDefault-Step30%' THEN '1' ELSE '0' END + ' '
+         + CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateSMTPMaster')), '') LIKE '%SmtpDefault-Step30%' THEN '1' ELSE '0' END + ' '
+         + CASE WHEN @Def LIKE '%@ReturnRow = 0%' THEN '1' ELSE '0' END;
 
 -- Refusals: inside a transaction that is rolled back, in case one of them were to clear anything
 BEGIN TRANSACTION;
@@ -533,6 +638,68 @@ INSERT INTO @T SELECT 'Forced failure: identity counters put back by the procedu
 INSERT INTO @T SELECT 'Forced failure: the test trigger is gone [step 29]', '0',
        CASE WHEN OBJECT_ID('dbo.trg_ZZ_Step29Test_Fail', 'TR') IS NULL THEN '0' ELSE '1' END;
 
+IF (@Step30 = 1)
+BEGIN
+    -- The reset writes the default before the seeds, so the failing Committee insert comes after it
+    EXEC #ZZ_Step30_Smtp @Rows = @SmtpRows OUTPUT, @Snapshot = @SmtpSnap OUTPUT;
+    INSERT INTO @T SELECT 'Forced failure: SMTP_Master rows and values as before the test [step 30]', 'same',
+           CASE WHEN @SmtpSnap COLLATE Latin1_General_BIN2 = @SmtpBefore COLLATE Latin1_General_BIN2 THEN 'same' ELSE 'changed' END;
+
+    -- The helper and the SMTP page save, inside a transaction that is rolled back
+    SET @ErrNo = 0;
+    SET @ErrMsg = N'';
+
+    BEGIN TRANSACTION;
+
+    BEGIN TRY
+        -- The helper on an empty table: one default row
+        DELETE FROM SMTP_Master;
+        EXEC spr_sys_SetSmtpDefault @ConfirmDatabaseName = @DbName, @ReturnRow = 0,
+             @Result = @HelperResult OUTPUT, @Reason = @HelperReason OUTPUT;
+        EXEC #ZZ_Step30_Smtp @Rows = @SmtpRows OUTPUT, @Snapshot = @SmtpSnap OUTPUT;
+        INSERT INTO @T SELECT 'spr_sys_SetSmtpDefault on an empty table (Result, rows, values) [step 30]', 'Result 1, 1 row, default',
+               'Result ' + ISNULL(CAST(@HelperResult AS VARCHAR(4)), 'NULL') + ', ' + CAST(@SmtpRows AS VARCHAR(12)) + ' row, '
+             + CASE WHEN @SmtpSnap COLLATE Latin1_General_BIN2 = @SmtpDefault COLLATE Latin1_General_BIN2 THEN 'default' ELSE 'other values' END;
+
+        -- A wrong database name: refused with its own result row, nothing changed
+        UPDATE SMTP_Master SET SMTPServer = 'smtp.sample.invalid';
+        EXEC #ZZ_Step30_Smtp @Rows = @SmtpRows OUTPUT, @Snapshot = @SmtpSnap OUTPUT;
+        DELETE FROM @R;
+        INSERT INTO @R EXEC spr_sys_SetSmtpDefault @ConfirmDatabaseName = @WrongName;
+        EXEC #ZZ_Step30_Smtp @Rows = @SmtpRows2 OUTPUT, @Snapshot = @SmtpSnap2 OUTPUT;
+        INSERT INTO @T SELECT 'spr_sys_SetSmtpDefault with a wrong database name: refused, nothing changed [step 30]',
+               'Result 0, Reason 3, DatabaseName, same',
+               'Result ' + CAST(Result AS VARCHAR(4)) + ', Reason ' + CAST(Reason AS VARCHAR(4)) + ', ' + ISNULL(CAST(ReasonDetail AS VARCHAR(100)), '') + ', '
+             + CASE WHEN @SmtpRows2 = @SmtpRows AND @SmtpSnap2 COLLATE Latin1_General_BIN2 = @SmtpSnap COLLATE Latin1_General_BIN2 THEN 'same' ELSE 'changed' END
+        FROM @R;
+
+        -- The SMTP page save on an empty table inserts the row; a second save updates that row
+        DELETE FROM SMTP_Master;
+        EXEC spr_UpdateSMTPMaster @SMTPServer = 'smtp.sample.invalid', @SMTPServerPort = '2525', @UserName = '', @Password = '',
+             @FromMailId = 'sample@example.invalid', @Bcc = '';
+        EXEC #ZZ_Step30_Smtp @Rows = @SmtpRows OUTPUT, @Snapshot = @SmtpSnap OUTPUT;
+        EXEC spr_UpdateSMTPMaster @SMTPServer = 'localhost', @SMTPServerPort = '25', @UserName = '', @Password = '',
+             @FromMailId = 'noreply@example.invalid', @Bcc = '';
+        EXEC #ZZ_Step30_Smtp @Rows = @SmtpRows2 OUTPUT, @Snapshot = @SmtpSnap2 OUTPUT;
+        INSERT INTO @T SELECT 'spr_UpdateSMTPMaster: an empty table gets one row, a second save updates it (rows, rows) [step 30]',
+               '1 1, saved',
+               CAST(@SmtpRows AS VARCHAR(12)) + ' ' + CAST(@SmtpRows2 AS VARCHAR(12)) + ', '
+             + CASE WHEN @SmtpSnap COLLATE Latin1_General_BIN2 = 'smtp.sample.invalid|2525|||sample@example.invalid|'
+                     AND @SmtpSnap2 COLLATE Latin1_General_BIN2 = @SmtpDefault COLLATE Latin1_General_BIN2 THEN 'saved' ELSE 'other values' END;
+    END TRY
+    BEGIN CATCH
+        SET @ErrNo = ERROR_NUMBER();
+        SET @ErrMsg = LEFT(ERROR_MESSAGE(), 400);
+    END CATCH
+
+    IF (@@TRANCOUNT > 0)
+        ROLLBACK TRANSACTION;
+
+    IF (@ErrNo <> 0)
+        INSERT INTO @T VALUES ('Unexpected error in the step 30 checks - checks after this point did not run', 'No error',
+                               'Error ' + CAST(@ErrNo AS VARCHAR(12)) + ': ' + LEFT(@ErrMsg, 220));
+END
+
 INSERT INTO #T (Test, Expected, Actual)
 SELECT Test, Expected, Actual FROM @T ORDER BY TestNo;
 GO
@@ -576,6 +743,20 @@ FROM #Ident i
 WHERE i.SavedValue IS NOT NULL
 AND CAST(IDENT_CURRENT('dbo.' + QUOTENAME(i.TableName)) AS BIGINT) <> i.SavedValue;
 
+-- Step 30: the mail settings of the test copy are as before (compared, not shown)
+DECLARE @SmtpRows INT;
+DECLARE @SmtpSnapshot VARCHAR(MAX);
+
+IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_sys_ResetDatabase')), '') LIKE '%SmtpDefault-Step30%')
+BEGIN
+    EXEC #ZZ_Step30_Smtp @Rows = @SmtpRows OUTPUT, @Snapshot = @SmtpSnapshot OUTPUT;
+    INSERT INTO #T
+    SELECT 'Test copy restored: SMTP_Master rows and values unchanged [step 30]', 'same',
+           CASE WHEN @SmtpRows = s.RowsBefore
+                 AND @SmtpSnapshot COLLATE Latin1_General_BIN2 = s.SnapshotBefore COLLATE Latin1_General_BIN2 THEN 'same' ELSE 'changed' END
+    FROM #Smtp s;
+END
+
 SELECT TestNo, Test, Expected, Actual,
        CASE WHEN Actual = 'SKIPPED' THEN 'SKIPPED'
             WHEN Actual = Expected THEN 'PASS'
@@ -591,8 +772,10 @@ FROM #T;
 DROP TABLE #T;
 DROP TABLE #Ident;
 DROP TABLE #Counts;
+DROP TABLE #Smtp;
 DROP PROCEDURE #ZZ_Step29_PutCountersBack;
 DROP PROCEDURE #ZZ_Step29_Changed;
+DROP PROCEDURE #ZZ_Step30_Smtp;
 GO
 
 SET NOEXEC OFF;

@@ -58,6 +58,11 @@
    sends the new parameters; until then the older page's Reset fails with
    "expects parameter" and nothing is cleared.
 
+   Step 30 (BMMS-Fix-SmtpDefault-Step30.sql) replaces this procedure with the
+   same text plus the safe SMTP default. If this script is re-run after step
+   30, the reset keeps the mail settings again: run step 30 again afterwards,
+   as the last step.
+
    It has no USE line: select the database in SSMS first (the test copy, then
    BMMS). It stops if the current database name does not start with "BMMS".
 

@@ -19,8 +19,10 @@
    This script only replaces the procedure. It does NOT run it and changes no
    data. Remember that executing the procedure wipes the whole database.
 
-   Step 29 (BMMS-Fix-ResetDatabase-Step29.sql) replaces this procedure; if
-   this script is re-run, run steps 18, 21 and 29 again afterwards.
+   Step 29 (BMMS-Fix-ResetDatabase-Step29.sql) replaces this procedure, and
+   step 30 (BMMS-Fix-SmtpDefault-Step30.sql) replaces step 29's; if this
+   script is re-run, run steps 18, 21 and 30 again afterwards (step 30
+   contains the step 29 text).
 
    It has no USE line (removed in step 29): select the database in SSMS first
    (the test copy, then BMMS). It stops if the current database name does not

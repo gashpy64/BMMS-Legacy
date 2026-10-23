@@ -1,5 +1,5 @@
 /* ============================================================================
-   BMMS - Which numbered steps (README run order 1 to 24 and 29; step 23 is installed after step 28, step 29 last) are installed
+   BMMS - Which numbered steps (README run order 1 to 24, 29 and 30; step 23 is installed after step 28, steps 29 and 30 last) are installed
    ----------------------------------------------------------------------------
    READ ONLY. It reads object definitions and constraint names; it creates,
    changes and deletes nothing, and it can run on BMMS as well as on a copy.
@@ -45,7 +45,14 @@
    re-run afterwards, all three step 29 markers are gone and step 29 reads
    Missing: run step 29 again, as the last step. A database that has the
    first text of step 29 (before the new default password) reads Partly,
-   2 of 3 (DefaultPassword-Step29 missing): run step 29 again.
+   2 of 3 (DefaultPassword-Step29 missing): run step 29 again (or step 30,
+   which contains it). Step 30 replaces spr_sys_ResetDatabase of step 29 and
+   keeps the texts of steps 3, 18, 21 and 29 in it, so those still read
+   Installed; it also adds spr_sys_SetSmtpDefault and replaces the legacy
+   spr_UpdateSMTPMaster (3 markers). If step 3, 18, 21 or 29 is re-run
+   afterwards, step 30 reads Partly, 2 of 3 (and after step 3, 18 or 21 step
+   29 reads Missing): run step 30 again, as the last step; it restores the
+   step 29 text too.
 
    It has no USE line: select the database in SSMS first. It stops if the
    current database name does not start with "BMMS".
@@ -253,6 +260,12 @@ INSERT INTO @M VALUES
 (29, 'spr_sys_ResetDatabase (DefaultPassword-Step29)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_sys_ResetDatabase')), '') LIKE '%DefaultPassword-Step29%' THEN 1 ELSE 0 END),
 (29, 'spr_sys_ResetDatabase has @ConfirmDatabaseName', CASE WHEN EXISTS (SELECT 1 FROM sys.parameters WHERE object_id = OBJECT_ID('dbo.spr_sys_ResetDatabase') AND name = '@ConfirmDatabaseName') THEN 1 ELSE 0 END);
 
+-- 30. BMMS-Fix-SmtpDefault-Step30.sql, installed last (re-running step 3, 18, 21 or 29 replaces spr_sys_ResetDatabase)
+INSERT INTO @M VALUES
+(30, 'spr_sys_ResetDatabase (SmtpDefault-Step30)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_sys_ResetDatabase')), '') LIKE '%SmtpDefault-Step30%' THEN 1 ELSE 0 END),
+(30, 'spr_sys_SetSmtpDefault (SmtpDefault-Step30)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_sys_SetSmtpDefault')), '') LIKE '%SmtpDefault-Step30%' THEN 1 ELSE 0 END),
+(30, 'spr_UpdateSMTPMaster (SmtpDefault-Step30)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateSMTPMaster')), '') LIKE '%SmtpDefault-Step30%' THEN 1 ELSE 0 END);
+
 DECLARE @Steps TABLE (Step INT, Script VARCHAR(60), IfPartly VARCHAR(200));
 INSERT INTO @Steps VALUES
 (1, 'BMMS-Fix-Login-Procedures.sql', ''),
@@ -266,20 +279,21 @@ INSERT INTO @Steps VALUES
 (9, 'BMMS-Add-ForeignKeys-Step4.sql', ''),
 (10, 'BMMS-Fix-UserDelete-Procedure.sql', 'step 10 or 13 replaced: run step 13 again, then 14'),
 (11, 'BMMS-Add-ForeignKeys-Step5.sql', 'some keys refused: run BMMS-Check-Orphans.sql, then step 11 again'),
-(12, 'BMMS-Fix-Attendance-FutureMeeting.sql', 'run step 12 again, then steps 15, 16, 17, 18, 20, 21, 24, 23 and 29'),
-(13, 'BMMS-Fix-UserProtection-Stage1.sql', 'step 2, 6 or 10 was re-run: run step 13 again, then 14, 18, 20, 21, 24 and 29'),
-(14, 'BMMS-Fix-UserStatus-Stage2a.sql', 'step 13 was re-run: run step 14 again, then 18, 24 and 29'),
-(15, 'BMMS-Fix-MeetingLocks.sql', 'step 6, 8 or 12 was re-run: run step 15 again, then steps 16, 17, 18, 20, 21, 24, 23 and 29'),
-(16, 'BMMS-Fix-MeetingLocks-Step16.sql', 'step 6, 12 or 15 was re-run: run step 16 again, then steps 17, 18, 20, 24, 23 and 29'),
-(17, 'BMMS-Fix-UserStatus-Stage2b.sql', 'step 6, 8, 15 or 16 was re-run: run step 17 again, then steps 18, 20, 24, 23 and 29'),
-(18, 'BMMS-Fix-SystemAccount-Stage3.sql', 'step 3, 6, 8, 13, 14, 15, 16 or 17 was re-run, or the system account count is not 1: see README step 18 (then steps 20, 21, 24, 23 and 29)'),
+(12, 'BMMS-Fix-Attendance-FutureMeeting.sql', 'run step 12 again, then steps 15, 16, 17, 18, 20, 21, 24, 23 and 30'),
+(13, 'BMMS-Fix-UserProtection-Stage1.sql', 'step 2, 6 or 10 was re-run: run step 13 again, then 14, 18, 20, 21, 24 and 30'),
+(14, 'BMMS-Fix-UserStatus-Stage2a.sql', 'step 13 was re-run: run step 14 again, then 18, 24 and 30'),
+(15, 'BMMS-Fix-MeetingLocks.sql', 'step 6, 8 or 12 was re-run: run step 15 again, then steps 16, 17, 18, 20, 21, 24, 23 and 30'),
+(16, 'BMMS-Fix-MeetingLocks-Step16.sql', 'step 6, 12 or 15 was re-run: run step 16 again, then steps 17, 18, 20, 24, 23 and 30'),
+(17, 'BMMS-Fix-UserStatus-Stage2b.sql', 'step 6, 8, 15 or 16 was re-run: run step 17 again, then steps 18, 20, 24, 23 and 30'),
+(18, 'BMMS-Fix-SystemAccount-Stage3.sql', 'step 3, 6, 8, 13, 14, 15, 16 or 17 was re-run, or the system account count is not 1: see README step 18 (then steps 20, 21, 24, 23 and 30)'),
 (19, 'BMMS-Fix-OrganisationSettings-Step19.sql', 'a procedure or setting row is missing: run step 19 again (the values already set are kept)'),
 (20, 'BMMS-Fix-AgendaRouting-Step20.sql', 'step 16, 17 or 18 was re-run: run step 20 again (the re-route moves nothing a second time)'),
-(21, 'BMMS-Fix-MemberTypes-Step21.sql', 'step 2, 3, 15 or 18 was re-run, or a reserved type was changed by hand: run step 21 again, then 29'),
+(21, 'BMMS-Fix-MemberTypes-Step21.sql', 'step 2, 3, 15 or 18 was re-run, or a reserved type was changed by hand: run step 21 again, then 30'),
 (22, 'BMMS-Fix-MinutesGating-Step22.sql', 'a procedure is missing: run step 22 again'),
 (23, 'BMMS-Fix-WorkflowOrder-Step23.sql', 'installed after step 28; step 6, 8, 12, 15, 16, 17 or 18 was re-run: run step 23 again'),
 (24, 'BMMS-Fix-MeetingDates-Step24.sql', 'Missing after a re-run of step 16, 17 or 18: run step 24 again'),
-(29, 'BMMS-Fix-ResetDatabase-Step29.sql', 'the first text of step 29 (old default password seeds): run step 29 again, as the last step');
+(29, 'BMMS-Fix-ResetDatabase-Step29.sql', 'the first text of step 29 (old default password seeds): run step 30 (it contains step 29), as the last step'),
+(30, 'BMMS-Fix-SmtpDefault-Step30.sql', 'step 3, 18, 21 or 29 was re-run: run step 30 again, as the last step (it restores the step 29 text too)');
 
 SELECT s.Step, s.Script,
        CASE WHEN COUNT(m.Step) = 0 THEN 'Not detectable'
