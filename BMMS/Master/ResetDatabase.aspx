@@ -39,6 +39,11 @@
                         <p class="wb-help">
                             Kept: the organisation settings and logo, and the other system settings.</p>
                         <p class="wb-help">
+                            Replaced: the mail settings (SMTP Configuration) get a safe default that sends no real
+                            mail: server localhost, port 25, no login, From noreply@example.invalid, no Bcc. Until
+                            real settings are entered there, every mail fails, and a new agenda item is not saved
+                            because its mail fails.</p>
+                        <p class="wb-help">
                             Afterwards you are signed out. Sign in as <strong>admin</strong> with the default
                             password; you will be asked to choose a new one at once.</p>
                         <p class="wb-help">

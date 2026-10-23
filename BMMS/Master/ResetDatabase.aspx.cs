@@ -69,7 +69,8 @@ namespace BMMS.Master
                     btnResetDatabase.OnClientClick = "return ResetDatabaseConfirm('" + HttpUtility.JavaScriptStringEncode(databaseName)
                         + "', 'This permanently deletes all committees, meetings, agenda items, minutes, "
                         + "members, users and audit records in database " + HttpUtility.JavaScriptStringEncode(databaseName)
-                        + " and re-creates the default data. Organisation settings are kept; uploaded files are not removed. "
+                        + " and re-creates the default data. Organisation settings are kept; the mail settings are replaced "
+                        + "by a safe default (localhost, port 25, no login, noreply@example.invalid); uploaded files are not removed. "
                         + "Afterwards sign in as admin with the default password and choose a new one. Continue?');";
 
                     BindFileCounts();

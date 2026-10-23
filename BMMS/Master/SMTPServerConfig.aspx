@@ -42,7 +42,6 @@
                     </div>
                     <div class="divRowRight">
                         <asp:TextBox ID="txtUserName" runat="server" Width="200px"></asp:TextBox>
-                        <span class="spanMandatory">*</span>
                     </div>
                 </div>
                 <div class="divRow">
@@ -52,7 +51,6 @@
                     <div class="divRowRight">
                         <asp:TextBox ID="txtPassword" runat="server" Width="200px" TextMode="Password"></asp:TextBox>
                         <asp:TextBox ID="txtPasswordDisplay" runat="server" Width="200px" Text="****************"></asp:TextBox>
-                        <span class="spanMandatory">*</span>
                         <cc1:FilteredTextBoxExtender ID="FilteredTextBoxExtender3" runat="server" TargetControlID="txtPassword"
                             InvalidChars=" .,;" FilterMode="InvalidChars" FilterType="Custom">
                         </cc1:FilteredTextBoxExtender>
@@ -81,6 +79,14 @@
                     </div>
                 </div>
             </div>
+            <p class="wb-help">
+                User Name and Password: fill both for a mail server that needs a login, or leave both empty
+                for one without login.</p>
+            <p class="wb-help">
+                A new or reset database has a safe default that sends no real mail: server localhost, port 25,
+                no login, From noreply@example.invalid, no Bcc. Until real settings are entered here, every
+                mail fails, and a new agenda item is not saved because its mail fails. For testing, run a local
+                mail catcher on port 25.</p>
         </div>
     </div>
 </asp:Content>

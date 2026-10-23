@@ -9,13 +9,11 @@ function SMTPServerConfigValidation() {
     if (errMsg.length <= 0)    
         errMsg = errMsg + (nullValidation('ctl00_ContentPlaceHolder1_txtSMTPServerPort', "ctl00_ContentPlaceHolder1_spanErrLogin", "SMTP Server Port is required field"));
 
-    if (errMsg.length <= 0)    
-        errMsg = errMsg + (nullValidation('ctl00_ContentPlaceHolder1_txtUserName', "ctl00_ContentPlaceHolder1_spanErrLogin", "User Name is required field"));
+    // User Name and Password: both empty (a server without login) or both filled (step 30)
+    if (errMsg.length <= 0)
+        errMsg = errMsg + (smtpLoginValidation('ctl00_ContentPlaceHolder1_txtUserName', 'ctl00_ContentPlaceHolder1_txtPassword', "ctl00_ContentPlaceHolder1_spanErrLogin"));
 
-    if (errMsg.length <= 0)    
-        errMsg = errMsg + (nullValidation('ctl00_ContentPlaceHolder1_txtPassword', "ctl00_ContentPlaceHolder1_spanErrLogin", "Password is required field"));
-        
-    if (errMsg.length <= 0)    
+    if (errMsg.length <= 0)
         errMsg = errMsg + (nullValidation('ctl00_ContentPlaceHolder1_txtFromMailId', "ctl00_ContentPlaceHolder1_spanErrLogin", "From Mail Id is required field"));
 
     if (errMsg.length <= 0)    
@@ -24,6 +22,22 @@ function SMTPServerConfigValidation() {
                
      return throwErr(errMsg,"ctl00_ContentPlaceHolder1_divErrLogin");
 
+}
+
+// SMTP login: refused when only one of User Name and Password is filled. The server checks the same
+// (SMTPServerConfig.aspx.cs).
+function smtpLoginValidation(userControlId, passwordControlId, errId) {
+    var userName = Trim(document.getElementById(userControlId).value);
+    var password = Trim(document.getElementById(passwordControlId).value);
+
+    if ((userName == "") != (password == "")) {
+        var emptyControlId = (userName == "") ? userControlId : passwordControlId;
+        document.getElementById(errId).innerHTML = "User Name and Password go together: fill both, or leave both empty for a mail server without login";
+        document.getElementById(emptyControlId).focus();
+        document.getElementById(emptyControlId).className = "skinNormalValidationText";
+        return "Login";
+    }
+    return "";
 }
 
 ///For ChangePasswordValidation()
@@ -599,12 +613,17 @@ function URLValidation(controlId, errId) {
 }
 
 //Email Validation
+// Used by SMTP Configuration (From Mail Id), Member Master and User Master. Step 30: the last part after
+// the dot is 2 or more letters (it was 2 or 3 letters or digits, which refused real addresses such as
+// .company or .photography and the seeded example.invalid addresses). Still refused: spaces, a second @,
+// no dot or no domain. Each dot or hyphen must stand between two word parts, so the check cannot hang
+// on a long wrong address (the old pattern took seconds on 28 characters).
 function emailValidation(controlId, errId) {
 
     var chkTxt = " ";
     chkTxt = document.getElementById(controlId).value;
 
-    if (!(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(chkTxt))) {
+    if (!(/^\w+([\.-]\w+)*@\w+([\.-]\w+)*\.[A-Za-z]{2,}$/.test(chkTxt))) {
         document.getElementById(controlId).focus();
         document.getElementById(controlId).className = "skinNormalValidationText";
         document.getElementById(errId).innerHTML = "Invalid E-Mail Id";
