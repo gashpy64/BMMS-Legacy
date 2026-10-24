@@ -411,7 +411,7 @@ namespace BMMS.Master
                             //    AgendaMgr.UpdateSubjectNoByAgendaId(AgendaIdTemp, SubjectNo);
                             //}
 
-                            MsgDisplay(deleteResult.Result == 1 ? "Record Deleted Successfully" : deleteResult.RefusalMessage());
+                            MsgDisplay(deleteResult.Result == 1 ? "Record Deleted Successfully" : deleteResult.RefusalMessage(), deleteResult.Result == 1 ? MessageKind.Success : MessageKind.Warning);
                         }
                         catch (Exception ex)
                         {
@@ -667,7 +667,7 @@ namespace BMMS.Master
                     myAgenda = null;
                 }
 
-                MsgDisplay(sMsg);
+                MsgDisplay(sMsg, sMsg == "Successfully Saved" ? MessageKind.Success : sMsg.StartsWith("Error: ") ? MessageKind.Error : MessageKind.Warning);
 
                 pnlViewAgenda.Visible = true;
                 pnlEditAgenda.Visible = false;
@@ -884,9 +884,9 @@ namespace BMMS.Master
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

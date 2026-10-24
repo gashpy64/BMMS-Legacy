@@ -11,8 +11,34 @@ using System.Data.SqlClient;
 
 namespace BMMSBAL
 {
+    // The look of a page message (step B3): Warning (the default) for refusals, "please select" and checks,
+    // Success when the action was done, Error when it failed on the server. Shown with the icons and tints
+    // of the palette (CSS classes divError, msg-success, msg-error in bmms-workbench.css).
+    public enum MessageKind
+    {
+        Warning,
+        Success,
+        Error
+    }
+
     public class Common
     {
+        #region MessageCss
+        // The class attribute of a page's message box (divErrLogin) for a message of this kind (step B3)
+        public static string MessageCss(MessageKind Kind)
+        {
+            switch (Kind)
+            {
+                case MessageKind.Success:
+                    return "divError msg-success";
+                case MessageKind.Error:
+                    return "divError msg-error";
+                default:
+                    return "divError";
+            }
+        }
+        #endregion
+
         private static string lscryptoKey = "";
         private static byte[] lbtVector = { 240, 3, 45, 29, 0, 76, 173, 59 };
 

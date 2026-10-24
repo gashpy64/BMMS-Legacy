@@ -63,7 +63,7 @@ namespace BMMS.Master
                 UserMgr.ResetPasswordByUserId(UserId, Password, UpdatedBy);
 
                 string sMsg = "Successfully Saved";
-                MsgDisplay(sMsg);
+                MsgDisplay(sMsg, MessageKind.Success);
             }
         }
         #endregion
@@ -96,9 +96,9 @@ namespace BMMS.Master
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

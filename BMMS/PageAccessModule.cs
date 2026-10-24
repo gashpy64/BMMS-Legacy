@@ -186,8 +186,13 @@ namespace BMMS.Security
             ctx.Response.StatusCode = 403;
             ctx.Response.StatusDescription = "Forbidden";
             ctx.Response.ContentType = "text/html";
+            // The colours are copies of the palette (CSS/bmms-colours.css, step B3): page-bg, text, heading,
+            // link, link-visited, link-hover, focus. This page loads no file, so it cannot use the variables.
             ctx.Response.Write(
-                "<html><body style=\"font-family:Arial,sans-serif;margin:40px\">" +
+                "<html>" +
+                "<head><style>body{background:#F4F6F9;color:#1F2937}h3{color:#111827}a{color:#1E5AA8}a:visited{color:#5B3E96}" +
+                "a:hover{color:#174A8C}a:focus{outline:3px solid #2563EB;outline-offset:2px}</style></head>" +
+                "<body style=\"font-family:Arial,sans-serif;margin:40px\">" +
                 "<h3>Access denied</h3>" +
                 "<p>Your role does not have access to this page.</p>" +
                 "<p><a href=\"" + VirtualPathUtility.ToAbsolute("~/DashBoard/Dashboard.aspx") + "\">Back to home</a></p>" +

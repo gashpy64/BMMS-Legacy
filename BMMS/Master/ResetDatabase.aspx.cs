@@ -120,7 +120,7 @@ namespace BMMS.Master
             {
                 // The reset runs in one transaction: an error or a timeout has rolled all of it back
                 Utilities.WriteErrorLog(className, "btnResetDatabase_Click", ex.ToString());
-                MsgDisplay("The reset did not run; nothing was changed. The error is in the error log.");
+                MsgDisplay("The reset did not run; nothing was changed. The error is in the error log.", MessageKind.Error);
                 return;
             }
 
@@ -194,9 +194,9 @@ namespace BMMS.Master
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

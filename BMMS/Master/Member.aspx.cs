@@ -260,7 +260,7 @@ namespace BMMS.Master
                     myMember = null;
                 }
 
-                MsgDisplay(sMsg);
+                MsgDisplay(sMsg, sMsg == "Successfully Saved" ? MessageKind.Success : sMsg == "Record Not Saved" ? MessageKind.Error : MessageKind.Warning);
 
                 pnlViewMember.Visible = true;
                 pnlEditMember.Visible = false;
@@ -372,7 +372,7 @@ namespace BMMS.Master
                         int Result = MemberMgr.DeleteMemberByMemberId(MemberId);
 
                         if (Result == 1)
-                            MsgDisplay("Record Deleted Successfully");
+                            MsgDisplay("Record Deleted Successfully", MessageKind.Success);
                         else
                             MsgDisplay(Common.GetAppSetting("delete_reference"));
                     }
@@ -416,9 +416,9 @@ namespace BMMS.Master
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

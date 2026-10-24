@@ -11,31 +11,33 @@
    functions) and MaskedEditExtender overwrite className on those controls.
    ========================================================================== */
 
-/* ---------- Design tokens: change the look here ---------- */
+/* ---------- Design tokens ----------
+   Colours come from the palette in bmms-colours.css (loaded before this file, step B3). The --wb-* colour
+   names are kept as aliases so the rules below and the restyled pages need no change. */
 :root
 {
-	--wb-accent: #166534;          /* primary buttons, links */
-	--wb-accent-hover: #14532D;
-	--wb-danger: #B91C1C;          /* Delete link, required mark */
-	--wb-focus: #2563EB;           /* focus outline */
+	--wb-accent: var(--bmms-primary);              /* primary buttons, links */
+	--wb-accent-hover: var(--bmms-primary-hover);
+	--wb-danger: var(--bmms-error);                /* Delete link, required mark */
+	--wb-focus: var(--bmms-focus);                 /* focus outline */
 
-	--wb-bg: #EEF0F2;              /* page background */
-	--wb-surface: #FFFFFF;         /* cards, inputs */
-	--wb-surface-alt: #F9FAFB;     /* card header strip */
-	--wb-table-head: #F3F4F6;
-	--wb-text: #1F2937;
-	--wb-text-muted: #4B5563;
-	--wb-border: #D1D5DB;
-	--wb-border-input: #9CA3AF;
-	--wb-row-line: #E5E7EB;
+	--wb-bg: var(--bmms-page-bg);                  /* page background */
+	--wb-surface: var(--bmms-panel-bg);            /* cards, inputs */
+	--wb-surface-alt: var(--bmms-table-stripe);    /* card header strip */
+	--wb-table-head: var(--bmms-table-head-bg);
+	--wb-text: var(--bmms-text);
+	--wb-text-muted: var(--bmms-text-muted);
+	--wb-border: var(--bmms-panel-border);
+	--wb-border-input: var(--bmms-field-border);
+	--wb-row-line: var(--bmms-panel-border);
 
-	--wb-header-bg: #1F2937;
-	--wb-header-active: #374151;
-	--wb-header-text: #FFFFFF;
-	--wb-header-text-dim: #D1D5DB;
+	--wb-header-bg: var(--bmms-header-bg);
+	--wb-header-active: var(--bmms-menu-hover-bg);
+	--wb-header-text: var(--bmms-header-text);
+	--wb-header-text-dim: var(--bmms-menu-text);
 
-	--wb-notice-bg: #FFFBEB;
-	--wb-notice-border: #D97706;
+	--wb-notice-bg: var(--bmms-warning-tint);
+	--wb-notice-border: var(--bmms-warning);
 
 	--wb-radius: 6px;
 	--wb-space-1: 4px;
@@ -118,8 +120,8 @@ body.wb div#footer
 	flex-wrap: wrap;
 	align-items: center;
 	gap: var(--wb-space-1) var(--wb-space-5);
-	min-height: 56px;
-	padding: var(--wb-space-2) var(--wb-space-4);
+	min-height: 48px;      /* the 36 px logo and the 40 px menu items, 4 px above and below (step B3) */
+	padding: var(--wb-space-1) var(--wb-space-4);
 	background: var(--wb-header-bg);
 	color: var(--wb-header-text);
 	font-family: var(--wb-font);
@@ -131,6 +133,14 @@ body.wb div#footer
 	font-size: 18px;
 	font-weight: 700;
 	letter-spacing: 0.04em;
+}
+/* the product logo in the header (step B3): 36 px high in the 48 px bar, no link */
+.wb-brand img
+{
+	display: block;
+	width: auto;
+	height: 36px;
+	border: 0;
 }
 .wb-nav
 {
@@ -160,9 +170,10 @@ body.wb div#footer
 {
 	color: var(--wb-header-text-dim);
 }
+/* focus on the dark bar: light blue, visible on the bar and on the selected (blue) menu item */
 .wb-header a:focus
 {
-	outline: 2px solid var(--wb-header-text);
+	outline: 2px solid var(--bmms-focus-on-dark);
 	outline-offset: 2px;
 }
 
@@ -197,12 +208,20 @@ body.wb div#footer
 	line-height: 40px;
 	white-space: nowrap;
 }
+/* hover, and the item whose drop-down is open (the script sets "selected") */
 .wb-header .mattblackmenu li a:hover,
-.wb-header .mattblackmenu li a.selected,
+.wb-header .mattblackmenu li a.selected
+{
+	background: var(--bmms-menu-hover-bg);
+	color: var(--bmms-menu-hover-text);
+}
+/* the menu item of the current page (Main.Master sets wb-active): the blue alone is only 2.16:1 against
+   the bar, so a 3 px white bar along its bottom marks it as well */
 .wb-header .mattblackmenu li a.wb-active
 {
-	background: var(--wb-header-active);
-	color: var(--wb-header-text);
+	background: var(--bmms-menu-selected-bg);
+	color: var(--bmms-menu-selected-text);
+	box-shadow: inset 0 -3px 0 var(--bmms-menu-selected-indicator);
 }
 /* the script's arrow image does not exist; draw the arrow in CSS */
 .wb-header .downarrowpointer
@@ -268,7 +287,29 @@ body.wb .ddsubmenustyle li a:focus
 }
 .wb-page a
 {
-	color: var(--wb-accent);
+	color: var(--bmms-link);
+}
+.wb-page a:visited
+{
+	color: var(--bmms-link-visited);
+}
+.wb-page a:hover
+{
+	color: var(--bmms-link-hover);
+}
+/* visible to screen readers only (the sign-in heading under the banner, step B3) */
+.wb-visually-hidden
+{
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
 }
 .wb-hidden
 {
@@ -340,12 +381,8 @@ body.wb .ddsubmenustyle li a:focus
 .wb-page .lblError
 {
 	display: block;
-	padding: var(--wb-space-3) var(--wb-space-4);
-	background: var(--wb-notice-bg);
-	border: 1px solid var(--wb-notice-border);
-	border-left-width: 4px;
+	padding: var(--wb-space-3) var(--wb-space-4) var(--wb-space-3) 40px;
 	border-radius: var(--wb-radius);
-	color: var(--wb-text);
 	font-family: inherit;
 	font-size: 14px;
 	font-weight: 700;
@@ -353,19 +390,51 @@ body.wb .ddsubmenustyle li a:focus
 }
 
 /* Message bar for a failed UpdatePanel postback: the masters and the login page; shown and hidden by
-   JScript/AsyncPostBackError.js (step E1). Same look as the page message above. */
+   JScript/AsyncPostBackError.js (step E1). Error look (step B3), set by its class alone. */
 .wb-async-error
 {
 	margin: 0 0 var(--wb-space-4);
-	padding: var(--wb-space-3) var(--wb-space-4);
-	background: var(--wb-notice-bg);
-	border: 1px solid var(--wb-notice-border);
-	border-left-width: 4px;
+	padding: var(--wb-space-3) var(--wb-space-4) var(--wb-space-3) 40px;
 	border-radius: var(--wb-radius);
-	color: var(--wb-text);
 	font-size: 14px;
 	font-weight: 700;
 	text-align: left;
+}
+
+/* ---------- Message kinds (step B3), on every page, old look or new ----------
+   divError alone = warning (the default: refusals, "please select", Validation.js), divError msg-success,
+   divError msg-error (Common.MessageCss). The E1 bar is always an error. Text in the normal text colour on
+   the tint; the 16 px icon and the 4 px left border carry the kind. The plain url() comes first, the
+   image-set() with the 2x file after it, for browsers that know it. */
+.divError .lblError,
+.wb-async-error
+{
+	color: var(--bmms-text);
+	background-color: var(--bmms-warning-tint);
+	background-image: url("../Images/Brand/message-warning.png");
+	background-image: image-set(url("../Images/Brand/message-warning.png") 1x, url("../Images/Brand/message-warning-2x.png") 2x);
+	background-repeat: no-repeat;
+	background-position: 10px center;
+	background-size: 16px 16px;
+	border: 1px solid var(--bmms-warning-border);
+	border-left: 4px solid var(--bmms-warning);
+}
+.divError.msg-success .lblError
+{
+	background-color: var(--bmms-success-tint);
+	background-image: url("../Images/Brand/message-success.png");
+	background-image: image-set(url("../Images/Brand/message-success.png") 1x, url("../Images/Brand/message-success-2x.png") 2x);
+	border-color: var(--bmms-success-border);
+	border-left-color: var(--bmms-success);
+}
+.divError.msg-error .lblError,
+.wb-async-error
+{
+	background-color: var(--bmms-error-tint);
+	background-image: url("../Images/Brand/message-error.png");
+	background-image: image-set(url("../Images/Brand/message-error.png") 1x, url("../Images/Brand/message-error-2x.png") 2x);
+	border-color: var(--bmms-error-border);
+	border-left-color: var(--bmms-error);
 }
 
 /* ---------- Forms: label left, field right ---------- */
@@ -421,6 +490,13 @@ body.wb .ddsubmenustyle li a:focus
 	font-family: inherit;
 	font-size: 14px;
 }
+.wb-page input[type="text"]:hover,
+.wb-page input[type="password"]:hover,
+.wb-page select:hover,
+.wb-page textarea:hover
+{
+	border-color: var(--bmms-field-border-hover);
+}
 .wb-page textarea
 {
 	height: auto;
@@ -432,8 +508,9 @@ body.wb .ddsubmenustyle li a:focus
 .wb-page input[disabled],
 .wb-page select[disabled]
 {
-	background: var(--wb-table-head);
-	color: var(--wb-text-muted);
+	background: var(--bmms-disabled-bg);
+	border-color: var(--bmms-disabled-border);
+	color: var(--bmms-disabled-text);
 }
 /* short fields: date pickers and the hh:mm time box */
 .wb-page input[type="text"][id$="Date"]
@@ -549,7 +626,7 @@ body.wb .ddsubmenustyle li a:focus
 	background: var(--wb-accent);
 	border: 1px solid var(--wb-accent);
 	border-radius: var(--wb-radius);
-	color: #FFFFFF;
+	color: var(--bmms-on-primary);
 	font-family: inherit;
 	font-size: 14px;
 	font-weight: 700;
@@ -562,19 +639,35 @@ body.wb .ddsubmenustyle li a:focus
 	background: var(--wb-accent-hover);
 	border-color: var(--wb-accent-hover);
 }
+.wb-page .wb-btn:active,
+.wb-actions input[type="submit"]:active,
+.wb-toolbar input[type="submit"]:active
+{
+	background: var(--bmms-primary-active);
+	border-color: var(--bmms-primary-active);
+}
 /* secondary: Cancel (matched by ID as well, because the class can be overwritten) */
 .wb-page .wb-btn-secondary,
 .wb-actions input[type="submit"][id$="btnCancel"]
 {
-	background: var(--wb-surface);
-	border-color: var(--wb-border-input);
-	color: var(--wb-text);
+	background: var(--bmms-btn-secondary-bg);
+	border-color: var(--bmms-btn-secondary-border);
+	color: var(--bmms-btn-secondary-text);
 }
 .wb-page .wb-btn-secondary:hover,
 .wb-actions input[type="submit"][id$="btnCancel"]:hover
 {
-	background: var(--wb-table-head);
-	border-color: var(--wb-border-input);
+	background: var(--bmms-btn-secondary-hover-bg);
+	border-color: var(--bmms-btn-secondary-hover-border);
+	color: var(--bmms-btn-secondary-hover-text);
+}
+.wb-page .wb-btn[disabled],
+.wb-actions input[type="submit"][disabled]
+{
+	background: var(--bmms-disabled-bg);
+	border-color: var(--bmms-disabled-border);
+	color: var(--bmms-disabled-text);
+	cursor: default;
 }
 
 /* ---------- Focus ---------- */
@@ -643,18 +736,24 @@ body.wb .ddsubmenustyle li a:focus
 .wb-table > tbody > tr > th
 {
 	background: var(--wb-table-head);
+	color: var(--bmms-table-head-text);
 	font-weight: 700;
 	white-space: nowrap;
 }
+/* sort links: underlined, so they read as links without relying on colour (step B3) */
 .wb-table > tbody > tr > th a,
 .wb-table > tbody > tr > th a:visited
 {
-	color: var(--wb-text);
-	text-decoration: none;
+	color: var(--bmms-table-head-text);
+	text-decoration: underline;
 }
 .wb-table > tbody > tr > th a:hover
 {
-	text-decoration: underline;
+	text-decoration: none;
+}
+.wb-table > tbody > tr:hover > td
+{
+	background: var(--bmms-table-row-hover);
 }
 /* "ascending" / "descending" are set on the sorted column by Utilities.GridViewDataTableSorting */
 .wb-table > tbody > tr > th.ascending a::after
@@ -750,9 +849,9 @@ body.wb .ddsubmenustyle li a:focus
 }
 .wb-pager table td span
 {
-	background: var(--wb-header-active);
-	border-color: var(--wb-header-active);
-	color: #FFFFFF;
+	background: var(--bmms-primary);
+	border-color: var(--bmms-primary);
+	color: var(--bmms-on-primary);
 }
 
 /* empty list */
@@ -821,12 +920,35 @@ body.wb .ddsubmenustyle li a:focus
 /* ==========================================================================
    Login page (Default.aspx)
    ========================================================================== */
+/* the login banner (step B3): up to 560 px wide (its 24 px tagline shows at 13.4 px), never wider than
+   the window, centred above the card; banner, card and footer fit a 1366 x 650 window without scrolling */
+.wb-login-banner
+{
+	max-width: 560px;
+	margin: 0 auto;
+	padding: var(--wb-space-4) var(--wb-space-4) 0;
+	box-sizing: content-box;
+	text-align: center;
+}
+.wb-login-banner img
+{
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	height: auto;
+	margin: 0 auto;
+	border-radius: var(--wb-radius);
+}
 .wb-login
 {
 	max-width: 440px;
 	min-height: 0;
 	margin: 0 auto;
-	padding: 64px var(--wb-space-4) var(--wb-space-5);
+	padding: var(--wb-space-4);
+}
+.wb-login .wb-card
+{
+	margin-bottom: 0;
 }
 .wb-login .wb-h1
 {
@@ -885,9 +1007,5 @@ body.wb .ddsubmenustyle li a:focus
 	.wb-actions
 	{
 		padding-left: 0;
-	}
-	.wb-login
-	{
-		padding-top: var(--wb-space-5);
 	}
 }

@@ -310,7 +310,7 @@ namespace BMMS.Master
                     myUser = null;
                 }
 
-                MsgDisplay(sMsg);
+                MsgDisplay(sMsg, sMsg == "Successfully Saved" ? MessageKind.Success : sMsg == "Record Not Saved" ? MessageKind.Error : MessageKind.Warning);
 
                 pnlViewUser.Visible = true;
                 pnlEditUser.Visible = false;
@@ -428,7 +428,7 @@ namespace BMMS.Master
                     UserChangeResult result = UserMgr.DeleteUserByUserId(UserId, ActingUserId());
 
                     if (result.Result == 1)
-                        MsgDisplay("Record Deleted Successfully");
+                        MsgDisplay("Record Deleted Successfully", MessageKind.Success);
                     else
                         MsgDisplay(result.RefusalMessage("delete this user", className));
 
@@ -443,7 +443,7 @@ namespace BMMS.Master
                     UserChangeResult result = UserMgr.SetUserStatusByUserId(UserId, activate ? 1 : 0, ActingUserId());
 
                     if (result.Result == 1)
-                        MsgDisplay(activate ? "User activated" : "User deactivated");
+                        MsgDisplay(activate ? "User activated" : "User deactivated", MessageKind.Success);
                     else
                         MsgDisplay(result.RefusalMessage(activate ? "activate this user" : "deactivate this user", className));
 
@@ -473,9 +473,9 @@ namespace BMMS.Master
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

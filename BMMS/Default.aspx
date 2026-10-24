@@ -9,7 +9,10 @@
     <title></title>
     <link href="CSS/CommonHTML.css" rel="stylesheet" type="text/css" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="CSS/bmms-colours.css" rel="stylesheet" type="text/css" />
     <link href="CSS/bmms-workbench.css" rel="stylesheet" type="text/css" />
+    <link rel="icon" href="favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="192x192" href="Images/Brand/bmms-favicon-192.png" />
 
     <script type="text/javascript" language="javascript" src="JScript/BrowserSecurity.js"></script>
 
@@ -22,11 +25,17 @@
                 <asp:ScriptReference Path="~/JScript/AsyncPostBackError.js" />
             </Scripts>
         </asp:ScriptManager>
+        <%-- The login banner (step B3): up to 560 px wide, scales down with the window; it shows the
+             product name, so the heading below is for screen readers only --%>
+        <div class="wb-login-banner">
+            <img src="<%= ResolveUrl("~/Images/Brand/bmms-login-banner.png") %>" srcset="<%= ResolveUrl("~/Images/Brand/bmms-login-banner-2x.png") %> 2x"
+                width="1000" height="240" alt="" />
+        </div>
         <asp:UpdatePanel ID="UpdatePanel1" runat="server">
             <ContentTemplate>
                 <div class="wb-page wb-login">
-                    <h1 class="wb-h1">BMMS</h1>
-                    <p class="wb-help" style="text-align: center;">Board Minutes and Meeting Software</p>
+                    <h1 class="wb-h1 wb-visually-hidden">BMMS</h1>
+                    <p class="wb-visually-hidden">Board Minutes and Meeting Software</p>
                     <%-- A failed UpdatePanel postback (JScript/AsyncPostBackError.js, step E1) --%>
                     <div id="wbAsyncError" class="wb-async-error" role="alert" style="display: none;"></div>
                     <div class="wb-card">
@@ -68,6 +77,10 @@
                 </div>
             </ContentTemplate>
         </asp:UpdatePanel>
+        <%-- the footer line of the other pages (step B3) --%>
+        <div id="footer">
+            <asp:Label ID="lblFooter" runat="server"></asp:Label>
+        </div>
     </form>
 </body>
 </html>

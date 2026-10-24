@@ -124,7 +124,7 @@ namespace BMMS.Master
                     if (MeetingMgr.GetMeetingWorkflowState(MeetingId).IsNew)
                     {
                         MeetingChangeResult newResult = AgendaMgr.MinutesFinalizeByMeetingId(MeetingId, int.Parse(Session["UserId"].ToString()));
-                        MsgDisplay(newResult.Result == 1 ? "Minutes Finalized" : newResult.RefusalMessage());
+                        MsgDisplay(newResult.Result == 1 ? "Minutes Finalized" : newResult.RefusalMessage(), newResult.Result == 1 ? MessageKind.Success : MessageKind.Warning);
                         return;
                     }
 
@@ -149,13 +149,13 @@ namespace BMMS.Master
 
                             sMsg = result.Result == 1 ? "Minutes Finalized" : result.RefusalMessage();
 
-                            MsgDisplay(sMsg);
+                            MsgDisplay(sMsg, sMsg == "Minutes Finalized" ? MessageKind.Success : MessageKind.Warning);
                         }
                         else
                         {
                             sMsg = "Attendance details not entered for this meeting. So you cannot finalize minutes.";
 
-                            MsgDisplay(sMsg);
+                            MsgDisplay(sMsg, sMsg == "Minutes Finalized" ? MessageKind.Success : MessageKind.Warning);
                         }
                     }
                 }
@@ -224,9 +224,9 @@ namespace BMMS.Master
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

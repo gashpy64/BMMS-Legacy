@@ -14,7 +14,10 @@
     <link href="../CSS/PasswordCheck.css" rel="stylesheet" type="text/css" />
 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="../CSS/bmms-colours.css" rel="stylesheet" type="text/css" />
     <link href="../CSS/bmms-workbench.css" rel="stylesheet" type="text/css" />
+    <link rel="icon" href="../favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="192x192" href="../Images/Brand/bmms-favicon-192.png" />
 
     <script type="text/javascript" language="javascript" src="../JScript/BrowserSecurity.js"></script>
 
@@ -31,7 +34,8 @@
         <div id="mainContainer">
             <%-- The header of Main.Master without the menu (step B2) --%>
             <div class="wb-header">
-                <span class="wb-brand" title="Board Minutes and Meeting Software">BMMS</span>
+                <%-- The product logo (step B3): no link; tooltip and alt text carry the full name --%>
+                <span class="wb-brand" title="Board Minutes and Meeting Software"><img src="<%= ResolveUrl("~/Images/Brand/bmms-logo-horizontal-white.png") %>" srcset="<%= ResolveUrl("~/Images/Brand/bmms-logo-horizontal-white-2x.png") %> 2x" width="223" height="36" alt="BMMS - Board Minutes and Meeting Software" /></span>
                 <div class="wb-nav"></div>
                 <div class="wb-user">
                     <span class="wb-user-name"><%: Session["UserName"] %> | <%: Session["RoleName"] %></span>

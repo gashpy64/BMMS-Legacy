@@ -55,7 +55,7 @@ namespace BMMS.Report
                 CreatePDF(dtFollowup);
                 pnlFollowupDownload.Visible = true;
                 CreateBodyText();
-                MsgDisplay("Mail was sent to all members.");
+                MsgDisplay("Mail was sent to all members.", MessageKind.Success);
             }
         }
         #endregion
@@ -758,9 +758,9 @@ namespace BMMS.Report
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

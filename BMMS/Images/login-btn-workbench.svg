@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="120" height="44" viewBox="0 0 120 44" role="img" aria-label="Log in">
-  <rect width="120" height="44" rx="6" fill="#166534"/>
+  <!-- #1E5AA8 is a copy of the palette value bmms-primary (CSS/bmms-colours.css, step B3): an image cannot read CSS variables -->
+  <rect width="120" height="44" rx="6" fill="#1E5AA8"/>
   <text x="60" y="27" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, 'Segoe UI', Arial, sans-serif" font-size="14" font-weight="700">Log in</text>
 </svg>

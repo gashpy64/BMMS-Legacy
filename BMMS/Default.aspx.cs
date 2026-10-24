@@ -42,6 +42,8 @@ namespace BMMS
         private void InitSetup()
         {
             Page.Title = Common.GetAppSetting("PageTitle") + " - Login";
+            // the footer line of the other pages (step B3)
+            lblFooter.Text = Common.ProductFooter(typeof(_Default).Assembly);
             Session["PageURL"] = "~/Default.aspx";
             txtLoginName.Attributes.Add("MaxLength", Common.GetAppSetting("LoginIdMaxLength"));
             txtPassword.Attributes.Add("MaxLength", Common.GetAppSetting("PasswordMaxLength"));
@@ -140,16 +142,16 @@ namespace BMMS
 
             }
 
-            MsgDisplay(errMsg);
+            MsgDisplay(errMsg, errMsg == "Database not connected" ? MessageKind.Error : MessageKind.Warning);
 
             //Response.Redirect(@"~\DashBoard\Dashboard.aspx", false);
         }
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

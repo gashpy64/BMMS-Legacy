@@ -116,9 +116,14 @@ namespace BMMS
                         openAgain = "<a href=\"" + HttpUtility.HtmlAttributeEncode(HttpUtility.UrlPathEncode(path))
                             + "\">Open the page again</a> | ";
 
+                    // The colours are copies of the palette (CSS/bmms-colours.css, step B3): page-bg, text, heading,
+                    // link, link-visited, link-hover, focus. This page loads no file, so it cannot use the variables.
                     response.ContentType = "text/html";
                     response.Write(
-                        "<!DOCTYPE html><html><head><meta charset=\"utf-8\" /><title>BMMS - Error</title></head>" +
+                        "<!DOCTYPE html><html><head><meta charset=\"utf-8\" /><title>BMMS - Error</title>" +
+                        "<style>body{background:#F4F6F9;color:#1F2937}h3{color:#111827}a{color:#1E5AA8}a:visited{color:#5B3E96}" +
+                        "a:hover{color:#174A8C}a:focus{outline:3px solid #2563EB;outline-offset:2px}</style>" +
+                        "</head>" +
                         "<body style=\"font-family:Arial,sans-serif;margin:40px\">" +
                         "<h3>Error</h3>" +
                         "<p>" + SafeErrorText + "</p>" +

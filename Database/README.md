@@ -1053,8 +1053,41 @@ Browser checks on `BMMS_Test` after deploying the build:
 6. The safe page link: User Master, Add, `<x` in User Name, Save: the safe page shows the new text with "Open the page again" (to /Master/User.aspx, no query string) and "Back to home"; the link opens User Master with a normal GET. /Master/a%3Cb.aspx: status 400, the safe page without "Open the page again".
 7. A failing page from the Network tab never leads to an address with an empty page name (no request to /Master/.aspx).
 
+## Step B3: product artwork and one colour scheme (code and files only, no database script)
+
+The artwork and the palette were made in Claude Design; the source is `Design/bmms-brand/` (outside the web project; its SVG files carry no provenance metadata in the repository copy). Owner Gashpy Software, product "Board Minutes and Meeting Software" (BMMS).
+
+From step B3:
+
+- Palette: `BMMS/CSS/bmms-colours.css`, an exact copy of `Design/bmms-brand/bmms-colours.css` (48 `--bmms-*` values, including `--bmms-focus-on-dark` and `--bmms-menu-selected-indicator`), loaded before `bmms-workbench.css` on both master pages and the sign-in page. The `--wb-*` names of the workbench are now aliases of the palette (the green accent became the product blue). The older stylesheets MainMaster.css and CommonHTML.css use the palette for every colour (layout unchanged); rules nothing uses were removed (listed at the top of MainMaster.css).
+- Header: the logo `Images/Brand/bmms-logo-horizontal-white.png` (2x through srcset), 36 px high in a 48 px bar, no link, tooltip and alt text "Board Minutes and Meeting Software". The current page's menu item: blue with a 3 px white bar along its bottom; keyboard focus on the bar: a light blue outline.
+- Sign-in page: the banner (up to 560 px wide (source file 1000 x 240 px, with a 2000 x 480 px version for sharp screens), scales down to the window) above the Log in box; the heading "BMMS" and the product name stay for screen readers (visually hidden); the footer line of the other pages; the Log in button is blue.
+- Favicon: `BMMS/favicon.ico` (so `/favicon.ico` no longer gives 404) and `Images/Brand/bmms-favicon-192.png`, linked from the master pages, the sign-in page, Logout, ReportPrint and ViewReport.
+- Messages: each page's MsgDisplay has an optional kind (Common.MessageKind): Warning (the default: refusals, "please select", the browser checks of Validation.js), Success (saved, deleted, finalized, confirmed, mail sent, ...), Error (failed on the server). The message shows the matching icon (`Images/Brand/message-*.png`), tint and left border; the text is unchanged. The E1 message bar has the error look (CSS only).
+- Tables: the light palette header (`--bmms-table-head-bg`, `--bmms-table-head-text`), striped rows and a hover tint. The sort links of the older grids carry an inline white colour; one rule (`.contentTableHeader a[style]`, with !important) gives them the header text colour, and they are underlined.
+- Dashboard: read and unread alerts and action items keep their difference (unread rows bold, as before) on two palette tints; the current filter (Show All / Read / Unread) is blue and not underlined, the others underlined.
+- Menu arrows: the menu script no longer adds arrow images (`showarrow` off in MenuUserControl.ascx), so `/DashBoard/Images/arrow-down.gif` and `/Report/Images/arrow-down.gif` are no longer requested; the arrow is drawn in CSS.
+- The inline error page (Application_Error) and the "Access denied" page use hex copies of the palette (marked in the code); text and behaviour unchanged.
+- Deleted (unused after B3): Images/bg.jpg, tableft.gif, tabright.gif, Common/Error-Info.gif and the tab_*.gif copies in Images (the colour picker keeps its own in JScript/ColorPicker/Images).
+- Printed reports, PDFs and mail are unchanged. The Committee colour field keeps the colour the user chose.
+
+Browser checks on `BMMS_Test` after deploying the build (Ctrl+F5 on each page; developer tools, Network, Disable cache):
+
+1. Sign-in page: the banner above the Log in box, sharp on a high-density screen; at 320 px window width no horizontal scroll bar; a screen reader reads the heading "BMMS"; the footer line; the blue Log in button; no 404 in the Network list (favicon.ico, arrow-down.gif, bg.jpg).
+2. Signed out: `/favicon.ico`, `/CSS/bmms-colours.css` and `/Images/Brand/bmms-logo-horizontal-white.png` each give 200.
+3. First-login page (admin with the default password after a reset on `BMMS_Quality`): the logo bar is 48 px high; no orange anywhere.
+4. Dashboard: blue and grey only; unread rows bold on the stronger tint, read rows normal on the lighter one; the current filter blue and not underlined; no request for `/DashBoard/Images/arrow-down.gif`.
+5. A master list and form (Department): Save gives a green success message with its icon; a delete of a department in use gives the warning look; field borders grey, the focus ring blue.
+6. A report page (Reports, Minutes; then Meeting Master): the table header light blue with dark, underlined sort links; no request for `/Report/Images/arrow-down.gif`.
+7. Reset Database: a wrong name gives the warning look; otherwise unchanged.
+8. An error page (the Department lock of step E2b): the error page in the new look, text unchanged; Exit as before.
+9. The safe page after `<x` on User Master: the palette colours, the same text and links, status 500.
+10. Keyboard on the menu bar: Tab through the menu items, Change Password and Logout: each shows a light blue outline; the current page's menu item shows the white bottom bar.
+11. A failed partial postback (the E1 lock on the Dashboard): the E1 bar has the red error icon and tint.
+
 ## Known items for later steps
 
+- The colour picker on Committee and Meeting (third-party JScript/ColorPicker/js_color_picker_v2.js) asks for its tab and slider images relative to the page (`/Master/images/tab_right_active.gif`, `slider_handle.gif`), which gives 404; its own copies are in JScript/ColorPicker/Images. Seen in step B3, not changed.
 - Mail has no TLS or STARTTLS: Mail_Mgr never sets EnableSsl, so a mail provider that requires an encrypted connection (usually port 587) refuses every mail (step 30).
 - The Bcc of SMTP Configuration is ignored when the caller passes no Bcc of its own (Reset Password, Notice, Send Mail): Mail_Mgr.SendWebEmail replaces it by null (step 30).
 - From Mail Id and Bcc are cut at 50 characters without an error: the parameters of spr_UpdateSMTPMaster are VARCHAR(50) (step 30 kept the sizes).

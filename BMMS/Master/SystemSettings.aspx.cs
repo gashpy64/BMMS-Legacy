@@ -136,7 +136,7 @@ namespace BMMS.Master
                 MeetingChangeResult result = Utilities.SetAppSetting(Utilities.AgendaControllerBypass, value, ActingUserId);
 
                 if (result.Result == 1)
-                    MsgDisplay("Successfully updated.");
+                    MsgDisplay("Successfully updated.", MessageKind.Success);
                 else if (result.Reason == MeetingChangeReason.ActingUserInvalid)
                     MsgDisplay(result.RefusalMessage());
                 else if (result.Reason == MeetingChangeReason.NotFound)
@@ -169,7 +169,7 @@ namespace BMMS.Master
 
                 if (result.Result == 1)
                 {
-                    MsgDisplay("Organisation details saved.");
+                    MsgDisplay("Organisation details saved.", MessageKind.Success);
                     LoadOrganisation();
                 }
                 else if (result.Reason == MeetingChangeReason.ActingUserInvalid)
@@ -204,7 +204,7 @@ namespace BMMS.Master
                 // Only the bytes are used: the file name and the type the browser sends are ignored
                 bool saved;
                 string message = OrganisationDetails.UploadLogo(fuLogo.FileBytes, ActingUserId, out saved);
-                MsgDisplay(HttpUtility.HtmlEncode(message));
+                MsgDisplay(HttpUtility.HtmlEncode(message), saved ? MessageKind.Success : MessageKind.Warning);
 
                 LoadLogo();
             }
@@ -224,7 +224,7 @@ namespace BMMS.Master
 
                 bool removed;
                 string message = OrganisationDetails.RemoveLogo(ActingUserId, out removed);
-                MsgDisplay(HttpUtility.HtmlEncode(message));
+                MsgDisplay(HttpUtility.HtmlEncode(message), removed ? MessageKind.Success : MessageKind.Warning);
 
                 LoadLogo();
             }
@@ -243,9 +243,9 @@ namespace BMMS.Master
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

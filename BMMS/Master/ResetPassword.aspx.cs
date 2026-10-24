@@ -127,15 +127,16 @@ namespace BMMS.Master
                     errMsg = "The password was reset to the default password, but the mail could not be sent. Error : " + result;
             }
 
-            MsgDisplay(errMsg);
+            MsgDisplay(errMsg, (errMsg == "New passward was sent through mail." || errMsg == "Password reset; no mail sent because the account is inactive.") ? MessageKind.Success
+                    : errMsg == "The password was not reset. Please try again." ? MessageKind.Error : MessageKind.Warning);
             pnlResetPassword.Visible = false;
         }
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

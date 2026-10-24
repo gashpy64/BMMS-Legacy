@@ -42,6 +42,10 @@
 </div>
 
 <script type="text/javascript">
+	// No arrow images (step B3): the script would request Images/arrow-down.gif relative to the page, which does
+	// not exist (404); the arrow is drawn in CSS (bmms-workbench.css). Set before setup(), which reads them in init().
+	ddlevelsmenu.arrowpointers.showarrow.toplevel = false;
+	ddlevelsmenu.arrowpointers.showarrow.sublevel = false;
 	ddlevelsmenu.setup("ddtopmenubar", "topbar") //ddlevelsmenu.setup("mainmenuid", "topbar|sidebar")
 </script>
 

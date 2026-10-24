@@ -220,7 +220,7 @@ namespace BMMS.Master
 
                 if (result.Result == 1)
                 {
-                    MsgDisplay("Successfully Saved");
+                    MsgDisplay("Successfully Saved", MessageKind.Success);
                     LoadMemberType();
                 }
                 else
@@ -316,7 +316,7 @@ namespace BMMS.Master
                     MeetingChangeResult Result = MemberTypeMgr.DeleteMemberTypeByMemberTypeId(MemberTypeId, ActingUserId());
 
                     if (Result.Result == 1)
-                        MsgDisplay("Record Deleted Successfully");
+                        MsgDisplay("Record Deleted Successfully", MessageKind.Success);
                     else
                         MsgDisplay(MemberTypeMgr.RefusalMessage(Result, true));
 
@@ -344,9 +344,9 @@ namespace BMMS.Master
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

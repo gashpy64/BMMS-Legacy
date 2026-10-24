@@ -180,7 +180,7 @@ namespace BMMS.Master
                             int Result = MeetingMgr.DeleteMeetingByMeetingId(MeetingId);
 
                             if (Result == 1)
-                                MsgDisplay("Record Deleted Successfully");
+                                MsgDisplay("Record Deleted Successfully", MessageKind.Success);
                             else
                                 MsgDisplay(Common.GetAppSetting("delete_reference"));
                         }
@@ -340,7 +340,7 @@ namespace BMMS.Master
                     myMeeting = null;
                 }
 
-                MsgDisplay(sMsg);
+                MsgDisplay(sMsg, sMsg == "Successfully Saved" ? MessageKind.Success : sMsg.StartsWith("Error: ") ? MessageKind.Error : MessageKind.Warning);
 
                 pnlViewMeeting.Visible = true;
                 pnlEditMeeting.Visible = false;
@@ -516,9 +516,9 @@ namespace BMMS.Master
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

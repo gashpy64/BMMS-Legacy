@@ -82,6 +82,19 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="CSS\bmms-workbench.css" />
+    <Content Include="CSS\bmms-colours.css" />
+    <Content Include="favicon.ico" />
+    <Content Include="Images\Brand\bmms-favicon-192.png" />
+    <Content Include="Images\Brand\bmms-login-banner.png" />
+    <Content Include="Images\Brand\bmms-login-banner-2x.png" />
+    <Content Include="Images\Brand\bmms-logo-horizontal-white.png" />
+    <Content Include="Images\Brand\bmms-logo-horizontal-white-2x.png" />
+    <Content Include="Images\Brand\message-error.png" />
+    <Content Include="Images\Brand\message-error-2x.png" />
+    <Content Include="Images\Brand\message-success.png" />
+    <Content Include="Images\Brand\message-success-2x.png" />
+    <Content Include="Images\Brand\message-warning.png" />
+    <Content Include="Images\Brand\message-warning-2x.png" />
     <Content Include="CSS\CommonHTML.css" />
     <Content Include="Default.aspx" />
     <Content Include="JScript\Validation.js" />
@@ -478,20 +491,11 @@
     <Content Include="Fonts\PublicSans-Bold.woff2" />
     <Content Include="Fonts\PublicSans-Regular.woff2" />
     <Content Include="Global.asax" />
-    <Content Include="Images\bg.jpg" />
     <Content Include="Images\chromebg.gif" />
     <Content Include="Images\Common\calendar.png" />
-    <Content Include="Images\Common\Error-Info.gif" />
     <Content Include="Images\delete-ico.gif" />
     <Content Include="Images\edit-ico.gif" />
     <Content Include="Images\login-btn-workbench.svg" />
-    <Content Include="Images\tableft.gif" />
-    <Content Include="Images\tabright.gif" />
-    <Content Include="Images\tab_center_active.gif" />
-    <Content Include="Images\tab_left_active.gif" />
-    <Content Include="Images\tab_left_inactive.gif" />
-    <Content Include="Images\tab_right_active.gif" />
-    <Content Include="Images\tab_right_inactive.gif" />
     <Content Include="JScript\ColorPicker\color_functions.js" />
     <Content Include="JScript\ColorPicker\Images\select_arrow.gif" />
     <Content Include="JScript\ColorPicker\Images\select_arrow_down.gif" />

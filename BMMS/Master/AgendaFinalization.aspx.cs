@@ -191,7 +191,7 @@ namespace BMMS.Master
                         MeetingChangeResult noItems = AgendaMgr.AgendaFinalizeByMeetingId(MeetingId);
 
                         sMsg = noItems.Result == 1 ? "Agenda Finalized (no agenda items)." : noItems.RefusalMessage();
-                        MsgDisplay(sMsg);
+                        MsgDisplay(sMsg, sMsg == "Agenda Finalized (no agenda items)." ? MessageKind.Success : MessageKind.Warning);
                     }
                     else
                     {
@@ -212,7 +212,7 @@ namespace BMMS.Master
 
                         sMsg = result.Result == 1 ? "Agenda Finalized" : result.RefusalMessage();
 
-                        MsgDisplay(sMsg);
+                        MsgDisplay(sMsg, (sMsg == "Agenda Finalized" || sMsg == "Agenda Finalized (no agenda items).") ? MessageKind.Success : MessageKind.Warning);
 
                     }
 
@@ -395,9 +395,9 @@ namespace BMMS.Master
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

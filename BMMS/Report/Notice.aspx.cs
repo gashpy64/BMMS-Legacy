@@ -19,6 +19,10 @@ namespace BMMS.Report
     {
         private string className = "Notice";
 
+        // The look of the outcome CreateBodyText returns (step B3): Success when every member with an address
+        // got the notice, Warning when some have no address or some mails failed, Error when none was sent
+        private MessageKind noticeKind = MessageKind.Warning;
+
         protected void Page_Load(object sender, EventArgs e)
         {
             Common.InitSetup(className);
@@ -42,12 +46,12 @@ namespace BMMS.Report
                 string result = CreateBodyText();
 
                 if (result != string.Empty)
-                    MsgDisplay(result);
+                    MsgDisplay(result, noticeKind);
             }
             catch (Exception ex)
             {
                 BMMSBAL.Utilities.WriteErrorLog(className, "btnSendMail_Click", ex.ToString());
-                MsgDisplay("The notice could not be sent: " + HttpUtility.HtmlEncode(ex.Message));
+                MsgDisplay("The notice could not be sent: " + HttpUtility.HtmlEncode(ex.Message), MessageKind.Error);
             }
         }
         #endregion
@@ -201,6 +205,13 @@ namespace BMMS.Report
 
                     if (failed > 0)
                         result += " " + failed + " mail(s) could not be sent; see the error log.";
+
+                    if (failed > 0 && sent == 0)
+                        noticeKind = MessageKind.Error;
+                    else if (failed > 0 || noMail.Count > 0)
+                        noticeKind = MessageKind.Warning;
+                    else
+                        noticeKind = MessageKind.Success;
                 }
                 catch (Exception ex)
                 {
@@ -434,9 +445,9 @@ namespace BMMS.Report
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

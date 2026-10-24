@@ -18,7 +18,9 @@ The solution `BMMS.sln` has three projects, all .NET Framework 4.8:
 
 ## Branding
 
-The product name is "Board Minutes and Meeting Software" (short: BMMS), owned by Gashpy Software, the same everywhere: the login page, the page header and footer, the browser title (`BMMS/XML/AppSettings.xml`), the mail footer (`BMMSBAL/Mail_Mgr.cs`) and the assembly details. The application ships no organisation or vendor image: the brand is text. Printed reports carry only the customer's own logo, uploaded on System Settings, or else the organisation name.
+The product name is "Board Minutes and Meeting Software" (short: BMMS), owned by Gashpy Software, the same everywhere: the login page, the page header and footer, the browser title (`BMMS/XML/AppSettings.xml`), the mail footer (`BMMSBAL/Mail_Mgr.cs`) and the assembly details.
+
+Since step B3 the application carries the product artwork made in Claude Design: the logo in the header, the banner on the sign-in page, the favicon and the message icons (`BMMS/Images/Brand/`, `BMMS/favicon.ico`), and one colour scheme: the palette `BMMS/CSS/bmms-colours.css` (the `--bmms-*` values), loaded before `bmms-workbench.css` on every page. The source files (SVG masters, all sizes, the unused icons and a sample company logo for tests) are in `Design/bmms-brand/`, outside the web project. Printed reports, PDFs and mail carry no product artwork: they carry only the customer's own logo, uploaded on System Settings, or else the organisation name.
 
 ## Database
 
