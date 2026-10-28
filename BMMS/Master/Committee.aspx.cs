@@ -220,7 +220,7 @@ namespace BMMS.Master
                     myCommittee = null;
                 }
 
-                MsgDisplay(sMsg);
+                MsgDisplay(sMsg, sMsg == "Successfully Saved" ? MessageKind.Success : MessageKind.Warning);
 
                 pnlViewCommittee.Visible = true;
                 pnlEditCommittee.Visible = false;
@@ -272,7 +272,7 @@ namespace BMMS.Master
             string ToMailId = string.Empty;
             string Bcc = string.Empty;
 
-            DataTable dtUser = UserMgr.GetUserList();
+            DataTable dtUser = UserMgr.GetActiveUserList();   // active users only (stage 2a)
             if (dtUser.Rows.Count > 0)
             {
                 for (int i = 0; i <= dtUser.Rows.Count - 1; i++)
@@ -394,9 +394,12 @@ namespace BMMS.Master
                         }
                         else
                         {
-                            CommitteeMgr.DeleteCommitteeByCommitteeId(CommitteeId);
+                            int Result = CommitteeMgr.DeleteCommitteeByCommitteeId(CommitteeId);
 
-                            MsgDisplay(Common.GetAppSetting("delete_msg"));
+                            if (Result == 1)
+                                MsgDisplay(Common.GetAppSetting("delete_msg"), MessageKind.Success);
+                            else
+                                MsgDisplay(Common.GetAppSetting("delete_reference"));
                         }
                     }
                     catch (Exception ex)
@@ -430,9 +433,9 @@ namespace BMMS.Master
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

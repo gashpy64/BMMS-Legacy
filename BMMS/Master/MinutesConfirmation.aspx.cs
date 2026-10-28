@@ -127,11 +127,12 @@ namespace BMMS.Master
                     }
                     else
                     {
-                        int result = AgendaMgr.MinutesConfirmByMeetingId(MeetingId, int.Parse(Session["UserId"].ToString()));
+                        // Refused if another tab confirmed it first (BMMS-Fix-MeetingLocks.sql)
+                        MeetingChangeResult result = AgendaMgr.MinutesConfirmByMeetingId(MeetingId, int.Parse(Session["UserId"].ToString()));
 
-                        sMsg = "Minutes confirmed.";
+                        sMsg = result.Result == 1 ? "Minutes confirmed." : result.RefusalMessage();
 
-                        MsgDisplay(sMsg);
+                        MsgDisplay(sMsg, sMsg == "Minutes confirmed." ? MessageKind.Success : MessageKind.Warning);
                     }
                 }
                 catch (Exception ex)
@@ -180,7 +181,7 @@ namespace BMMS.Master
 
                     if (dtMeeting.Rows.Count <= 0)
                     {
-                        MsgDisplay("Minutes not finalize for this meeting.");
+                        MsgDisplay(MeetingChangeReason.MinutesNotFinalizedForConfirmMessage);   // step 23 wording
                         ScriptManager.GetCurrent(this).SetFocus(ddlMeeting.ClientID);
                         result = false;
                     }
@@ -199,9 +200,9 @@ namespace BMMS.Master
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

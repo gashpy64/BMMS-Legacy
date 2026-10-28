@@ -19,6 +19,10 @@ namespace BMMS.Report
     {
         private string className = "Notice";
 
+        // The look of the outcome CreateBodyText returns (step B3): Success when every member with an address
+        // got the notice, Warning when some have no address or some mails failed, Error when none was sent
+        private MessageKind noticeKind = MessageKind.Warning;
+
         protected void Page_Load(object sender, EventArgs e)
         {
             Common.InitSetup(className);
@@ -34,22 +38,41 @@ namespace BMMS.Report
         protected void btnSendMail_Click(object sender, EventArgs e)
         {
             MsgHide();
-            CreateBodyText();
-            MsgDisplay("Mail was sent to all members.");
+
+            // Never silent (step 28): the click is an UpdatePanel postback, so an error would otherwise
+            // show nothing and leave no log entry
+            try
+            {
+                string result = CreateBodyText();
+
+                if (result != string.Empty)
+                    MsgDisplay(result, noticeKind);
+            }
+            catch (Exception ex)
+            {
+                BMMSBAL.Utilities.WriteErrorLog(className, "btnSendMail_Click", ex.ToString());
+                MsgDisplay("The notice could not be sent: " + HttpUtility.HtmlEncode(ex.Message), MessageKind.Error);
+            }
         }
         #endregion
 
         #region CreateBodyText
-        private void CreateBodyText()
+        // Sends the notice to each member with an e-mail address and returns the outcome for the page;
+        // string.Empty when the meeting has no members (the alert says so) (step 28)
+        private string CreateBodyText()
         {
+            string result = string.Empty;
+
             int MeetingId = int.Parse(ddlMeeting.SelectedValue);
             int CommitteeId = int.Parse(ddlCommittee.SelectedValue);
 
             DataTable dtMeeting = new DataTable();
             dtMeeting = (DataTable)ViewState["dtMeeting"];
 
+            // The same members as the printed notice (Create PDF): on the committee on the meeting date, or with
+            // attendance (BMMS-Fix-MeetingLocks-Step16.sql), with address, city and state (View_Member) (step 28)
             DataTable dtCommitteeMember = new DataTable();
-            dtCommitteeMember = CommitteeMemberMgr.GetCommitteeMemberByCommitteeId(CommitteeId, MeetingId);
+            dtCommitteeMember = CommitteeMemberMgr.GetCommitteeMemberByMeetingId(MeetingId);
 
             DataTable dtCompanySecretary = UserMgr.GetCompanySecretary(MeetingId);
             string CompanySecretary = string.Empty;
@@ -75,28 +98,24 @@ namespace BMMS.Report
                     if (commiteeBal.Board == 1)
                         IsBoard = true;
 
-                    bool IsMailSend = true;
+                    // The procedure already leaves out members not on the committee on the meeting date, so there
+                    // is no cessation check here; each send is counted for the page (step 28)
+                    int membersWithMail = 0;
+                    int sent = 0;
+                    int failed = 0;
+                    System.Collections.Generic.List<string> noMail = new System.Collections.Generic.List<string>();
 
                     for (int i = 0; i < dtCommitteeMember.Rows.Count; i++)
                     {
-                        if (dtCommitteeMember.Rows[i]["CessationDate"].ToString().Trim() != string.Empty)
-                        {
-                            try
-                            {
-                                DateTime CessationDate = Convert.ToDateTime(dtCommitteeMember.Rows[i]["CessationDate"].ToString());
-                                if (CessationDate <= System.DateTime.Now)
-                                {
-                                    IsMailSend = false;
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                IsMailSend = false;
-                            }
-                        }
+                        string ToMailId = dtCommitteeMember.Rows[i]["EmailId"].ToString().Trim();
 
-                        if (IsMailSend)
+                        if (ToMailId == string.Empty)
+                            noMail.Add(dtCommitteeMember.Rows[i]["MemberName"].ToString());
+
+                        if (ToMailId != string.Empty)
                         {
+                            membersWithMail += 1;
+
                             string BodyText = string.Empty;
 
 
@@ -104,12 +123,7 @@ namespace BMMS.Report
 
                             BodyText += "<table>";
 
-                            BodyText += "<tr>";
-                            BodyText += "<td colspan='2' style='text-align:center; font-weight:bold;'>";
-                            BodyText += "LAKSHMI VILAS BANK <br />";
-                            BodyText += "REGD & ADMIN OFFICE, KARUR";
-                            BodyText += "</td>";
-                            BodyText += "</tr>";
+                            BodyText += OrganisationDetails.Current.MailHeaderRowHtml();
 
                             BodyText += "<tr>";
                             BodyText += "<td colspan='2' style='text-align:right'>";
@@ -173,14 +187,31 @@ namespace BMMS.Report
                             BodyText += "</table>";
 
 
-                            string ToMailId = dtCommitteeMember.Rows[i]["EmailId"].ToString();
                             string Subject = "Notice of Next Meeting of the " + dtMeeting.Rows[0]["CommitteeName"].ToString();
-                            Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, null);
 
-                            
+                            // "Success", or "Error: ..." already written to the error log by Mail_Mgr
+                            if (Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, null) == "Success")
+                                sent += 1;
+                            else
+                                failed += 1;
                         }
                     }
 
+                    result = "Notice sent to " + sent + " of " + membersWithMail + " members.";
+
+                    if (noMail.Count > 0)
+                        result += " " + noMail.Count + " member(s) have no e-mail address: "
+                                + HttpUtility.HtmlEncode(string.Join(", ", noMail.ToArray())) + ".";
+
+                    if (failed > 0)
+                        result += " " + failed + " mail(s) could not be sent; see the error log.";
+
+                    if (failed > 0 && sent == 0)
+                        noticeKind = MessageKind.Error;
+                    else if (failed > 0 || noMail.Count > 0)
+                        noticeKind = MessageKind.Warning;
+                    else
+                        noticeKind = MessageKind.Success;
                 }
                 catch (Exception ex)
                 {
@@ -192,24 +223,39 @@ namespace BMMS.Report
                 }
             }
             //System.Diagnostics.Process.Start(sFilePDF);
+
+            return result;
         }
         #endregion
 
         #region btnCreatePDF_Click
         protected void btnCreatePDF_Click(object sender, EventArgs e)
         {
-            CreatePDF();
+            // Built in memory and opened by ViewReport.aspx?pdf=1; nothing is written to ~/Files/PDF (step 26).
+            // Two pop-ups of the same user at once: the last one built wins.
+            MsgHide();
+            byte[] pdf = CreatePDF();
+
+            if (pdf != null)
+            {
+                Session["ReportPdf"] = pdf;
+                Session["ReportPdfName"] = "Notice";
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(825,500,'ViewReport.aspx?pdf=1','Notice');", true);
+                pnlNoticeDownload.Visible = true;
+            }
         }
         #endregion
 
         #region CreatePDF
-        private void CreatePDF()
+        // The notice letters as PDF bytes; null when the meeting has no members (step 26)
+        private byte[] CreatePDF()
         {
             int MeetingId = int.Parse(ddlMeeting.SelectedValue);
             int CommitteeId = int.Parse(ddlCommittee.SelectedValue);
 
             Document pdfDocument = new Document();
-            string sFilePDF = Server.MapPath("~/Files/PDF") + "\\Notice.pdf";
+            MemoryStream pdfStream = new MemoryStream();
+            byte[] pdf = null;
 
             DataTable dtMeeting = new DataTable();
             dtMeeting = (DataTable)ViewState["dtMeeting"];
@@ -232,6 +278,13 @@ namespace BMMS.Report
                 ScriptManager.RegisterStartupScript(this, this.GetType(), "msg", "alert('No Committee-Member or Meeting-Members Available');", true);
                 ScriptManager.GetCurrent(this).SetFocus(ddlMeeting.ClientID);
             }
+            else if (PdfFonts.HasIndicText(dtCommitteeMember, "MemberName", "Address1", "Address2", "Address3", "CityName", "State_Name")
+                || PdfFonts.HasIndicText(dtMeeting, "CommitteeName", "MeetingTime", "Venue")
+                || PdfFonts.HasIndicText(CompanySecretary, CompanySecretaryDesign) || PdfFonts.OrganisationHasIndicText())
+            {
+                // Tamil or Hindi text: no PDF; the notice by Send Mail shows it (step U1b)
+                MsgDisplay(PdfFonts.IndicTextMessageFor("use Send Mail"));
+            }
             //else if (CompanySecretary == string.Empty)
             //{
             //    ScriptManager.RegisterStartupScript(this, this.GetType(), "msg", "alert('No such `In Attendance` meeting member tagging record for this meeting.');", true);
@@ -241,8 +294,7 @@ namespace BMMS.Report
             {
                 try
                 {
-                    PdfWriter writer = PdfWriter.GetInstance(pdfDocument,
-                                                 new FileStream(sFilePDF, FileMode.Create));
+                    PdfWriter writer = PdfWriter.GetInstance(pdfDocument, pdfStream);
                     pdfDocument.Open();
                     pdfDocument.SetMargins(45f, 45f, 60f, 60f);
 
@@ -253,73 +305,73 @@ namespace BMMS.Report
 
                     for (int i = 0; i < dtCommitteeMember.Rows.Count; i++)
                     {
-                        Paragraph paragraph = new Paragraph(" ");
+                        Paragraph paragraph = PdfFonts.Paragraph(" ");
                         pdfDocument.Add(paragraph);
 
-                        pdfDocument.Add((PDFUtilities.PrintCompanyLogo()));
+                        PDFUtilities.AddCompanyLogo(pdfDocument);
 
-                        Paragraph para = new Paragraph("REGD & ADMIN OFFICE, KARUR");
+                        Paragraph para = PdfFonts.Paragraph(OrganisationDetails.Current.OfficeLineUpper);
                         para.Alignment = Element.ALIGN_CENTER;
-                        pdfDocument.Add(para);
+                        if (OrganisationDetails.Current.OfficeLineUpper != string.Empty)
+                            pdfDocument.Add(para);
 
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
 
-                        para = new Paragraph("Date : " + System.DateTime.Now.ToString("dd-MMM-yyyy"));
+                        para = PdfFonts.Paragraph("Date : " + System.DateTime.Now.ToString("dd-MMM-yyyy"));
                         para.Alignment = Element.ALIGN_RIGHT;
                         pdfDocument.Add(para);
 
-                        pdfDocument.Add(new Paragraph("To"));
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
-                        pdfDocument.Add(new Paragraph(dtCommitteeMember.Rows[i]["MemberName"].ToString()));
-                        pdfDocument.Add(new Paragraph(dtCommitteeMember.Rows[i]["Address1"].ToString()));
-                        pdfDocument.Add(new Paragraph(dtCommitteeMember.Rows[i]["Address2"].ToString()));
-                        pdfDocument.Add(new Paragraph(dtCommitteeMember.Rows[i]["Address3"].ToString()));
-                        pdfDocument.Add(new Paragraph(dtCommitteeMember.Rows[i]["CityName"].ToString()));
-                        pdfDocument.Add(new Paragraph(dtCommitteeMember.Rows[i]["State_Name"].ToString()));
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
-                        pdfDocument.Add(new Paragraph("Dear Sir/Madam,"));
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph("To"));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph(dtCommitteeMember.Rows[i]["MemberName"].ToString()));
+                        pdfDocument.Add(PdfFonts.Paragraph(dtCommitteeMember.Rows[i]["Address1"].ToString()));
+                        pdfDocument.Add(PdfFonts.Paragraph(dtCommitteeMember.Rows[i]["Address2"].ToString()));
+                        pdfDocument.Add(PdfFonts.Paragraph(dtCommitteeMember.Rows[i]["Address3"].ToString()));
+                        pdfDocument.Add(PdfFonts.Paragraph(dtCommitteeMember.Rows[i]["CityName"].ToString()));
+                        pdfDocument.Add(PdfFonts.Paragraph(dtCommitteeMember.Rows[i]["State_Name"].ToString()));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph("Dear Sir/Madam,"));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
 
                         string strSubject = string.Empty;
                         strSubject = "Subject : Notice of Next Meeting of the " + dtMeeting.Rows[0]["CommitteeName"].ToString();
 
-                        pdfDocument.Add(new Paragraph(strSubject));
+                        pdfDocument.Add(PdfFonts.Paragraph(strSubject));
 
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
                         //string test = dtMeeting.Rows[0]["Venue"].ToString();
                         //string tes1t = dtMeeting.Rows[0]["Venue"].ToString().Replace("\n", " ");
-                        pdfDocument.Add(new Paragraph("The next meeting of the " + dtMeeting.Rows[0]["CommitteeName"].ToString() +
+                        pdfDocument.Add(PdfFonts.Paragraph("The next meeting of the " + dtMeeting.Rows[0]["CommitteeName"].ToString() +
                             " is scheduled to be held on " + Convert.ToDateTime(dtMeeting.Rows[0]["MeetingDate"].ToString()).ToString("dd-MMM-yyyy") +
                             " at " + dtMeeting.Rows[0]["MeetingTime"].ToString() + " Hrs. at " + dtMeeting.Rows[0]["Venue"].ToString().Replace("\n", " ")));
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
-                        pdfDocument.Add(new Paragraph("The Agenda Note will be sent to you in due course."));
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
-                        pdfDocument.Add(new Paragraph("You are requested to kindly make it convenient to attend the above meeting."));
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
-                        pdfDocument.Add(new Paragraph("Thanking You,"));
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
-                        pdfDocument.Add(new Paragraph("Yours faithfully,"));
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph("The Agenda Note will be sent to you in due course."));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph("You are requested to kindly make it convenient to attend the above meeting."));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph("Thanking You,"));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph("Yours faithfully,"));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
 
                         if (CompanySecretary != string.Empty)
                         {
-                            pdfDocument.Add(new Paragraph("(" + CompanySecretary + ")"));
-                            pdfDocument.Add(new Paragraph(CompanySecretaryDesign));
+                            pdfDocument.Add(PdfFonts.Paragraph("(" + CompanySecretary + ")"));
+                            pdfDocument.Add(PdfFonts.Paragraph(CompanySecretaryDesign));
                         }
                         else
                         {
-                            pdfDocument.Add(new Paragraph("Authorized Signatory"));
+                            pdfDocument.Add(PdfFonts.Paragraph("Authorized Signatory"));
                         }
 
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
                         pdfDocument.Add(new Paragraph());
-                        pdfDocument.Add(new Paragraph(""));
-                        pdfDocument.Add(new Paragraph(""));
+                        pdfDocument.Add(PdfFonts.Paragraph(""));
+                        pdfDocument.Add(PdfFonts.Paragraph(""));
                         pdfDocument.NewPage();
                     }
-                    pnlNoticeDownload.Visible = true;
                 }
                 catch (Exception ex)
                 {
@@ -329,8 +381,11 @@ namespace BMMS.Report
                 {
                     pdfDocument.Close();
                 }
+
+                pdf = pdfStream.ToArray();
             }
-            //System.Diagnostics.Process.Start(sFilePDF);
+
+            return pdf;
         }
         #endregion
 
@@ -398,9 +453,9 @@ namespace BMMS.Report
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

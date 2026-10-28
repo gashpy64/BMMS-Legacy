@@ -1,3 +1,5 @@
+/* Colours: the palette in bmms-colours.css (step B3); only colours were changed here, not layout. */
+
 /* MY POPUP */
 
 .MyPopupOuter
@@ -21,40 +23,18 @@
 	height: 100%;
 	z-index: 100001;
 	position: absolute;
-	background-color: White;
+	background-color: var(--bmms-panel-bg);
 	padding: 5px;
 }
 
 .MyPopupContentInner
 {
-	background-color: #FEE2C3;
-    border: 2px solid #FFCF9A;
+	background-color: var(--bmms-panel-bg);
+    border: 2px solid var(--bmms-panel-border);
     height: auto;
     margin: auto;
     overflow: hidden;
     width: 90%;
-}
-
-.MyPopupBG
-{
-	position: fixed;
-	left: 0px;
-	top: 0px;
-	width: 1000px;
-	height: 100%;
-	z-index: 10000;
-	background-color: #414141;
-	filter: alpha(opacity=90);
-	opacity: 0.9;
-}
-
-/* MODEL POPUP */
-
-.ModalPopupBackground
-{
-	background-color: #2476e4;
-	filter: alpha(opacity=90);
-	opacity: 0.9;
 }
 
 /*  DIV RELATED STYLE */
@@ -148,7 +128,7 @@
 .spanMandatory
 {
 	background-color: Transparent;
-	color: red;
+	color: var(--bmms-error);
 	height: 3px;
 	width: 3px;
 }
@@ -182,20 +162,19 @@
 	overflow: hidden;
 }
 
+/* The message's colours and its icon (warning, success, error) are set by the message rules in
+   bmms-workbench.css (step B3); this rule keeps the layout of the older pages. */
 .lblError
 {
 	text-align: center;
 	vertical-align: top;
-	color: Red;
+	color: var(--bmms-text);
 	font-family: Verdana, Arial, Helvetica, sans-serif;
 	font-size: x-small;
-	border: solid 1px #CFAD66;
-	background-color: #FFFBCC;
+	border: solid 1px var(--bmms-warning-border);
+	background-color: var(--bmms-warning-tint);
 	padding: 8px 8px 8px 30px;
 	vertical-align: middle;
-	background-image: url(      "../Images/Common/Error-Info.gif" );
-	background-repeat: no-repeat;
-	background-position: 6px center;
 	width: auto;
 }
 
@@ -210,8 +189,8 @@
 
 .divNoRecord
 {
-	background-color: #FFCF9A;
-	color: #FF3E00;
+	background-color: var(--bmms-table-stripe);
+	color: var(--bmms-text-muted);
 	font-size: 10pt;
 	font-weight: bold;
 	height: 60px;
@@ -242,14 +221,14 @@
 	position: relative;
 	vertical-align: middle;
 	text-align: center;
-	background-color: White;
+	background-color: var(--bmms-panel-bg);
 	background-image: url(../Images/loader.gif);
 	background-repeat: no-repeat;
 	background-position: 10px 5px;
 	font-weight: bold;
 	padding-left: 25px;
 	padding-top: 15px;
-	border: solid 1px #FF3E00;
+	border: solid 1px var(--bmms-panel-border);
 }
 
 .divProgressBackground

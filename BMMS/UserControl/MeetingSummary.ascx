@@ -6,16 +6,15 @@
     <table border="0" width="100%" cellspacing="0" cellpadding="0">
         <tr>
             <td valign="top">
-                <asp:GridView ID="grvMeetSchedule" runat="server" BackColor="white" HeaderStyle-BackColor=""
-                    CellPadding="3" CellSpacing="2" Width="100%" AutoGenerateColumns="False" BorderColor="#DEBA84"
+                <asp:GridView ID="grvMeetSchedule" runat="server" CssClass="contentTable1"
+                    CellPadding="3" CellSpacing="2" Width="100%" AutoGenerateColumns="False"
                     BorderStyle="None" BorderWidth="0px">
-                    <HeaderStyle HorizontalAlign="Center" BackColor="#F3B876" Font-Bold="True" ForeColor="black" />
-                    <RowStyle bordercolor="Gray" borderstyle="Solid" borderwidth="0px" backcolor="#FFF7E7"
-                        forecolor="#8C4510" />
-                    <AlternatingRowStyle bordercolor="Gray" borderstyle="Solid" borderwidth="0px" />
-                    <FooterStyle BackColor="#F7DFB5" ForeColor="#8C4510" />
-                    <SelectedRowStyle backcolor="#738A9C" font-bold="True" forecolor="White" />
-                    <PagerStyle ForeColor="#8C4510" HorizontalAlign="Center" />
+                    <HeaderStyle HorizontalAlign="Center" CssClass="contentTableHeader" Font-Bold="True" />
+                    <RowStyle CssClass="contentTabletd" borderstyle="Solid" borderwidth="0px" />
+                    <AlternatingRowStyle borderstyle="Solid" borderwidth="0px" />
+                    <FooterStyle CssClass="contentTabletd" />
+                    <SelectedRowStyle CssClass="bmms-row-selected" font-bold="True" />
+                    <PagerStyle HorizontalAlign="Center" />
                     <Columns>
                         <asp:TemplateField HeaderText="Committee">
                             <ItemTemplate>
@@ -50,16 +49,15 @@
     <table border="0" width="100%" cellspacing="0" cellpadding="0" class="leftColTab">
         <tr>
             <td valign="Top">
-            <asp:GridView ID="grvCompleteMeet" runat="server" BackColor="white" HeaderStyle-BackColor=""
-                    CellPadding="3" CellSpacing="2" Width="100%" AutoGenerateColumns="False" BorderColor="#DEBA84"
+            <asp:GridView ID="grvCompleteMeet" runat="server" CssClass="contentTable1"
+                    CellPadding="3" CellSpacing="2" Width="100%" AutoGenerateColumns="False"
                     BorderStyle="None" BorderWidth="0px">
-                    <HeaderStyle HorizontalAlign="Center" BackColor="#F3B876" Font-Bold="True" ForeColor="black" />
-                    <RowStyle bordercolor="Gray" borderstyle="Solid" borderwidth="0px" backcolor="#FFF7E7"
-                        forecolor="#8C4510" />
-                    <AlternatingRowStyle bordercolor="Gray" borderstyle="Solid" borderwidth="0px" />
-                    <FooterStyle BackColor="#F7DFB5" ForeColor="#8C4510" />
-                    <SelectedRowStyle backcolor="#738A9C" font-bold="True" forecolor="White" />
-                    <PagerStyle ForeColor="#8C4510" HorizontalAlign="Center" />
+                    <HeaderStyle HorizontalAlign="Center" CssClass="contentTableHeader" Font-Bold="True" />
+                    <RowStyle CssClass="contentTabletd" borderstyle="Solid" borderwidth="0px" />
+                    <AlternatingRowStyle borderstyle="Solid" borderwidth="0px" />
+                    <FooterStyle CssClass="contentTabletd" />
+                    <SelectedRowStyle CssClass="bmms-row-selected" font-bold="True" />
+                    <PagerStyle HorizontalAlign="Center" />
                     <Columns>
                         <asp:TemplateField HeaderText="Committee">
                             <ItemTemplate>

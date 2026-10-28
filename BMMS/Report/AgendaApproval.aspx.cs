@@ -30,8 +30,11 @@ namespace BMMS.Report
         }
 
         #region CreatePDF
-        private void CreatePDF()
+        // The agenda notes as PDF bytes; null when there is no agenda. Built in memory: nothing is written
+        // to ~/Files/PDF (step 26; it used to overwrite AgendaDetails.pdf behind a link to AgendaApproval.pdf)
+        private byte[] CreatePDF()
         {
+            byte[] pdf = null;
 
             DataTable dtAgenda = new DataTable();
             dtAgenda = GetAgendaDetails();
@@ -42,17 +45,22 @@ namespace BMMS.Report
                 ScriptManager.RegisterStartupScript(this, this.GetType(), "msg", "alert('No Agenda Available');", true);
                 ScriptManager.GetCurrent(this).SetFocus(ddlMeeting.ClientID);
             }
+            else if (HasIndicText(dtAgenda))
+            {
+                // Tamil or Hindi text: no PDF (step U1b)
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "msg",
+                    "alert('" + HttpUtility.JavaScriptStringEncode(PdfFonts.IndicTextMessageFor("choose View on this page")) + "');", true);
+            }
             else
             {
                 Document pdfDocument = new Document();
-                string sFilePDF = Server.MapPath("~/Files/PDF") + "\\AgendaDetails.pdf";
+                MemoryStream pdfStream = new MemoryStream();
 
                 try
                 {
                     string htmlTxt = string.Empty;
 
-                    PdfWriter writer = PdfWriter.GetInstance(pdfDocument,
-                                                 new FileStream(sFilePDF, FileMode.Create));
+                    PdfWriter writer = PdfWriter.GetInstance(pdfDocument, pdfStream);
                     pdfDocument.Open();
                     pdfDocument.SetMargins(45f, 45f, 60f, 60f);
 
@@ -63,11 +71,12 @@ namespace BMMS.Report
                         Paragraph paragraph = new Paragraph(" ");
                         pdfDocument.Add(paragraph);
 
-                        pdfDocument.Add((PDFUtilities.PrintCompanyLogo()));
+                        PDFUtilities.AddCompanyLogo(pdfDocument);
 
-                        Paragraph para = new Paragraph("REGD & ADMIN OFFICE, KARUR");
+                        Paragraph para = PdfFonts.Paragraph(OrganisationDetails.Current.OfficeLineUpper);
                         para.Alignment = Element.ALIGN_CENTER;
-                        pdfDocument.Add(para);
+                        if (OrganisationDetails.Current.OfficeLineUpper != string.Empty)
+                            pdfDocument.Add(para);
 
                         pdfDocument.Add(new Paragraph(Environment.NewLine));
                         pdfDocument.Add(new Paragraph(Environment.NewLine));
@@ -119,7 +128,7 @@ namespace BMMS.Report
                         PDFUtilities.AddHTMLText(pdfDocument, htmlText);
 
                         pdfDocument.Add(new Paragraph(Environment.NewLine));
-                        pdfDocument.Add(new Paragraph("Proposed Resolution : "));
+                        pdfDocument.Add(PdfFonts.Paragraph("Proposed Resolution : "));
 
                         htmlText = dtAgenda.Rows[j]["ProposedResolution"].ToString();
                         PDFUtilities.AddHTMLText(pdfDocument, htmlText);
@@ -140,8 +149,6 @@ namespace BMMS.Report
 
                         pdfDocument.NewPage();
                     }
-
-                    pnlAgendaDetailsDownload.Visible = true;
                 }
                 catch (Exception ex)
                 {
@@ -151,15 +158,47 @@ namespace BMMS.Report
                 {
                     pdfDocument.Close();
                 }
+
+                pdf = pdfStream.ToArray();
             }
-            //System.Diagnostics.Process.Start(sFilePDF);
+
+            return pdf;
+        }
+        #endregion
+
+        #region HasIndicText
+        // True when the agenda notes would print Tamil or Hindi text (step U1b): the heading of each item, its
+        // short text, typed agenda text and proposed resolution, and the organisation details. An uploaded
+        // agenda text file is a PDF; its bytes are not text and are not checked.
+        private bool HasIndicText(DataTable dtAgenda)
+        {
+            if (PdfFonts.OrganisationHasIndicText()
+                || PdfFonts.HasIndicText(dtAgenda, "CommitteeName", "AgendaNo", "MeetingNo", "DepartmentName", "ShortText", "ProposedResolution"))
+                return true;
+
+            foreach (DataRow row in dtAgenda.Rows)
+            {
+                if (row["AgendaType"].ToString() == "Entry" && PdfFonts.HasIndicText(row["AgendaText"].ToString()))
+                    return true;
+            }
+
+            return false;
         }
         #endregion
 
         #region btnCreatePDF_Click
         protected void btnCreatePDF_Click(object sender, EventArgs e)
         {
-            CreatePDF();
+            // Opened by ViewReport.aspx?pdf=1 (step 26). Two pop-ups of the same user at once: the last one built wins.
+            byte[] pdf = CreatePDF();
+
+            if (pdf != null)
+            {
+                Session["ReportPdf"] = pdf;
+                Session["ReportPdfName"] = "AgendaApproval";
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(1000,600,'ViewReport.aspx?pdf=1','Agenda Approval');", true);
+                pnlAgendaDetailsDownload.Visible = true;
+            }
         }
         #endregion
 

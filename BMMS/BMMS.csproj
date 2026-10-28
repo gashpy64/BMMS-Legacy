@@ -81,9 +81,25 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="CSS\bmms-workbench.css" />
+    <Content Include="CSS\bmms-colours.css" />
+    <Content Include="favicon.ico" />
+    <Content Include="Images\Brand\bmms-favicon-192.png" />
+    <Content Include="Images\Brand\bmms-login-banner.png" />
+    <Content Include="Images\Brand\bmms-login-banner-2x.png" />
+    <Content Include="Images\Brand\bmms-logo-horizontal-white.png" />
+    <Content Include="Images\Brand\bmms-logo-horizontal-white-2x.png" />
+    <Content Include="Images\Brand\message-error.png" />
+    <Content Include="Images\Brand\message-error-2x.png" />
+    <Content Include="Images\Brand\message-success.png" />
+    <Content Include="Images\Brand\message-success-2x.png" />
+    <Content Include="Images\Brand\message-warning.png" />
+    <Content Include="Images\Brand\message-warning-2x.png" />
     <Content Include="CSS\CommonHTML.css" />
     <Content Include="Default.aspx" />
     <Content Include="JScript\Validation.js" />
+    <Content Include="JScript\AsyncPostBackError.js" />
+    <Content Include="XML\PageAccess.xml" />
     <Content Include="UserControl\MenuUserControl.ascx" />
   </ItemGroup>
   <ItemGroup>
@@ -132,13 +148,6 @@
     <Compile Include="MasterPage\MainNoMenu.Master.designer.cs">
       <DependentUpon>MainNoMenu.Master</DependentUpon>
     </Compile>
-    <Compile Include="MasterPage\General.Master.cs">
-      <DependentUpon>General.Master</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="MasterPage\General.Master.designer.cs">
-      <DependentUpon>General.Master</DependentUpon>
-    </Compile>
     <Compile Include="MasterPage\Main.Master.cs">
       <DependentUpon>Main.Master</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -183,6 +192,7 @@
     </Compile>
     <Compile Include="Master\BackupDatabase.aspx.cs">
       <DependentUpon>BackupDatabase.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Master\BackupDatabase.aspx.designer.cs">
       <DependentUpon>BackupDatabase.aspx</DependentUpon>
@@ -207,6 +217,13 @@
     </Compile>
     <Compile Include="Master\Followup.aspx.designer.cs">
       <DependentUpon>Followup.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Master\SystemSettings.aspx.cs">
+      <DependentUpon>SystemSettings.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Master\SystemSettings.aspx.designer.cs">
+      <DependentUpon>SystemSettings.aspx</DependentUpon>
     </Compile>
     <Compile Include="Master\SMTPServerConfig.aspx.cs">
       <DependentUpon>SMTPServerConfig.aspx</DependentUpon>
@@ -313,6 +330,7 @@
     <Compile Include="Master\Department.aspx.designer.cs">
       <DependentUpon>Department.aspx</DependentUpon>
     </Compile>
+    <Compile Include="PageAccessModule.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Report\AttendanceDetails.aspx.cs">
       <DependentUpon>AttendanceDetails.aspx</DependentUpon>
@@ -465,31 +483,24 @@
     <Content Include="CSS\AjaxCalender.css" />
     <Content Include="CSS\PasswordCheck.css" />
     <Content Include="CSS\MainMaster.css" />
-    <Content Include="CSS\GeneralMaster.css" />
-    <Content Include="CSS\LoginPage.css" />
     <Content Include="Error\ErrorPage.aspx" />
     <Content Include="Error\TestPage.aspx" />
     <Content Include="Files\MemberPhoto\FemalePhoto.png" />
     <Content Include="Files\MemberPhoto\MalePhoto.png" />
+    <Content Include="Fonts\OFL.txt" />
+    <Content Include="Fonts\PublicSans-Bold.woff2" />
+    <Content Include="Fonts\PublicSans-Regular.woff2" />
+    <Content Include="Fonts\Pdf\NotoSerif-Bold.ttf" />
+    <Content Include="Fonts\Pdf\NotoSerif-BoldItalic.ttf" />
+    <Content Include="Fonts\Pdf\NotoSerif-Italic.ttf" />
+    <Content Include="Fonts\Pdf\NotoSerif-Regular.ttf" />
+    <Content Include="Fonts\Pdf\OFL.txt" />
     <Content Include="Global.asax" />
-    <Content Include="Images\bg.jpg" />
     <Content Include="Images\chromebg.gif" />
     <Content Include="Images\Common\calendar.png" />
-    <Content Include="Images\Common\Error-Info.gif" />
     <Content Include="Images\delete-ico.gif" />
     <Content Include="Images\edit-ico.gif" />
-    <Content Include="Images\login-bg.gif" />
-    <Content Include="Images\login-box.gif" />
-    <Content Include="Images\login-btn.gif" />
-    <Content Include="Images\login-lvb-logo.gif" />
-    <Content Include="Images\logo.jpg" />
-    <Content Include="Images\tableft.gif" />
-    <Content Include="Images\tabright.gif" />
-    <Content Include="Images\tab_center_active.gif" />
-    <Content Include="Images\tab_left_active.gif" />
-    <Content Include="Images\tab_left_inactive.gif" />
-    <Content Include="Images\tab_right_active.gif" />
-    <Content Include="Images\tab_right_inactive.gif" />
+    <Content Include="Images\login-btn-workbench.svg" />
     <Content Include="JScript\ColorPicker\color_functions.js" />
     <Content Include="JScript\ColorPicker\Images\select_arrow.gif" />
     <Content Include="JScript\ColorPicker\Images\select_arrow_down.gif" />
@@ -504,7 +515,6 @@
     <Content Include="JScript\ColorPicker\js_color_picker_v2.js" />
     <Content Include="JScript\BrowserSecurity.js" />
     <Content Include="Logout.aspx" />
-    <Content Include="MasterPage\General.Master" />
     <Content Include="Master\Committee.aspx" />
     <Content Include="Master\CommitteeMember.aspx" />
     <Content Include="Master\Agenda.aspx" />
@@ -514,6 +524,7 @@
     <Content Include="Master\ChangePassword.aspx" />
     <Content Include="ChangePasswordFirst.aspx" />
     <Content Include="Master\SMTPServerConfig.aspx" />
+    <Content Include="Master\SystemSettings.aspx" />
     <Content Include="Master\ResetPassword.aspx" />
     <Content Include="Master\MinutesConfirmation.aspx" />
     <Content Include="Master\ResetDatabase.aspx" />
@@ -547,11 +558,8 @@
     <EmbeddedResource Include="Properties\licenses.licx" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Images\banner-top.jpg" />
     <Content Include="Images\spacer.gif" />
     <Content Include="Images\loader.gif" />
-    <Content Include="Images\report_banner-top-old.jpg" />
-    <Content Include="Images\report_banner-top.jpg" />
     <Content Include="MasterPage\MainNoMenu.Master" />
     <Content Include="Master\Followup.aspx" />
     <Content Include="Report\Reports.aspx" />
@@ -564,6 +572,7 @@
     <Content Include="XML\ReportSettings.xml" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="App_Data\" />
     <Folder Include="Files\AgendaAttach\" />
     <Folder Include="Files\AgendaText\" />
     <Folder Include="Files\MemberResume\" />
@@ -571,6 +580,16 @@
     <Folder Include="Files\SqlBackup\" />
     <Folder Include="Files\Temp\" />
     <Folder Include="Log\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Web.config" />
+    <Content Include="connectionStrings.config" />
+    <None Include="Web.Debug.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </None>
+    <None Include="Web.Release.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v18.0\WebApplications\Microsoft.WebApplication.targets" />

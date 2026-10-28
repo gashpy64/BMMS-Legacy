@@ -296,7 +296,7 @@
                             </asp:RadioButtonList>
                             <asp:Panel ID="pnlUploadAgendaText" runat="server" Visible="false">
                                 <asp:FileUpload ID="FileUploadAgendaText" runat="server" />
-                                <span style="color: Red;">Note : Attach pdf files only.</span>
+                                <span class="bmms-text-error">Note : Attach pdf files only.</span>
                             </asp:Panel>
                         </div>
                     </div>
@@ -335,7 +335,7 @@
                         </div>
                         <div class="divRowRight" style="width: 650px;">
                             <asp:GridView ID="grvAttachedFiles" runat="server" AutoGenerateColumns="False" ShowHeader="False"
-                                BackColor="#DEBA84" BorderColor="#DEBA84" BorderStyle="None" BorderWidth="1px"
+                                CssClass="contentTable1" BorderStyle="None" BorderWidth="1px"
                                 CellPadding="3" CellSpacing="2">
                                 <Columns>
                                     <asp:TemplateField>
@@ -353,14 +353,14 @@
                                         </ItemTemplate>
                                     </asp:TemplateField>
                                 </Columns>
-                                <RowStyle BackColor="#FFF7E7" ForeColor="#8C4510" />
-                                <FooterStyle BackColor="#F7DFB5" ForeColor="#8C4510" />
-                                <PagerStyle ForeColor="#8C4510" HorizontalAlign="Center" />
-                                <SelectedRowStyle BackColor="#738A9C" Font-Bold="True" ForeColor="White" />
-                                <HeaderStyle BackColor="#A55129" Font-Bold="True" ForeColor="White" />
+                                <RowStyle CssClass="contentTabletd" />
+                                <FooterStyle CssClass="contentTabletd" />
+                                <PagerStyle HorizontalAlign="Center" />
+                                <SelectedRowStyle CssClass="bmms-row-selected" Font-Bold="True" />
+                                <HeaderStyle CssClass="contentTableHeader" Font-Bold="True" />
                             </asp:GridView>
                             <asp:FileUpload runat="server" ID="fuAttachment"></asp:FileUpload>
-                            <span style="color: Red;">Note : Attach pdf files only.</span>
+                            <span class="bmms-text-error">Note : Attach pdf files only.</span>
                             <asp:Button ID="btnAddFile" runat="server" Text="AddFile" OnClick="btnAddFile_Click"
                                 Style="visibility: hidden" />
                         </div>

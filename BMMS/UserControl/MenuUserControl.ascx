@@ -42,6 +42,10 @@
 </div>
 
 <script type="text/javascript">
+	// No arrow images (step B3): the script would request Images/arrow-down.gif relative to the page, which does
+	// not exist (404); the arrow is drawn in CSS (bmms-workbench.css). Set before setup(), which reads them in init().
+	ddlevelsmenu.arrowpointers.showarrow.toplevel = false;
+	ddlevelsmenu.arrowpointers.showarrow.sublevel = false;
 	ddlevelsmenu.setup("ddtopmenubar", "topbar") //ddlevelsmenu.setup("mainmenuid", "topbar|sidebar")
 </script>
 
@@ -52,11 +56,7 @@
 <ul id="ddsubmenu1" class="ddsubmenustyle">
     <li><a href="../Master/Department.aspx">Department Master</a></li>
     <li><a href="../Master/Designation.aspx">Designation Master</a></li>
-    <%if (Session["RoleCode"].ToString() == "admin")
-      { %>
     <li><a href="../Master/MemberType.aspx">Member Type</a></li>
-    <%
-        } %>
     <li><a href="../Master/SubjectType.aspx">Subject Type</a></li>
     <li><a href="../Master/DecisionType.aspx">Decision Type</a></li>
     <li><a href="../Master/User.aspx">User Master</a></li>
@@ -74,6 +74,7 @@
     <li><a href="../Master/ResetPassword.aspx">Reset Password</a></li>
     <li><a href="../Master/BackupDatabase.aspx">Backup Database</a></li>
     <li><a href="../Master/SMTPServerConfig.aspx">SMTP Configuration</a></li>
+    <li><a href="../Master/SystemSettings.aspx">System Settings</a></li>
     <li><a href="../Master/ResetDatabase.aspx">Reset Database</a></li>
     <%
         } %>

@@ -23,12 +23,12 @@ namespace BMMS.DashBoard
 
             if (!IsPostBack)
             {
-                lnkActShowall.Attributes.Add("style", "color:#da251d");
-                lnkActRead.Attributes.Add("style", "color:#333333");
-                lnkActUnRead.Attributes.Add("style", "color:#333333");
-                lnkShowAll.Attributes.Add("style", "color:#da251d");
-                lnkRead.Attributes.Add("style", "color:#333333");
-                lnkUnread.Attributes.Add("style", "color:#333333");
+                lnkActShowall.CssClass = "bmms-filter-current";
+                lnkActRead.CssClass = "";
+                lnkActUnRead.CssClass = "";
+                lnkShowAll.CssClass = "bmms-filter-current";
+                lnkRead.CssClass = "";
+                lnkUnread.CssClass = "";
 
                 LoadAlertGRV();
                 LoadActionItemGRV();
@@ -81,9 +81,9 @@ namespace BMMS.DashBoard
         #region lnkShowAll_Click
         protected void lnkShowAll_Click(object sender, EventArgs e)
         {
-            lnkShowAll.Attributes.Add("style", "color:#da251d");
-            lnkRead.Attributes.Add("style", "color:#333333");
-            lnkUnread.Attributes.Add("style", "color:#333333");
+            lnkShowAll.CssClass = "bmms-filter-current";
+            lnkRead.CssClass = "";
+            lnkUnread.CssClass = "";
 
             LoadAlertGRV();
         }
@@ -92,9 +92,9 @@ namespace BMMS.DashBoard
         #region lnkActShowall_Click
         protected void lnkActShowall_Click(object sender, EventArgs e)
         {
-            lnkActShowall.Attributes.Add("style", "color:#da251d");
-            lnkActRead.Attributes.Add("style", "color:#333333");
-            lnkActUnRead.Attributes.Add("style", "color:#333333");
+            lnkActShowall.CssClass = "bmms-filter-current";
+            lnkActRead.CssClass = "";
+            lnkActUnRead.CssClass = "";
 
             LoadActionItemGRV();
         }
@@ -104,9 +104,9 @@ namespace BMMS.DashBoard
         #region lnkRead_Click
         protected void lnkRead_Click(object sender, EventArgs e)
         {
-            lnkShowAll.Attributes.Add("style", "color:#333333");
-            lnkRead.Attributes.Add("style", "color:#da251d");
-            lnkUnread.Attributes.Add("style", "color:#333333");
+            lnkShowAll.CssClass = "";
+            lnkRead.CssClass = "bmms-filter-current";
+            lnkUnread.CssClass = "";
 
             LoadAlertGRV();
             DataTable dtAlert = new DataTable();
@@ -126,9 +126,9 @@ namespace BMMS.DashBoard
         #region lnkActRead_Click
         protected void lnkActRead_Click(object sender, EventArgs e)
         {
-            lnkActShowall.Attributes.Add("style", "color:#333333");
-            lnkActRead.Attributes.Add("style", "color:#da251d");
-            lnkActUnRead.Attributes.Add("style", "color:#333333");
+            lnkActShowall.CssClass = "";
+            lnkActRead.CssClass = "bmms-filter-current";
+            lnkActUnRead.CssClass = "";
 
             LoadActionItemGRV();
             DataTable dtActionItem = new DataTable();
@@ -148,9 +148,9 @@ namespace BMMS.DashBoard
         #region lnkUnread_Click
         protected void lnkUnread_Click(object sender, EventArgs e)
         {
-            lnkShowAll.Attributes.Add("style", "color:#333333");
-            lnkRead.Attributes.Add("style", "color:#333333");
-            lnkUnread.Attributes.Add("style", "color:#da251d");
+            lnkShowAll.CssClass = "";
+            lnkRead.CssClass = "";
+            lnkUnread.CssClass = "bmms-filter-current";
 
             LoadAlertGRV();
             DataTable dtAlert = new DataTable();
@@ -170,9 +170,9 @@ namespace BMMS.DashBoard
         #region lnkActUnRead_Click
         protected void lnkActUnRead_Click(object sender, EventArgs e)
         {
-            lnkActShowall.Attributes.Add("style", "color:#333333");
-            lnkActRead.Attributes.Add("style", "color:#333333");
-            lnkActUnRead.Attributes.Add("style", "color:#da251d");
+            lnkActShowall.CssClass = "";
+            lnkActRead.CssClass = "";
+            lnkActUnRead.CssClass = "bmms-filter-current";
 
             LoadActionItemGRV();
             DataTable dtActionItem = new DataTable();
@@ -206,7 +206,7 @@ namespace BMMS.DashBoard
             Label lblSourceTypeId = (Label)gv.FindControl("lblSourceTypeId");
             Label lblAlertUserId = (Label)gv.FindControl("lblAlertUserId");
             Label lblAlert = (Label)gv.FindControl("lblAlert");
-            gv.BackColor = System.Drawing.Color.FromName("#FEE2C3");
+            gv.CssClass = "contentTabletd bmms-row-read";
 
             hdnAlertUserId.Value = lblAlertUserId.Text.Trim();
 
@@ -274,7 +274,7 @@ namespace BMMS.DashBoard
             LinkButton link = (LinkButton)sender;
             GridViewRow gv = (GridViewRow)(link.Parent.Parent);
             Label lblActionItemId = (Label)gv.FindControl("lblActionItemId");
-            gv.BackColor = System.Drawing.Color.FromName("#FEE2C3");
+            gv.CssClass = "contentTabletd bmms-row-read";
 
             BindActionItemDetails(int.Parse(lblActionItemId.Text));
 
@@ -309,12 +309,12 @@ namespace BMMS.DashBoard
                 string read = Convert.ToString(DataBinder.Eval(e.Row.DataItem, "ReadStatus"));
                 if (read.Equals("1"))
                 {
-                    e.Row.BackColor = System.Drawing.Color.FromName("#FEE2C3");
+                    e.Row.CssClass = "contentTabletd bmms-row-read";
                 }
                 else
                 {
                     e.Row.Font.Bold = true;
-                    e.Row.BackColor = System.Drawing.Color.FromName("#FFCF9A");
+                    e.Row.CssClass = "contentTabletd bmms-row-unread";
                 }
             }
         }
@@ -328,12 +328,12 @@ namespace BMMS.DashBoard
                 string read = Convert.ToString(DataBinder.Eval(e.Row.DataItem, "ReadStatus"));
                 if (read.Equals("1"))
                 {
-                    e.Row.BackColor = System.Drawing.Color.FromName("#FEE2C3");
+                    e.Row.CssClass = "contentTabletd bmms-row-read";
                 }
                 else
                 {
                     e.Row.Font.Bold = true;
-                    e.Row.BackColor = System.Drawing.Color.FromName("#FFCF9A");
+                    e.Row.CssClass = "contentTabletd bmms-row-unread";
                 }
             }
         }
@@ -485,16 +485,23 @@ namespace BMMS.DashBoard
                         btnDeleteAgendaAlert.Visible = true;
                         break;
                     default:
-                        ftxtManagerComments.ReadOnly = false;
-                        ftxtControllerComments.ReadOnly = false;
-                        if (dtAgendaEdit.Rows[0]["ControllerApprovedStatus"].ToString() != "Approved" && dtAgendaEdit.Rows[0]["ControllerApprovedStatus"].ToString() != "Rejected")
-                        {
-                            btnApprove.Visible = true;
-                            btnReject.Visible = true;
-                            btnDeleteAgendaAlert.Visible = false;
-                        }
+                        // Admin, mgmt and md_sect do not sign off agenda items: view only
+                        // (BMMS-Fix-AgendaRouting-Step20.sql refuses them too, Reason 14)
+                        ftxtManagerComments.ReadOnly = true;
+                        ftxtControllerComments.ReadOnly = true;
+                        btnApprove.Visible = false;
+                        btnReject.Visible = false;
+                        btnDeleteAgendaAlert.Visible = true;
                         break;
 
+                }
+
+                // The protected system account takes no part in the workflow (BMMS-Fix-SystemAccount-Stage3.sql)
+                if (Common.IsSystemAccountSession())
+                {
+                    btnApprove.Visible = false;
+                    btnReject.Visible = false;
+                    btnDeleteAgendaAlert.Visible = true;
                 }
             }
         }
@@ -536,23 +543,38 @@ namespace BMMS.DashBoard
             agendaBal.MgrApprovedStatus = "";
             agendaBal.ControllerApprovedStatus = "";
 
-            if (Session["RoleCode"].ToString() == "manager")
+            // Finalized since the alert was opened: refuse before any mail (BMMS-Fix-MeetingLocks-Step16.sql)
+            if (!MeetingMgr.IsAgendaOpen(MeetingId))
             {
-                agendaBal.MgrApprovedStatus = "Approved";
-                GenerateMail("approved by Manager", "AMA");
+                ShowAlert(MeetingChangeReason.AgendaFinalizedMessage);
+                pnlAgenda.Visible = false;
+                LoadAlertGRV();
+                return;
             }
 
+            if (Session["RoleCode"].ToString() == "manager")
+                agendaBal.MgrApprovedStatus = "Approved";
+
             if (Session["RoleCode"].ToString() == "controller")
-            {
                 agendaBal.ControllerApprovedStatus = "Approved";
-                GenerateMail("approved by Controller", "ACA");
-            }
 
             agendaBal.UpdatedBy = Convert.ToInt16(Session["UserId"].ToString());
 
-            AgendaMgr.UpdateAgendaByAgendaId(agendaBal);
+            // Who may approve at which stage is checked by the procedure (BMMS-Fix-AgendaRouting-Step20.sql);
+            // the mail goes out only once it is done
+            MeetingChangeResult approveResult = AgendaMgr.UpdateAgendaByAgendaId(agendaBal);
 
-            int result = AgendaMgr.GenerateSubjectNoByMeetingId(MeetingId, AgendaId);
+            if (approveResult.Result == 1)
+            {
+                if (agendaBal.MgrApprovedStatus == "Approved")
+                    GenerateMail("approved by Manager", "AMA");
+                if (agendaBal.ControllerApprovedStatus == "Approved")
+                    GenerateMail("approved by Controller", "ACA");
+
+                AgendaMgr.GenerateSubjectNoByMeetingId(MeetingId, AgendaId);
+            }
+            else
+                ShowAlert(approveResult.RefusalMessage());
 
             pnlAgenda.Visible = false;
 
@@ -576,24 +598,47 @@ namespace BMMS.DashBoard
             agendaBal.MgrApprovedStatus = "";
             agendaBal.ControllerApprovedStatus = "";
 
-            if (Session["RoleCode"].ToString() == "manager")
+            // Finalized since the alert was opened: refuse before any mail (BMMS-Fix-MeetingLocks-Step16.sql)
+            if (!MeetingMgr.IsAgendaOpen(MeetingId))
             {
-                agendaBal.MgrApprovedStatus = "Rejected";
-                GenerateMail("rejected by Manager", "AMR");
+                ShowAlert(MeetingChangeReason.AgendaFinalizedMessage);
+                pnlAgenda.Visible = false;
+                LoadAlertGRV();
+                return;
             }
 
+            if (Session["RoleCode"].ToString() == "manager")
+                agendaBal.MgrApprovedStatus = "Rejected";
+
             if (Session["RoleCode"].ToString() == "controller")
-            {
                 agendaBal.ControllerApprovedStatus = "Rejected";
-                GenerateMail("rejected by Controller", "ACR");
-            }
 
             agendaBal.UpdatedBy = Convert.ToInt16(Session["UserId"].ToString());
 
-            AgendaMgr.UpdateAgendaByAgendaId(agendaBal);
+            // Who may reject at which stage is checked by the procedure (BMMS-Fix-AgendaRouting-Step20.sql);
+            // the mail goes out only once it is done
+            MeetingChangeResult rejectResult = AgendaMgr.UpdateAgendaByAgendaId(agendaBal);
+
+            if (rejectResult.Result == 1)
+            {
+                if (agendaBal.MgrApprovedStatus == "Rejected")
+                    GenerateMail("rejected by Manager", "AMR");
+                if (agendaBal.ControllerApprovedStatus == "Rejected")
+                    GenerateMail("rejected by Controller", "ACR");
+            }
+            else
+                ShowAlert(rejectResult.RefusalMessage());
 
             pnlAgenda.Visible = false;
             LoadAlertGRV();
+        }
+        #endregion
+
+        #region ShowAlert
+        private void ShowAlert(string message)
+        {
+            ScriptManager.RegisterStartupScript(this, this.GetType(), "refusal",
+                "alert('" + HttpUtility.JavaScriptStringEncode(HttpUtility.HtmlDecode(message)) + "');", true);
         }
         #endregion
 

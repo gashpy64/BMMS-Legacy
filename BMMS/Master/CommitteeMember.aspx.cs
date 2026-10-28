@@ -47,14 +47,7 @@ namespace BMMS.Master
         {
             try
             {
-                DataTable dtMemberType = MemberTypeMgr.GetMemberTypeList(1);
-
-                DataView dv = new DataView(dtMemberType);
-                dv.RowFilter = "MemberTypeId <> 2 AND MemberTypeId <> 3 AND MemberTypeId <> 6";
-
-                dtMemberType = dv.ToTable("dtMemberType");
-
-                Common.LoadDropdownlist(ddlMemberType, dtMemberType, "MemberTypeName", "MemberTypeId", true);
+                LoadMemberTypes(0);
             }
             catch (Exception ex)
             {
@@ -64,6 +57,17 @@ namespace BMMS.Master
             {
 
             }
+        }
+        #endregion
+
+        #region LoadMemberTypes
+        // Active committee types in display order; on an edit also the row's current type,
+        // marked when it is inactive or a meeting type (BMMS-Fix-MemberTypes-Step21.sql)
+        private void LoadMemberTypes(int CurrentMemberTypeId)
+        {
+            DataTable dtMemberType = MemberTypeMgr.GetMemberTypeForTagging(MemberTypeMgr.CommitteeScope, CurrentMemberTypeId);
+
+            Common.LoadDropdownlist(ddlMemberType, dtMemberType, "DisplayName", "MemberTypeId", true);
         }
         #endregion
 
@@ -230,6 +234,7 @@ namespace BMMS.Master
                     hdnCommitteeMemberId.Value = "0";
 
                     ddlMemberName.Text = "0";
+                    LoadMemberTypes(0);
                     ddlMemberType.Text = "0";
                     rdoIsFeeApplicable.Text = "0";
                     txtApplicableFee.Enabled = false;
@@ -285,12 +290,13 @@ namespace BMMS.Master
                     myCommitteeMember.UpdatedOn = System.DateTime.Now;
                     myCommitteeMember.UpdatedBy = int.Parse(Session["UserId"].ToString());
 
-                    int result = myCommitteeMemberMgr.AddEditCommitteeMember(myCommitteeMember);
+                    // Refused when the type is not an active committee type (BMMS-Fix-MemberTypes-Step21.sql)
+                    MeetingChangeResult result = myCommitteeMemberMgr.AddEditCommitteeMember(myCommitteeMember);
 
-                    if (result == 1)
+                    if (result.Result == 1)
                         sMsg = "Successfully Saved";
                     else
-                        sMsg = "Record Not Saved";
+                        sMsg = result.RefusalMessage();
                 }
                 catch (Exception ex)
                 {
@@ -302,13 +308,14 @@ namespace BMMS.Master
                     myCommitteeMember = null;
                 }
 
-                MsgDisplay(sMsg);
-
                 ltrlMemberDetails.Text = string.Empty;
                 pnlViewCommitteeMember.Visible = true;
                 pnlEditCommitteeMember.Visible = false;
 
                 ddlCommittee_SelectedIndexChanged(this, e);
+
+                // After the list refresh, which hides the message
+                MsgDisplay(sMsg, sMsg == "Successfully Saved" ? MessageKind.Success : MessageKind.Warning);
             }
         }
         #endregion
@@ -370,6 +377,7 @@ namespace BMMS.Master
                     txtMemberName.Visible = true;
                     txtMemberName.Text = dtCommitteeMember.Rows[0]["MemberName"].ToString();
                     hdnMemberId.Value = dtCommitteeMember.Rows[0]["MemberId"].ToString();
+                    LoadMemberTypes(Convert.ToInt32(dtCommitteeMember.Rows[0]["MemberTypeId"]));
                     ddlMemberType.Text = dtCommitteeMember.Rows[0]["MemberTypeId"].ToString();
                     txtAppointmentDate.Text = Convert.ToDateTime(dtCommitteeMember.Rows[0]["AppointmentDate"].ToString()).ToString("dd-MMM-yyyy");
                     txtCessationDate.Enabled = true;
@@ -388,9 +396,12 @@ namespace BMMS.Master
 
                     try
                     {
-                        CommitteeMemberMgr.DeleteCommitteeMemberByCommitteeMemberId(CommitteeMemberId);
+                        int Result = CommitteeMemberMgr.DeleteCommitteeMemberByCommitteeMemberId(CommitteeMemberId);
 
-                        MsgDisplay("Record Deleted Successfully");
+                        if (Result == 1)
+                            MsgDisplay("Record Deleted Successfully", MessageKind.Success);
+                        else
+                            MsgDisplay(Common.GetAppSetting("delete_reference"));
                     }
                     catch (Exception ex)
                     {
@@ -420,9 +431,9 @@ namespace BMMS.Master
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

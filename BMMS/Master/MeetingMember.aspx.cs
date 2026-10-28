@@ -46,14 +46,7 @@ namespace BMMS.Master
         {
             try
             {
-                DataTable dtMemberType = MemberTypeMgr.GetMemberTypeList(1);
-
-                DataView dv = new DataView(dtMemberType);
-                dv.RowFilter = "MemberTypeId = 2 OR MemberTypeId = 3 OR MemberTypeId = 6";
-
-                dtMemberType = dv.ToTable("dtMemberType");
-
-                Common.LoadDropdownlist(ddlMemberType, dtMemberType, "MemberTypeName", "MemberTypeId", true);
+                LoadMemberTypes(0);
             }
             catch (Exception ex)
             {
@@ -63,6 +56,17 @@ namespace BMMS.Master
             {
 
             }
+        }
+        #endregion
+
+        #region LoadMemberTypes
+        // Active meeting types in display order; on an edit also the row's current type,
+        // marked when it is inactive or a committee type (BMMS-Fix-MemberTypes-Step21.sql)
+        private void LoadMemberTypes(int CurrentMemberTypeId)
+        {
+            DataTable dtMemberType = MemberTypeMgr.GetMemberTypeForTagging(MemberTypeMgr.MeetingScope, CurrentMemberTypeId);
+
+            Common.LoadDropdownlist(ddlMemberType, dtMemberType, "DisplayName", "MemberTypeId", true);
         }
         #endregion
 
@@ -77,6 +81,15 @@ namespace BMMS.Master
                 dtMeetingMember = MeetingMemberMgr.GetMeetingMemberByMeetingId(_intMeetingId);
 
                 ViewState["DataTable"] = dtMeetingMember;
+
+                // Read only once the minutes are finalized (BMMS-Fix-MeetingLocks.sql)
+                bool locked = _intMeetingId > 0 && MeetingMgr.IsMinutesFinalized(_intMeetingId);
+                ViewState["MeetingLocked"] = locked;
+                btnAdd.Enabled = !locked;
+                btnAdd.ToolTip = locked ? MeetingChangeReason.MinutesFinalizedMessage : "Add";
+                if (locked)
+                    MsgDisplay(MeetingChangeReason.MinutesFinalizedMessage);
+
                 BindGridView();
             }
             catch (Exception ex)
@@ -195,6 +208,18 @@ namespace BMMS.Master
             {
                 if (e.Row.RowType == DataControlRowType.DataRow)
                 {
+                    // Visual only: the procedures refuse these anyway
+                    if (MeetingLocked())
+                    {
+                        Button btnEdit = (Button)e.Row.FindControl("btnEdit");
+                        btnEdit.Enabled = false;
+                        btnEdit.ToolTip = MeetingChangeReason.MinutesFinalizedMessage;
+
+                        Button btnDelete = (Button)e.Row.FindControl("btnDelete");
+                        btnDelete.Enabled = false;
+                        btnDelete.ToolTip = MeetingChangeReason.MinutesFinalizedMessage;
+                    }
+
                     //e.Row.Attributes.Add("onmouseover", "MouseEvents(this, event)");
                     //e.Row.Attributes.Add("onmouseout", "MouseEvents(this, event)");
 
@@ -208,6 +233,23 @@ namespace BMMS.Master
             {
                 Utilities.GoToErrPage(className, "grvMeetingMember_RowDataBound", ex);
             }
+        }
+        #endregion
+
+        #region MeetingLocked
+        // Set when a meeting is chosen: minutes finalized ('F') or confirmed ('C')
+        private bool MeetingLocked()
+        {
+            return ViewState["MeetingLocked"] != null && (bool)ViewState["MeetingLocked"];
+        }
+        #endregion
+
+        #region ActingUserId
+        // The logged-in user, from the server-side session only
+        private int ActingUserId()
+        {
+            int userId;
+            return (Session["UserId"] != null && int.TryParse(Session["UserId"].ToString(), out userId)) ? userId : 0;
         }
         #endregion
 
@@ -231,7 +273,11 @@ namespace BMMS.Master
         protected void btnAdd_Click(object sender, EventArgs e)
         {
             MsgHide();
-            if (ddlMeeting.Text != "0")
+            if (ddlMeeting.Text != "0" && MeetingMgr.IsMinutesFinalized(Convert.ToInt32(ddlMeeting.SelectedValue)))
+            {
+                MsgDisplay(MeetingChangeReason.MinutesFinalizedMessage);
+            }
+            else if (ddlMeeting.Text != "0")
             {
                 ddlMemberName.Visible = true;
                 LoadUnTagMember();
@@ -251,6 +297,7 @@ namespace BMMS.Master
                     hdnMeetingMemberId.Value = "0";
 
                     ddlMemberName.Text = "0";
+                    LoadMemberTypes(0);
                     ddlMemberType.Text = "0";
                     txtMemberName.Visible = false;
                     hdnMemberId.Value = "0";
@@ -292,16 +339,17 @@ namespace BMMS.Master
                     myMeetingMember.MemberTypeId = Convert.ToInt16(ddlMemberType.SelectedValue.ToString());
                     myMeetingMember.StatusId = Convert.ToInt16(ddlStatus.SelectedValue);
                     myMeetingMember.CreatedOn = System.DateTime.Now;
-                    myMeetingMember.CreatedBy = int.Parse(Session["UserId"].ToString());
+                    myMeetingMember.CreatedBy = ActingUserId();
                     myMeetingMember.UpdatedOn = System.DateTime.Now;
-                    myMeetingMember.UpdatedBy = int.Parse(Session["UserId"].ToString());
+                    myMeetingMember.UpdatedBy = ActingUserId();
 
-                    int result = myMeetingMemberMgr.AddEditMeetingMember(myMeetingMember);
+                    // Refused once the minutes are finalized (BMMS-Fix-MeetingLocks.sql)
+                    MeetingChangeResult result = myMeetingMemberMgr.AddEditMeetingMember(myMeetingMember);
 
-                    if (result == 1)
+                    if (result.Result == 1)
                         sMsg = "Successfully Saved";
                     else
-                        sMsg = "Record Not Saved";
+                        sMsg = result.RefusalMessage();
                 }
                 catch (Exception ex)
                 {
@@ -313,12 +361,13 @@ namespace BMMS.Master
                     myMeetingMember = null;
                 }
 
-                MsgDisplay(sMsg);
-
                 ltrlMemberDetails.Text = string.Empty;
                 pnlViewMeetingMember.Visible = true;
                 pnlEditMeetingMember.Visible = false;
                 ddlMeeting_SelectedIndexChanged(this,e);
+
+                // After the list refresh, which hides the message
+                MsgDisplay(sMsg, sMsg == "Successfully Saved" ? MessageKind.Success : MessageKind.Warning);
             }
         }
         #endregion
@@ -381,6 +430,12 @@ namespace BMMS.Master
                 {
                     int MeetingMemberId = Convert.ToInt32(e.CommandArgument);
 
+                    if (MeetingMgr.IsMinutesFinalized(Convert.ToInt32(ddlMeeting.SelectedValue)))
+                    {
+                        MsgDisplay(MeetingChangeReason.MinutesFinalizedMessage);
+                        return;
+                    }
+
                     pnlViewMeetingMember.Visible = false;
                     pnlEditMeetingMember.Visible = true;
 
@@ -399,6 +454,7 @@ namespace BMMS.Master
                     txtMemberName.Visible = true;
                     txtMemberName.Text = dtMeetingMember.Rows[0]["MemberName"].ToString();
                     hdnMemberId.Value = dtMeetingMember.Rows[0]["MemberId"].ToString();
+                    LoadMemberTypes(Convert.ToInt32(dtMeetingMember.Rows[0]["MemberTypeId"]));
                     ddlMemberType.Text = dtMeetingMember.Rows[0]["MemberTypeId"].ToString();
 
                     ddlStatus.Enabled = true;
@@ -412,19 +468,21 @@ namespace BMMS.Master
                 {
                     int MeetingMemberId = Convert.ToInt32(e.CommandArgument);
                     
+                    // Refused once the minutes are finalized or the member's attendance is recorded
+                    // (BMMS-Fix-MeetingLocks.sql). Only a foreign-key refusal (547) is "in use";
+                    // any other error goes to the outer catch and the error page.
                     try
                     {
-                        int Result = MeetingMemberMgr.DeleteMeetingMemberByMeetingMemberId(MeetingMemberId);
+                        MeetingChangeResult result = MeetingMemberMgr.DeleteMeetingMemberByMeetingMemberId(MeetingMemberId);
 
-                        if (Result == 1)
-                            MsgDisplay("Record Deleted Successfully");
+                        if (result.Result == 1)
+                            MsgDisplay("Record Deleted Successfully", MessageKind.Success);
                         else
-                            MsgDisplay(Common.GetAppSetting("delete_reference"));
+                            MsgDisplay(result.RefusalMessage());
                     }
-                    catch (Exception ex)
+                    catch (System.Data.SqlClient.SqlException ex) when (ex.Number == 547)
                     {
-                        string _ErrMsg = Common.GetAppSetting("delete_reference");
-                        MsgDisplay(_ErrMsg);
+                        MsgDisplay(Common.GetAppSetting("delete_reference"));
                     }
 
                     int _intMeetingId = Convert.ToInt16(ddlMeeting.SelectedValue);
@@ -452,9 +510,9 @@ namespace BMMS.Master
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

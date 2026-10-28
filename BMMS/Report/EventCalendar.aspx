@@ -65,13 +65,13 @@
                                         <%# Container.DataItemIndex+1 + " Week"%>
                                     </ItemTemplate>
                                     <ItemStyle Width="11%" VerticalAlign="Middle" HorizontalAlign="Center" Font-Bold="true"
-                                        ForeColor="DarkGreen" />
+                                        CssClass="bmms-text-success" />
                                 </asp:TemplateField>
                                 <asp:TemplateField HeaderText="Sunday">
                                     <ItemTemplate>
                                         <%#Eval("Sunday", "{0:dd-MMM-yyyy (ddd)}")%>
                                     </ItemTemplate>
-                                    <ItemStyle Width="11%" VerticalAlign="Middle" HorizontalAlign="Center" ForeColor="red"
+                                    <ItemStyle Width="11%" VerticalAlign="Middle" HorizontalAlign="Center" CssClass="bmms-text-error"
                                         Font-Bold="true" />
                                 </asp:TemplateField>
                                 <asp:TemplateField HeaderText="Monday">

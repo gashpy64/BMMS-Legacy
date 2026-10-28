@@ -128,11 +128,14 @@ namespace BMMS.Report
                 {
                     ddlMeetingNo.Enabled = true;
 
-                    DataTable dtMeetingNo = MeetingMgr.GetMeetingByCommitteeId(CommitteeId);
+                    DataTable dtMeetingNo = GetReportMeetings(CommitteeId);
                     Common.LoadDDLwithAllNew(ddlMeetingNo, dtMeetingNo, "MeetingNo", "MeetingId", true);
 
                     if (dtMeetingNo.Rows.Count > 0)
                         ddlMeetingNo.SelectedIndex = 0;
+
+                    if (IsMinutesReport() && dtMeetingNo.Rows.Count <= 0)
+                        MsgDisplay(MeetingChangeReason.NoMinutesFinalizedMessage);
 
                 }
                 if (rdoMeatingNoSearch.SelectedValue == "1")
@@ -142,7 +145,7 @@ namespace BMMS.Report
                     ddlMeetingNoFrom.Enabled = true;
                     ddlMeetingNoTo.Enabled = true;
 
-                    DataTable dtMeetingNo = MeetingMgr.GetMeetingByCommitteeId(CommitteeId);
+                    DataTable dtMeetingNo = GetReportMeetings(CommitteeId);
                     Common.LoadDDLwithAllNew(ddlMeetingNoFrom, dtMeetingNo, "MeetingNo", "MeetingId", false);
                     Common.LoadDDLwithAllNew(ddlMeetingNoTo, dtMeetingNo, "MeetingNo", "MeetingId", false);
 
@@ -151,8 +154,30 @@ namespace BMMS.Report
                         ddlMeetingNoFrom.SelectedIndex = 0;
                         ddlMeetingNoTo.SelectedIndex = ddlMeetingNoTo.Items.Count - 1;
                     }
+
+                    if (IsMinutesReport() && dtMeetingNo.Rows.Count <= 0)
+                        MsgDisplay(MeetingChangeReason.NoMinutesFinalizedMessage);
                 }
             }
+        }
+        #endregion
+
+        #region IsMinutesReport
+        // Minutes and Minutes Extract: only meetings with finalized or confirmed minutes (BMMS-Fix-MinutesGating-Step22.sql)
+        private bool IsMinutesReport()
+        {
+            return reportCode == "minutes" || reportCode == "minutes_extract";
+        }
+        #endregion
+
+        #region GetReportMeetings
+        // The meeting lists: finalized or confirmed meetings for the minutes reports, every meeting for the agenda reports
+        private DataTable GetReportMeetings(int CommitteeId)
+        {
+            if (IsMinutesReport())
+                return MeetingMgr.GetMinutesReportMeetings(CommitteeId);
+
+            return MeetingMgr.GetMeetingByCommitteeId(CommitteeId);
         }
         #endregion
 
@@ -243,6 +268,25 @@ namespace BMMS.Report
                     ScriptManager.GetCurrent(this).SetFocus(ddlCommittee.ClientID);
                     result = false;
                 }
+                else if (IsMinutesReport())
+                {
+                    // Minutes and Minutes Extract only after Finalize Minutes (BMMS-Fix-MinutesGating-Step22.sql);
+                    // the procedure leaves the other meetings out anyway
+                    bool particular = rdoMeatingNoSearch.SelectedValue == "0";
+
+                    if ((particular && ddlMeetingNo.Items.Count <= 1) || (!particular && ddlMeetingNoFrom.Items.Count <= 0))
+                    {
+                        MsgDisplay(MeetingChangeReason.NoMinutesFinalizedMessage);
+                        result = false;
+                    }
+                    else if (particular && int.Parse(ddlMeetingNo.SelectedValue) > 0
+                             && !MeetingMgr.IsMinutesFinalized(int.Parse(ddlMeetingNo.SelectedValue)))
+                    {
+                        MsgDisplay(MeetingChangeReason.MinutesNotFinalizedMessage);
+                        ScriptManager.GetCurrent(this).SetFocus(ddlMeetingNo.ClientID);
+                        result = false;
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -255,6 +299,9 @@ namespace BMMS.Report
         #region btnView_Click
         protected void btnView_Click(object sender, EventArgs e)
         {
+            MsgHide();
+            pnlViewReport.Visible = false;
+
             if (CheckValidataion())
             {
                 pnlViewReport.Visible = true;
@@ -299,9 +346,9 @@ namespace BMMS.Report
 
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion
@@ -419,21 +466,22 @@ namespace BMMS.Report
         private void GenReport(DataTable dtReportsDetails)
         {
             reportCode = ViewState["reportCode"].ToString();
-            string sFilePDF = string.Empty;
 
+            // The PDF file name for ViewReport.aspx (Export to Pdf); the agenda PDFs are built in memory,
+            // kept in Session["ReportPdf"] and streamed by ViewReport.aspx?pdf=1, not written to ~/Files/PDF (step 25)
             switch (reportCode)
             {
                 case "minutes":
                     Session["ViewReport"] = CreateMinutesReportHTML(dtReportsDetails);
+                    Session["ViewReportName"] = "Minutes";
                     ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(" + Common.GetReportSettings("MinutesReport_Width") + ",500,'ViewReport.aspx','Minutes Report');", true);
                     break;
                 case "minutes_extract":
                     Session["ViewReport"] = CreateMinutesExtractReportHTML(dtReportsDetails);
+                    Session["ViewReportName"] = "MinutesExtract";
                     ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(" + Common.GetReportSettings("MinutesExtractReport_Width") + ",500,'ViewReport.aspx','Minutes Extract Report');", true);
                     break;
                 case "agenda_summary":
-                    sFilePDF = Server.MapPath("~/Files/PDF") + "\\AgendaSummary.pdf";
-
                     int MeetingNoSearch = int.Parse(rdoMeatingNoSearch.SelectedValue.ToString().Trim());
                     string fromMNO = string.Empty;
                     string toMNO = string.Empty;
@@ -454,17 +502,35 @@ namespace BMMS.Report
                         toMNO = ddlMeetingNoTo.SelectedItem.Text.ToString().Trim();
                     }
 
-                    if (MeetingNoSearch == 1 || (MeetingNoSearch == 0 && MeetingId <= 0))
-                        CreateAgendaSummaryFullPDF(dtReportsDetails, sFilePDF, fromMNO, toMNO);
-                    else
-                        CreateAgendaSummaryPDF(dtReportsDetails, sFilePDF);
+                    // Tamil or Hindi text in what the PDF prints: no PDF (step U1b)
+                    if (PdfFonts.HasIndicText(dtReportsDetails, "CommitteeName", "MeetingNo", "MeetingTime", "Place", "SubjectNo", "DepartmentName", "ShortText")
+                        || PdfFonts.HasIndicText(fromMNO, toMNO) || PdfFonts.OrganisationHasIndicText())
+                    {
+                        MsgDisplay(PdfFonts.IndicTextMessageFor("use View on this page"));
+                        break;
+                    }
 
-                    ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(1000,600,'../Files/PDF/AgendaSummary.pdf','Agenda Summary Report');", true);
+                    if (MeetingNoSearch == 1 || (MeetingNoSearch == 0 && MeetingId <= 0))
+                        Session["ReportPdf"] = CreateAgendaSummaryFullPDF(dtReportsDetails, fromMNO, toMNO);
+                    else
+                        Session["ReportPdf"] = CreateAgendaSummaryPDF(dtReportsDetails);
+                    Session["ReportPdfName"] = "AgendaSummary";
+
+                    ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(1000,600,'ViewReport.aspx?pdf=1','Agenda Summary Report');", true);
                     break;
                 case "agenda_details":
-                    sFilePDF = Server.MapPath("~/Files/PDF") + "\\AgendaDetails.pdf";
-                    CreateAgendaDetailsPDF(dtReportsDetails, sFilePDF);
-                    ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(1000,600,'../Files/PDF/AgendaDetails.pdf','Agenda Details Report');", true);
+                    // Tamil or Hindi text in what the PDF prints: no PDF (step U1b). An agenda text uploaded
+                    // as a PDF file is copied page by page and is not checked.
+                    if (PdfFonts.HasIndicText(dtReportsDetails, "CommitteeName", "SubjectNo", "SubjectTypeName", "DepartmentName", "ShortText")
+                        || AgendaTextHasIndicText(dtReportsDetails) || PdfFonts.OrganisationHasIndicText())
+                    {
+                        MsgDisplay(PdfFonts.IndicTextMessageFor("use View on this page"));
+                        break;
+                    }
+
+                    Session["ReportPdf"] = CreateAgendaDetailsPDF(dtReportsDetails);
+                    Session["ReportPdfName"] = "AgendaDetails";
+                    ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(1000,600,'ViewReport.aspx?pdf=1','Agenda Details Report');", true);
                     break;
             }
 
@@ -548,14 +614,10 @@ namespace BMMS.Report
                             CompanySecretaryDesign = dtCompanySecretary.Rows[0]["DesignationName"].ToString();
                         }
 
-                        string strReportBanner = Server.MapPath("~/Images") + "\\report_banner-top.jpg";
-
                         htmlTxt += "<div style='font-size:12pt; font-family: Times New Roman; width: " + Common.GetReportSettings("MinutesReport_Width") + "px;'>";
 
-                        //htmlTxt += "<div style='float:left; width:100%; text-align:center;'><img src='../Images/report_banner-top.jpg' /></div>";
-                        //htmlTxt += "<div style='float:left; width:100%; text-align:center;'><img src='" + strReportBanner.ToString() + "' /></div>";
-
-                        htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:11pt; padding-top:10px;'>THE LAKSHMI VILAS BANK LIMITED., REGD & ADMIN OFFICE, KARUR - 6</div>";
+                        if (OrganisationDetails.Current.HeaderLine != string.Empty)
+                            htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:11pt; padding-top:10px;'>" + OrganisationDetails.Html(OrganisationDetails.Current.HeaderLine) + "</div>";
 
                         htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:11pt;'><br /></div>";
 
@@ -638,25 +700,18 @@ namespace BMMS.Report
                             }
                         }
 
-                        for (int n = 0; n < dtSpecialInviteeMember.Rows.Count; n++)
-                        {
-                            htmlTxt += "<tr>";
-                            htmlTxt += "<td>";
-                            htmlTxt += dtSpecialInviteeMember.Rows[n]["MemberName"].ToString();
-                            htmlTxt += "</td>";
-                            htmlTxt += "<td>";
-                            htmlTxt += "-  " + dtSpecialInviteeMember.Rows[n]["DesignationName"].ToString();
-                            htmlTxt += "</td>";
-                            htmlTxt += "</tr>";
-                        }
-
                         htmlTxt += "<tr>";
                         htmlTxt += "<td colspan='2'>";
                         htmlTxt += "<br />";
                         htmlTxt += "</td>";
                         htmlTxt += "</tr>";
 
-                        if (dtInviteeMember.Rows.Count > 0)
+                        // ON INVITATION: the Invitees (type 2, where it exists), then the Special Invitees (type 6),
+                        // each in the order tagged (BMMS-Fix-AgendaRouting-Step20.sql)
+                        DataTable[] dtInvitationLists = { dtInviteeMember, dtSpecialInviteeMember };
+                        int InvitationCount = dtInviteeMember.Rows.Count + dtSpecialInviteeMember.Rows.Count;
+
+                        if (InvitationCount > 0)
                         {
                             htmlTxt += "<tr>";
                             htmlTxt += "<td colspan='2'>";
@@ -665,22 +720,25 @@ namespace BMMS.Report
                             htmlTxt += "</tr>";
                         }
 
-                        for (int n1 = 0; n1 < dtInviteeMember.Rows.Count; n1++)
+                        foreach (DataTable dtInvitation in dtInvitationLists)
                         {
-                            if (CompanySecretary != dtInviteeMember.Rows[n1]["MemberName"].ToString())
+                            for (int n1 = 0; n1 < dtInvitation.Rows.Count; n1++)
                             {
-                                htmlTxt += "<tr>";
-                                htmlTxt += "<td>";
-                                htmlTxt += dtInviteeMember.Rows[n1]["MemberName"].ToString();
-                                htmlTxt += "</td>";
-                                htmlTxt += "<td>";
-                                htmlTxt += "-  " + dtInviteeMember.Rows[n1]["DesignationName"].ToString();
-                                htmlTxt += "</td>";
-                                htmlTxt += "</tr>";
+                                if (CompanySecretary != dtInvitation.Rows[n1]["MemberName"].ToString())
+                                {
+                                    htmlTxt += "<tr>";
+                                    htmlTxt += "<td>";
+                                    htmlTxt += dtInvitation.Rows[n1]["MemberName"].ToString();
+                                    htmlTxt += "</td>";
+                                    htmlTxt += "<td>";
+                                    htmlTxt += "-  " + dtInvitation.Rows[n1]["DesignationName"].ToString();
+                                    htmlTxt += "</td>";
+                                    htmlTxt += "</tr>";
+                                }
                             }
                         }
 
-                        if (dtInviteeMember.Rows.Count > 0)
+                        if (InvitationCount > 0)
                         {
                             htmlTxt += "<tr>";
                             htmlTxt += "<td colspan='2'>";
@@ -697,14 +755,18 @@ namespace BMMS.Report
                             htmlTxt += "</td>";
                             htmlTxt += "</tr>";
 
-                            htmlTxt += "<tr>";
-                            htmlTxt += "<td>";
-                            htmlTxt += CompanySecretary;
-                            htmlTxt += "</td>";
-                            htmlTxt += "<td>";
-                            htmlTxt += "-  " + CompanySecretaryDesign;
-                            htmlTxt += "</td>";
-                            htmlTxt += "</tr>";
+                            // Every In Attendance member, the first tagged first; the first one also signs below
+                            for (int n2 = 0; n2 < dtCompanySecretary.Rows.Count; n2++)
+                            {
+                                htmlTxt += "<tr>";
+                                htmlTxt += "<td>";
+                                htmlTxt += dtCompanySecretary.Rows[n2]["CompanySecretary"].ToString();
+                                htmlTxt += "</td>";
+                                htmlTxt += "<td>";
+                                htmlTxt += "-  " + dtCompanySecretary.Rows[n2]["DesignationName"].ToString();
+                                htmlTxt += "</td>";
+                                htmlTxt += "</tr>";
+                            }
 
                         }
 
@@ -864,6 +926,10 @@ namespace BMMS.Report
 
                     int MeetingId = int.Parse(dtMeetingList.Rows[j]["MeetingId"].ToString());
 
+                    // No rows for this meeting (its minutes are not finalized): no heading for it (BMMS-Fix-MinutesGating-Step22.sql)
+                    if (dtMinutes.Select("MeetingId = " + MeetingId).Length == 0)
+                        continue;
+
                     DataTable dtMeeting = MeetingMgr.GetMeetingByMeetingId(MeetingId);
 
                     DataTable dtCommitteeMember = CommitteeMemberMgr.GetCommitteeMemberByMeetingId(MeetingId); // MemberMgr.GetMemberByMemberType("Director", CommitteeId, MeetingId);
@@ -889,13 +955,16 @@ namespace BMMS.Report
 
                     for (int i = 0; i < dtMinutes.Rows.Count; i++)
                     {
-                        htmlTxt += "<div style='float:left; width:100%; text-align:center;'><img src='../Images/report_banner-top.jpg' /></div>";
+                        htmlTxt += OrganisationDetails.ReportBannerHtml();
 
-                        htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:13pt;'>THE LAKSHMI VILAS BANK LIMITED</div>";
+                        if (OrganisationDetails.Current.Name != string.Empty)
+                            htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:13pt;'>" + OrganisationDetails.Html(OrganisationDetails.Current.NameUpper) + "</div>";
 
-                        htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:11pt;'>REGD & ADMIN OFFICE, KATHAPARAI</div>";
+                        if (OrganisationDetails.Current.OfficeLabel != string.Empty)
+                            htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:11pt;'>" + OrganisationDetails.Html(OrganisationDetails.Current.OfficeLabelUpper) + "</div>";
 
-                        htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:11pt;'>SALEM ROAD, KARUR 639 006<br /></div>";
+                        if (OrganisationDetails.Current.Address != string.Empty)
+                            htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:11pt;'>" + OrganisationDetails.Html(OrganisationDetails.Current.AddressUpper) + "<br /></div>";
 
                         htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:11pt;'><br /></div>";
 
@@ -973,37 +1042,38 @@ namespace BMMS.Report
         #endregion
 
         #region CreateAgendaSummaryPDF
-        private void CreateAgendaSummaryPDF(DataTable dtAgenda, string sFilePDF)
+        // Built in memory; the bytes are returned (step 25)
+        private byte[] CreateAgendaSummaryPDF(DataTable dtAgenda)
         {
 
             Document pdfDocument = new Document(PageSize.A4, 45f, 45f, 30f, 30f);
-            ///string sFilePDF = Server.MapPath("~/Files/PDF") + "\\AgendaSummary.pdf";
+            MemoryStream pdfStream = new MemoryStream();
 
             try
             {
                 int CommitteeId = int.Parse(ddlCommittee.SelectedValue.ToString());
 
-                Font fnt12Normal = new Font(Font.TIMES_ROMAN, 12, Font.NORMAL);
-                Font fnt10Normal = new Font(Font.TIMES_ROMAN, 10, Font.NORMAL);
-                Font fnt12Bold = new Font(Font.TIMES_ROMAN, 12, Font.BOLD);
+                Font fnt12Normal = PdfFonts.Get(12, Font.NORMAL);
+                Font fnt10Normal = PdfFonts.Get(10, Font.NORMAL);
+                Font fnt12Bold = PdfFonts.Get(12, Font.BOLD);
 
-                PdfWriter writer = PdfWriter.GetInstance(pdfDocument,
-                                             new FileStream(sFilePDF, FileMode.Create));
+                PdfWriter writer = PdfWriter.GetInstance(pdfDocument, pdfStream);
                 pdfDocument.Open();
 
                 Paragraph paragraph = new Paragraph(" ");
                 pdfDocument.Add(paragraph);
 
-                pdfDocument.Add((PDFUtilities.PrintCompanyLogo()));
+                PDFUtilities.AddCompanyLogo(pdfDocument);
 
                 PDFUtilities.AddHeaderPageNo(pdfDocument);
 
-                HeaderFooter header = new HeaderFooter(new Phrase("Page No: "), true);
+                HeaderFooter header = new HeaderFooter(PdfFonts.Phrase("Page No: ", fnt12Normal), true);
                 header.Border = Rectangle.NO_BORDER;
                 header.Alignment = Element.ALIGN_RIGHT;
                 pdfDocument.Header = header;
 
-                PDFUtilities.AddParagraph(pdfDocument, "THE LAKSHMI VILAS BANK LTD., REGD & ADMIN OFFICE, KARUR - 6", fnt12Normal, Element.ALIGN_CENTER);
+                if (OrganisationDetails.Current.HeaderLine != string.Empty)
+                    PDFUtilities.AddParagraph(pdfDocument, OrganisationDetails.Current.HeaderLine, fnt12Normal, Element.ALIGN_CENTER);
 
 
                 PDFUtilities.AddParagraph(pdfDocument, "-".PadRight(150, '-'), fnt10Normal, Element.ALIGN_CENTER);
@@ -1026,7 +1096,7 @@ namespace BMMS.Report
                 table.SetWidths(new float[] { 10, 90 });
                 table.HorizontalAlignment = 0;
 
-                PdfPCell cell = new PdfPCell(new Phrase("S. No.", fnt12Bold));
+                PdfPCell cell = new PdfPCell(PdfFonts.Phrase("S. No.", fnt12Bold));
                 cell.Colspan = 1;
                 cell.BorderWidthRight = 0.0f;
                 cell.BorderWidthLeft = 0.0f;
@@ -1036,7 +1106,7 @@ namespace BMMS.Report
 
                 table.AddCell(cell);
 
-                cell = new PdfPCell(new Phrase("Subject in brief", fnt12Bold));
+                cell = new PdfPCell(PdfFonts.Phrase("Subject in brief", fnt12Bold));
                 cell.Colspan = 1;
                 cell.BorderWidthRight = 0.0f;
                 cell.BorderWidthLeft = 0.0f;
@@ -1081,13 +1151,13 @@ namespace BMMS.Report
 
                 }
 
-                cell = new PdfPCell(new Phrase(" ", fnt12Normal));
+                cell = new PdfPCell(PdfFonts.Phrase(" ", fnt12Normal));
                 cell.Colspan = 2;
                 cell.BorderWidth = 0.0f;
                 cell.FixedHeight = 10.0f;
                 table.AddCell(cell);
 
-                cell = new PdfPCell(new Phrase(" ", fnt12Normal));
+                cell = new PdfPCell(PdfFonts.Phrase(" ", fnt12Normal));
                 cell.Colspan = 2;
                 cell.BorderWidthRight = 0.0f;
                 cell.BorderWidthLeft = 0.0f;
@@ -1101,10 +1171,13 @@ namespace BMMS.Report
 
                 pdfDocument.Add(new Paragraph(Environment.NewLine));
 
-                paragraph = new Paragraph("KARUR", fnt12Normal);
-                pdfDocument.Add(paragraph);
+                if (OrganisationDetails.Current.City != string.Empty)
+                {
+                    paragraph = PdfFonts.Paragraph(OrganisationDetails.Current.CityUpper, fnt12Normal);
+                    pdfDocument.Add(paragraph);
+                }
 
-                paragraph = new Paragraph(System.DateTime.Now.ToString("dd-MM-yyyy"), fnt12Normal);
+                paragraph = PdfFonts.Paragraph(System.DateTime.Now.ToString("dd-MM-yyyy"), fnt12Normal);
                 pdfDocument.Add(paragraph);
 
                 PDFUtilities.AddParagraph(pdfDocument, "Company Secretary", fnt12Normal, Element.ALIGN_RIGHT);
@@ -1121,12 +1194,13 @@ namespace BMMS.Report
                 pdfDocument.Close();
             }
 
-            //System.Diagnostics.Process.Start(sFilePDF);
+            return pdfStream.ToArray();
         }
         #endregion
 
         #region CreateAgendaSummaryFullPDF
-        private void CreateAgendaSummaryFullPDF(DataTable dtAgenda, string sFilePDF, string fromMNO, string toMNO)
+        // Built in memory; the bytes are returned (step 25)
+        private byte[] CreateAgendaSummaryFullPDF(DataTable dtAgenda, string fromMNO, string toMNO)
         {
 
             DataTable dtDepartment = new DataTable();
@@ -1136,10 +1210,11 @@ namespace BMMS.Report
             string htmlTxt = string.Empty;
 
             Document pdfDocument = new Document(PageSize.A4, 45f, 45f, 30f, 30f);
+            MemoryStream pdfStream = new MemoryStream();
 
             try
             {
-                PdfWriter writer = PdfWriter.GetInstance(pdfDocument, new FileStream(sFilePDF, FileMode.Create));
+                PdfWriter writer = PdfWriter.GetInstance(pdfDocument, pdfStream);
 
                 pdfDocument.Open();
 
@@ -1153,11 +1228,12 @@ namespace BMMS.Report
                     dvAgenda.RowFilter = "DepartmentId = " + int.Parse(dtDepartment.Rows[i]["DepartmentId"].ToString());
                     dtAgendaFilter = dvAgenda.ToTable("dtAgenda");
 
-                    pdfDocument.Add((PDFUtilities.PrintCompanyLogo()));
+                    PDFUtilities.AddCompanyLogo(pdfDocument);
 
-                    Paragraph para = new Paragraph("REGD & ADMIN OFFICE, KARUR");
+                    Paragraph para = PdfFonts.Paragraph(OrganisationDetails.Current.OfficeLineUpper);
                     para.Alignment = Element.ALIGN_CENTER;
-                    pdfDocument.Add(para);
+                    if (OrganisationDetails.Current.OfficeLineUpper != string.Empty)
+                        pdfDocument.Add(para);
 
                     htmlTxt = "<div style='float:left; width:100%; text-align:center'>";
                     htmlTxt += "Subject wise report for the Department : " + dtDepartment.Rows[i]["DepartmentName"].ToString();
@@ -1181,10 +1257,10 @@ namespace BMMS.Report
                     table.HorizontalAlignment = 0;
 
 
-                    Font fnt12Bold = new Font(Font.TIMES_ROMAN, 12, Font.BOLD);
-                    Font fnt12Normal = new Font(Font.TIMES_ROMAN, 12, Font.NORMAL);
+                    Font fnt12Bold = PdfFonts.Get(12, Font.BOLD);
+                    Font fnt12Normal = PdfFonts.Get(12, Font.NORMAL);
 
-                    PdfPCell cell = new PdfPCell(new Phrase("M.No.", fnt12Bold));
+                    PdfPCell cell = new PdfPCell(PdfFonts.Phrase("M.No.", fnt12Bold));
                     cell.Colspan = 1;
                     cell.BorderWidth = 0.5f;
                     cell.HorizontalAlignment = 1; //0=Left, 1=Centre, 2=Right
@@ -1244,13 +1320,31 @@ namespace BMMS.Report
             {
                 pdfDocument.Close();
             }
+
+            return pdfStream.ToArray();
+        }
+        #endregion
+
+        #region AgendaTextHasIndicText
+        // The agenda text typed on Agenda Entry (AgendaType Entry) of the Agenda Details PDF (step U1b)
+        private bool AgendaTextHasIndicText(DataTable dtAgenda)
+        {
+            foreach (DataRow row in dtAgenda.Rows)
+            {
+                if (row["AgendaType"].ToString() == "Entry" && PdfFonts.HasIndicText(row["AgendaText"].ToString()))
+                    return true;
+            }
+
+            return false;
         }
         #endregion
 
         #region CreateAgendaDetailsPDF
-        private void CreateAgendaDetailsPDF(DataTable dtAgenda, string sFilePDF)
+        // Built in memory; the bytes are returned (step 25)
+        private byte[] CreateAgendaDetailsPDF(DataTable dtAgenda)
         {
             Document pdfDocument = new Document(PageSize.A4, 45f, 45f, 30f, 30f);
+            MemoryStream pdfStream = new MemoryStream();
 
             try
             {
@@ -1258,8 +1352,7 @@ namespace BMMS.Report
 
                 string htmlTxt = string.Empty;
 
-                PdfWriter writer = PdfWriter.GetInstance(pdfDocument,
-                                             new FileStream(sFilePDF, FileMode.Create));
+                PdfWriter writer = PdfWriter.GetInstance(pdfDocument, pdfStream);
                 pdfDocument.Open();
 
                 for (int j = 0; j < dtAgenda.Rows.Count; j++)
@@ -1267,11 +1360,12 @@ namespace BMMS.Report
                     Paragraph paragraph = new Paragraph(" ");
                     pdfDocument.Add(paragraph);
 
-                    pdfDocument.Add((PDFUtilities.PrintCompanyLogo()));
+                    PDFUtilities.AddCompanyLogo(pdfDocument);
 
-                    Paragraph para = new Paragraph("REGD & ADMIN OFFICE, KARUR");
+                    Paragraph para = PdfFonts.Paragraph(OrganisationDetails.Current.OfficeLineUpper);
                     para.Alignment = Element.ALIGN_CENTER;
-                    pdfDocument.Add(para);
+                    if (OrganisationDetails.Current.OfficeLineUpper != string.Empty)
+                        pdfDocument.Add(para);
 
                     pdfDocument.Add(new Paragraph(Environment.NewLine));
                     pdfDocument.Add(new Paragraph(Environment.NewLine));
@@ -1286,9 +1380,9 @@ namespace BMMS.Report
 
                     ViewState["MailSubject"] = "Agenda Details of Next Meeting of the " + dtAgenda.Rows[j]["CommitteeName"].ToString();
 
-                    Font fnt12Bold = new Font(1, 12, Font.BOLD);
+                    Font fnt12Bold = PdfFonts.Get(12, Font.BOLD);
 
-                    PdfPCell cell = new PdfPCell(new Phrase(CommitteeName, fnt12Bold));
+                    PdfPCell cell = new PdfPCell(PdfFonts.Phrase(CommitteeName, fnt12Bold));
                     cell.Colspan = 1;
                     cell.BorderWidth = 0;
                     cell.HorizontalAlignment = 0; //0=Left, 1=Centre, 2=Right
@@ -1389,6 +1483,8 @@ namespace BMMS.Report
             {
                 pdfDocument.Close();
             }
+
+            return pdfStream.ToArray();
         }
         #endregion
 

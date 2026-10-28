@@ -13,34 +13,42 @@
     <link href="../CSS/AjaxCalender.css" rel="stylesheet" type="text/css" />
     <link href="../CSS/PasswordCheck.css" rel="stylesheet" type="text/css" />
 
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="../CSS/bmms-colours.css" rel="stylesheet" type="text/css" />
+    <link href="../CSS/bmms-workbench.css" rel="stylesheet" type="text/css" />
+    <link rel="icon" href="../favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="192x192" href="../Images/Brand/bmms-favicon-192.png" />
+
     <script type="text/javascript" language="javascript" src="../JScript/BrowserSecurity.js"></script>
 
 </head>
-<body>
+<body class="wb">
     <form id="form1" runat="server">
-        <asp:ScriptManager ID="ScriptManager1" runat="server">
+        <asp:ScriptManager ID="ScriptManager1" runat="server" OnAsyncPostBackError="ScriptManager1_AsyncPostBackError">
             <Scripts>
                 <asp:ScriptReference Path="~/JScript/ddlevelsmenu.js" />
                 <asp:ScriptReference Path="~/JScript/Validation.js" />
+                <asp:ScriptReference Path="~/JScript/AsyncPostBackError.js" />
             </Scripts>
         </asp:ScriptManager>
-        <div id="mainContainer" >
-            <div id="logo">
-                <p class="welcomeMsg">
-                    <br />
-                    <br />
-                    <br />
-                    <br />
-                    <a href="../Master/ChangePassword.aspx" style="color:White; font-weight:bold; ">Change Password</a>
-                    <b>Logged In :
-                        <%=Session["UserName"]%>
-                        &nbsp;&nbsp;<asp:LinkButton ID="lnkLogout" runat="server" Text="Logout" ForeColor="white"
-                            PostBackUrl="~/Logout.aspx"></asp:LinkButton></b></p>
+        <div id="mainContainer">
+            <%-- The header of Main.Master without the menu (step B2) --%>
+            <div class="wb-header">
+                <%-- The product logo (step B3): no link; tooltip and alt text carry the full name --%>
+                <span class="wb-brand" title="Board Minutes and Meeting Software"><img src="<%= ResolveUrl("~/Images/Brand/bmms-logo-horizontal-white.png") %>" srcset="<%= ResolveUrl("~/Images/Brand/bmms-logo-horizontal-white-2x.png") %> 2x" width="223" height="36" alt="BMMS - Board Minutes and Meeting Software" /></span>
+                <div class="wb-nav"></div>
+                <div class="wb-user">
+                    <span class="wb-user-name"><%: Session["UserName"] %> | <%: Session["RoleName"] %></span>
+                    <a href="../Master/ChangePassword.aspx">Change Password</a>
+                    <asp:LinkButton ID="lnkLogout" runat="server" Text="Logout" PostBackUrl="~/Logout.aspx"></asp:LinkButton>
+                </div>
             </div>
 <%--            <div id="divMenu">
                 <uc1:MenuUserControl ID="MenuUserControl1" runat="server"></uc1:MenuUserControl>
             </div>--%>
             <div id="contentArea">
+                <%-- A failed UpdatePanel postback (JScript/AsyncPostBackError.js, step E1) --%>
+                <div id="wbAsyncError" class="wb-async-error" role="alert" style="display: none;"></div>
                 <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server">
                 </asp:ContentPlaceHolder>
             </div>

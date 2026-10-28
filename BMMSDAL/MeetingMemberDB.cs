@@ -140,7 +140,7 @@ namespace BMMSDAL
         #endregion
 
         #region AddEditMeetingMember
-        public static int AddEditMeetingMember(MeetingMemberDAL MeetingMemberDAL)
+        public static DataTable AddEditMeetingMember(MeetingMemberDAL MeetingMemberDAL)
         {
             SqlParameter[] parameter = new SqlParameter[10];
             parameter[0] = new SqlParameter("@Code", MeetingMemberDAL.Code);
@@ -154,20 +154,19 @@ namespace BMMSDAL
             parameter[8] = new SqlParameter("@UpdatedOn", MeetingMemberDAL.UpdatedOn);
             parameter[9] = new SqlParameter("@UpdatedBy", MeetingMemberDAL.UpdatedBy);
 
-            return CommonDB.ExecuteProcedure("spr_AddEditMeetingMember", parameter);
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks.sql)
+            return CommonDB.GetDataTable("spr_AddEditMeetingMember", parameter);
         }
         #endregion
 
         #region DeleteMeetingMemberByMeetingMemberId
-        public static int DeleteMeetingMemberByMeetingMemberId(int MeetingMemberId)
+        public static DataTable DeleteMeetingMemberByMeetingMemberId(int MeetingMemberId)
         {
             SqlParameter[] parameter = new SqlParameter[1];
             parameter[0] = new SqlParameter("@MeetingMemberId", MeetingMemberId);
 
-            DataTable dtResult = new DataTable();
-            dtResult = CommonDB.GetDataTable("spr_DeleteMeetingMemberByMeetingMemberId", parameter);
-
-            return Convert.ToInt16(dtResult.Rows[0]["Result"].ToString());
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks.sql)
+            return CommonDB.GetDataTable("spr_DeleteMeetingMemberByMeetingMemberId", parameter);
         }
         #endregion
     }
