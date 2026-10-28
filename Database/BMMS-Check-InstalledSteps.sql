@@ -1,5 +1,5 @@
 /* ============================================================================
-   BMMS - Which numbered steps (README run order 1 to 24, 29 and 30; step 23 is installed after step 28, steps 29 and 30 last) are installed
+   BMMS - Which numbered steps (README run order 1 to 24, 29, 30 and 31; step 23 is installed after step 28, steps 29, 30 and 31 last) are installed
    ----------------------------------------------------------------------------
    READ ONLY. It reads object definitions and constraint names; it creates,
    changes and deletes nothing, and it can run on BMMS as well as on a copy.
@@ -52,7 +52,11 @@
    spr_UpdateSMTPMaster (3 markers). If step 3, 18, 21 or 29 is re-run
    afterwards, step 30 reads Partly, 2 of 3 (and after step 3, 18 or 21 step
    29 reads Missing): run step 30 again, as the last step; it restores the
-   step 29 text too.
+   step 29 text too. Step 31 changes 13 text columns to NVARCHAR(MAX) and
+   replaces seven procedures (keeping the texts of steps 6, 16, 17, 18, 20
+   and 23 in them); if step 6, 15, 16, 17, 18, 20 or 23 is re-run afterwards,
+   or the original database's spr_UpdateActionItem comes back, step 31 reads
+   Partly (the columns stay): run step 31 again, as the last step.
 
    It has no USE line: select the database in SSMS first. It stops if the
    current database name does not start with "BMMS".
@@ -266,6 +270,20 @@ INSERT INTO @M VALUES
 (30, 'spr_sys_SetSmtpDefault (SmtpDefault-Step30)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_sys_SetSmtpDefault')), '') LIKE '%SmtpDefault-Step30%' THEN 1 ELSE 0 END),
 (30, 'spr_UpdateSMTPMaster (SmtpDefault-Step30)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateSMTPMaster')), '') LIKE '%SmtpDefault-Step30%' THEN 1 ELSE 0 END);
 
+-- 31. BMMS-Fix-UnicodeText-Step31.sql, installed last (re-running step 6, 15, 16, 17, 18, 20 or 23 replaces one of its procedures)
+INSERT INTO @M
+SELECT 31, o.Name + ' (UnicodeText-Step31)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%UnicodeText-Step31%' THEN 1 ELSE 0 END
+FROM (VALUES ('spr_AddEditAgenda'), ('spr_UpdateAgendaByAgendaId'), ('spr_AddEditAgendaByManager'), ('spr_AddEditAgendaByController'),
+             ('spr_UpdateAgendaShortText'), ('spr_UpdateMinutes'), ('spr_UpdateActionItem')) o(Name);
+DECLARE @UnicodeColumns INT = (SELECT COUNT(*) FROM sys.columns sc JOIN sys.types t ON t.user_type_id = sc.user_type_id
+    WHERE t.name = 'nvarchar' AND sc.max_length = -1
+    AND ((sc.object_id = OBJECT_ID('dbo.Agenda') AND sc.name IN ('ShortText', 'AgendaText', 'AgendaTextPath', 'ProposedResolution', 'FilePath', 'MgrComments', 'ControllerComments'))
+      OR (sc.object_id = OBJECT_ID('dbo.Minutes') AND sc.name IN ('Directions', 'ActualResolution'))
+      OR (sc.object_id = OBJECT_ID('dbo.Action_Item') AND sc.name IN ('Directions', 'ActionText'))
+      OR (sc.object_id = OBJECT_ID('dbo.Audit_Trail_Master') AND sc.name IN ('Old_Value', 'New_Value'))));
+INSERT INTO @M VALUES
+(31, '13 text columns NVARCHAR(MAX)' + CASE WHEN @UnicodeColumns <> 13 THEN ' (' + CAST(@UnicodeColumns AS VARCHAR(12)) + ' are)' ELSE '' END, CASE WHEN @UnicodeColumns = 13 THEN 1 ELSE 0 END);
+
 DECLARE @Steps TABLE (Step INT, Script VARCHAR(60), IfPartly VARCHAR(200));
 INSERT INTO @Steps VALUES
 (1, 'BMMS-Fix-Login-Procedures.sql', ''),
@@ -293,7 +311,8 @@ INSERT INTO @Steps VALUES
 (23, 'BMMS-Fix-WorkflowOrder-Step23.sql', 'installed after step 28; step 6, 8, 12, 15, 16, 17 or 18 was re-run: run step 23 again'),
 (24, 'BMMS-Fix-MeetingDates-Step24.sql', 'Missing after a re-run of step 16, 17 or 18: run step 24 again'),
 (29, 'BMMS-Fix-ResetDatabase-Step29.sql', 'the first text of step 29 (old default password seeds): run step 30 (it contains step 29), as the last step'),
-(30, 'BMMS-Fix-SmtpDefault-Step30.sql', 'step 3, 18, 21 or 29 was re-run: run step 30 again, as the last step (it restores the step 29 text too)');
+(30, 'BMMS-Fix-SmtpDefault-Step30.sql', 'step 3, 18, 21 or 29 was re-run: run step 30 again, as the last step (it restores the step 29 text too)'),
+(31, 'BMMS-Fix-UnicodeText-Step31.sql', 'step 6, 15, 16, 17, 18, 20 or 23 was re-run, or the original spr_UpdateActionItem came back: run step 31 again, as the last step');
 
 SELECT s.Step, s.Script,
        CASE WHEN COUNT(m.Step) = 0 THEN 'Not detectable'
