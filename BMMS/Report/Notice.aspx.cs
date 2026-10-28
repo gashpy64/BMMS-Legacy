@@ -233,6 +233,7 @@ namespace BMMS.Report
         {
             // Built in memory and opened by ViewReport.aspx?pdf=1; nothing is written to ~/Files/PDF (step 26).
             // Two pop-ups of the same user at once: the last one built wins.
+            MsgHide();
             byte[] pdf = CreatePDF();
 
             if (pdf != null)
@@ -277,6 +278,13 @@ namespace BMMS.Report
                 ScriptManager.RegisterStartupScript(this, this.GetType(), "msg", "alert('No Committee-Member or Meeting-Members Available');", true);
                 ScriptManager.GetCurrent(this).SetFocus(ddlMeeting.ClientID);
             }
+            else if (PdfFonts.HasIndicText(dtCommitteeMember, "MemberName", "Address1", "Address2", "Address3", "CityName", "State_Name")
+                || PdfFonts.HasIndicText(dtMeeting, "CommitteeName", "MeetingTime", "Venue")
+                || PdfFonts.HasIndicText(CompanySecretary, CompanySecretaryDesign) || PdfFonts.OrganisationHasIndicText())
+            {
+                // Tamil or Hindi text: no PDF; the notice by Send Mail shows it (step U1b)
+                MsgDisplay(PdfFonts.IndicTextMessageFor("use Send Mail"));
+            }
             //else if (CompanySecretary == string.Empty)
             //{
             //    ScriptManager.RegisterStartupScript(this, this.GetType(), "msg", "alert('No such `In Attendance` meeting member tagging record for this meeting.');", true);
@@ -297,71 +305,71 @@ namespace BMMS.Report
 
                     for (int i = 0; i < dtCommitteeMember.Rows.Count; i++)
                     {
-                        Paragraph paragraph = new Paragraph(" ");
+                        Paragraph paragraph = PdfFonts.Paragraph(" ");
                         pdfDocument.Add(paragraph);
 
                         PDFUtilities.AddCompanyLogo(pdfDocument);
 
-                        Paragraph para = new Paragraph(OrganisationDetails.Current.OfficeLineUpper);
+                        Paragraph para = PdfFonts.Paragraph(OrganisationDetails.Current.OfficeLineUpper);
                         para.Alignment = Element.ALIGN_CENTER;
                         if (OrganisationDetails.Current.OfficeLineUpper != string.Empty)
                             pdfDocument.Add(para);
 
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
 
-                        para = new Paragraph("Date : " + System.DateTime.Now.ToString("dd-MMM-yyyy"));
+                        para = PdfFonts.Paragraph("Date : " + System.DateTime.Now.ToString("dd-MMM-yyyy"));
                         para.Alignment = Element.ALIGN_RIGHT;
                         pdfDocument.Add(para);
 
-                        pdfDocument.Add(new Paragraph("To"));
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
-                        pdfDocument.Add(new Paragraph(dtCommitteeMember.Rows[i]["MemberName"].ToString()));
-                        pdfDocument.Add(new Paragraph(dtCommitteeMember.Rows[i]["Address1"].ToString()));
-                        pdfDocument.Add(new Paragraph(dtCommitteeMember.Rows[i]["Address2"].ToString()));
-                        pdfDocument.Add(new Paragraph(dtCommitteeMember.Rows[i]["Address3"].ToString()));
-                        pdfDocument.Add(new Paragraph(dtCommitteeMember.Rows[i]["CityName"].ToString()));
-                        pdfDocument.Add(new Paragraph(dtCommitteeMember.Rows[i]["State_Name"].ToString()));
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
-                        pdfDocument.Add(new Paragraph("Dear Sir/Madam,"));
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph("To"));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph(dtCommitteeMember.Rows[i]["MemberName"].ToString()));
+                        pdfDocument.Add(PdfFonts.Paragraph(dtCommitteeMember.Rows[i]["Address1"].ToString()));
+                        pdfDocument.Add(PdfFonts.Paragraph(dtCommitteeMember.Rows[i]["Address2"].ToString()));
+                        pdfDocument.Add(PdfFonts.Paragraph(dtCommitteeMember.Rows[i]["Address3"].ToString()));
+                        pdfDocument.Add(PdfFonts.Paragraph(dtCommitteeMember.Rows[i]["CityName"].ToString()));
+                        pdfDocument.Add(PdfFonts.Paragraph(dtCommitteeMember.Rows[i]["State_Name"].ToString()));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph("Dear Sir/Madam,"));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
 
                         string strSubject = string.Empty;
                         strSubject = "Subject : Notice of Next Meeting of the " + dtMeeting.Rows[0]["CommitteeName"].ToString();
 
-                        pdfDocument.Add(new Paragraph(strSubject));
+                        pdfDocument.Add(PdfFonts.Paragraph(strSubject));
 
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
                         //string test = dtMeeting.Rows[0]["Venue"].ToString();
                         //string tes1t = dtMeeting.Rows[0]["Venue"].ToString().Replace("\n", " ");
-                        pdfDocument.Add(new Paragraph("The next meeting of the " + dtMeeting.Rows[0]["CommitteeName"].ToString() +
+                        pdfDocument.Add(PdfFonts.Paragraph("The next meeting of the " + dtMeeting.Rows[0]["CommitteeName"].ToString() +
                             " is scheduled to be held on " + Convert.ToDateTime(dtMeeting.Rows[0]["MeetingDate"].ToString()).ToString("dd-MMM-yyyy") +
                             " at " + dtMeeting.Rows[0]["MeetingTime"].ToString() + " Hrs. at " + dtMeeting.Rows[0]["Venue"].ToString().Replace("\n", " ")));
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
-                        pdfDocument.Add(new Paragraph("The Agenda Note will be sent to you in due course."));
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
-                        pdfDocument.Add(new Paragraph("You are requested to kindly make it convenient to attend the above meeting."));
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
-                        pdfDocument.Add(new Paragraph("Thanking You,"));
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
-                        pdfDocument.Add(new Paragraph("Yours faithfully,"));
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph("The Agenda Note will be sent to you in due course."));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph("You are requested to kindly make it convenient to attend the above meeting."));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph("Thanking You,"));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph("Yours faithfully,"));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
 
                         if (CompanySecretary != string.Empty)
                         {
-                            pdfDocument.Add(new Paragraph("(" + CompanySecretary + ")"));
-                            pdfDocument.Add(new Paragraph(CompanySecretaryDesign));
+                            pdfDocument.Add(PdfFonts.Paragraph("(" + CompanySecretary + ")"));
+                            pdfDocument.Add(PdfFonts.Paragraph(CompanySecretaryDesign));
                         }
                         else
                         {
-                            pdfDocument.Add(new Paragraph("Authorized Signatory"));
+                            pdfDocument.Add(PdfFonts.Paragraph("Authorized Signatory"));
                         }
 
-                        pdfDocument.Add(new Paragraph(Environment.NewLine));
+                        pdfDocument.Add(PdfFonts.Paragraph(Environment.NewLine));
                         pdfDocument.Add(new Paragraph());
-                        pdfDocument.Add(new Paragraph(""));
-                        pdfDocument.Add(new Paragraph(""));
+                        pdfDocument.Add(PdfFonts.Paragraph(""));
+                        pdfDocument.Add(PdfFonts.Paragraph(""));
                         pdfDocument.NewPage();
                     }
                 }

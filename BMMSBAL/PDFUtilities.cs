@@ -18,9 +18,10 @@ namespace BMMSBAL
     {
 
         #region CreateCell
+        // In Noto Serif 12 (PdfFonts, step U1b)
         public static PdfPCell CreateCell(string TextValue, float BorderWidth, int AlignText, int ColSpan)
         {
-            PdfPCell cell = new PdfPCell(new Phrase(TextValue));
+            PdfPCell cell = new PdfPCell(PdfFonts.Phrase(TextValue, PdfFonts.Get(12, Font.NORMAL)));
             cell.Colspan = ColSpan;
 
             cell.BorderWidth = BorderWidth;
@@ -33,7 +34,7 @@ namespace BMMSBAL
         #region CreateDesignCell
         public static PdfPCell CreateDesignCell(string TextValue, float BorderWidth, int AlignText, int ColSpan, Font fnt)
         {
-            PdfPCell cell = new PdfPCell(new Phrase(TextValue, fnt));
+            PdfPCell cell = new PdfPCell(PdfFonts.Phrase(TextValue, fnt));
             cell.Colspan = ColSpan;
 
             cell.BorderWidth = BorderWidth;
@@ -44,9 +45,10 @@ namespace BMMSBAL
         #endregion
 
         #region AddHTMLText
+        // The HTML in Noto Serif, whatever font it names (PdfFonts, step U1b)
         public static void AddHTMLText(Document Pdf_Document, string HTML_Text)
         {
-            ArrayList lt = HTMLWorker.ParseToList(new StringReader(HTML_Text), null);
+            ArrayList lt = HTMLWorker.ParseToList(new StringReader(PdfFonts.PrintableHtml(HTML_Text)), null, PdfFonts.HtmlWorkerProps());
 
             for (int l = 0; l < lt.Count; ++l)
             {
@@ -85,8 +87,7 @@ namespace BMMSBAL
             }
             else if (OrganisationDetails.Current.Name != string.Empty)
             {
-                Paragraph name = new Paragraph(OrganisationDetails.Current.NameUpper,
-                    FontFactory.GetFont(FontFactory.TIMES_ROMAN, 14, Font.BOLD));
+                Paragraph name = PdfFonts.Paragraph(OrganisationDetails.Current.NameUpper, PdfFonts.Get(14, Font.BOLD));
                 name.SpacingBefore = 30f;
                 name.SpacingAfter = 1f;
                 name.Alignment = Element.ALIGN_CENTER;
@@ -129,7 +130,7 @@ namespace BMMSBAL
         public static void AddHeaderPageNo(Document Pdf_Document)
         {
 
-            HeaderFooter header = new HeaderFooter(new Phrase("Page No: "), true);
+            HeaderFooter header = new HeaderFooter(PdfFonts.Phrase("Page No: ", PdfFonts.Get(12, Font.NORMAL)), true);
             header.Border = Rectangle.NO_BORDER;
             header.Alignment = Element.ALIGN_RIGHT;
             Pdf_Document.Header = header;
@@ -141,7 +142,7 @@ namespace BMMSBAL
         public static void AddFooterPageNo(Document Pdf_Document)
         {
 
-            HeaderFooter footer = new HeaderFooter(new Phrase("Page No: "), true);
+            HeaderFooter footer = new HeaderFooter(PdfFonts.Phrase("Page No: ", PdfFonts.Get(12, Font.NORMAL)), true);
             footer.Border = Rectangle.NO_BORDER;
             footer.Alignment = Element.ALIGN_RIGHT;
             Pdf_Document.Footer = footer;
@@ -192,7 +193,7 @@ namespace BMMSBAL
         #region AddParagraph
         public static void AddParagraph(Document pdfDocument, string strMessage, Font fntFormat, int intAlign)
         {
-            Paragraph para = new Paragraph(strMessage, fntFormat);
+            Paragraph para = PdfFonts.Paragraph(strMessage, fntFormat);
             para.Alignment = intAlign;
             pdfDocument.Add(para);
         }
@@ -232,7 +233,7 @@ namespace BMMSBAL
                 pdfDocument.Open();
 
                 // A document needs at least one element
-                pdfDocument.Add(new Paragraph(" "));
+                pdfDocument.Add(PdfFonts.Paragraph(" "));
 
                 string[] parts = html.Split(new string[] { HTML_Report.HTML_PageBreak() }, StringSplitOptions.None);
 
@@ -245,7 +246,7 @@ namespace BMMSBAL
                         && !AddHtmlPart(pdfDocument, System.Text.RegularExpressions.Regex.Replace(parts[i], "<img[^>]*>", string.Empty,
                                                          System.Text.RegularExpressions.RegexOptions.IgnoreCase)))
                     {
-                        pdfDocument.Add(new Paragraph("[This part of the report could not be converted to PDF. Use Print instead.]"));
+                        pdfDocument.Add(PdfFonts.Paragraph("[This part of the report could not be converted to PDF. Use Print instead.]"));
                     }
                 }
             }
@@ -257,14 +258,14 @@ namespace BMMSBAL
             return pdfStream.ToArray();
         }
 
-        // False when the part cannot be parsed (for example an image that cannot be read)
+        // False when the part cannot be parsed (for example an image that cannot be read). In Noto Serif (step U1b).
         private static bool AddHtmlPart(Document Pdf_Document, string HTML_Text)
         {
             ArrayList lt;
 
             try
             {
-                lt = HTMLWorker.ParseToList(new StringReader(HTML_Text), null);
+                lt = HTMLWorker.ParseToList(new StringReader(PdfFonts.PrintableHtml(HTML_Text)), null, PdfFonts.HtmlWorkerProps());
             }
             catch
             {

@@ -85,6 +85,15 @@ namespace BMMS.Report
         }
         #endregion
 
+        #region ShowIndicTextMessage
+        // Sitting Fees has no Word export or Print view; the PDF is not made (step U1b)
+        private void ShowIndicTextMessage()
+        {
+            ScriptManager.RegisterStartupScript(this, this.GetType(), "r",
+                "javascript:alert('" + HttpUtility.JavaScriptStringEncode(PdfFonts.IndicTextMessageFor("Sitting Fees has no Word export, so this report cannot be made")) + "');", true);
+        }
+        #endregion
+
         #region GenerateIndividualReport
         public byte[] GenerateIndividualReport()
         {
@@ -104,7 +113,16 @@ namespace BMMS.Report
             byte[] pdf = null;
 
             if (dtMember.Rows.Count > 0)
+            {
+                // Tamil or Hindi text: no PDF (step U1b)
+                if (PDF_Reports.SittingFeeIndividualHasIndicText(dtMember, FromDate, ToDate, txtAuthorizedPersionName.Text.Trim(), txtAuthorizedPersionDesign.Text.Trim()))
+                {
+                    ShowIndicTextMessage();
+                    return null;
+                }
+
                 pdf = PDF_Reports.GenerateSittingFeeIndividual(dtMember, FromDate, ToDate, txtAuthorizedPersionName.Text.Trim(), txtAuthorizedPersionDesign.Text.Trim());
+            }
 
             if (pdf == null)
                 ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:alert('No such record found');", true);
@@ -130,7 +148,12 @@ namespace BMMS.Report
             {
                 dtDesignation = AttendanceMgr.GetAttendanceMembersByDesignId(DesignationId, FromDate, ToDate);
 
-                if (dtDesignation.Rows.Count > 0)
+                // Tamil or Hindi text: no PDF (step U1b)
+                if (dtDesignation.Rows.Count > 0
+                    && (PdfFonts.HasIndicText(dtDesignation, "MemberName", "DesignationName")
+                        || PdfFonts.HasIndicText(txtAuthorizedPersionName.Text, txtAuthorizedPersionDesign.Text) || PdfFonts.OrganisationHasIndicText()))
+                    ShowIndicTextMessage();
+                else if (dtDesignation.Rows.Count > 0)
                     return PDF_Reports.GenerateSittingFeeDesignation(dtDesignation, FromDate, ToDate, txtAuthorizedPersionName.Text.Trim(), txtAuthorizedPersionDesign.Text.Trim());
                 else
                     ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:alert('No such record found');", true);
@@ -158,7 +181,12 @@ namespace BMMS.Report
 
             dtMember = dtTemp.DefaultView.ToTable(true, "MemberId", "MemberName");
 
-            if (dtMeeting.Rows.Count > 0)
+            // Tamil or Hindi text: no PDF (step U1b)
+            if (dtMeeting.Rows.Count > 0
+                && (PdfFonts.HasIndicText(dtMeeting, "CommitteeName", "Place") || PdfFonts.HasIndicText(dtMember, "MemberName")
+                    || PdfFonts.OrganisationHasIndicText()))
+                ShowIndicTextMessage();
+            else if (dtMeeting.Rows.Count > 0)
                 return PDF_Reports.GenerateSittingFeeConsolidated(dtMeeting, dtMember, FromDate, ToDate, txtAuthorizedPersionName.Text.Trim(), txtAuthorizedPersionDesign.Text.Trim());
             else
                 ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:alert('No such record found');", true);

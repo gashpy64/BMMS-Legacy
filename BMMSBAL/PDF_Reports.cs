@@ -17,11 +17,41 @@ namespace BMMSBAL
     public class PDF_Reports
     {
         private static string className = "PDF_Reports";
-        private static Font font11B = FontFactory.GetFont(FontFactory.TIMES_ROMAN, 11, Font.BOLD);
-        private static Font font11N = FontFactory.GetFont(FontFactory.TIMES_ROMAN, 11, Font.NORMAL);
-        private static Font font12U = FontFactory.GetFont(FontFactory.TIMES_ROMAN, 12, Font.UNDERLINE);
-        private static Font font10B = FontFactory.GetFont(FontFactory.TIMES_ROMAN, 10, Font.BOLD);
-        private static Font font10N = FontFactory.GetFont(FontFactory.TIMES_ROMAN, 10, Font.NORMAL);
+        // Noto Serif (PdfFonts, step U1b; was the built-in Times Roman)
+        private static Font font11B { get { return PdfFonts.Get(11, Font.BOLD); } }
+        private static Font font11N { get { return PdfFonts.Get(11, Font.NORMAL); } }
+        private static Font font12U { get { return PdfFonts.Get(12, Font.UNDERLINE); } }
+        private static Font font10B { get { return PdfFonts.Get(10, Font.BOLD); } }
+        private static Font font10N { get { return PdfFonts.Get(10, Font.NORMAL); } }
+
+        #region SittingFeeIndividualHasIndicText
+        // True when a certificate of GenerateSittingFeeIndividual would print Tamil or Hindi text (step U1b):
+        // the member, the committees and places of the meetings, the signatory and the organisation details
+        // of each member with a sitting fee in the period
+        public static bool SittingFeeIndividualHasIndicText(DataTable dt, DateTime FromDate, DateTime ToDate, string AuthorityPersion,
+            string AuthorityPersionDesign)
+        {
+            if (PdfFonts.HasIndicText(AuthorityPersion, AuthorityPersionDesign) || PdfFonts.OrganisationHasIndicText())
+                return true;
+
+            for (int i = 0; i < dt.Rows.Count; i++)
+            {
+                int MemberId = int.Parse(dt.Rows[i]["MemberId"].ToString());
+                string total = AttendanceMgr.GetTotAmtByMemberId(MemberId, FromDate, ToDate).Rows[0]["TOTAMT"].ToString();
+
+                if (total == string.Empty || Convert.ToDouble(total) == 0)
+                    continue;
+
+                if (PdfFonts.HasIndicText(MemberMgr.GetMemberDTbyMemberId(MemberId),
+                        "MemberName", "DesignationName", "Address1", "Address2", "Address3", "CityName", "PinCode")
+                    || PdfFonts.HasIndicText(AttendanceMgr.GetAttendanceByMemberId(MemberId, FromDate, ToDate),
+                        "CommitteeName", "MeetingNo", "Place"))
+                    return true;
+            }
+
+            return false;
+        }
+        #endregion
 
         #region GenerateSittingFeeIndividual
         public static byte[] GenerateSittingFeeIndividual(DataTable dt, DateTime FromDate, DateTime ToDate, string AuthorityPersion,
@@ -230,35 +260,35 @@ namespace BMMSBAL
                         table.Widths = headerwidths;
                         table.WidthPercentage = 50;
 
-                        Cell cell = new Cell(new Phrase("Board", font10B));
+                        Cell cell = new Cell(PdfFonts.Phrase("Board", font10B));
                         cell.Header = false;
                         cell.BorderWidth = 0.5f;
                         cell.HorizontalAlignment = Element.ALIGN_LEFT;
                         cell.VerticalAlignment = Element.ALIGN_CENTER;
                         table.AddCell(cell);
 
-                        cell = new Cell(new Phrase(boardTotFee.ToString("N0"), font10N));
+                        cell = new Cell(PdfFonts.Phrase(boardTotFee.ToString("N0"), font10N));
                         cell.Header = true;
                         cell.BorderWidth = 0.5f;
                         cell.HorizontalAlignment = Element.ALIGN_RIGHT;
                         cell.VerticalAlignment = Element.ALIGN_TOP;
                         table.AddCell(cell);
 
-                        cell = new Cell(new Phrase("Committee", font10B));
+                        cell = new Cell(PdfFonts.Phrase("Committee", font10B));
                         cell.Header = true;
                         cell.BorderWidth = 0.5f;
                         cell.HorizontalAlignment = Element.ALIGN_LEFT;
                         cell.VerticalAlignment = Element.ALIGN_TOP;
                         table.AddCell(cell);
 
-                        cell = new Cell(new Phrase(committeeTotFee.ToString("N0"), font10N));
+                        cell = new Cell(PdfFonts.Phrase(committeeTotFee.ToString("N0"), font10N));
                         cell.Header = true;
                         cell.BorderWidth = 0.5f;
                         cell.HorizontalAlignment = Element.ALIGN_RIGHT;
                         cell.VerticalAlignment = Element.ALIGN_TOP;
                         table.AddCell(cell);
 
-                        cell = new Cell(new Phrase("Total Sitting Fees paid", font10B));
+                        cell = new Cell(PdfFonts.Phrase("Total Sitting Fees paid", font10B));
                         cell.Header = true;
                         cell.BorderWidth = 0.5f;
                         cell.HorizontalAlignment = Element.ALIGN_LEFT;
@@ -267,7 +297,7 @@ namespace BMMSBAL
 
                         double totSitFee = committeeTotFee + boardTotFee;
 
-                        cell = new Cell(new Phrase(totSitFee.ToString("N0"), font10B));
+                        cell = new Cell(PdfFonts.Phrase(totSitFee.ToString("N0"), font10B));
                         cell.Header = true;
                         cell.BorderWidth = 0.5f;
                         cell.HorizontalAlignment = Element.ALIGN_RIGHT;
@@ -326,30 +356,30 @@ namespace BMMSBAL
             Cell cell = null;
 
             if (code == "committee")
-                cell = new Cell(new Phrase("Name of the Committee", font10B));
+                cell = new Cell(PdfFonts.Phrase("Name of the Committee", font10B));
             if (code == "board")
-                cell = new Cell(new Phrase("Board No.", font10B));
+                cell = new Cell(PdfFonts.Phrase("Board No.", font10B));
             cell.Header = true;
             cell.BorderWidth = 0.5f;
             cell.HorizontalAlignment = Element.ALIGN_CENTER;
             cell.VerticalAlignment = Element.ALIGN_MIDDLE;
             table.AddCell(cell);
 
-            cell = new Cell(new Phrase("Date", font10B));
+            cell = new Cell(PdfFonts.Phrase("Date", font10B));
             cell.Header = true;
             cell.BorderWidth = 0.5f;
             cell.HorizontalAlignment = Element.ALIGN_CENTER;
             cell.VerticalAlignment = Element.ALIGN_MIDDLE;
             table.AddCell(cell);
 
-            cell = new Cell(new Phrase("Place", font10B));
+            cell = new Cell(PdfFonts.Phrase("Place", font10B));
             cell.Header = true;
             cell.BorderWidth = 0.5f;
             cell.HorizontalAlignment = Element.ALIGN_CENTER;
             cell.VerticalAlignment = Element.ALIGN_MIDDLE;
             table.AddCell(cell);
 
-            cell = new Cell(new Phrase("Rs.", font10B));
+            cell = new Cell(PdfFonts.Phrase("Rs.", font10B));
             cell.Header = true;
             cell.BorderWidth = 0.5f;
             cell.HorizontalAlignment = Element.ALIGN_CENTER;
@@ -361,9 +391,9 @@ namespace BMMSBAL
             for (int r = 0; r < dt.Rows.Count; r++)
             {
                 if (code == "committee")
-                    cell = new Cell(new Phrase(dt.Rows[r]["CommitteeName"].ToString(), font10N));
+                    cell = new Cell(PdfFonts.Phrase(dt.Rows[r]["CommitteeName"].ToString(), font10N));
                 if (code == "board")
-                    cell = new Cell(new Phrase(dt.Rows[r]["MeetingNo"].ToString(), font10N));
+                    cell = new Cell(PdfFonts.Phrase(dt.Rows[r]["MeetingNo"].ToString(), font10N));
 
                 cell.Header = false;
                 cell.BorderWidth = 0.5f;
@@ -371,21 +401,21 @@ namespace BMMSBAL
                 cell.VerticalAlignment = Element.ALIGN_MIDDLE;
                 table.AddCell(cell);
 
-                cell = new Cell(new Phrase(Convert.ToDateTime(dt.Rows[r]["MeetingDate"].ToString()).ToString("dd.MM.yyyy"), font10N));
+                cell = new Cell(PdfFonts.Phrase(Convert.ToDateTime(dt.Rows[r]["MeetingDate"].ToString()).ToString("dd.MM.yyyy"), font10N));
                 cell.Header = false;
                 cell.BorderWidth = 0.5f;
                 cell.HorizontalAlignment = Element.ALIGN_CENTER;
                 cell.VerticalAlignment = Element.ALIGN_MIDDLE;
                 table.AddCell(cell);
 
-                cell = new Cell(new Phrase(dt.Rows[r]["Place"].ToString(), font10N));
+                cell = new Cell(PdfFonts.Phrase(dt.Rows[r]["Place"].ToString(), font10N));
                 cell.Header = false;
                 cell.BorderWidth = 0.5f;
                 cell.HorizontalAlignment = Element.ALIGN_LEFT;
                 cell.VerticalAlignment = Element.ALIGN_MIDDLE;
                 table.AddCell(cell);
 
-                cell = new Cell(new Phrase(Convert.ToDouble(dt.Rows[r]["SittingFees"].ToString()).ToString("N0"), font10N));
+                cell = new Cell(PdfFonts.Phrase(Convert.ToDouble(dt.Rows[r]["SittingFees"].ToString()).ToString("N0"), font10N));
                 cell.Header = false;
                 cell.BorderWidth = 0.5f;
                 cell.HorizontalAlignment = Element.ALIGN_RIGHT;
@@ -395,28 +425,28 @@ namespace BMMSBAL
                 totAmt += Convert.ToDouble(dt.Rows[r]["SittingFees"].ToString());
             }
 
-            cell = new Cell(new Phrase("", font10N));
+            cell = new Cell(PdfFonts.Phrase("", font10N));
             cell.Header = false;
             cell.BorderWidth = 0.5f;
             cell.HorizontalAlignment = Element.ALIGN_RIGHT;
             cell.VerticalAlignment = Element.ALIGN_MIDDLE;
             table.AddCell(cell);
 
-            cell = new Cell(new Phrase("", font10N));
+            cell = new Cell(PdfFonts.Phrase("", font10N));
             cell.Header = false;
             cell.BorderWidth = 0.5f;
             cell.HorizontalAlignment = Element.ALIGN_RIGHT;
             cell.VerticalAlignment = Element.ALIGN_MIDDLE;
             table.AddCell(cell);
 
-            cell = new Cell(new Phrase("TOTAL", font10B));
+            cell = new Cell(PdfFonts.Phrase("TOTAL", font10B));
             cell.Header = false;
             cell.BorderWidth = 0.5f;
             cell.HorizontalAlignment = Element.ALIGN_RIGHT;
             cell.VerticalAlignment = Element.ALIGN_MIDDLE;
             table.AddCell(cell);
 
-            cell = new Cell(new Phrase(totAmt.ToString("N0"), font10B));
+            cell = new Cell(PdfFonts.Phrase(totAmt.ToString("N0"), font10B));
             cell.Header = false;
             cell.BorderWidth = 0.5f;
             cell.HorizontalAlignment = Element.ALIGN_RIGHT;
@@ -452,31 +482,31 @@ namespace BMMSBAL
                 Paragraph paragraph = new Paragraph(" ");
                 document.Add(paragraph);
 
-                Font font11B = FontFactory.GetFont(FontFactory.TIMES_ROMAN, 11, Font.BOLD);
-                Font font11N = FontFactory.GetFont(FontFactory.TIMES_ROMAN, 11, Font.NORMAL);
-                Font font12U = FontFactory.GetFont(FontFactory.TIMES_ROMAN, 12, Font.UNDERLINE);
+                Font font11B = PdfFonts.Get(11, Font.BOLD);
+                Font font11N = PdfFonts.Get(11, Font.NORMAL);
+                Font font12U = PdfFonts.Get(12, Font.UNDERLINE);
 
                 PDFUtilities.AddCompanyLogo(document);
 
-                paragraph = new Paragraph(new Phrase(DateTime.Now.ToString("MMMM dd, yyyy"), font11N));
+                paragraph = new Paragraph(PdfFonts.Phrase(DateTime.Now.ToString("MMMM dd, yyyy"), font11N));
                 paragraph.Alignment = Element.ALIGN_RIGHT;
                 document.Add(paragraph);
 
                 document.Add(new Paragraph(Environment.NewLine));
 
-                document.Add(new Paragraph(new Phrase("To", font11N)));
-                document.Add(new Paragraph(new Phrase("The Chief Manager,", font11N)));
-                document.Add(new Paragraph(new Phrase("Accounts Department.", font11N)));
+                document.Add(new Paragraph(PdfFonts.Phrase("To", font11N)));
+                document.Add(new Paragraph(PdfFonts.Phrase("The Chief Manager,", font11N)));
+                document.Add(new Paragraph(PdfFonts.Phrase("Accounts Department.", font11N)));
 
                 document.Add(new Paragraph(Environment.NewLine));
 
-                document.Add(new Paragraph(new Phrase("Dear Sir,", font11N)));
+                document.Add(new Paragraph(PdfFonts.Phrase("Dear Sir,", font11N)));
 
-                paragraph = new Paragraph(new Phrase("Sub : Payment of Sitting Fees of the " + dt.Rows[0]["DesignationName"].ToString() + " during " + FinancialYear + ".", font11N));
+                paragraph = new Paragraph(PdfFonts.Phrase("Sub : Payment of Sitting Fees of the " + dt.Rows[0]["DesignationName"].ToString() + " during " + FinancialYear + ".", font11N));
                 paragraph.Alignment = Element.ALIGN_CENTER;
                 document.Add(paragraph);
 
-                paragraph = new Paragraph(new Phrase("*****", font11N));
+                paragraph = new Paragraph(PdfFonts.Phrase("*****", font11N));
                 paragraph.Alignment = Element.ALIGN_CENTER;
                 document.Add(paragraph);
 
@@ -498,21 +528,21 @@ namespace BMMSBAL
 
                 Cell cell = null;
 
-                cell = new Cell(new Phrase("Sl. No.", font10B));
+                cell = new Cell(PdfFonts.Phrase("Sl. No.", font10B));
                 cell.Header = true;
                 cell.BorderWidth = 0.5f;
                 cell.HorizontalAlignment = Element.ALIGN_CENTER;
                 cell.VerticalAlignment = Element.ALIGN_MIDDLE;
                 table.AddCell(cell);
 
-                cell = new Cell(new Phrase("Name of the " + dt.Rows[0]["DesignationName"].ToString() + "(Sarvashree)", font10B));
+                cell = new Cell(PdfFonts.Phrase("Name of the " + dt.Rows[0]["DesignationName"].ToString() + "(Sarvashree)", font10B));
                 cell.Header = true;
                 cell.BorderWidth = 0.5f;
                 cell.HorizontalAlignment = Element.ALIGN_CENTER;
                 cell.VerticalAlignment = Element.ALIGN_MIDDLE;
                 table.AddCell(cell);
 
-                cell = new Cell(new Phrase("Amount", font10B));
+                cell = new Cell(PdfFonts.Phrase("Amount", font10B));
                 cell.Header = true;
                 cell.BorderWidth = 0.5f;
                 cell.HorizontalAlignment = Element.ALIGN_CENTER;
@@ -525,14 +555,14 @@ namespace BMMSBAL
 
                 for (int i = 0; i < dt.Rows.Count; i++)
                 {
-                    cell = new Cell(new Phrase((i + 1) + ".", font10N));
+                    cell = new Cell(PdfFonts.Phrase((i + 1) + ".", font10N));
                     cell.Header = false;
                     cell.BorderWidth = 0.5f;
                     cell.HorizontalAlignment = Element.ALIGN_CENTER;
                     cell.VerticalAlignment = Element.ALIGN_MIDDLE;
                     table.AddCell(cell);
 
-                    cell = new Cell(new Phrase(dt.Rows[i]["MemberName"].ToString(), font10N));
+                    cell = new Cell(PdfFonts.Phrase(dt.Rows[i]["MemberName"].ToString(), font10N));
                     cell.Header = false;
                     cell.BorderWidth = 0.5f;
                     cell.HorizontalAlignment = Element.ALIGN_LEFT;
@@ -540,9 +570,9 @@ namespace BMMSBAL
                     table.AddCell(cell);
 
                     if (dt.Rows[i]["TOTAMT"].ToString().Trim() != string.Empty)
-                        cell = new Cell(new Phrase(Convert.ToDouble(dt.Rows[i]["TOTAMT"].ToString()).ToString("N0"), font10N));
+                        cell = new Cell(PdfFonts.Phrase(Convert.ToDouble(dt.Rows[i]["TOTAMT"].ToString()).ToString("N0"), font10N));
                     else
-                        cell = new Cell(new Phrase("", font10N));
+                        cell = new Cell(PdfFonts.Phrase("", font10N));
                     cell.Header = false;
                     cell.BorderWidth = 0.5f;
                     cell.HorizontalAlignment = Element.ALIGN_RIGHT;
@@ -554,21 +584,21 @@ namespace BMMSBAL
 
                 }
 
-                cell = new Cell(new Phrase("", font10N));
+                cell = new Cell(PdfFonts.Phrase("", font10N));
                 cell.Header = false;
                 cell.BorderWidth = 0.5f;
                 cell.HorizontalAlignment = Element.ALIGN_RIGHT;
                 cell.VerticalAlignment = Element.ALIGN_MIDDLE;
                 table.AddCell(cell);
 
-                cell = new Cell(new Phrase("TOTAL", font10B));
+                cell = new Cell(PdfFonts.Phrase("TOTAL", font10B));
                 cell.Header = false;
                 cell.BorderWidth = 0.5f;
                 cell.HorizontalAlignment = Element.ALIGN_RIGHT;
                 cell.VerticalAlignment = Element.ALIGN_MIDDLE;
                 table.AddCell(cell);
 
-                cell = new Cell(new Phrase(totAmt.ToString("N0"), font10B));
+                cell = new Cell(PdfFonts.Phrase(totAmt.ToString("N0"), font10B));
                 cell.Header = false;
                 cell.BorderWidth = 0.5f;
                 cell.HorizontalAlignment = Element.ALIGN_RIGHT;
@@ -578,20 +608,20 @@ namespace BMMSBAL
                 document.Add(table);
 
 
-                paragraph = new Paragraph(new Phrase("", font11N));
+                paragraph = new Paragraph(PdfFonts.Phrase("", font11N));
                 paragraph.Alignment = Element.ALIGN_JUSTIFIED;
                 document.Add(paragraph);
 
                 document.Add(new Paragraph(Environment.NewLine));
-                document.Add(new Paragraph(new Phrase("This is for your kind information.", font11N)));
+                document.Add(new Paragraph(PdfFonts.Phrase("This is for your kind information.", font11N)));
                 document.Add(new Paragraph(Environment.NewLine));
-                document.Add(new Paragraph(new Phrase("Yours faithfully,", font11N)));
+                document.Add(new Paragraph(PdfFonts.Phrase("Yours faithfully,", font11N)));
                 if (OrganisationDetails.Current.SignOffName != string.Empty)
-                    document.Add(new Paragraph(new Phrase("For " + OrganisationDetails.Current.SignOffName, font11N)));
+                    document.Add(new Paragraph(PdfFonts.Phrase("For " + OrganisationDetails.Current.SignOffName, font11N)));
                 document.Add(new Paragraph(Environment.NewLine));
                 document.Add(new Paragraph(Environment.NewLine));
-                document.Add(new Paragraph(new Phrase(AuthorityPersion, font11N)));
-                document.Add(new Paragraph(new Phrase(AuthorityPersionDesign, font11N)));
+                document.Add(new Paragraph(PdfFonts.Phrase(AuthorityPersion, font11N)));
+                document.Add(new Paragraph(PdfFonts.Phrase(AuthorityPersionDesign, font11N)));
                 document.Add(new Paragraph(Environment.NewLine));
 
                 document.NewPage();
@@ -632,19 +662,19 @@ namespace BMMSBAL
                 Paragraph paragraph = new Paragraph(" ");
                 document.Add(paragraph);
 
-                Font font11B = FontFactory.GetFont(FontFactory.TIMES_ROMAN, 11, Font.BOLD);
-                Font font11N = FontFactory.GetFont(FontFactory.TIMES_ROMAN, 11, Font.NORMAL);
-                Font font12U = FontFactory.GetFont(FontFactory.TIMES_ROMAN, 12, Font.UNDERLINE);
+                Font font11B = PdfFonts.Get(11, Font.BOLD);
+                Font font11N = PdfFonts.Get(11, Font.NORMAL);
+                Font font12U = PdfFonts.Get(12, Font.UNDERLINE);
 
                 PDFUtilities.AddCompanyLogo(document);
 
-                paragraph = new Paragraph(new Phrase(DateTime.Now.ToString("MMMM dd, yyyy"), font11N));
+                paragraph = new Paragraph(PdfFonts.Phrase(DateTime.Now.ToString("MMMM dd, yyyy"), font11N));
                 paragraph.Alignment = Element.ALIGN_RIGHT;
                 document.Add(paragraph);
 
                 document.Add(new Paragraph(Environment.NewLine));
 
-                document.Add(new Paragraph(new Phrase("Committee / Board Sitting Fees from " + FromDate.ToString("dd.MM.yyyy") + " to " + ToDate.ToString("dd.MM.yyyy"), font11N)));
+                document.Add(new Paragraph(PdfFonts.Phrase("Committee / Board Sitting Fees from " + FromDate.ToString("dd.MM.yyyy") + " to " + ToDate.ToString("dd.MM.yyyy"), font11N)));
 
                 document.Add(new Paragraph(Environment.NewLine));
 
@@ -671,21 +701,21 @@ namespace BMMSBAL
 
                 Cell cell = null;
 
-                cell = new Cell(new Phrase("Name of the Committee", font10B));
+                cell = new Cell(PdfFonts.Phrase("Name of the Committee", font10B));
                 cell.Header = true;
                 cell.BorderWidth = 0.5f;
                 cell.HorizontalAlignment = Element.ALIGN_CENTER;
                 cell.VerticalAlignment = Element.ALIGN_MIDDLE;
                 table.AddCell(cell);
 
-                cell = new Cell(new Phrase("Date", font10B));
+                cell = new Cell(PdfFonts.Phrase("Date", font10B));
                 cell.Header = true;
                 cell.BorderWidth = 0.5f;
                 cell.HorizontalAlignment = Element.ALIGN_CENTER;
                 cell.VerticalAlignment = Element.ALIGN_MIDDLE;
                 table.AddCell(cell);
 
-                cell = new Cell(new Phrase("Place", font10B));
+                cell = new Cell(PdfFonts.Phrase("Place", font10B));
                 cell.Header = true;
                 cell.BorderWidth = 0.5f;
                 cell.HorizontalAlignment = Element.ALIGN_CENTER;
@@ -694,7 +724,7 @@ namespace BMMSBAL
 
                 for (int i = 0; i < dtMember.Rows.Count; i++)
                 {
-                    cell = new Cell(new Phrase(dtMember.Rows[i]["MemberName"].ToString(), font10B));
+                    cell = new Cell(PdfFonts.Phrase(dtMember.Rows[i]["MemberName"].ToString(), font10B));
                     cell.Header = true;
                     cell.BorderWidth = 0.5f;
                     cell.HorizontalAlignment = Element.ALIGN_CENTER;
@@ -711,21 +741,21 @@ namespace BMMSBAL
                 {
                     int MeetingId = int.Parse(dtMeeting.Rows[i]["MeetingId"].ToString());
 
-                    cell = new Cell(new Phrase(dtMeeting.Rows[i]["CommitteeName"].ToString(), font10N));
+                    cell = new Cell(PdfFonts.Phrase(dtMeeting.Rows[i]["CommitteeName"].ToString(), font10N));
                     cell.Header = false;
                     cell.BorderWidth = 0.5f;
                     cell.HorizontalAlignment = Element.ALIGN_LEFT;
                     cell.VerticalAlignment = Element.ALIGN_MIDDLE;
                     table.AddCell(cell);
 
-                    cell = new Cell(new Phrase(Convert.ToDateTime(dtMeeting.Rows[i]["MeetingDate"].ToString()).ToString("dd.MM.yyyy"), font10N));
+                    cell = new Cell(PdfFonts.Phrase(Convert.ToDateTime(dtMeeting.Rows[i]["MeetingDate"].ToString()).ToString("dd.MM.yyyy"), font10N));
                     cell.Header = false;
                     cell.BorderWidth = 0.5f;
                     cell.HorizontalAlignment = Element.ALIGN_LEFT;
                     cell.VerticalAlignment = Element.ALIGN_MIDDLE;
                     table.AddCell(cell);
 
-                    cell = new Cell(new Phrase(dtMeeting.Rows[i]["Place"].ToString(), font10N));
+                    cell = new Cell(PdfFonts.Phrase(dtMeeting.Rows[i]["Place"].ToString(), font10N));
                     cell.Header = false;
                     cell.BorderWidth = 0.5f;
                     cell.HorizontalAlignment = Element.ALIGN_LEFT;
@@ -745,7 +775,7 @@ namespace BMMSBAL
                         if (foundRows.Length > 0)
                             FeesAmt = foundRows[0]["SittingFees"].ToString();
 
-                        cell = new Cell(new Phrase(FeesAmt, font10B));
+                        cell = new Cell(PdfFonts.Phrase(FeesAmt, font10B));
                         cell.Header = true;
                         cell.BorderWidth = 0.5f;
                         cell.HorizontalAlignment = Element.ALIGN_RIGHT;

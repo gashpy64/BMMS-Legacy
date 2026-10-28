@@ -60,6 +60,15 @@ namespace BMMS.Report
 
         protected void btnExportToPdf_Click(object sender, EventArgs e)
         {
+            // Tamil or Hindi text: no PDF; Export to Word and Print show it (step U1b). The report name is kept
+            // for Export to Word.
+            if (PdfFonts.HasIndicText(Session["ViewReport"].ToString()))
+            {
+                divPdfMessage.InnerText = PdfFonts.IndicTextMessageFor("use Export to Word or Print");
+                divPdfMessage.Visible = true;
+                return;
+            }
+
             // Built in memory from the report HTML and sent as a download; no file on disk (step 25)
             string name = Session["ViewReportName"] as string;
             Session.Remove("ViewReportName");

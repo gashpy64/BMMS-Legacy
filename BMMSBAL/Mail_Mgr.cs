@@ -65,6 +65,12 @@ namespace BMMSBAL
                         if (pBcc.Trim() != string.Empty)
                             AddMailAddresses(eMail.Bcc, pBcc);
 
+                    // UTF-8 for the subject, the body and the headers (step U1b): the rupee sign and Tamil
+                    // and Hindi letters arrive as typed in every mail program
+                    eMail.SubjectEncoding = Encoding.UTF8;
+                    eMail.BodyEncoding = Encoding.UTF8;
+                    eMail.HeadersEncoding = Encoding.UTF8;
+
                     eMail.Subject = pSubject;
 
                     eMail.IsBodyHtml = true;
@@ -75,7 +81,12 @@ namespace BMMSBAL
 
 
                     if (AttachFileName != null)
-                        eMail.Attachments.Add(new Attachment(AttachFileName));
+                    {
+                        // A file with a Tamil or Hindi name keeps its name (step U1b)
+                        Attachment attachment = new Attachment(AttachFileName);
+                        attachment.NameEncoding = Encoding.UTF8;
+                        eMail.Attachments.Add(attachment);
+                    }
 
                     using (SmtpClient smtp = new SmtpClient(pSMTPServer, smtpPort))
                     {

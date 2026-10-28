@@ -67,6 +67,8 @@ function printPartOfPage(elementClientId, myWidth)
             <asp:Button ID="btnPrint" runat="server" Text="Print" OnClientClick="window.print(); return false;" />
             <asp:Button ID="btnExportToWord" runat="server" Text="Export to Word" OnClick="btnExportToWord_Click" />
             <asp:Button ID="btnExportToPdf" runat="server" Text="Export to Pdf" OnClick="btnExportToPdf_Click" />
+            <%-- Why Export to Pdf made no PDF (step U1b); not printed --%>
+            <div id="divPdfMessage" runat="server" visible="false" style="margin-top: 6px; font-weight: bold; color: #9b1c1c;"></div>
             </div>
 
             

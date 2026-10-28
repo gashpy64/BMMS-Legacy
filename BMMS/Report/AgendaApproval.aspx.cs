@@ -45,6 +45,12 @@ namespace BMMS.Report
                 ScriptManager.RegisterStartupScript(this, this.GetType(), "msg", "alert('No Agenda Available');", true);
                 ScriptManager.GetCurrent(this).SetFocus(ddlMeeting.ClientID);
             }
+            else if (HasIndicText(dtAgenda))
+            {
+                // Tamil or Hindi text: no PDF (step U1b)
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "msg",
+                    "alert('" + HttpUtility.JavaScriptStringEncode(PdfFonts.IndicTextMessageFor("choose View on this page")) + "');", true);
+            }
             else
             {
                 Document pdfDocument = new Document();
@@ -67,7 +73,7 @@ namespace BMMS.Report
 
                         PDFUtilities.AddCompanyLogo(pdfDocument);
 
-                        Paragraph para = new Paragraph(OrganisationDetails.Current.OfficeLineUpper);
+                        Paragraph para = PdfFonts.Paragraph(OrganisationDetails.Current.OfficeLineUpper);
                         para.Alignment = Element.ALIGN_CENTER;
                         if (OrganisationDetails.Current.OfficeLineUpper != string.Empty)
                             pdfDocument.Add(para);
@@ -122,7 +128,7 @@ namespace BMMS.Report
                         PDFUtilities.AddHTMLText(pdfDocument, htmlText);
 
                         pdfDocument.Add(new Paragraph(Environment.NewLine));
-                        pdfDocument.Add(new Paragraph("Proposed Resolution : "));
+                        pdfDocument.Add(PdfFonts.Paragraph("Proposed Resolution : "));
 
                         htmlText = dtAgenda.Rows[j]["ProposedResolution"].ToString();
                         PDFUtilities.AddHTMLText(pdfDocument, htmlText);
@@ -157,6 +163,26 @@ namespace BMMS.Report
             }
 
             return pdf;
+        }
+        #endregion
+
+        #region HasIndicText
+        // True when the agenda notes would print Tamil or Hindi text (step U1b): the heading of each item, its
+        // short text, typed agenda text and proposed resolution, and the organisation details. An uploaded
+        // agenda text file is a PDF; its bytes are not text and are not checked.
+        private bool HasIndicText(DataTable dtAgenda)
+        {
+            if (PdfFonts.OrganisationHasIndicText()
+                || PdfFonts.HasIndicText(dtAgenda, "CommitteeName", "AgendaNo", "MeetingNo", "DepartmentName", "ShortText", "ProposedResolution"))
+                return true;
+
+            foreach (DataRow row in dtAgenda.Rows)
+            {
+                if (row["AgendaType"].ToString() == "Entry" && PdfFonts.HasIndicText(row["AgendaText"].ToString()))
+                    return true;
+            }
+
+            return false;
         }
         #endregion
 

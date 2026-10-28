@@ -502,6 +502,14 @@ namespace BMMS.Report
                         toMNO = ddlMeetingNoTo.SelectedItem.Text.ToString().Trim();
                     }
 
+                    // Tamil or Hindi text in what the PDF prints: no PDF (step U1b)
+                    if (PdfFonts.HasIndicText(dtReportsDetails, "CommitteeName", "MeetingNo", "MeetingTime", "Place", "SubjectNo", "DepartmentName", "ShortText")
+                        || PdfFonts.HasIndicText(fromMNO, toMNO) || PdfFonts.OrganisationHasIndicText())
+                    {
+                        MsgDisplay(PdfFonts.IndicTextMessageFor("use View on this page"));
+                        break;
+                    }
+
                     if (MeetingNoSearch == 1 || (MeetingNoSearch == 0 && MeetingId <= 0))
                         Session["ReportPdf"] = CreateAgendaSummaryFullPDF(dtReportsDetails, fromMNO, toMNO);
                     else
@@ -511,6 +519,15 @@ namespace BMMS.Report
                     ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(1000,600,'ViewReport.aspx?pdf=1','Agenda Summary Report');", true);
                     break;
                 case "agenda_details":
+                    // Tamil or Hindi text in what the PDF prints: no PDF (step U1b). An agenda text uploaded
+                    // as a PDF file is copied page by page and is not checked.
+                    if (PdfFonts.HasIndicText(dtReportsDetails, "CommitteeName", "SubjectNo", "SubjectTypeName", "DepartmentName", "ShortText")
+                        || AgendaTextHasIndicText(dtReportsDetails) || PdfFonts.OrganisationHasIndicText())
+                    {
+                        MsgDisplay(PdfFonts.IndicTextMessageFor("use View on this page"));
+                        break;
+                    }
+
                     Session["ReportPdf"] = CreateAgendaDetailsPDF(dtReportsDetails);
                     Session["ReportPdfName"] = "AgendaDetails";
                     ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(1000,600,'ViewReport.aspx?pdf=1','Agenda Details Report');", true);
@@ -1036,9 +1053,9 @@ namespace BMMS.Report
             {
                 int CommitteeId = int.Parse(ddlCommittee.SelectedValue.ToString());
 
-                Font fnt12Normal = new Font(Font.TIMES_ROMAN, 12, Font.NORMAL);
-                Font fnt10Normal = new Font(Font.TIMES_ROMAN, 10, Font.NORMAL);
-                Font fnt12Bold = new Font(Font.TIMES_ROMAN, 12, Font.BOLD);
+                Font fnt12Normal = PdfFonts.Get(12, Font.NORMAL);
+                Font fnt10Normal = PdfFonts.Get(10, Font.NORMAL);
+                Font fnt12Bold = PdfFonts.Get(12, Font.BOLD);
 
                 PdfWriter writer = PdfWriter.GetInstance(pdfDocument, pdfStream);
                 pdfDocument.Open();
@@ -1050,7 +1067,7 @@ namespace BMMS.Report
 
                 PDFUtilities.AddHeaderPageNo(pdfDocument);
 
-                HeaderFooter header = new HeaderFooter(new Phrase("Page No: "), true);
+                HeaderFooter header = new HeaderFooter(PdfFonts.Phrase("Page No: ", fnt12Normal), true);
                 header.Border = Rectangle.NO_BORDER;
                 header.Alignment = Element.ALIGN_RIGHT;
                 pdfDocument.Header = header;
@@ -1079,7 +1096,7 @@ namespace BMMS.Report
                 table.SetWidths(new float[] { 10, 90 });
                 table.HorizontalAlignment = 0;
 
-                PdfPCell cell = new PdfPCell(new Phrase("S. No.", fnt12Bold));
+                PdfPCell cell = new PdfPCell(PdfFonts.Phrase("S. No.", fnt12Bold));
                 cell.Colspan = 1;
                 cell.BorderWidthRight = 0.0f;
                 cell.BorderWidthLeft = 0.0f;
@@ -1089,7 +1106,7 @@ namespace BMMS.Report
 
                 table.AddCell(cell);
 
-                cell = new PdfPCell(new Phrase("Subject in brief", fnt12Bold));
+                cell = new PdfPCell(PdfFonts.Phrase("Subject in brief", fnt12Bold));
                 cell.Colspan = 1;
                 cell.BorderWidthRight = 0.0f;
                 cell.BorderWidthLeft = 0.0f;
@@ -1134,13 +1151,13 @@ namespace BMMS.Report
 
                 }
 
-                cell = new PdfPCell(new Phrase(" ", fnt12Normal));
+                cell = new PdfPCell(PdfFonts.Phrase(" ", fnt12Normal));
                 cell.Colspan = 2;
                 cell.BorderWidth = 0.0f;
                 cell.FixedHeight = 10.0f;
                 table.AddCell(cell);
 
-                cell = new PdfPCell(new Phrase(" ", fnt12Normal));
+                cell = new PdfPCell(PdfFonts.Phrase(" ", fnt12Normal));
                 cell.Colspan = 2;
                 cell.BorderWidthRight = 0.0f;
                 cell.BorderWidthLeft = 0.0f;
@@ -1156,11 +1173,11 @@ namespace BMMS.Report
 
                 if (OrganisationDetails.Current.City != string.Empty)
                 {
-                    paragraph = new Paragraph(OrganisationDetails.Current.CityUpper, fnt12Normal);
+                    paragraph = PdfFonts.Paragraph(OrganisationDetails.Current.CityUpper, fnt12Normal);
                     pdfDocument.Add(paragraph);
                 }
 
-                paragraph = new Paragraph(System.DateTime.Now.ToString("dd-MM-yyyy"), fnt12Normal);
+                paragraph = PdfFonts.Paragraph(System.DateTime.Now.ToString("dd-MM-yyyy"), fnt12Normal);
                 pdfDocument.Add(paragraph);
 
                 PDFUtilities.AddParagraph(pdfDocument, "Company Secretary", fnt12Normal, Element.ALIGN_RIGHT);
@@ -1213,7 +1230,7 @@ namespace BMMS.Report
 
                     PDFUtilities.AddCompanyLogo(pdfDocument);
 
-                    Paragraph para = new Paragraph(OrganisationDetails.Current.OfficeLineUpper);
+                    Paragraph para = PdfFonts.Paragraph(OrganisationDetails.Current.OfficeLineUpper);
                     para.Alignment = Element.ALIGN_CENTER;
                     if (OrganisationDetails.Current.OfficeLineUpper != string.Empty)
                         pdfDocument.Add(para);
@@ -1240,10 +1257,10 @@ namespace BMMS.Report
                     table.HorizontalAlignment = 0;
 
 
-                    Font fnt12Bold = new Font(Font.TIMES_ROMAN, 12, Font.BOLD);
-                    Font fnt12Normal = new Font(Font.TIMES_ROMAN, 12, Font.NORMAL);
+                    Font fnt12Bold = PdfFonts.Get(12, Font.BOLD);
+                    Font fnt12Normal = PdfFonts.Get(12, Font.NORMAL);
 
-                    PdfPCell cell = new PdfPCell(new Phrase("M.No.", fnt12Bold));
+                    PdfPCell cell = new PdfPCell(PdfFonts.Phrase("M.No.", fnt12Bold));
                     cell.Colspan = 1;
                     cell.BorderWidth = 0.5f;
                     cell.HorizontalAlignment = 1; //0=Left, 1=Centre, 2=Right
@@ -1308,6 +1325,20 @@ namespace BMMS.Report
         }
         #endregion
 
+        #region AgendaTextHasIndicText
+        // The agenda text typed on Agenda Entry (AgendaType Entry) of the Agenda Details PDF (step U1b)
+        private bool AgendaTextHasIndicText(DataTable dtAgenda)
+        {
+            foreach (DataRow row in dtAgenda.Rows)
+            {
+                if (row["AgendaType"].ToString() == "Entry" && PdfFonts.HasIndicText(row["AgendaText"].ToString()))
+                    return true;
+            }
+
+            return false;
+        }
+        #endregion
+
         #region CreateAgendaDetailsPDF
         // Built in memory; the bytes are returned (step 25)
         private byte[] CreateAgendaDetailsPDF(DataTable dtAgenda)
@@ -1331,7 +1362,7 @@ namespace BMMS.Report
 
                     PDFUtilities.AddCompanyLogo(pdfDocument);
 
-                    Paragraph para = new Paragraph(OrganisationDetails.Current.OfficeLineUpper);
+                    Paragraph para = PdfFonts.Paragraph(OrganisationDetails.Current.OfficeLineUpper);
                     para.Alignment = Element.ALIGN_CENTER;
                     if (OrganisationDetails.Current.OfficeLineUpper != string.Empty)
                         pdfDocument.Add(para);
@@ -1349,9 +1380,9 @@ namespace BMMS.Report
 
                     ViewState["MailSubject"] = "Agenda Details of Next Meeting of the " + dtAgenda.Rows[j]["CommitteeName"].ToString();
 
-                    Font fnt12Bold = new Font(1, 12, Font.BOLD);
+                    Font fnt12Bold = PdfFonts.Get(12, Font.BOLD);
 
-                    PdfPCell cell = new PdfPCell(new Phrase(CommitteeName, fnt12Bold));
+                    PdfPCell cell = new PdfPCell(PdfFonts.Phrase(CommitteeName, fnt12Bold));
                     cell.Colspan = 1;
                     cell.BorderWidth = 0;
                     cell.HorizontalAlignment = 0; //0=Left, 1=Centre, 2=Right

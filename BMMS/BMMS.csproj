@@ -490,6 +490,11 @@
     <Content Include="Fonts\OFL.txt" />
     <Content Include="Fonts\PublicSans-Bold.woff2" />
     <Content Include="Fonts\PublicSans-Regular.woff2" />
+    <Content Include="Fonts\Pdf\NotoSerif-Bold.ttf" />
+    <Content Include="Fonts\Pdf\NotoSerif-BoldItalic.ttf" />
+    <Content Include="Fonts\Pdf\NotoSerif-Italic.ttf" />
+    <Content Include="Fonts\Pdf\NotoSerif-Regular.ttf" />
+    <Content Include="Fonts\Pdf\OFL.txt" />
     <Content Include="Global.asax" />
     <Content Include="Images\chromebg.gif" />
     <Content Include="Images\Common\calendar.png" />

@@ -1048,7 +1048,7 @@ A second run of step 31 prints "Columns still VARCHAR: 0 of 13" and "Columns cha
 
 On `BMMS_Quality`: the same seven. On `BMMS`, after the backup: 1, 2, 3, 4 and 7 only (no tests).
 
-The SQL works with the current build. Code step U1b (mail encoding, the request and response encoding in Web.config, the login page charset, PDF fonts and the stop for Tamil and Devanagari text in PDF exports) follows; its browser checks will be in its own section.
+The SQL works with the current build. Code step U1b (mail encoding, the request and response encoding in Web.config, the login page charset, PDF fonts and the stop for Tamil and Devanagari text in PDF exports) follows; its browser checks are in the section "Step U1b".
 
 ## Step E1: errors in UpdatePanel postbacks (code only, no database script)
 
@@ -1153,6 +1153,56 @@ Browser checks on `BMMS_Test` after deploying the build (Ctrl+F5 on each page; d
 9. The safe page after `<x` on User Master: the palette colours, the same text and links, status 500.
 10. Keyboard on the menu bar: Tab through the menu items, Change Password and Logout: each shows a light blue outline; the current page's menu item shows the white bottom bar.
 11. A failed partial postback (the E1 lock on the Dashboard): the E1 bar has the red error icon and tint.
+
+## Step U1b: Unicode in mail, pages and PDF exports (code, Web.config and font files, no database script)
+
+Install step 31 first (see its section): before it, Tamil and Hindi agenda and minutes text is stored as `?`, and the checks below cannot show anything. U1b works with or without step 31.
+
+From step U1b:
+
+- Mail (Mail_Mgr.SendWebEmail, used by every alert mail, Notice, Send Mail and Reset Password): subject, body and headers are sent as UTF-8 (SubjectEncoding, BodyEncoding, HeadersEncoding), and an attached file keeps a Tamil or Hindi file name (NameEncoding UTF-8).
+- Web.config, in `<system.web>`, after `<httpRuntime requestValidationMode="2.0"/>`: `<globalization requestEncoding="utf-8" responseEncoding="utf-8"/>`. The runtime web.config of each server needs the same line by hand (Web.config is not deployed over it).
+- The sign-in page (Default.aspx) declared `charset=iso-8859-1`; it now declares `charset=utf-8`, as the server sends. The other pages had no charset of their own.
+- PDF font: the PDF exports use Noto Serif, embedded (only the letters used), in place of the built-in Times Roman and Helvetica, which have only the 1252 code page: the rupee sign was left out of every PDF. Files in `BMMS/Fonts/Pdf` (static TrueType, unhinted; hinting does nothing in a PDF), SIL Open Font License 1.1 (`OFL.txt` beside them, from the Noto project):
+
+  | File | Bytes |
+  |---|---|
+  | NotoSerif-Regular.ttf | 482,540 |
+  | NotoSerif-Bold.ttf | 481,892 |
+  | NotoSerif-Italic.ttf | 513,428 |
+  | NotoSerif-BoldItalic.ttf | 513,280 |
+  | OFL.txt | 4,396 |
+
+  1,995,536 bytes in all. A PDF grows only by the letters it uses (a one-page test with all four faces: 41 KB). The files are Content in BMMS.csproj, so Publish copies them; the site reads them from `<site>\Fonts\Pdf` and a missing file stops the export with "The PDF font file is missing: <path>" in the error log.
+- BMMSBAL/PdfFonts.cs: the font (size and style; bold and italic are the real faces, underline stays a style), the text helpers, and the font for HTML converted by iTextSharp's HTMLWorker: every font the HTML names (`font-family: Times`, Arial or none) becomes Noto Serif in the size and style asked for. Noto Serif has Latin, Greek, Cyrillic and the rupee sign; a character it does not have prints as `?` (iTextSharp left it out without a sign), also when written in the HTML as `&#nnnn;`.
+- Tamil and Hindi (Devanagari) text: Noto Serif has no Tamil or Devanagari letters, and iTextSharp 4 cannot join them (no text shaping) even with a font that has them. A PDF export whose printed text contains a Tamil or Devanagari letter (also written as `&#nnnn;` in rich text) is therefore not made: the page shows "Tamil or Hindi text cannot be printed correctly in a PDF; " and what to use instead, in its own message display, and opens no PDF window. Only the text the PDF prints is checked (for example a Hindi Proposed Resolution does not stop the Agenda Summary, which does not print it). An agenda text or attachment uploaded as a PDF file is copied into Agenda Details page by page and is not checked.
+
+  | PDF export | Message display | Instead (in the message) |
+  |---|---|---|
+  | ViewReport, Export to Pdf (Minutes, Minutes Extract, Followup Action Taken reports) | new line under the buttons (not printed) | "use Export to Word or Print" (same window) |
+  | Reports, Agenda Summary, Generate (one meeting, all meetings, a range) | the page's message box | "use View on this page" (the grid) |
+  | Reports, Agenda Details, Generate | the page's message box | "use View on this page" |
+  | Agenda Approval, Create PDF | alert, as "No Agenda Available" | "choose View on this page" (View Format: View) |
+  | Notice, Create PDF | the page's message box | "use Send Mail" (the same notice as mail) |
+  | Sitting Fees, Generate Report (Individual, Designation, Consolidated) | alert, as "No such record found" | none: "Sitting Fees has no Word export, so this report cannot be made" |
+
+  Agenda Summary, Agenda Details, Agenda Approval and Sitting Fees have no Word export or Print view; their alternatives are the screen grid (only part of the text) or nothing.
+- Not changed: code no page reaches (Followup Action Taken and Followup Send Mail, whose buttons are not on the pages; PayRollStatement in PDFUtilities and PDF_Reports; GenerateHTMLPdf of Error/TestPage); empty spacer lines in the PDFs still name Helvetica (they print no letter).
+- Still VARCHAR in the database (not part of step 31): member names and addresses, committee, department, meeting place and venue, and the organisation details of System Settings (App_Setting). The rupee sign and Tamil or Hindi letters typed there become `?` when saved, so they cannot reach a PDF, a mail or a report. In particular the Notice PDF prints only such texts, so its stop cannot be seen in the browser yet.
+
+Before the checks (on `BMMS_Test`, step 31 installed): deploy the build, add the globalization line to the runtime web.config, recycle the application pool, start smtp4dev (step 30) and point SMTP Configuration at it. Sample texts (made up): `₹ 1,500`, Tamil `தமிழ் சோதனை`, Hindi `हिन्दी परीक्षण`, and `中` (a character no font has).
+
+1. Sign-in page: developer tools, Network, Default.aspx: the response header `Content-Type: text/html; charset=utf-8`; View Source shows `charset=utf-8`. Sign in.
+2. Every agenda and minutes box, each with the rupee sign, the Tamil and the Hindi text: Agenda Entry (Short Text, Agenda Text, Proposed Resolution); Manager and Controller approval comments (Dashboard); Minutes short text; Update Minutes (Directions, Actual Resolution); Followup / Action Taken (action text, actual resolution). Save, open again: the text is as typed. In SSMS the four tables show the letters (no `?`).
+3. A file with a Tamil name: on Agenda Entry attach a PDF named `தமிழ்-மாதிரி.pdf` and save: it is listed with its name and opens; Agenda Details (step 7) includes its pages. On Send Mail attach the same file: the mail in smtp4dev has the attachment with its Tamil name.
+4. Screen reports: Reports, Minutes and Minutes Extract, Generate; Followup Action Taken, Generate Report: the report window shows the rupee sign, Tamil and Hindi correctly.
+5. Word: Export to Word from each report of check 4: Word shows the same letters.
+6. Print: Print from each report of check 4, Save as PDF in the browser: the rupee sign, Tamil and Hindi are printed correctly (the browser joins the letters).
+7. Each PDF with the rupee sign and Latin text only (an agenda without Tamil or Hindi; Sitting Fees with `₹` in Authorised Person Name): Export to Pdf of the three reports of check 4; Agenda Summary (one meeting, and a range); Agenda Details; Agenda Approval, Create PDF; Notice, Create PDF; Sitting Fees Individual, Designation and Consolidated. Each opens; the rupee sign shows; the PDF reader's document properties list only NotoSerif fonts (with Helvetica at most for empty lines), embedded subset; bold and italic text is in the Bold and Italic faces.
+8. `中` in an agenda Short Text, Agenda Summary and Export to Pdf of the Minutes report: it prints as `?`; the rest of the line is complete.
+9. Each PDF with Tamil, then with Hindi text in what it prints: Export to Pdf of the three reports (the message under the buttons; Export to Word and Print still work in the same window); Agenda Summary and Agenda Details (message box, no window opens); Agenda Approval (alert); Sitting Fees with Tamil in Authorised Person Name, each of the three types (alert). The texts as in the table above. Then the same with Tamil only in the Proposed Resolution: Agenda Summary is made (it does not print it); Agenda Approval stops.
+10. Alert mails in smtp4dev, with the rupee sign, Tamil and Hindi in the agenda Short Text (the alert mails print it): an agenda created on Agenda Entry, approved or returned on the Dashboard, finalized on Agenda Finalization: the Short Text line shows the letters as typed. Send Mail with the sample texts in Subject and Body: subject and body as typed. The message source has `charset=utf-8` in the body's Content-Type and the subject as `=?utf-8?B?...?=`. (The meeting and committee alert mails print only master data, see above.)
+11. Notice, Send Mail: arrives as before (its texts are VARCHAR master data, see above).
 
 ## Known items for later steps
 

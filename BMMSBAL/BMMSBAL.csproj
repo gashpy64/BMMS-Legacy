@@ -92,6 +92,7 @@
     <Compile Include="Sql_Backup_Mgr.cs" />
     <Compile Include="WordUtilities.cs" />
     <Compile Include="PDFUtilities.cs" />
+    <Compile Include="PdfFonts.cs" />
     <Compile Include="MinutesMgr.cs" />
     <Compile Include="MeetingMemberMgr.cs" />
     <Compile Include="MeetingMgr.cs" />
