@@ -407,7 +407,7 @@ namespace BMMS.DashBoard
             hdnCommitteeId.Value = myCommittee.CommitteeId.ToString();
             txtCommitteeCode.Text = myCommittee.CommitteeCode;
             txtCommitteeName.Text = myCommittee.CommitteeName;
-            txtIncorporationDate.Text = myCommittee.IncorporationDate.ToString("dd-MMM-yyyy");
+            txtIncorporationDate.Text = myCommittee.IncorporationDate == DateTime.MinValue ? string.Empty : myCommittee.IncorporationDate.ToString("dd-MMM-yyyy");
 
             return true;
         }

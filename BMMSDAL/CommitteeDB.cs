@@ -154,19 +154,37 @@ namespace BMMSDAL
 
             dt = CommonDB.GetDataTable("spr_GetCommitteeByCommitteeId", parameter);
 
+            // No row: Rows[0] still throws IndexOutOfRangeException, which the callers handle (step F1).
+            // NULL or unreadable values give 0 and DateTime.MinValue (= no date) instead of an error (step F3)
             CommitteeDAL CommitteeDAL = new CommitteeDAL();
-            CommitteeDAL.CommitteeId = Convert.ToInt16(dt.Rows[0]["CommitteeId"].ToString());
+            CommitteeDAL.CommitteeId = ToInt(dt.Rows[0]["CommitteeId"]);
             CommitteeDAL.CommitteeCode = dt.Rows[0]["CommitteeCode"].ToString();
             CommitteeDAL.CommitteeName = dt.Rows[0]["CommitteeName"].ToString();
-            CommitteeDAL.Board = Convert.ToInt16(dt.Rows[0]["Board"].ToString());
-            CommitteeDAL.IncorporationDate = Convert.ToDateTime(dt.Rows[0]["IncorporationDate"].ToString());
-            CommitteeDAL.MeetingStartNo = int.Parse(dt.Rows[0]["MeetingStartNo"].ToString());
+            CommitteeDAL.Board = ToInt(dt.Rows[0]["Board"]);
+            CommitteeDAL.IncorporationDate = ToDate(dt.Rows[0]["IncorporationDate"]);
+            CommitteeDAL.MeetingStartNo = ToInt(dt.Rows[0]["MeetingStartNo"]);
             CommitteeDAL.CommitteeColorCode = dt.Rows[0]["CommitteeColorCode"].ToString();
             CommitteeDAL.CessationDate = dt.Rows[0]["CessationDate"].ToString();
-            CommitteeDAL.StatusId = Convert.ToInt16(dt.Rows[0]["StatusId"].ToString());
-            CommitteeDAL.IsDelete = Convert.ToInt16(dt.Rows[0]["IsDelete"].ToString());
+            CommitteeDAL.StatusId = ToInt(dt.Rows[0]["StatusId"]);
+            CommitteeDAL.IsDelete = ToInt(dt.Rows[0]["IsDelete"]);
 
             return CommitteeDAL;
+        }
+        #endregion
+
+        #region ToInt / ToDate
+        // NULL or unreadable = 0
+        private static int ToInt(object value)
+        {
+            int result;
+            return (value != null && int.TryParse(value.ToString(), out result)) ? result : 0;
+        }
+
+        // Read as before (the text of the value in the current culture); NULL or unreadable = DateTime.MinValue
+        private static DateTime ToDate(object value)
+        {
+            DateTime result;
+            return (value != null && DateTime.TryParse(value.ToString(), out result)) ? result : DateTime.MinValue;
         }
         #endregion
 
@@ -202,7 +220,7 @@ namespace BMMSDAL
             DataTable dtResult = new DataTable();
             dtResult = CommonDB.GetDataTable("spr_DeleteCommitteeByCommitteeId", parameter);
 
-            return Convert.ToInt16(dtResult.Rows[0]["Result"].ToString());
+            return Convert.ToInt32(dtResult.Rows[0]["Result"].ToString());
         }
         #endregion
     }

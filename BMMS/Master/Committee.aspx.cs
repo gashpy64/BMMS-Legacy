@@ -254,6 +254,13 @@ namespace BMMS.Master
                 return false;
             }
 
+            if (txtIncorporationDate.Text.Trim() == string.Empty)
+            {
+                MsgDisplay("Incorporation Date is required.");
+                ScriptManager.GetCurrent(this).SetFocus(txtIncorporationDate.ClientID);
+                return false;
+            }
+
             if (int.Parse(txtMeetingStartNo.Text.Trim()) <= 0)
             {
                 MsgDisplay("Meeting starting no must be greater then zero.");
@@ -358,7 +365,7 @@ namespace BMMS.Master
                         chkBoard.Checked = true;
                     else
                         chkBoard.Checked = false;
-                    txtIncorporationDate.Text = myCommittee.IncorporationDate.ToString("dd-MMM-yyyy");
+                    txtIncorporationDate.Text = myCommittee.IncorporationDate == DateTime.MinValue ? string.Empty : myCommittee.IncorporationDate.ToString("dd-MMM-yyyy");
                     txtMeetingStartNo.Text = myCommittee.MeetingStartNo.ToString();
 
                     DataTable dtMeeting = MeetingMgr.GetMeetingByCommitteeId(CommitteeId);
