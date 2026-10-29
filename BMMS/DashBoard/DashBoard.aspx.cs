@@ -43,8 +43,10 @@ namespace BMMS.DashBoard
         {
             DataTable dtAlert = new DataTable();
 
-            string RoleName = Session["RoleCode"].ToString();
-            int UserId = int.Parse(Session["UserId"].ToString());
+            int UserId;
+            string RoleName;
+            if (!HasSessionUser(out UserId, out RoleName))
+                return;
 
             dtAlert = AlertMgr.GetAlertByUserId(RoleName, UserId);
             ViewState["dtAlert"] = dtAlert;
@@ -56,7 +58,13 @@ namespace BMMS.DashBoard
         private void LoadActionItemGRV()
         {
             DataTable dtActionItem = new DataTable();
-            dtActionItem = ActionItemMgr.GetActionItemByUserId(int.Parse(Session["UserId"].ToString()));
+
+            int UserId;
+            string RoleCode;
+            if (!HasSessionUser(out UserId, out RoleCode))
+                return;
+
+            dtActionItem = ActionItemMgr.GetActionItemByUserId(UserId);
             ViewState["dtActionItem"] = dtActionItem;
             BindActionItemGRV(dtActionItem);
         }
@@ -263,11 +271,20 @@ namespace BMMS.DashBoard
         #endregion
 
         #region lnkActionItem_Click
+        // Step F2: an action item whose id is unusable or that no longer exists shows a short warning instead of
+        // an error page; a valid id is still marked as read, as lnkSource_Click does for alerts (step F1)
         protected void lnkActionItem_Click(object sender, EventArgs e)
         {
-            pnlActionItemDetails.Visible = true;
+            MsgHide();
 
-            switch (Session["RoleCode"].ToString())
+            pnlActionItemDetails.Visible = false;
+
+            int UserId;
+            string RoleCode;
+            if (!HasSessionUser(out UserId, out RoleCode))
+                return;
+
+            switch (RoleCode)
             {
                 case "controller":
                     ftxtActualResolution.ReadOnly = true;
@@ -297,19 +314,30 @@ namespace BMMS.DashBoard
             Label lblActionItemId = (Label)gv.FindControl("lblActionItemId");
             gv.CssClass = "contentTabletd bmms-row-read";
 
-            BindActionItemDetails(int.Parse(lblActionItemId.Text));
+            int ActionItemId;
+            if (int.TryParse(lblActionItemId.Text.Trim(), out ActionItemId))
+            {
+                if (BindActionItemDetails(ActionItemId, UserId))
+                    pnlActionItemDetails.Visible = true;
+                else
+                    ShowItemGone();
 
-            ActionItemMgr.UpdateActionItemByUserId(int.Parse(Session["UserId"].ToString()), int.Parse(lblActionItemId.Text));
+                ActionItemMgr.UpdateActionItemByUserId(UserId, ActionItemId);
+            }
+            else
+                ShowItemGone();
 
             LoadActionItemGRV();
         }
         #endregion
 
         #region BindActionItemDetails
-        private void BindActionItemDetails(int ActionItemId)
+        private bool BindActionItemDetails(int ActionItemId, int UserId)
         {
             DataTable dtActionItem = new DataTable();
-            dtActionItem = ActionItemMgr.GetActionItemByActionItemIdUserId(ActionItemId, int.Parse(Session["UserId"].ToString()));
+            dtActionItem = ActionItemMgr.GetActionItemByActionItemIdUserId(ActionItemId, UserId);
+            if (dtActionItem == null || dtActionItem.Rows.Count == 0)
+                return false;
 
             txtAgendaNumber.Text = dtActionItem.Rows[0]["AgendaNo"].ToString();
             hdnActionItemId.Value = dtActionItem.Rows[0]["ActionItemId"].ToString();
@@ -319,6 +347,8 @@ namespace BMMS.DashBoard
             //txtDueDate.Text = Convert.ToDateTime(dtActionItem.Rows[0]["DueDate"].ToString()).ToString("dd-MMM-yyyy"); ;
             ftxtActualResolution.Text = dtActionItem.Rows[0]["ActualResolution"].ToString();
             ftxtActionText.Text = dtActionItem.Rows[0]["ActionText"].ToString();
+
+            return true;
         }
         #endregion
 
@@ -396,9 +426,9 @@ namespace BMMS.DashBoard
             txtMeetingNo.Text = dtMeeting.Rows[0]["MeetingNo"].ToString();
             txtCommittee.Text = dtMeeting.Rows[0]["CommitteeName"].ToString();
             txtVenue.Text = dtMeeting.Rows[0]["Venue"].ToString();
-            txtMeetingDate.Text = Convert.ToDateTime(dtMeeting.Rows[0]["MeetingDate"].ToString()).ToString("dd-MMM-yyyy");
+            txtMeetingDate.Text = FormatDate(dtMeeting.Rows[0]["MeetingDate"]);
             txtMeetingTime.Text = dtMeeting.Rows[0]["MeetingTime"].ToString();
-            txtAgendaSubmissionDate.Text = Convert.ToDateTime(dtMeeting.Rows[0]["AgendaSubmissionDate"].ToString()).ToString("dd-MMM-yyyy");
+            txtAgendaSubmissionDate.Text = FormatDate(dtMeeting.Rows[0]["AgendaSubmissionDate"]);
 
             return true;
         }
@@ -412,6 +442,11 @@ namespace BMMS.DashBoard
             if (dtAgendaEdit == null || dtAgendaEdit.Rows.Count == 0)
                 return false;
 
+            // Step F2: int, not Int16 (MeetingId can pass 32767); an agenda item without a usable meeting is treated as gone
+            int MeetingId;
+            if (!int.TryParse(dtAgendaEdit.Rows[0]["MeetingId"].ToString(), out MeetingId))
+                return false;
+
             txtAgendaNo.Text = dtAgendaEdit.Rows[0]["AgendaNo"].ToString();
             txtSubjectNo.Text = dtAgendaEdit.Rows[0]["SubjectNo"].ToString();
             hdnAgendaId.Value = dtAgendaEdit.Rows[0]["AgendaId"].ToString();
@@ -419,8 +454,7 @@ namespace BMMS.DashBoard
             hdnAgendaCommittee.Value = dtAgendaEdit.Rows[0]["CommitteeId"].ToString();
             txtAgendaMeeting.Text = dtAgendaEdit.Rows[0]["MeetingNo"].ToString();
             hdnAgendaMeeting.Value = dtAgendaEdit.Rows[0]["MeetingId"].ToString();
-            int MeetingId = Convert.ToInt16(dtAgendaEdit.Rows[0]["MeetingId"].ToString());
-            txtDateOfMeeting.Text = Convert.ToDateTime(dtAgendaEdit.Rows[0]["MeetingDate"].ToString()).ToString("dd-MMM-yyyy"); ;
+            txtDateOfMeeting.Text = FormatDate(dtAgendaEdit.Rows[0]["MeetingDate"]);
             txtAgendaDepartment.Text = dtAgendaEdit.Rows[0]["DepartmentName"].ToString();
             txtSubjectType.Text = dtAgendaEdit.Rows[0]["SubjectTypeName"].ToString();
             txtShortText.Text = dtAgendaEdit.Rows[0]["ShortText"].ToString();
@@ -485,7 +519,7 @@ namespace BMMS.DashBoard
                 btnReject.Visible = false;
                 btnDeleteAgendaAlert.Visible = true;
 
-                switch (Session["RoleCode"].ToString())
+                switch (Convert.ToString(Session["RoleCode"]))
                 {
                     case "controller":
                         txtShortText.ReadOnly = false;
@@ -568,12 +602,25 @@ namespace BMMS.DashBoard
         #region btnApprove_Click
         protected void btnApprove_Click(object sender, EventArgs e)
         {
-            int MeetingId = int.Parse(hdnAgendaMeeting.Value);
-            int AgendaId = int.Parse(hdnAgendaId.Value);
+            MsgHide();
+
+            int UserId;
+            string RoleCode;
+            if (!HasSessionUser(out UserId, out RoleCode))
+                return;
+
+            int AgendaId;
+            int MeetingId;
+            if (!TryGetAgenda(out AgendaId, out MeetingId))
+            {
+                ShowItemGone();
+                LoadAlertGRV();
+                return;
+            }
 
             AgendaBAL agendaBal = new AgendaBAL();
 
-            agendaBal.AgendaId = int.Parse(hdnAgendaId.Value);
+            agendaBal.AgendaId = AgendaId;
             agendaBal.ShortText = txtShortText.Text.Trim();
             agendaBal.ProposedResolution = ftxtProposedResolution.Text.Trim();
             agendaBal.MgrComments = ftxtManagerComments.Text.Trim();
@@ -590,13 +637,13 @@ namespace BMMS.DashBoard
                 return;
             }
 
-            if (Session["RoleCode"].ToString() == "manager")
+            if (RoleCode == "manager")
                 agendaBal.MgrApprovedStatus = "Approved";
 
-            if (Session["RoleCode"].ToString() == "controller")
+            if (RoleCode == "controller")
                 agendaBal.ControllerApprovedStatus = "Approved";
 
-            agendaBal.UpdatedBy = Convert.ToInt16(Session["UserId"].ToString());
+            agendaBal.UpdatedBy = UserId;
 
             // Who may approve at which stage is checked by the procedure (BMMS-Fix-AgendaRouting-Step20.sql);
             // the mail goes out only once it is done
@@ -611,6 +658,8 @@ namespace BMMS.DashBoard
 
                 AgendaMgr.GenerateSubjectNoByMeetingId(MeetingId, AgendaId);
             }
+            else if (approveResult.Reason == MeetingChangeReason.NotFound)
+                ShowItemGone();
             else
                 ShowAlert(approveResult.RefusalMessage());
 
@@ -623,12 +672,25 @@ namespace BMMS.DashBoard
         #region btnReject_Click
         protected void btnReject_Click(object sender, EventArgs e)
         {
-            int MeetingId = int.Parse(hdnAgendaMeeting.Value);
-            int AgendaId = int.Parse(hdnAgendaId.Value);
+            MsgHide();
+
+            int UserId;
+            string RoleCode;
+            if (!HasSessionUser(out UserId, out RoleCode))
+                return;
+
+            int AgendaId;
+            int MeetingId;
+            if (!TryGetAgenda(out AgendaId, out MeetingId))
+            {
+                ShowItemGone();
+                LoadAlertGRV();
+                return;
+            }
 
             AgendaBAL agendaBal = new AgendaBAL();
 
-            agendaBal.AgendaId = int.Parse(hdnAgendaId.Value);
+            agendaBal.AgendaId = AgendaId;
             agendaBal.ShortText = txtShortText.Text.Trim();
             agendaBal.ProposedResolution = ftxtProposedResolution.Text.Trim();
             agendaBal.MgrComments = ftxtManagerComments.Text.Trim();
@@ -645,13 +707,13 @@ namespace BMMS.DashBoard
                 return;
             }
 
-            if (Session["RoleCode"].ToString() == "manager")
+            if (RoleCode == "manager")
                 agendaBal.MgrApprovedStatus = "Rejected";
 
-            if (Session["RoleCode"].ToString() == "controller")
+            if (RoleCode == "controller")
                 agendaBal.ControllerApprovedStatus = "Rejected";
 
-            agendaBal.UpdatedBy = Convert.ToInt16(Session["UserId"].ToString());
+            agendaBal.UpdatedBy = UserId;
 
             // Who may reject at which stage is checked by the procedure (BMMS-Fix-AgendaRouting-Step20.sql);
             // the mail goes out only once it is done
@@ -664,11 +726,31 @@ namespace BMMS.DashBoard
                 if (agendaBal.ControllerApprovedStatus == "Rejected")
                     GenerateMail("rejected by Controller", "ACR");
             }
+            else if (rejectResult.Reason == MeetingChangeReason.NotFound)
+                ShowItemGone();
             else
                 ShowAlert(rejectResult.RefusalMessage());
 
             pnlAgenda.Visible = false;
             LoadAlertGRV();
+        }
+        #endregion
+
+        #region TryGetAgenda
+        // Step F2: the agenda item behind Approve / Reject must still exist; its MeetingId is read from the item
+        // itself, not from the hidden field. False sends no mail and changes nothing.
+        private bool TryGetAgenda(out int AgendaId, out int MeetingId)
+        {
+            MeetingId = 0;
+
+            if (!int.TryParse(hdnAgendaId.Value.Trim(), out AgendaId))
+                return false;
+
+            DataTable dtAgenda = AgendaMgr.GetAgendaByAgendaId(AgendaId);
+            if (dtAgenda == null || dtAgenda.Rows.Count == 0)
+                return false;
+
+            return int.TryParse(dtAgenda.Rows[0]["MeetingId"].ToString(), out MeetingId);
         }
         #endregion
 
@@ -747,8 +829,25 @@ namespace BMMS.DashBoard
         #region btnActionItemApprove_Click
         protected void btnActionItemApprove_Click(object sender, EventArgs e)
         {
+            MsgHide();
+
+            int UserId;
+            string RoleCode;
+            if (!HasSessionUser(out UserId, out RoleCode))
+                return;
+
+            // Step F2: the action item must still exist before it is saved
+            int ActionItemId;
+            DataTable dtActionItem = int.TryParse(hdnActionItemId.Value.Trim(), out ActionItemId)
+                ? ActionItemMgr.GetActionItemByActionItemIdUserId(ActionItemId, UserId)
+                : null;
+            if (dtActionItem == null || dtActionItem.Rows.Count == 0)
+            {
+                ShowItemGone();
+                return;
+            }
+
             string Code = "ActionText";
-            int ActionItemId = int.Parse(hdnActionItemId.Value);
             string Directions = string.Empty;
             string ActualResolution = ftxtActualResolution.Text.Trim();
             string ActionText = ftxtActionText.Text.Trim();
@@ -793,7 +892,17 @@ namespace BMMS.DashBoard
         #region btnDeleteAlert_Click
         protected void btnDeleteAlert_Click(object sender, EventArgs e)
         {
-            int AlertUserId = Convert.ToInt16(hdnAlertUserId.Value.Trim());
+            MsgHide();
+
+            // Step F2: int, not Int16 (AlertUserId passes 32767 in normal use); an unusable id deletes nothing
+            int AlertUserId;
+            if (!int.TryParse(hdnAlertUserId.Value.Trim(), out AlertUserId) || AlertUserId <= 0)
+            {
+                ShowItemGone();
+                LoadAlertGRV();
+                return;
+            }
+
             AlertMgr.UpdateAlertByAlertUserId(AlertUserId);
             pnlAgenda.Visible = false;
             LoadAlertGRV();
@@ -812,6 +921,50 @@ namespace BMMS.DashBoard
         private void MsgHide()
         {
             divErrLogin.Attributes.Add("class", "divErrorHide");
+        }
+        #endregion
+
+        #region HasSessionUser
+        // Step F2: a session without a usable user id or role is treated as expired, as Common.InitSetup and
+        // lnkSource_Click (step F1) do
+        private bool HasSessionUser(out int UserId, out string RoleCode)
+        {
+            UserId = 0;
+            RoleCode = Convert.ToString(Session["RoleCode"]);
+
+            if (Session["UserId"] == null || !int.TryParse(Session["UserId"].ToString(), out UserId) || RoleCode == string.Empty)
+            {
+                Response.Redirect("~/", true);
+                return false;
+            }
+
+            return true;
+        }
+        #endregion
+
+        #region ShowItemGone
+        // Step F2: the item behind a link or button is gone or its id is unusable: close the panels, show the F1 warning
+        private void ShowItemGone()
+        {
+            pnlAgenda.Visible = false;
+            pnlActionItemDetails.Visible = false;
+            pnlMeeting.Visible = false;
+            pnlCommittee.Visible = false;
+
+            MsgDisplay("This item no longer exists.", MessageKind.Warning);
+        }
+        #endregion
+
+        #region FormatDate
+        // Step F2: the same text as Convert.ToDateTime(value.ToString()).ToString("dd-MMM-yyyy") (current culture,
+        // both ways); a NULL, empty or unreadable date gives an empty string instead of an error
+        private static string FormatDate(object value)
+        {
+            DateTime date;
+            if (value == null || value == DBNull.Value || !DateTime.TryParse(value.ToString(), out date))
+                return string.Empty;
+
+            return date.ToString("dd-MMM-yyyy");
         }
         #endregion
 
