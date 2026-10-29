@@ -14,6 +14,11 @@
                         <uc1:MeetingSummary ID="MeetingSummary1" runat="server"></uc1:MeetingSummary>
                         <td valign="top">
                             <div class="formPanel">
+                                <div aria-live="polite">
+                                    <div id="divErrLogin" runat="server" class="divErrorHide">
+                                        <span id="spanErrLogin" runat="server" class="lblError"></span>
+                                    </div>
+                                </div>
                                 <div>
                                     <table width="100%" border="0" cellspacing="0" cellpadding="0">
                                         <tr>

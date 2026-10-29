@@ -113,6 +113,7 @@ Do NOT run BMMS-Test-ResetDatabase.sql on `BMMS`. It refuses to, by name.
 - BMMS-Test-Delete-Procedures.sql         (delete-procedure tests for the master tables; deletes real unreferenced rows, inside a transaction that is rolled back. With step 21 installed the member type part passes an active Admin, also tries a reserved type (expect Reason 7) and deletes a free type, adding one inside the transaction when none is unreferenced)
 - BMMS-Test-FK-Procedures.sql             (tests for steps 6 to 9; rolled back)
 - BMMS-Test-UserDelete.sql                (tests for steps 10 and 11, with step 13 installed: user delete rules, one test per protected column, one per key; rolled back)
+- BMMS-Test-DashboardAlert-F1.sql         (step F1 browser check: three test alerts whose item does not exist for one test user, their ReadStatus, and the cleanup; three parts, run one at a time; BMMS_Test only; not rolled back, part 3 removes the rows)
 - BMMS-Test-UserKey-Workflows.sql         (committee, meeting, agenda, approvals, finalize, confirm, alerts, login / backup / mail audit, through the real procedures; rolled back)
 - BMMS-Test-ResetDatabase.sql             (runs spr_sys_ResetDatabase with all keys in place; since step 29 also its refusals and a forced failure that must roll back; since step 30 the safe mail settings, spr_sys_SetSmtpDefault and the SMTP save on an empty table; needs step 29; 32 checks, 40 with step 30; TEST COPY ONLY; rolled back, and the identity counters are put back)
 - BMMS-Test-Attendance-FutureMeeting.sql  (tests for step 12: past / today / future / no-date meetings, new attendance and edits; 23 checks; run on the test copy; rolled back)
@@ -1203,6 +1204,46 @@ Before the checks (on `BMMS_Test`, step 31 installed): deploy the build, add the
 9. Each PDF with Tamil, then with Hindi text in what it prints: Export to Pdf of the three reports (the message under the buttons; Export to Word and Print still work in the same window); Agenda Summary and Agenda Details (message box, no window opens); Agenda Approval (alert); Sitting Fees with Tamil in Authorised Person Name, each of the three types (alert). The texts as in the table above. Then the same with Tamil only in the Proposed Resolution: Agenda Summary is made (it does not print it); Agenda Approval stops.
 10. Alert mails in smtp4dev, with the rupee sign, Tamil and Hindi in the agenda Short Text (the alert mails print it): an agenda created on Agenda Entry, approved or returned on the Dashboard, finalized on Agenda Finalization: the Short Text line shows the letters as typed. Send Mail with the sample texts in Subject and Body: subject and body as typed. The message source has `charset=utf-8` in the body's Content-Type and the subject as `=?utf-8?B?...?=`. (The meeting and committee alert mails print only master data, see above.)
 11. Notice, Send Mail: arrives as before (its texts are VARCHAR master data, see above).
+
+## Step F1 and E2c: Dashboard alert whose item is gone; Page not found (code and Web.config, no database script)
+
+Found on `BMMS_Test`: one alert row with SourceTypeId NULL made DashBoard.aspx.cs, lnkSource_Click, throw a FormatException (`int.Parse` of the hidden SourceTypeId), and the user saw the error page. A page that does not exist got the default ASP.NET 404 page (with the .NET and ASP.NET versions), and every answer carried the X-AspNet-Version and X-Powered-By headers.
+
+From step F1:
+
+- Dashboard, lnkSource_Click: the session user id, the item id (SourceTypeId) and the alert id are read with `int.TryParse`. A session without a usable user id is treated as expired: the login page opens (`Response.Redirect("~/", true)`, as Common.InitSetup does). When the item id is unusable or the Meeting, Committee or Agenda is not found, no panel or popup opens and the page shows the warning "This item no longer exists." in its message box (new on the Dashboard, the same box and MsgDisplay as the other pages); the alert is still marked as read when the alert id itself is valid. A committee that is not found is detected by catching the IndexOutOfRangeException of that one lookup (CommitteeDB reads `Rows[0]` without a check; BAL and DAL unchanged).
+- Unchanged: the normal path, an unknown source type (no panel, marked as read), alert creation and every procedure. An item that is found but the user should not see: no change, the Dashboard lists only the alerts mapped to the user (Alert_User_Map) and has no per-item check; Approve and Reject are shown by role and refused by the procedure for the wrong role (step 20).
+
+From step E2c:
+
+- Global.asax.cs, Application_Error: HTTP 404 raised in ASP.NET (a missing .aspx, ScriptResource.axd or WebResource.axd with a bad `d=`) gets status 404 and a short fixed page: title "BMMS - Page not found", heading "Page not found", the text "Page not found." and the link "Back to home" (the Dashboard; a signed-out visitor goes on to the login page). Same inline style and palette as the safe error page, no master, session or database; no path, no version, no log entry. An UpdatePanel postback that gets a 404 receives status 404 with the fixed text of step E1, and the E1 message bar shows.
+- A missing static file (.css, .js, images) or folder is answered by IIS itself, not by the application; that answer is unchanged. Also unchanged: 404.8 for the hidden folders PDF, SqlBackup and Log, and the 403 "Access denied" page of PageAccessModule.
+- The safe page without the "Open the page again" link (status 400, the error page itself, a path starting with `//` or containing `\`) now says "This action could not be completed because of an error on the server. The error is in the error log. Check what was saved before you try again." The other safe pages keep "... Open the page again and check what was saved before you try again." with the link.
+- Web.config, `<system.web>`: `<httpRuntime requestValidationMode="2.0" enableVersionHeader="false"/>` (no X-AspNet-Version header). `<system.webServer>`: `<httpProtocol><customHeaders><remove name="X-Powered-By"/></customHeaders></httpProtocol>` after `<security>`. The Server header is left as it is. Apply the same lines by hand to the runtime Web.config.
+- No database object is changed. BMMS-Test-DashboardAlert-F1.sql only adds test rows for the browser check and removes them again.
+
+Preparation: deploy the build, apply the Web.config lines to the runtime Web.config, recycle the application pool. Keep the error log of the day open (BMMS\Log\yyyy_MM_dd_ErrorLog.txt). Addresses below are relative to the application root (`http://localhost:<port>`).
+
+Browser checks on `BMMS_Test`:
+
+1. F1, bad alert rows: open BMMS-Test-DashboardAlert-F1.sql in SSMS on `BMMS_Test`, set `@TestLogin` in part 1 to a test user who already has at least one alert, select part 1 and run it (it prints three AlertIds). Sign in as that user, Dashboard, Show All, click each of the three "ZZ F1 test -" alerts (agenda without id, meeting and committee that do not exist): each time the warning "This item no longer exists." shows above the Alert list, no panel or popup opens, no error page, no new error log entry. Run part 2: ReadStatus is 1 for all three. Run part 3 (cleanup): "Deleted 3 ... and 3 ...".
+2. F1, normal path: a real Meeting alert and a Committee alert open their popup, and an Agenda alert opens the agenda panel, as before; the warning is gone after the next click.
+3. F1, Approve and Reject still work for a normal agenda alert: as Manager (agenda status AC) and as Controller (status AMA), Approve one agenda and Reject another from the Dashboard: the status changes, the alert mail arrives (smtp4dev), no message box warning.
+4. Page not found: `/NoSuchPage.aspx`, `/x/y.aspx` and `/ScriptResource.axd?d=bad`: status 404 (Network tab) and the short page with only "Page not found." and "Back to home"; the page source has no path, no version and no ".NET"; no new error log entry. "Back to home" opens the Dashboard (or the login page when signed out). For comparison, `/NoSuch.css` gets the IIS answer as before.
+5. Unchanged: `/Log/`, `/Files/SqlBackup/` and `/Files/PDF/` (and a file name under each, such as `/Log/x.txt`) give 404.8 as before; signed in as a user who is not an Admin, `/Master/ResetDatabase.aspx` gives 403 "Access denied" as before. No new error log entries.
+6. Headers: any page (Network tab, response headers): no `X-AspNet-Version` and no `X-Powered-By`; `Server` is still there.
+7. Wording: `/Master/a%3Cb.aspx` (a `<` in the path): status 400, the safe page with "... Check what was saved before you try again.", no "Open the page again" text and no such link, one log entry. User Master, Add, `<x` in User Name, Save: status 500, the safe page still has "Open the page again" in the text and as a link.
+
+Later: step F2 (found while planning F1, not changed in this step; all in DashBoard.aspx.cs):
+
+- LoadAlertGRV and LoadActionItemGRV: `int.Parse(Session["UserId"])`.
+- lnkActionItem_Click: `int.Parse` of the hidden ActionItemId (twice); BindActionItemDetails reads `Rows[0]` without checking that a row came back.
+- btnApprove_Click and btnReject_Click: `int.Parse` of hdnAgendaMeeting and hdnAgendaId, and `Convert.ToInt16(Session["UserId"])`.
+- GenerateMail: `int.Parse` of hdnAgendaId and of the session user id.
+- btnActionItemApprove_Click: `int.Parse` of hdnActionItemId.
+- btnDeleteAlert_Click: `Convert.ToInt16(hdnAlertUserId)` overflows once AlertUserId is above 32,767 (an overflow, not only bad input).
+- BindAgendaDetails: `Convert.ToInt16` of the MeetingId (the same overflow above 32,767).
+- BindMeetingDetails and BindAgendaDetails: an item that is found but has a NULL MeetingDate (or AgendaSubmissionDate) still fails in `Convert.ToDateTime`.
 
 ## Known items for later steps
 

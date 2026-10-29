@@ -190,12 +190,23 @@ namespace BMMS.DashBoard
         #endregion
 
         #region lnkSource_Click
+        // Step F1: an alert whose item is gone or whose id is unusable (SourceTypeId NULL) shows a short warning
+        // instead of an error page; the alert is still marked as read when its own id is valid. A session
+        // without a usable user id is treated as expired, as Common.InitSetup does.
         protected void lnkSource_Click(object sender, EventArgs e)
         {
+            MsgHide();
 
             pnlAgenda.Visible = false;
             pnlMeeting.Visible = false;
             pnlCommittee.Visible = false;
+
+            int UserId;
+            if (Session["UserId"] == null || !int.TryParse(Session["UserId"].ToString(), out UserId))
+            {
+                Response.Redirect("~/", true);
+                return;
+            }
 
             hdnAlertUserId.Value = "0";
 
@@ -210,32 +221,42 @@ namespace BMMS.DashBoard
 
             hdnAlertUserId.Value = lblAlertUserId.Text.Trim();
 
+            int SourceTypeId;
+            bool hasSourceId = int.TryParse(lblSourceTypeId.Text.Trim(), out SourceTypeId);
+            bool found = true;
+
             if (lblSourceType.Text.Equals("Meeting"))
             {
-                pnlMeeting.Visible = true;
-
-                BindMeetingDetails(int.Parse(lblSourceTypeId.Text));
-
-                MpCommittee.Show();
+                found = hasSourceId && BindMeetingDetails(SourceTypeId);
+                if (found)
+                {
+                    pnlMeeting.Visible = true;
+                    MpCommittee.Show();
+                }
             }
             if (lblSourceType.Text.Equals("Committee"))
             {
-                pnlCommittee.Visible = true;
-
-                BindCommitteeDetails(int.Parse(lblSourceTypeId.Text));
-
-                MpCommittee.Show();
+                found = hasSourceId && BindCommitteeDetails(SourceTypeId);
+                if (found)
+                {
+                    pnlCommittee.Visible = true;
+                    MpCommittee.Show();
+                }
             }
 
             if (lblSourceType.Text.Equals("Agenda"))
             {
-                pnlAgenda.Visible = true;
-
-                BindAgendaDetails(int.Parse(lblSourceTypeId.Text));
-
+                found = hasSourceId && BindAgendaDetails(SourceTypeId);
+                if (found)
+                    pnlAgenda.Visible = true;
             }
 
-            AlertMgr.UpdateAlertByUserId(int.Parse(Session["UserId"].ToString()), int.Parse(lblAlert.Text));
+            if (!found)
+                MsgDisplay("This item no longer exists.", MessageKind.Warning);
+
+            int AlertId;
+            if (int.TryParse(lblAlert.Text.Trim(), out AlertId))
+                AlertMgr.UpdateAlertByUserId(UserId, AlertId);
 
         }
 
@@ -340,24 +361,35 @@ namespace BMMS.DashBoard
         #endregion
 
         #region BindCommitteeDetails
-        private void BindCommitteeDetails(int CommitteeId)
+        private bool BindCommitteeDetails(int CommitteeId)
         {
             CommitteeBAL myCommittee = new CommitteeBAL();
-            myCommittee = CommitteeMgr.GetCommitteeByCommitteeId(CommitteeId);
+            try
+            {
+                myCommittee = CommitteeMgr.GetCommitteeByCommitteeId(CommitteeId);
+            }
+            catch (IndexOutOfRangeException)
+            {
+                // CommitteeDB reads Rows[0] without a check: no row means the committee no longer exists (step F1)
+                return false;
+            }
 
             hdnCommitteeId.Value = myCommittee.CommitteeId.ToString();
             txtCommitteeCode.Text = myCommittee.CommitteeCode;
             txtCommitteeName.Text = myCommittee.CommitteeName;
             txtIncorporationDate.Text = myCommittee.IncorporationDate.ToString("dd-MMM-yyyy");
 
+            return true;
         }
         #endregion
 
         #region BindMeetingDetails
-        private void BindMeetingDetails(int MeetingId)
+        private bool BindMeetingDetails(int MeetingId)
         {
             DataTable dtMeeting = new DataTable();
             dtMeeting = MeetingMgr.GetMeetingByMeetingId(MeetingId);
+            if (dtMeeting == null || dtMeeting.Rows.Count == 0)
+                return false;
 
             hdnMeetingId.Value = dtMeeting.Rows[0]["MeetingId"].ToString();
 
@@ -367,14 +399,18 @@ namespace BMMS.DashBoard
             txtMeetingDate.Text = Convert.ToDateTime(dtMeeting.Rows[0]["MeetingDate"].ToString()).ToString("dd-MMM-yyyy");
             txtMeetingTime.Text = dtMeeting.Rows[0]["MeetingTime"].ToString();
             txtAgendaSubmissionDate.Text = Convert.ToDateTime(dtMeeting.Rows[0]["AgendaSubmissionDate"].ToString()).ToString("dd-MMM-yyyy");
+
+            return true;
         }
         #endregion
 
         #region BindAgendaDetails
-        private void BindAgendaDetails(int AgendaId)
+        private bool BindAgendaDetails(int AgendaId)
         {
             DataTable dtAgendaEdit = new DataTable();
             dtAgendaEdit = AgendaMgr.GetAgendaByAgendaId(AgendaId);
+            if (dtAgendaEdit == null || dtAgendaEdit.Rows.Count == 0)
+                return false;
 
             txtAgendaNo.Text = dtAgendaEdit.Rows[0]["AgendaNo"].ToString();
             txtSubjectNo.Text = dtAgendaEdit.Rows[0]["SubjectNo"].ToString();
@@ -504,6 +540,8 @@ namespace BMMS.DashBoard
                     btnDeleteAgendaAlert.Visible = true;
                 }
             }
+
+            return true;
         }
         #endregion
 
@@ -759,6 +797,21 @@ namespace BMMS.DashBoard
             AlertMgr.UpdateAlertByAlertUserId(AlertUserId);
             pnlAgenda.Visible = false;
             LoadAlertGRV();
+        }
+        #endregion
+
+        #region MsgDisplay
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
+        {
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
+            spanErrLogin.InnerHtml = errMsg;
+        }
+        #endregion
+
+        #region MsgHide
+        private void MsgHide()
+        {
+            divErrLogin.Attributes.Add("class", "divErrorHide");
         }
         #endregion
 

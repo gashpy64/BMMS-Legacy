@@ -36,7 +36,25 @@ namespace BMMS.DashBoard {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::BMMS.UserControl.MeetingSummary MeetingSummary1;
-        
+
+        /// <summary>
+        /// divErrLogin control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl divErrLogin;
+
+        /// <summary>
+        /// spanErrLogin control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl spanErrLogin;
+
         /// <summary>
         /// lnkShowAll control.
         /// </summary>

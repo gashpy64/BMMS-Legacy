@@ -39,12 +39,17 @@ namespace BMMS
         private const string SafeErrorText = "This action could not be completed because of an error on the server. "
             + "The error is in the error log. Open the page again and check what was saved before you try again.";
 
+        // The same text for a page without the "Open the page again" link (step E2c)
+        private const string SafeErrorTextNoLink = "This action could not be completed because of an error on the server. "
+            + "The error is in the error log. Check what was saved before you try again.";
+
         // Step E2: an unhandled error that reaches the application (a page that posts back in full, an error
         // before the page starts such as request validation, a dangerous URL path with HTTP 400) is written once
         // to the error log and answered with a short fixed page: no exception text, no stack, no redirect, so an
-        // error page can never loop. Untouched: HTTP 404 (not logged, the usual answer); the 404.8 of the hidden
-        // folders and the 403 "Access denied" page of PageAccessModule never reach this handler. An UpdatePanel
-        // postback gets status 500 with the fixed text, and JScript/AsyncPostBackError.js shows its message bar.
+        // error page can never loop. HTTP 404 is not logged and gets the short "Page not found." page (step E2c).
+        // The 404.8 of the hidden folders and the 403 "Access denied" page of PageAccessModule never reach this
+        // handler; a missing static file (.css, .js, images) is answered by IIS itself. An UpdatePanel postback
+        // gets the error status with the fixed text, and JScript/AsyncPostBackError.js shows its message bar.
         // Never throws.
         protected void Application_Error(object sender, EventArgs e)
         {
@@ -60,7 +65,11 @@ namespace BMMS
                 int status = httpError != null ? httpError.GetHttpCode() : 500;
 
                 if (status == 404)
+                {
+                    Server.ClearError();
+                    WriteNotFoundAnswer(context);
                     return;
+                }
 
                 // Already logged by the E1 handler of an UpdatePanel postback: the ScriptManager's answer stands
                 if (context.Items[Utilities.ErrorLoggedKey] != null)
@@ -106,7 +115,8 @@ namespace BMMS
                 {
                     // "Open the page again": the same path with a normal GET, no query string (step E2b); no link
                     // for a dangerous URL path (400), for the error page itself (it would point at itself), and
-                    // for a path that could point to another site (//, \)
+                    // for a path that could point to another site (//, \); the text then leaves out that
+                    // sentence (step E2c)
                     string openAgain = string.Empty;
                     string path = context.Request.Path;
                     bool isErrorPage = string.Equals(context.Request.AppRelativeCurrentExecutionFilePath,
@@ -126,9 +136,53 @@ namespace BMMS
                         "</head>" +
                         "<body style=\"font-family:Arial,sans-serif;margin:40px\">" +
                         "<h3>Error</h3>" +
-                        "<p>" + SafeErrorText + "</p>" +
+                        "<p>" + (openAgain.Length > 0 ? SafeErrorText : SafeErrorTextNoLink) + "</p>" +
                         "<p>" + openAgain +
                         "<a href=\"" + VirtualPathUtility.ToAbsolute("~/DashBoard/DashBoard.aspx") + "\">Back to home</a></p>" +
+                        "</body></html>");
+                }
+
+                context.ApplicationInstance.CompleteRequest();
+            }
+            catch (Exception)
+            {
+                WriteEmptyAnswer(context);
+            }
+        }
+
+        // Step E2c: a page or resource that does not exist gets status 404 and a short fixed page: no path, no
+        // version, no log entry; no master page, session or database. An UpdatePanel postback gets the fixed text.
+        private static void WriteNotFoundAnswer(HttpContext context)
+        {
+            HttpResponse response = context.Response;
+
+            try
+            {
+                if (!response.HeadersWritten)
+                    response.ClearHeaders();
+                response.Clear();
+                response.TrySkipIisCustomErrors = true;
+                response.StatusCode = 404;
+
+                string delta = context.Request.Headers["X-MicrosoftAjax"];
+                if (delta != null && delta.IndexOf("Delta=true", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    response.ContentType = "text/plain";
+                    response.Write(Utilities.AsyncPostBackErrorMessage);
+                }
+                else
+                {
+                    // The same palette copies as the safe error page (WriteSafeAnswer)
+                    response.ContentType = "text/html";
+                    response.Write(
+                        "<!DOCTYPE html><html><head><meta charset=\"utf-8\" /><title>BMMS - Page not found</title>" +
+                        "<style>body{background:#F4F6F9;color:#1F2937}h3{color:#111827}a{color:#1E5AA8}a:visited{color:#5B3E96}" +
+                        "a:hover{color:#174A8C}a:focus{outline:3px solid #2563EB;outline-offset:2px}</style>" +
+                        "</head>" +
+                        "<body style=\"font-family:Arial,sans-serif;margin:40px\">" +
+                        "<h3>Page not found</h3>" +
+                        "<p>Page not found.</p>" +
+                        "<p><a href=\"" + VirtualPathUtility.ToAbsolute("~/DashBoard/DashBoard.aspx") + "\">Back to home</a></p>" +
                         "</body></html>");
                 }
 
