@@ -623,10 +623,10 @@ namespace BMMS.Report
 
                         htmlTxt += "<div style='float:left; width:100%; border-bottom-style:dashed; border-bottom-width:thin'></div>";
 
-                        string para = "Minutes of the  " + BMMSBAL.Utilities.ConvertOrdinalValue(int.Parse(dtMeeting.Rows[0]["MeetingNo"].ToString())) + " meeting of the " + dtMeeting.Rows[0]["CommitteeName"].ToString();
+                        string para = "Minutes of the  " + BMMSBAL.Utilities.ConvertOrdinalValue(int.Parse(dtMeeting.Rows[0]["MeetingNo"].ToString())) + " meeting of the " + HttpUtility.HtmlEncode(dtMeeting.Rows[0]["CommitteeName"].ToString());
 
                         para += " held on " + Convert.ToDateTime(dtMeeting.Rows[0]["MeetingDate"].ToString()).ToString("dddd") + " the " + BMMSBAL.Utilities.ConvertOrdinalValue(Convert.ToInt16(Convert.ToDateTime(dtMeeting.Rows[0]["MeetingDate"].ToString()).ToString("dd"))) + " " + Convert.ToDateTime(dtMeeting.Rows[0]["MeetingDate"].ToString()).ToString("MMMM yyyy") +
-                                    " at " + dtMeeting.Rows[0]["MeetingTime"].ToString() + "Hrs. at " + dtMeeting.Rows[0]["Place"].ToString() + ".</b>";
+                                    " at " + HttpUtility.HtmlEncode(dtMeeting.Rows[0]["MeetingTime"].ToString()) + "Hrs. at " + HttpUtility.HtmlEncode(dtMeeting.Rows[0]["Place"].ToString()) + ".</b>";
 
                         htmlTxt += "<div style='float:left; width:100%; text-align:justify; font-size:12pt;font-weight: bold; padding-top: 5px; padding-bottom: 5px;'>" + para + "</div>";
 
@@ -659,7 +659,7 @@ namespace BMMS.Report
 
                         htmlTxt += "<tr>";
                         htmlTxt += "<td>";
-                        htmlTxt += MeetingChairman;
+                        htmlTxt += HttpUtility.HtmlEncode(MeetingChairman);
                         htmlTxt += "</td>";
                         htmlTxt += "<td>";
 
@@ -687,14 +687,14 @@ namespace BMMS.Report
                             {
                                 htmlTxt += "<tr>";
                                 htmlTxt += "<td>";
-                                htmlTxt += dtPresentCommitteeMember.Rows[j]["MemberName"].ToString();
+                                htmlTxt += HttpUtility.HtmlEncode(dtPresentCommitteeMember.Rows[j]["MemberName"].ToString());
                                 htmlTxt += "</td>";
 
                                 htmlTxt += "<td>";
                                 if (IsBoard)
-                                    htmlTxt += "-  " + dtPresentCommitteeMember.Rows[j]["DesignationName"].ToString();
+                                    htmlTxt += "-  " + HttpUtility.HtmlEncode(dtPresentCommitteeMember.Rows[j]["DesignationName"].ToString());
                                 else
-                                    htmlTxt += "-  " + dtPresentCommitteeMember.Rows[j]["MemberTypeName"].ToString();
+                                    htmlTxt += "-  " + HttpUtility.HtmlEncode(dtPresentCommitteeMember.Rows[j]["MemberTypeName"].ToString());
                                 htmlTxt += "</td>";
                                 htmlTxt += "</tr>";
                             }
@@ -728,10 +728,10 @@ namespace BMMS.Report
                                 {
                                     htmlTxt += "<tr>";
                                     htmlTxt += "<td>";
-                                    htmlTxt += dtInvitation.Rows[n1]["MemberName"].ToString();
+                                    htmlTxt += HttpUtility.HtmlEncode(dtInvitation.Rows[n1]["MemberName"].ToString());
                                     htmlTxt += "</td>";
                                     htmlTxt += "<td>";
-                                    htmlTxt += "-  " + dtInvitation.Rows[n1]["DesignationName"].ToString();
+                                    htmlTxt += "-  " + HttpUtility.HtmlEncode(dtInvitation.Rows[n1]["DesignationName"].ToString());
                                     htmlTxt += "</td>";
                                     htmlTxt += "</tr>";
                                 }
@@ -760,10 +760,10 @@ namespace BMMS.Report
                             {
                                 htmlTxt += "<tr>";
                                 htmlTxt += "<td>";
-                                htmlTxt += dtCompanySecretary.Rows[n2]["CompanySecretary"].ToString();
+                                htmlTxt += HttpUtility.HtmlEncode(dtCompanySecretary.Rows[n2]["CompanySecretary"].ToString());
                                 htmlTxt += "</td>";
                                 htmlTxt += "<td>";
-                                htmlTxt += "-  " + dtCompanySecretary.Rows[n2]["DesignationName"].ToString();
+                                htmlTxt += "-  " + HttpUtility.HtmlEncode(dtCompanySecretary.Rows[n2]["DesignationName"].ToString());
                                 htmlTxt += "</td>";
                                 htmlTxt += "</tr>";
                             }
@@ -785,10 +785,10 @@ namespace BMMS.Report
                             htmlTxt += "<table style='float:left; width:100%;'>";
                             htmlTxt += "<tr>";
                             htmlTxt += "<td valign='top' style='width:5%;'>";
-                            htmlTxt += dtMinutesFilter.Rows[k]["SubjectNo"].ToString();
+                            htmlTxt += HttpUtility.HtmlEncode(dtMinutesFilter.Rows[k]["SubjectNo"].ToString());
                             htmlTxt += "</td>";
                             htmlTxt += "<td style='width:95%; text-align: justify;'><b>";
-                            htmlTxt += dtMinutesFilter.Rows[k]["ShortText"].ToString();
+                            htmlTxt += HttpUtility.HtmlEncode(dtMinutesFilter.Rows[k]["ShortText"].ToString());
                             htmlTxt += "</b></td>";
                             htmlTxt += "</tr>";
                             //htmlTxt += "<tr>";
@@ -807,7 +807,7 @@ namespace BMMS.Report
                             //htmlTxt += "</table>";
 
                             htmlTxt += "<div style='text-align:justify; padding-left:35px;'>";
-                            htmlTxt += HTML_Report.ReplaceRichTextFont(dtMinutesFilter.Rows[k]["ActualResolution"].ToString());
+                            htmlTxt += HTML_Report.ReplaceRichTextFont(HtmlCleaner.Clean(dtMinutesFilter.Rows[k]["ActualResolution"].ToString()));
                             htmlTxt += "</div>";
                             htmlTxt += "<br />";
 
@@ -833,18 +833,18 @@ namespace BMMS.Report
                         htmlTxt += "<td style='text-align: center'>";
 
                         if (CompanySecretary != string.Empty)
-                            htmlTxt += "(" + CompanySecretary + ")";
+                            htmlTxt += "(" + HttpUtility.HtmlEncode(CompanySecretary) + ")";
                         else
-                            htmlTxt += CompanySecretary;
+                            htmlTxt += HttpUtility.HtmlEncode(CompanySecretary);
 
-                        htmlTxt += "<br />" + CompanySecretaryDesign;
+                        htmlTxt += "<br />" + HttpUtility.HtmlEncode(CompanySecretaryDesign);
                         htmlTxt += "</td>";
 
                         htmlTxt += "<td style='text-align: center'>";
                         if (MeetingChairman != string.Empty)
-                            htmlTxt += "(" + MeetingChairman + ")";
+                            htmlTxt += "(" + HttpUtility.HtmlEncode(MeetingChairman) + ")";
                         else
-                            htmlTxt += MeetingChairman;
+                            htmlTxt += HttpUtility.HtmlEncode(MeetingChairman);
 
                         htmlTxt += "<br />";
 
@@ -972,7 +972,7 @@ namespace BMMS.Report
 
                         htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:13pt;'><br />CERTIFIED TRUE COPY OF THE RESOLUTION</div>";
 
-                        para = "PASSED BY THE " + dtMeeting.Rows[0]["CommitteeName"].ToString();
+                        para = "PASSED BY THE " + HttpUtility.HtmlEncode(dtMeeting.Rows[0]["CommitteeName"].ToString());
 
                         htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:13pt;'>" + para + "</div>";
 
@@ -996,7 +996,7 @@ namespace BMMS.Report
                         htmlTxt += "DATE : " + Convert.ToDateTime(dtMeeting.Rows[0]["MeetingDate"].ToString()).ToString("dd-MMM-yyyy");
                         htmlTxt += "</td>";
                         htmlTxt += "<td style='width:30%; text-align: right'>";
-                        htmlTxt += "PLACE : " + dtMeeting.Rows[0]["Place"].ToString();
+                        htmlTxt += "PLACE : " + HttpUtility.HtmlEncode(dtMeeting.Rows[0]["Place"].ToString());
                         htmlTxt += "</td>";
                         htmlTxt += "</tr>";
                         htmlTxt += "</table>";
@@ -1006,16 +1006,16 @@ namespace BMMS.Report
                         htmlTxt += "<table style='float:left; width:100%;'>";
                         htmlTxt += "<tr>";
                         htmlTxt += "<td valign='top' style='width:5%;'>";
-                        htmlTxt += dtMinutes.Rows[i]["SubjectNo"].ToString();
+                        htmlTxt += HttpUtility.HtmlEncode(dtMinutes.Rows[i]["SubjectNo"].ToString());
                         htmlTxt += "</td>";
                         htmlTxt += "<td style='width:95%; text-align: justify;'><b>";
-                        htmlTxt += dtMinutes.Rows[i]["ShortText"].ToString();
+                        htmlTxt += HttpUtility.HtmlEncode(dtMinutes.Rows[i]["ShortText"].ToString());
                         htmlTxt += "</b></td>";
                         htmlTxt += "</tr>";
                         htmlTxt += "<tr>";
                         htmlTxt += "<td>&nbsp;</td>";
                         htmlTxt += "<td><br />";
-                        htmlTxt += HTML_Report.ReplaceRichTextFont(dtMinutes.Rows[i]["ActualResolution"].ToString());
+                        htmlTxt += HTML_Report.ReplaceRichTextFont(HtmlCleaner.Clean(dtMinutes.Rows[i]["ActualResolution"].ToString()));
                         htmlTxt += "<br /><br /></td>";
                         htmlTxt += "</tr>";
                         htmlTxt += "</table><br />";
@@ -1236,7 +1236,7 @@ namespace BMMS.Report
                         pdfDocument.Add(para);
 
                     htmlTxt = "<div style='float:left; width:100%; text-align:center'>";
-                    htmlTxt += "Subject wise report for the Department : " + dtDepartment.Rows[i]["DepartmentName"].ToString();
+                    htmlTxt += "Subject wise report for the Department : " + HttpUtility.HtmlEncode(dtDepartment.Rows[i]["DepartmentName"].ToString());
 
                     if (fromMNO == toMNO)
                         htmlTxt += "<br />Board No. :  " + fromMNO;
@@ -1416,7 +1416,7 @@ namespace BMMS.Report
                     pdfDocument.Add(new Paragraph(Environment.NewLine));
 
                     string htmlText = "<div style='width:100px; text-align:justify;'>";
-                    htmlText += dtAgenda.Rows[j]["ShortText"].ToString();
+                    htmlText += HttpUtility.HtmlEncode(dtAgenda.Rows[j]["ShortText"].ToString());
                     htmlText += "</div>";
 
                     PDFUtilities.AddHTMLText(pdfDocument, htmlText);
@@ -1428,7 +1428,7 @@ namespace BMMS.Report
                     if (dtAgenda.Rows[j]["AgendaType"].ToString() == "Entry")
                     {
                         htmlText = "<div style='width:100px; text-align:justify; font-famil: Times New Roman; font-size:10pt;'>";
-                        htmlText += HTML_Report.ReplaceRichTextFont(dtAgenda.Rows[j]["AgendaText"].ToString());
+                        htmlText += HTML_Report.ReplaceRichTextFont(HtmlCleaner.Clean(dtAgenda.Rows[j]["AgendaText"].ToString()));
                         htmlText += "</div>";
 
                         PDFUtilities.AddHTMLText(pdfDocument, htmlText);

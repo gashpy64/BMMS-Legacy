@@ -123,29 +123,29 @@ namespace BMMS.Report
                     BodyText += "<td colspan='2' style='text-align:left'>";
                     BodyText += "Dear Sir/Madam,<br />";
                     BodyText += "<br />";
-                    BodyText += "<b>Subject : " + ViewState["MailSubject"].ToString() + "</b><br />";
+                    BodyText += "<b>Subject : " + HttpUtility.HtmlEncode(ViewState["MailSubject"].ToString()) + "</b><br />";
                     BodyText += "<br />";
                     BodyText += "Please find attached the Followup for the meeting as given below.";
                     BodyText += "<br />";
                     BodyText += "<br />";
-                    BodyText += "Committee Name : " + ddlCommittee.SelectedItem.Text.Trim();
+                    BodyText += "Committee Name : " + HttpUtility.HtmlEncode(ddlCommittee.SelectedItem.Text.Trim());
                     BodyText += "<br />";
 
                     if (rdoMeatingNoSearch.SelectedValue.ToString() == "0")
                     {
-                        BodyText += "Meeting No : " + ddlMeetingNoFrom.SelectedItem.Text.Trim();
+                        BodyText += "Meeting No : " + HttpUtility.HtmlEncode(ddlMeetingNoFrom.SelectedItem.Text.Trim());
                         BodyText += "<br />";
                         if (rdoSubjectNoSearch.SelectedValue.ToString() == "1")
                         {
-                            BodyText += "Subject No : " + ddlSubjectNoFrom.SelectedItem.Text.Trim();
-                            BodyText += " to " + ddlSubjectNoTo.SelectedItem.Text.Trim();
+                            BodyText += "Subject No : " + HttpUtility.HtmlEncode(ddlSubjectNoFrom.SelectedItem.Text.Trim());
+                            BodyText += " to " + HttpUtility.HtmlEncode(ddlSubjectNoTo.SelectedItem.Text.Trim());
                             BodyText += "<br />";
                         }
                     }
                     if (rdoMeatingNoSearch.SelectedValue.ToString() == "1")
                     {
-                        BodyText += "Meeting No : " + ddlMeetingNoFrom.SelectedItem.Text.Trim();
-                        BodyText += " to " + ddlMeetingNoTo.SelectedItem.Text.Trim();
+                        BodyText += "Meeting No : " + HttpUtility.HtmlEncode(ddlMeetingNoFrom.SelectedItem.Text.Trim());
+                        BodyText += " to " + HttpUtility.HtmlEncode(ddlMeetingNoTo.SelectedItem.Text.Trim());
                         BodyText += "<br />";
                     }
                     BodyText += "<br />";
@@ -159,8 +159,8 @@ namespace BMMS.Report
 
                     if (CompanySecretary != string.Empty)
                     {
-                        BodyText += "<b>(" + CompanySecretary + ")</b><br />";
-                        BodyText += "<b>" + CompanySecretaryDesign + "</b>";
+                        BodyText += "<b>(" + HttpUtility.HtmlEncode(CompanySecretary) + ")</b><br />";
+                        BodyText += "<b>" + HttpUtility.HtmlEncode(CompanySecretaryDesign) + "</b>";
                     }
                     else
                     {
@@ -328,7 +328,7 @@ namespace BMMS.Report
                     {
                         htmlTxt += "<tr>";
                         htmlTxt += "<td>";
-                        htmlTxt += dtFollowupFilter.Rows[0]["MeetingNo"].ToString();
+                        htmlTxt += HttpUtility.HtmlEncode(dtFollowupFilter.Rows[0]["MeetingNo"].ToString());
                         htmlTxt += "</td>";
                         htmlTxt += "<td>";
                         htmlTxt += Convert.ToDateTime(dtFollowupFilter.Rows[0]["MeetingDate"].ToString()).ToString("dd/MM/yyyy");
@@ -348,10 +348,10 @@ namespace BMMS.Report
                             htmlTxt += "<td>";
                             htmlTxt += "</td>";
                             htmlTxt += "<td>";
-                            htmlTxt += dtFollowupFilter.Rows[j]["SubjectNo"].ToString();
+                            htmlTxt += HttpUtility.HtmlEncode(dtFollowupFilter.Rows[j]["SubjectNo"].ToString());
                             htmlTxt += "</td>";
                             htmlTxt += "<td>";
-                            htmlTxt += dtFollowupFilter.Rows[j]["ShortText"].ToString();
+                            htmlTxt += HttpUtility.HtmlEncode(dtFollowupFilter.Rows[j]["ShortText"].ToString());
                             htmlTxt += "</td>";
                             htmlTxt += "</tr>";                            
                         }

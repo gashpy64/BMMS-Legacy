@@ -312,13 +312,13 @@ namespace BMMS.Master
                 if (e.CommandName == "ViewActualResolution")
                 {
                     pnlActualResolution.Visible = true;
-                    ftxtActualResolution.Text = dtActionItem.Rows[0]["ActualResolution"].ToString();
+                    ftxtActualResolution.Text = HtmlCleaner.Clean(dtActionItem.Rows[0]["ActualResolution"].ToString());
                 }
 
                 if (e.CommandName == "ViewActionText")
                 {
                     pnlActionText.Visible = true;
-                    ftxtActionText.Text = dtActionItem.Rows[0]["ActionText"].ToString();
+                    ftxtActionText.Text = HtmlCleaner.Clean(dtActionItem.Rows[0]["ActionText"].ToString());
                 }
             }
             catch (Exception ex)

@@ -28,6 +28,10 @@ namespace BMMS.Report
             
             fPath = Server.MapPath("~/Files/Temp/");
 
+            // The editor shows the posted body again on every postback: cleaned to the allow-list first (step A1a)
+            if (IsPostBack)
+                ftxtBodyText.Text = HtmlCleaner.Clean(ftxtBodyText.Xhtml);
+
             if (!IsPostBack)
             {
                 aAttachment.Visible = false;
@@ -53,7 +57,7 @@ namespace BMMS.Report
             if (result == "Success")
                 MsgDisplay("Mail was sent to all members.", MessageKind.Success);
             else
-                MsgDisplay(result, MessageKind.Error);
+                MsgDisplay(HttpUtility.HtmlEncode(result), MessageKind.Error);   // the error text can repeat typed input
         }
         #endregion
 
@@ -62,11 +66,13 @@ namespace BMMS.Report
         {
             string ToMailId = txtToMailId.Text.Trim();
 
-            string BodyText = ftxtBodyText.Xhtml.Trim();
+            // The typed mail body cleaned to the rich-text allow-list (step A1a)
+            string BodyText = HtmlCleaner.Clean(ftxtBodyText.Xhtml.Trim());
 
             string Subject = txtSubject.Text.Trim();
 
-            string AttachFileName = txtAttachmentPath.Text.Trim();
+            // The name only: the hidden box is posted by the browser and must not reach outside Files/Temp
+            string AttachFileName = Path.GetFileName(txtAttachmentPath.Text.Trim());
 
             if (aAttachment.Visible == true)
                 return Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, fPath + AttachFileName, null);
@@ -102,7 +108,7 @@ namespace BMMS.Report
 
                 FileUploadAttachment.SaveAs(fNameWithPath);
 
-                aAttachment.Attributes.Add("href", "../Files/Temp/" + fName);
+                aAttachment.Attributes.Add("href", "../Files/Temp/" + Uri.EscapeDataString(fName));
                 txtAttachmentPath.Text = fName;
 
                 aAttachment.Visible = true;

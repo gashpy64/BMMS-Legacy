@@ -111,14 +111,15 @@ namespace BMMS.Report
 
                         pdfDocument.Add(new Paragraph(Environment.NewLine));
 
-                        string htmlText = dtAgenda.Rows[j]["ShortText"].ToString();
+                        // Short Text is plain text: encoded for HTMLWorker (step A1a)
+                        string htmlText = HttpUtility.HtmlEncode(dtAgenda.Rows[j]["ShortText"].ToString());
                         PDFUtilities.AddHTMLText(pdfDocument, htmlText);
 
                         pdfDocument.Add(new Paragraph(Environment.NewLine));
 
                         if (dtAgenda.Rows[j]["AgendaType"].ToString() == "Entry")
                         {
-                            htmlText = dtAgenda.Rows[j]["AgendaText"].ToString();
+                            htmlText = HtmlCleaner.Clean(dtAgenda.Rows[j]["AgendaText"].ToString());
                         }
                         else
                         {
@@ -130,7 +131,7 @@ namespace BMMS.Report
                         pdfDocument.Add(new Paragraph(Environment.NewLine));
                         pdfDocument.Add(PdfFonts.Paragraph("Proposed Resolution : "));
 
-                        htmlText = dtAgenda.Rows[j]["ProposedResolution"].ToString();
+                        htmlText = HtmlCleaner.Clean(dtAgenda.Rows[j]["ProposedResolution"].ToString());
                         PDFUtilities.AddHTMLText(pdfDocument, htmlText);
 
                         pdfDocument.Add(new Paragraph(Environment.NewLine));

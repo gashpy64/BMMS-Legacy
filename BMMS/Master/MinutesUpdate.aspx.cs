@@ -348,21 +348,21 @@ namespace BMMS.Master
                         pnlDirections.Visible = true;
                         
                         if (dtMinutes.Rows[0]["Directions"].ToString().Trim() == string.Empty)
-                            ftxtDirections.Text = dtMinutes.Rows[0]["ActualResolution"].ToString();
+                            ftxtDirections.Text = HtmlCleaner.Clean(dtMinutes.Rows[0]["ActualResolution"].ToString());
                         else
-                            ftxtDirections.Text = dtMinutes.Rows[0]["Directions"].ToString();
+                            ftxtDirections.Text = HtmlCleaner.Clean(dtMinutes.Rows[0]["Directions"].ToString());
 
                     }
                     if (e.CommandName == "ViewProposedResolution")
                     {
                         pnlProposedResolution.Visible = true;
-                        ftxtProposedResolution.Text = dtMinutes.Rows[0]["ProposedResolution"].ToString();
+                        ftxtProposedResolution.Text = HtmlCleaner.Clean(dtMinutes.Rows[0]["ProposedResolution"].ToString());
 
                     }
                     if (e.CommandName == "EditActualResolution")
                     {
                         pnlActualResolution.Visible = true;
-                        ftxtActualResolution.Text = dtMinutes.Rows[0]["ActualResolution"].ToString();
+                        ftxtActualResolution.Text = HtmlCleaner.Clean(dtMinutes.Rows[0]["ActualResolution"].ToString());
                         //txtaActualResolution.InnerText = dtMinutes.Rows[0]["ProposedResolution"].ToString();
                     }
                 }

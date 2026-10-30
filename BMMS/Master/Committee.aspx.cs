@@ -312,13 +312,13 @@ namespace BMMS.Master
             BodyText += "</td>";
 
             BodyText += "<td style='text-align:left; font-weight:normal;'>";
-            BodyText += ": " + txtCommitteeCode.Text.Trim() + "<br /><br />";
-            BodyText += ": " + txtCommitteeName.Text.Trim() + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(txtCommitteeCode.Text.Trim()) + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(txtCommitteeName.Text.Trim()) + "<br /><br />";
             if (chkBoard.Checked)
                 BodyText += ": Yes<br /><br />";
             else
                 BodyText += ": No<br /><br />";
-            BodyText += ": " + txtIncorporationDate.Text.Trim() + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(txtIncorporationDate.Text.Trim()) + "<br /><br />";
             BodyText += "</td>";
 
             BodyText += "</tr>";

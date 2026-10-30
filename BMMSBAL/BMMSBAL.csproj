@@ -57,6 +57,11 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="HtmlAgilityPack">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Lib\HtmlAgilityPack\HtmlAgilityPack.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="itextsharp, Version=4.0.2.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\BMMS\dll\itextsharp.dll</HintPath>
@@ -83,6 +88,7 @@
     <Compile Include="ActionItemMgr.cs" />
     <Compile Include="AuditTrail_Mgr.cs" />
     <Compile Include="HTML_Report.cs" />
+    <Compile Include="HtmlCleaner.cs" />
     <Compile Include="ReportsMgr.cs" />
     <Compile Include="PDF_Reports.cs" />
     <Compile Include="DocToString.cs" />

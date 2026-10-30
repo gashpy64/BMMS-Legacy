@@ -278,12 +278,12 @@ namespace BMMS.Master
             BodyText += "</td>";
 
             BodyText += "<td style='text-align:left; font-weight:normal;'>";
-            BodyText += ": " + dtAgenda.Rows[CurrentRow]["AgendaNo"].ToString() + "<br /><br />";
-            BodyText += ": " + dtAgenda.Rows[CurrentRow]["CommitteeName"].ToString() + "<br /><br />";
-            BodyText += ": " + dtAgenda.Rows[CurrentRow]["MeetingNo"].ToString() + "<br /><br />";
-            BodyText += ": " + dtAgenda.Rows[CurrentRow]["MeetingDate"].ToString() + "<br /><br />";
-            BodyText += ": " + dtAgenda.Rows[CurrentRow]["DepartmentName"].ToString() + "<br /><br />";
-            BodyText += ": " + dtAgenda.Rows[CurrentRow]["SubjectTypeName"].ToString() + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(dtAgenda.Rows[CurrentRow]["AgendaNo"].ToString()) + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(dtAgenda.Rows[CurrentRow]["CommitteeName"].ToString()) + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(dtAgenda.Rows[CurrentRow]["MeetingNo"].ToString()) + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(dtAgenda.Rows[CurrentRow]["MeetingDate"].ToString()) + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(dtAgenda.Rows[CurrentRow]["DepartmentName"].ToString()) + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(dtAgenda.Rows[CurrentRow]["SubjectTypeName"].ToString()) + "<br /><br />";
             //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
             BodyText += "</td>";
 
@@ -296,7 +296,7 @@ namespace BMMS.Master
             BodyText += "</td>";
 
             BodyText += "<td style='text-align:left; font-weight:normal;'>";
-            BodyText += ": " + dtAgenda.Rows[CurrentRow]["ShortText"].ToString() + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(dtAgenda.Rows[CurrentRow]["ShortText"].ToString()) + "<br /><br />";
             //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
             BodyText += "</td>";
 

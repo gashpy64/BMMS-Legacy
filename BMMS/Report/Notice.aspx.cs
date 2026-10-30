@@ -135,29 +135,29 @@ namespace BMMS.Report
                             BodyText += "<td colspan='2' style='text-align:left'>";
                             BodyText += "To <br />";
                             BodyText += "<br />";
-                            BodyText += dtCommitteeMember.Rows[i]["MemberName"].ToString() + " <br />";
+                            BodyText += HttpUtility.HtmlEncode(dtCommitteeMember.Rows[i]["MemberName"].ToString()) + " <br />";
                             if (dtCommitteeMember.Rows[i]["Address1"].ToString().Trim() != string.Empty)
-                                BodyText += dtCommitteeMember.Rows[i]["Address1"].ToString() + " <br />";
+                                BodyText += HttpUtility.HtmlEncode(dtCommitteeMember.Rows[i]["Address1"].ToString()) + " <br />";
                             if (dtCommitteeMember.Rows[i]["Address2"].ToString().Trim() != string.Empty)
-                                BodyText += dtCommitteeMember.Rows[i]["Address2"].ToString() + " <br />";
+                                BodyText += HttpUtility.HtmlEncode(dtCommitteeMember.Rows[i]["Address2"].ToString()) + " <br />";
                             if (dtCommitteeMember.Rows[i]["Address3"].ToString().Trim() != string.Empty)
-                                BodyText += dtCommitteeMember.Rows[i]["Address3"].ToString() + " <br />";
+                                BodyText += HttpUtility.HtmlEncode(dtCommitteeMember.Rows[i]["Address3"].ToString()) + " <br />";
                             if (dtCommitteeMember.Rows[i]["CityName"].ToString().Trim() != string.Empty)
-                                BodyText += dtCommitteeMember.Rows[i]["CityName"].ToString() + " <br />";
+                                BodyText += HttpUtility.HtmlEncode(dtCommitteeMember.Rows[i]["CityName"].ToString()) + " <br />";
                             if (dtCommitteeMember.Rows[i]["State_Name"].ToString().Trim() != string.Empty)
-                                BodyText += dtCommitteeMember.Rows[i]["State_Name"].ToString() + " <br />";
+                                BodyText += HttpUtility.HtmlEncode(dtCommitteeMember.Rows[i]["State_Name"].ToString()) + " <br />";
                             BodyText += "<br /><br />";
                             BodyText += "Dear Sir/Madam,<br />";
                             BodyText += "<br /><br />";
 
-                            BodyText += "<b>Subject : Notice of Next Meeting of the " + dtMeeting.Rows[0]["CommitteeName"].ToString();
+                            BodyText += "<b>Subject : Notice of Next Meeting of the " + HttpUtility.HtmlEncode(dtMeeting.Rows[0]["CommitteeName"].ToString());
 
                             BodyText += "</b><br />";
 
                             BodyText += "<br />";
-                            BodyText += "The next meeting of the " + dtMeeting.Rows[0]["CommitteeName"].ToString() +
+                            BodyText += "The next meeting of the " + HttpUtility.HtmlEncode(dtMeeting.Rows[0]["CommitteeName"].ToString()) +
                                 " is scheduled to be held on " + Convert.ToDateTime(dtMeeting.Rows[0]["MeetingDate"].ToString()).ToString("dd-MMM-yyyy") +
-                                " at " + dtMeeting.Rows[0]["MeetingTime"].ToString() + " Hrs. at " + dtMeeting.Rows[0]["Venue"].ToString() + "<br />";
+                                " at " + HttpUtility.HtmlEncode(dtMeeting.Rows[0]["MeetingTime"].ToString()) + " Hrs. at " + HttpUtility.HtmlEncode(dtMeeting.Rows[0]["Venue"].ToString()) + "<br />";
                             BodyText += "<br />";
                             BodyText += "The Agenda Note will be sent to you in due course.<br />";
                             BodyText += "<br />";
@@ -173,8 +173,8 @@ namespace BMMS.Report
 
                             if (CompanySecretary != string.Empty)
                             {
-                                BodyText += "<b>(" + CompanySecretary + ")</b><br />";
-                                BodyText += "<b>" + CompanySecretaryDesign + "</b>";
+                                BodyText += "<b>(" + HttpUtility.HtmlEncode(CompanySecretary) + ")</b><br />";
+                                BodyText += "<b>" + HttpUtility.HtmlEncode(CompanySecretaryDesign) + "</b>";
                             }
                             else
                             {

@@ -456,13 +456,13 @@ namespace BMMS.Master
             BodyText += "</td>";
 
             BodyText += "<td style='text-align:left; font-weight:normal;'>";
-            BodyText += ": " + txtMeetingNo.Text.Trim() + "<br /><br />";
-            BodyText += ": " + ddlCommittee.SelectedItem.Text.Trim() + "<br /><br />";
-            BodyText += ": " + txtPlace.Text.Trim() + "<br /><br />";
-            BodyText += ": " + txtVenue.Text.Trim() + "<br /><br />";
-            BodyText += ": " + txtMeetingDate.Text.Trim() + "<br /><br />";
-            BodyText += ": " + txtMeetingTime.Text.Trim() + "  Hrs.<br /><br />";
-            BodyText += ": " + txtAgendaSubmissionDate.Text.Trim() + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(txtMeetingNo.Text.Trim()) + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(ddlCommittee.SelectedItem.Text.Trim()) + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(txtPlace.Text.Trim()) + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(txtVenue.Text.Trim()) + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(txtMeetingDate.Text.Trim()) + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(txtMeetingTime.Text.Trim()) + "  Hrs.<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(txtAgendaSubmissionDate.Text.Trim()) + "<br /><br />";
             BodyText += "</td>";
 
             BodyText += "</tr>";

@@ -136,8 +136,8 @@ namespace BMMSBAL
             myMinutesDAL.MinutesId = myMinutesBAL.MinutesId;
             myMinutesDAL.DecisionTypeId = myMinutesBAL.DecisionTypeId;
             //myMinutesDAL.DueDate = myMinutesBAL.DueDate;
-            myMinutesDAL.Directions = myMinutesBAL.Directions;
-            myMinutesDAL.ActualResolution = myMinutesBAL.ActualResolution;
+            myMinutesDAL.Directions = HtmlCleaner.Clean(myMinutesBAL.Directions);   // step A1a
+            myMinutesDAL.ActualResolution = HtmlCleaner.Clean(myMinutesBAL.ActualResolution);   // step A1a
             myMinutesDAL.ShortText = myMinutesBAL.ShortText;
             myMinutesDAL.CreatedBy = myMinutesBAL.CreatedBy;
             myMinutesDAL.UpdatedBy = myMinutesBAL.UpdatedBy;

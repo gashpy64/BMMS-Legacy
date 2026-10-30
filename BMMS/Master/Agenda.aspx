@@ -141,7 +141,7 @@
                                                 CommandArgument="ShortText"></asp:LinkButton>
                                         </HeaderTemplate>
                                         <ItemTemplate>
-                                            <asp:Label ID="lblShortText" runat="server" SkinID="lblskingen" Text='<%#Eval("ShortText") %>'></asp:Label>
+                                            <asp:Label ID="lblShortText" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("ShortText")) %>'></asp:Label>
                                         </ItemTemplate>
                                         <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Justify" />
                                     </asp:TemplateField>
@@ -347,8 +347,8 @@
                                     </asp:TemplateField>
                                     <asp:TemplateField SortExpression="FilePath">
                                         <ItemTemplate>
-                                            <a href='<%#Eval("FilePath") %>' target="_blank">
-                                                <%#Eval("DisplayName") %>
+                                            <a href='<%# HttpUtility.HtmlEncode(Eval("FilePath")) %>' target="_blank">
+                                                <%# HttpUtility.HtmlEncode(Eval("DisplayName")) %>
                                             </a>
                                         </ItemTemplate>
                                     </asp:TemplateField>

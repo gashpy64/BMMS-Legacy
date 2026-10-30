@@ -323,12 +323,12 @@ namespace BMMS.Master
                                 ftxtAgendaText.Visible = false;
                                 aAgendaText.Visible = true;
                                 pnlUploadAgendaText.Visible = true;
-                                aAgendaText.Attributes.Add("href", "../Files/AgendaText/" + dtAgendaEdit.Rows[0]["AgendaTextPath"].ToString());
+                                aAgendaText.Attributes.Add("href", "../Files/AgendaText/" + Uri.EscapeDataString(dtAgendaEdit.Rows[0]["AgendaTextPath"].ToString()));
                             }
 
-                            ftxtAgendaText.Text = dtAgendaEdit.Rows[0]["AgendaText"].ToString();
+                            ftxtAgendaText.Text = HtmlCleaner.Clean(dtAgendaEdit.Rows[0]["AgendaText"].ToString());
                             txtAgendaTextPath.Text = dtAgendaEdit.Rows[0]["AgendaTextPath"].ToString();
-                            ftxtProposedResolution.Text = dtAgendaEdit.Rows[0]["ProposedResolution"].ToString();
+                            ftxtProposedResolution.Text = HtmlCleaner.Clean(dtAgendaEdit.Rows[0]["ProposedResolution"].ToString());
 
                             string[] attFiles = dtAgendaEdit.Rows[0]["FilePath"].ToString().Split(',');
                             DataTable dtAttFiles = new DataTable();
@@ -342,7 +342,7 @@ namespace BMMS.Master
                                 {
                                     DataRow dr = dtAttFiles.NewRow();
                                     dr["FilePathOrg"] = attFiles[i].ToString();
-                                    dr["FilePath"] = "../Files/AgendaAttach/" + attFiles[i].ToString();
+                                    dr["FilePath"] = "../Files/AgendaAttach/" + Uri.EscapeDataString(attFiles[i].ToString());
                                     dr["DisplayName"] = attFiles[i].ToString();
                                     dtAttFiles.Rows.Add(dr);
                                 }
@@ -365,7 +365,7 @@ namespace BMMS.Master
                                 pnlManagerComments.Visible = true;
                                 pnlControllerComments.Visible = false;
                                 txtSubjectNo.ReadOnly = true;
-                                ftxtManagerComments.Text = dtAgendaEdit.Rows[0]["MgrComments"].ToString();
+                                ftxtManagerComments.Text = HtmlCleaner.Clean(dtAgendaEdit.Rows[0]["MgrComments"].ToString());
                             }
 
                             if (Session["RoleCode"].ToString() == "controller")
@@ -378,8 +378,8 @@ namespace BMMS.Master
                                 else
                                     txtSubjectNo.ReadOnly = true;
 
-                                ftxtManagerComments.Text = dtAgendaEdit.Rows[0]["MgrComments"].ToString();
-                                ftxtControllerComments.Text = dtAgendaEdit.Rows[0]["ControllerComments"].ToString();
+                                ftxtManagerComments.Text = HtmlCleaner.Clean(dtAgendaEdit.Rows[0]["MgrComments"].ToString());
+                                ftxtControllerComments.Text = HtmlCleaner.Clean(dtAgendaEdit.Rows[0]["ControllerComments"].ToString());
                             }
 
 
@@ -798,17 +798,15 @@ namespace BMMS.Master
             BodyText += "</td>";
 
             BodyText += "<td style='text-align:left; font-weight:normal;'>";
-            BodyText += ": " + txtAgendaNo.Text.Trim() + "<br /><br />";
-            BodyText += ": " + txtCommittee.Text.Trim() + "<br /><br />";
-            BodyText += ": " + txtMeetingNo.Text.Trim() + "<br /><br />";
-            BodyText += ": " + txtDateOfMeeting.Text.Trim() + "<br /><br />";
-
+            BodyText += ": " + HttpUtility.HtmlEncode(txtAgendaNo.Text.Trim()) + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(txtCommittee.Text.Trim()) + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(txtMeetingNo.Text.Trim()) + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(txtDateOfMeeting.Text.Trim()) + "<br /><br />";
             if (Session["RoleCode"].ToString() == "controller")
-                BodyText += ": " + ddlDepartment.SelectedItem.Text.ToString().Trim() + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(ddlDepartment.SelectedItem.Text.ToString().Trim()) + "<br /><br />";
             else
-                BodyText += ": " + txtDepartment.Text.Trim() + "<br /><br />";
-
-            BodyText += ": " + ddlSubjectType.SelectedItem.Text.Trim() + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(txtDepartment.Text.Trim()) + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(ddlSubjectType.SelectedItem.Text.Trim()) + "<br /><br />";
             //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
             BodyText += "</td>";
 
@@ -821,7 +819,7 @@ namespace BMMS.Master
             BodyText += "</td>";
 
             BodyText += "<td style='text-align:left; font-weight:normal;'>";
-            BodyText += ": " + txtShortText.Text.Trim() + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(txtShortText.Text.Trim()) + "<br /><br />";
             //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
             BodyText += "</td>";
 
@@ -933,7 +931,7 @@ namespace BMMS.Master
 
                     DataRow dr = dtAttFiles.NewRow();
                     dr["FilePathOrg"] = fName;
-                    dr["FilePath"] = "../Files/AgendaAttach/" + fName;
+                    dr["FilePath"] = "../Files/AgendaAttach/" + Uri.EscapeDataString(fName);
                     dr["DisplayName"] = fName;
                     dtAttFiles.Rows.Add(dr);
 
@@ -978,7 +976,7 @@ namespace BMMS.Master
                     FileUploadAgendaText.SaveAs(fNameWithPath);
 
                     //string strPathToConvert = fName + ".htm";
-                    aAgendaText.Attributes.Add("href", "../Files/AgendaText/" + fName);
+                    aAgendaText.Attributes.Add("href", "../Files/AgendaText/" + Uri.EscapeDataString(fName));
                     txtAgendaTextPath.Text = fName; // strPathToConvert;
 
                     aAgendaText.Visible = true;

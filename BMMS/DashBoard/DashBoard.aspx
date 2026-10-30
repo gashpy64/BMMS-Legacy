@@ -42,7 +42,7 @@
                                         <Columns>
                                             <asp:TemplateField HeaderText="Source">
                                                 <ItemTemplate>
-                                                    <asp:LinkButton ID="lnkSource" runat="server" Text='<%#Bind("DisplayText") %>' OnClick="lnkSource_Click">
+                                                    <asp:LinkButton ID="lnkSource" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("DisplayText")) %>' OnClick="lnkSource_Click">
                                                     </asp:LinkButton>
                                                     <asp:Label ID="lblSourceType" runat="server" Text='<%#Bind("SourceType") %>' Visible="false"></asp:Label>
                                                     <asp:Label ID="lblSourceTypeId" runat="server" Text='<%#Bind("SourceTypeId") %>'
@@ -53,19 +53,19 @@
                                             </asp:TemplateField>
                                             <asp:TemplateField HeaderText="Department">
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblDepartmentName" runat="server" Text='<%#Bind("DepartmentName") %>'></asp:Label>
+                                                    <asp:Label ID="lblDepartmentName" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("DepartmentName")) %>'></asp:Label>
                                                 </ItemTemplate>
                                             </asp:TemplateField>
                                             <asp:TemplateField HeaderText="Alert Type">
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblAlertTypeName" runat="server" Text='<%#Bind("AlertTypeName") %>'></asp:Label>
+                                                    <asp:Label ID="lblAlertTypeName" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("AlertTypeName")) %>'></asp:Label>
                                                 </ItemTemplate>
                                                 <ItemStyle Width="100px" VerticalAlign="Middle" HorizontalAlign="Center" />
                                             </asp:TemplateField>
                                             <asp:BoundField DataField="CommitteeName" HeaderText="Committee" SortExpression="CommitteeName" />
                                             <asp:TemplateField HeaderText="CreatedOn">
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblCreatedOn" runat="server" Text='<%#Bind("CreatedOn") %>'></asp:Label>
+                                                    <asp:Label ID="lblCreatedOn" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("CreatedOn")) %>'></asp:Label>
                                                 </ItemTemplate>
                                                 <ItemStyle Width="100px" VerticalAlign="Middle" HorizontalAlign="Center" />
                                             </asp:TemplateField>
@@ -106,7 +106,7 @@
                                         <Columns>
                                             <asp:TemplateField HeaderText="Committee">
                                                 <ItemTemplate>
-                                                    <asp:LinkButton ID="lnkActionItem" runat="server" Text='<%#Bind("CommitteeName") %>'
+                                                    <asp:LinkButton ID="lnkActionItem" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("CommitteeName")) %>'
                                                         OnClick="lnkActionItem_Click">
                                                     </asp:LinkButton>
                                                     <asp:Label ID="lblActionItemId" runat="server" Text='<%#Bind("ActionItemId") %>'
@@ -116,25 +116,25 @@
                                             </asp:TemplateField>
                                             <asp:TemplateField HeaderText="Agenda No" Visible="true">
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblAgendaNo" runat="server" Text='<%#Eval("AgendaNo") %>'></asp:Label>
+                                                    <asp:Label ID="lblAgendaNo" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("AgendaNo")) %>'></asp:Label>
                                                 </ItemTemplate>
                                                 <ItemStyle VerticalAlign="Middle" HorizontalAlign="Center" />
                                             </asp:TemplateField>
                                             <asp:TemplateField HeaderText="Subject No" Visible="true">
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblSubjectNo" runat="server" Text='<%#Eval("SubjectNo") %>'></asp:Label>
+                                                    <asp:Label ID="lblSubjectNo" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("SubjectNo")) %>'></asp:Label>
                                                 </ItemTemplate>
                                                 <ItemStyle VerticalAlign="Middle" HorizontalAlign="Center" />
                                             </asp:TemplateField>
                                             <asp:TemplateField HeaderText="Meeting Date" Visible="true">
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblMeetingDate" runat="server" Text='<%#Eval("MeetingDate","{0:dd/MM/yyyy}") %>'></asp:Label>
+                                                    <asp:Label ID="lblMeetingDate" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("MeetingDate","{0:dd/MM/yyyy}")) %>'></asp:Label>
                                                 </ItemTemplate>
                                                 <ItemStyle Width="100px" Height="35px" VerticalAlign="Middle" HorizontalAlign="Center" />
                                             </asp:TemplateField>
                                             <asp:TemplateField HeaderText="Decision Type" Visible="true">
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblDecisionTypeName" runat="server" Text='<%#Eval("DecisionTypeName") %>'></asp:Label>
+                                                    <asp:Label ID="lblDecisionTypeName" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("DecisionTypeName")) %>'></asp:Label>
                                                 </ItemTemplate>
                                                 <ItemStyle VerticalAlign="Middle" HorizontalAlign="Center" />
                                             </asp:TemplateField>
@@ -469,8 +469,8 @@
                                                 <Columns>
                                                     <asp:TemplateField SortExpression="FilePath">
                                                         <ItemTemplate>
-                                                            <a href='<%#Eval("FilePath") %>' target="_blank">
-                                                                <%#Eval("DisplayName") %>
+                                                            <a href='<%# HttpUtility.HtmlEncode(Eval("FilePath")) %>' target="_blank">
+                                                                <%# HttpUtility.HtmlEncode(Eval("DisplayName")) %>
                                                             </a>
                                                         </ItemTemplate>
                                                     </asp:TemplateField>

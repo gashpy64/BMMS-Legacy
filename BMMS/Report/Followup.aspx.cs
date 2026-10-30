@@ -377,26 +377,26 @@ namespace BMMS.Report
                     htmlTxt += "<div style='font-size:12pt; font-family: Times New Roman; width: " + Common.GetReportSettings("FollowupReport_Width") + "px;'>";
 
                     htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:13pt; font-weight:bold'>";
-                    htmlTxt += "DEPARTMENT : " + dtDepartment.Rows[i]["DepartmentName"].ToString() + "<br /><br /></div>";
+                    htmlTxt += "DEPARTMENT : " + HttpUtility.HtmlEncode(dtDepartment.Rows[i]["DepartmentName"].ToString()) + "<br /><br /></div>";
 
                     for (int j = 0; j < dtFollowupFilter.Rows.Count; j++)
                     {
                         htmlTxt += "<div style='float:left; width:100%;'>";
-                        htmlTxt += "<b>" + dtFollowupFilter.Rows[j]["SubjectNo"].ToString();
+                        htmlTxt += "<b>" + HttpUtility.HtmlEncode(dtFollowupFilter.Rows[j]["SubjectNo"].ToString());
                         htmlTxt += "   (" + Convert.ToDateTime(dtFollowupFilter.Rows[j]["MeetingDate"].ToString()).ToString("dd-MMM-yyyy") + ")";
                         htmlTxt += "</b><br /><br /></div>";
 
                         htmlTxt += "<div style='float:left; width:100%;text-aligh:justify;'>";
-                        htmlTxt += "<b>" + dtFollowupFilter.Rows[j]["ShortText"].ToString() + "</b>";
+                        htmlTxt += "<b>" + HttpUtility.HtmlEncode(dtFollowupFilter.Rows[j]["ShortText"].ToString()) + "</b>";
                         htmlTxt += "<br /><br /></div>";
 
                         htmlTxt += "<div style='float:left; width:100%;text-aligh:justify;'>";
-                        htmlTxt += HTML_Report.ReplaceRichTextFont(dtFollowupFilter.Rows[j]["ProposedResolution"].ToString());
+                        htmlTxt += HTML_Report.ReplaceRichTextFont(HtmlCleaner.Clean(dtFollowupFilter.Rows[j]["ProposedResolution"].ToString()));
                         htmlTxt += "<br /><br /></div>";
 
                         htmlTxt += "<div style='float:left; width:100%;text-aligh:justify;font-weight:bold;'>";
                         htmlTxt += "ACTION TAKEN";
-                        htmlTxt += "<br />" + HTML_Report.ReplaceRichTextFont(dtFollowupFilter.Rows[j]["ActionText"].ToString());
+                        htmlTxt += "<br />" + HTML_Report.ReplaceRichTextFont(HtmlCleaner.Clean(dtFollowupFilter.Rows[j]["ActionText"].ToString()));
                         htmlTxt += "<br /><br /><br /></div>";
 
                     }
@@ -448,7 +448,7 @@ namespace BMMS.Report
                     htmlTxt += "<div style='font-size:12pt; font-family: Times New Roman; width: " + Common.GetReportSettings("FollowupReport_Width") + "px;'>";
 
                     htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:12pt; font-weight:bold'>";
-                    htmlTxt += "DEPARTMENT : " + dtDepartment.Rows[i]["DepartmentName"].ToString() + "<br /><br /></div>";
+                    htmlTxt += "DEPARTMENT : " + HttpUtility.HtmlEncode(dtDepartment.Rows[i]["DepartmentName"].ToString()) + "<br /><br /></div>";
 
 
                     htmlTxt += "<div style='float:left; width:100%;'>";
@@ -480,7 +480,7 @@ namespace BMMS.Report
                         }
                         else
                         {
-                            htmlTxt += "<td style='text-align:center;'>" + dtFollowupFilter.Rows[j]["MeetingNo"].ToString();
+                            htmlTxt += "<td style='text-align:center;'>" + HttpUtility.HtmlEncode(dtFollowupFilter.Rows[j]["MeetingNo"].ToString());
                             htmlTxt += "</td>";
                             htmlTxt += "<td style='text-align:center;'>" + Convert.ToDateTime(dtFollowupFilter.Rows[j]["MeetingDate"].ToString()).ToString("dd-MMM-yyyy");
                             htmlTxt += "</td>";                          
@@ -488,9 +488,9 @@ namespace BMMS.Report
                             PrevMeetingNo = currentMeetingNo;
                         }
                         
-                        htmlTxt += "<td style='text-align:center;'>" + dtFollowupFilter.Rows[j]["SubjectNo"].ToString();
+                        htmlTxt += "<td style='text-align:center;'>" + HttpUtility.HtmlEncode(dtFollowupFilter.Rows[j]["SubjectNo"].ToString());
                         htmlTxt += "</td>";
-                        htmlTxt += "<td style='text-align:left;'>" + dtFollowupFilter.Rows[j]["ShortText"].ToString();
+                        htmlTxt += "<td style='text-align:left;'>" + HttpUtility.HtmlEncode(dtFollowupFilter.Rows[j]["ShortText"].ToString());
                         htmlTxt += "</td>";
                         htmlTxt += "</tr>";
                     }
@@ -603,23 +603,23 @@ namespace BMMS.Report
                     BodyText += "<td colspan='2' style='text-align:left'>";
                     BodyText += "Dear Sir/Madam,<br />";
                     BodyText += "<br />";
-                    BodyText += "<b>Subject : " + ViewState["MailSubject"].ToString() + "</b><br />";
+                    BodyText += "<b>Subject : " + HttpUtility.HtmlEncode(ViewState["MailSubject"].ToString()) + "</b><br />";
                     BodyText += "<br />";
                     BodyText += "Please find attached the Followup for the meeting as given below.";
                     BodyText += "<br />";
                     BodyText += "<br />";
-                    BodyText += "Committee Name : " + ddlCommittee.SelectedItem.Text.Trim();
+                    BodyText += "Committee Name : " + HttpUtility.HtmlEncode(ddlCommittee.SelectedItem.Text.Trim());
                     BodyText += "<br />";
 
                     if (rdoMeatingNoSearch.SelectedValue.ToString() == "0")
                     {
-                        BodyText += "Meeting No : " + ddlMeetingNoFrom.SelectedItem.Text.Trim();
+                        BodyText += "Meeting No : " + HttpUtility.HtmlEncode(ddlMeetingNoFrom.SelectedItem.Text.Trim());
                         BodyText += "<br />";
                     }
                     if (rdoMeatingNoSearch.SelectedValue.ToString() == "1")
                     {
-                        BodyText += "Meeting No : " + ddlMeetingNoFrom.SelectedItem.Text.Trim();
-                        BodyText += " to " + ddlMeetingNoTo.SelectedItem.Text.Trim();
+                        BodyText += "Meeting No : " + HttpUtility.HtmlEncode(ddlMeetingNoFrom.SelectedItem.Text.Trim());
+                        BodyText += " to " + HttpUtility.HtmlEncode(ddlMeetingNoTo.SelectedItem.Text.Trim());
                         BodyText += "<br />";
                     }
                     BodyText += "<br />";
@@ -633,8 +633,8 @@ namespace BMMS.Report
 
                     if (CompanySecretary != string.Empty)
                     {
-                        BodyText += "<b>(" + CompanySecretary + ")</b><br />";
-                        BodyText += "<b>" + CompanySecretaryDesign + "</b>";
+                        BodyText += "<b>(" + HttpUtility.HtmlEncode(CompanySecretary) + ")</b><br />";
+                        BodyText += "<b>" + HttpUtility.HtmlEncode(CompanySecretaryDesign) + "</b>";
                     }
                     else
                     {

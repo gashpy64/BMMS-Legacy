@@ -287,11 +287,11 @@ namespace BMMSBAL
             if (dtMember.Rows.Count > 0)
             {
                 MemberDetails += "<u><b>Member Details :</b></u>";
-                MemberDetails += "<br /><b>Member Code  : </b>" + dtMember.Rows[0]["MemberCode"].ToString();
-                MemberDetails += "<br /><b>Member Name  : </b>" + dtMember.Rows[0]["MemberName"].ToString();
-                MemberDetails += "<br /><b>Designation  : </b>" + dtMember.Rows[0]["DesignationName"].ToString();
-                MemberDetails += "<br /><b>Date of Join : </b>" + dtMember.Rows[0]["DOJ"].ToString();
-                MemberDetails += "<br /><b>EmailId : </b>" + dtMember.Rows[0]["EmailId"].ToString();
+                MemberDetails += "<br /><b>Member Code  : </b>" + HttpUtility.HtmlEncode(dtMember.Rows[0]["MemberCode"].ToString());
+                MemberDetails += "<br /><b>Member Name  : </b>" + HttpUtility.HtmlEncode(dtMember.Rows[0]["MemberName"].ToString());
+                MemberDetails += "<br /><b>Designation  : </b>" + HttpUtility.HtmlEncode(dtMember.Rows[0]["DesignationName"].ToString());
+                MemberDetails += "<br /><b>Date of Join : </b>" + HttpUtility.HtmlEncode(dtMember.Rows[0]["DOJ"].ToString());
+                MemberDetails += "<br /><b>EmailId : </b>" + HttpUtility.HtmlEncode(dtMember.Rows[0]["EmailId"].ToString());
             }
             return MemberDetails;
         }
@@ -366,11 +366,11 @@ namespace BMMSBAL
             if (dtUser.Rows.Count > 0)
             {
                 UserDetails += "<u><b>User Details :</b></u>";
-                UserDetails += "<br /><b>User Name     : </b>" + dtUser.Rows[0]["UserName"].ToString();
-                UserDetails += "<br /><b>Department    : </b>" + dtUser.Rows[0]["DepartmentName"].ToString();
-                UserDetails += "<br /><b>Designation   : </b>" + dtUser.Rows[0]["DesignationName"].ToString();
-                UserDetails += "<br /><b>Date of Birth : </b>" + dtUser.Rows[0]["DOB"].ToString();
-                UserDetails += "<br /><b>Email Id      : </b>" + dtUser.Rows[0]["EmailId"].ToString();
+                UserDetails += "<br /><b>User Name     : </b>" + HttpUtility.HtmlEncode(dtUser.Rows[0]["UserName"].ToString());
+                UserDetails += "<br /><b>Department    : </b>" + HttpUtility.HtmlEncode(dtUser.Rows[0]["DepartmentName"].ToString());
+                UserDetails += "<br /><b>Designation   : </b>" + HttpUtility.HtmlEncode(dtUser.Rows[0]["DesignationName"].ToString());
+                UserDetails += "<br /><b>Date of Birth : </b>" + HttpUtility.HtmlEncode(dtUser.Rows[0]["DOB"].ToString());
+                UserDetails += "<br /><b>Email Id      : </b>" + HttpUtility.HtmlEncode(dtUser.Rows[0]["EmailId"].ToString());
             }
             return UserDetails;
         }

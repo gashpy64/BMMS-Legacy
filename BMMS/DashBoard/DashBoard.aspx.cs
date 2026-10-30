@@ -345,8 +345,8 @@ namespace BMMS.DashBoard
             txtActionDepartment.Text = dtActionItem.Rows[0]["DepartmentName"].ToString();
             txtDecisionType.Text = dtActionItem.Rows[0]["DecisionTypeName"].ToString();
             //txtDueDate.Text = Convert.ToDateTime(dtActionItem.Rows[0]["DueDate"].ToString()).ToString("dd-MMM-yyyy"); ;
-            ftxtActualResolution.Text = dtActionItem.Rows[0]["ActualResolution"].ToString();
-            ftxtActionText.Text = dtActionItem.Rows[0]["ActionText"].ToString();
+            ftxtActualResolution.Text = HtmlCleaner.Clean(dtActionItem.Rows[0]["ActualResolution"].ToString());
+            ftxtActionText.Text = HtmlCleaner.Clean(dtActionItem.Rows[0]["ActionText"].ToString());
 
             return true;
         }
@@ -463,16 +463,16 @@ namespace BMMS.DashBoard
             {
                 ftxtAgendaText.Visible = true;
                 aAgendaText.Visible = false;
-                ftxtAgendaText.Text = dtAgendaEdit.Rows[0]["AgendaText"].ToString();
+                ftxtAgendaText.Text = HtmlCleaner.Clean(dtAgendaEdit.Rows[0]["AgendaText"].ToString());
             }
             else
             {
                 ftxtAgendaText.Visible = false;
                 aAgendaText.Visible = true;
-                aAgendaText.Attributes.Add("href", "../Files/AgendaText/" + dtAgendaEdit.Rows[0]["AgendaTextPath"].ToString());
+                aAgendaText.Attributes.Add("href", "../Files/AgendaText/" + Uri.EscapeDataString(dtAgendaEdit.Rows[0]["AgendaTextPath"].ToString()));
             }
 
-            ftxtProposedResolution.Text = dtAgendaEdit.Rows[0]["ProposedResolution"].ToString();
+            ftxtProposedResolution.Text = HtmlCleaner.Clean(dtAgendaEdit.Rows[0]["ProposedResolution"].ToString());
 
             string[] attFiles = dtAgendaEdit.Rows[0]["FilePath"].ToString().Split(',');
             DataTable dtAttFiles = new DataTable();
@@ -484,7 +484,7 @@ namespace BMMS.DashBoard
             {
                 DataRow dr = dtAttFiles.NewRow();
                 dr["FilePathOrg"] = attFiles[i].ToString();
-                dr["FilePath"] = "../Files/AgendaAttach/" + attFiles[i].ToString();
+                dr["FilePath"] = "../Files/AgendaAttach/" + Uri.EscapeDataString(attFiles[i].ToString());
                 dr["DisplayName"] = attFiles[i].ToString();
                 dtAttFiles.Rows.Add(dr);
             }
@@ -492,8 +492,8 @@ namespace BMMS.DashBoard
             grvAttachedFiles.DataSource = dtAttFiles;
             grvAttachedFiles.DataBind();
 
-            ftxtManagerComments.Text = dtAgendaEdit.Rows[0]["MgrComments"].ToString();
-            ftxtControllerComments.Text = dtAgendaEdit.Rows[0]["ControllerComments"].ToString();
+            ftxtManagerComments.Text = HtmlCleaner.Clean(dtAgendaEdit.Rows[0]["MgrComments"].ToString());
+            ftxtControllerComments.Text = HtmlCleaner.Clean(dtAgendaEdit.Rows[0]["ControllerComments"].ToString());
 
             DataTable dtAgenda = new DataTable();
             dtAgenda = AgendaMgr.CheckAgendaFinalizeByMeetingId(MeetingId);
@@ -791,12 +791,12 @@ namespace BMMS.DashBoard
             BodyText += "</td>";
 
             BodyText += "<td style='text-align:left; font-weight:normal;'>";
-            BodyText += ": " + txtAgendaNo.Text.Trim() + "<br /><br />";
-            BodyText += ": " + txtAgendaCommittee.Text.Trim() + "<br /><br />";
-            BodyText += ": " + txtAgendaMeeting.Text.Trim() + "<br /><br />";
-            BodyText += ": " + txtDateOfMeeting.Text.Trim() + "<br /><br />";
-            BodyText += ": " + txtAgendaDepartment.Text.Trim() + "<br /><br />";
-            BodyText += ": " + txtSubjectType.Text.Trim() + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(txtAgendaNo.Text.Trim()) + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(txtAgendaCommittee.Text.Trim()) + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(txtAgendaMeeting.Text.Trim()) + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(txtDateOfMeeting.Text.Trim()) + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(txtAgendaDepartment.Text.Trim()) + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(txtSubjectType.Text.Trim()) + "<br /><br />";
             //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
             BodyText += "</td>";
 
@@ -809,7 +809,7 @@ namespace BMMS.DashBoard
             BodyText += "</td>";
 
             BodyText += "<td style='text-align:left; font-weight:normal;'>";
-            BodyText += ": " + txtShortText.Text.Trim() + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(txtShortText.Text.Trim()) + "<br /><br />";
             //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
             BodyText += "</td>";
 

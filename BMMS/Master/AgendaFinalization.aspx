@@ -125,7 +125,7 @@
                                                                 CommandArgument="ShortText"></asp:LinkButton>
                                                         </HeaderTemplate>
                                                         <ItemTemplate>
-                                                            <asp:Label ID="lblShortText" runat="server" SkinID="lblskingen" Text='<%#Eval("ShortText") %>'></asp:Label>
+                                                            <asp:Label ID="lblShortText" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("ShortText")) %>'></asp:Label>
                                                         </ItemTemplate>
                                                         <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Justify" />
                                                     </asp:TemplateField>
