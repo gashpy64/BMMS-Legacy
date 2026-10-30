@@ -1267,6 +1267,29 @@ Browser checks on `BMMS_Test` (deploy the build first; keep the error log of the
 7. Same name twice: attach `x&y.pdf` and then `x+y.pdf` to one agenda: two rows, `... x_y.pdf` and `... x_y (2).pdf`, each opens its own file.
 8. No new error log entries.
 
+## Step M1: Meeting Master Edit and Delete for the whole meeting date; "saved, but the mail could not be sent" (code only, no database script)
+
+Found during browser testing: Meeting Master compared the meeting date (stored at 00:00) with the current date and time, so a meeting dated today was "closed" from midnight, although step 24 allows saving a meeting dated today. A new meeting saved while the mail server was stopped showed only "Error: Failure sending mail.", although the meeting, its alert and the alert rows were saved.
+
+- MeetingMgr.IsMeetingOpenForChange (new): a meeting is open for Edit and Delete for the whole of its date and closed from the next day (web server date; MeetingTime is not looked at); a meeting with no date stays open so that it can be corrected.
+- Meeting Master, grid: only Edit and Delete are handled in RowCommand (a sort header click no longer reaches the id conversion); a meeting that no longer exists gives "The meeting or member no longer exists. Reload the page." and the grid is reloaded; a closed meeting gives the warning "The meeting date has passed, so this meeting can no longer be edited or deleted." (was "This meeting was closed."); a meeting with no date opens with empty date boxes.
+- Meeting Master, Update: the same rule is checked again against the saved meeting date before anything is saved (a form opened before midnight, or a changed hidden meeting id).
+- Meeting Master, Save and Update: when the mail fails after the save, the warning "The meeting was saved, but the mail could not be sent. The error is in the error log." (the mail error text is no longer shown); the grid is reloaded as before. A failure while the mail is prepared (for example reading the user list) is logged once as Meeting / GenerateMail; a failure while sending is logged once by Mail_Mgr as before.
+- Reset Password: "The password was reset to the default password, but the mail could not be sent. The error is in the error log." (the mail error text is no longer shown).
+- Meeting.aspx: the Venue sort header had the same ID as the Place header (`lnk3`, since the baseline), so every sort header click failed with "Multiple controls with the same ID 'lnk3' were found"; the Venue header is now `lnk7` and the headers sort.
+- Unchanged: the step 24 save rules and every procedure. spr_AddEditMeeting and spr_DeleteMeetingByMeetingId have no date rule of their own (the delete is refused only when the meeting has members or agenda items, and it leaves the meeting's alerts behind); the page is now the only way to them and applies the rule on Edit, Update and Delete.
+
+Browser checks on `BMMS_Test` (deploy the build first; smtp4dev running unless stated; keep the error log of the day open):
+
+1. A meeting dated tomorrow: Edit opens, Update gives "Successfully Saved" and the mail arrives; Delete deletes it when it has no members or agenda items, and is refused with the usual message when it has.
+2. A meeting dated today (before and after its meeting time): Edit and Delete as in 1, until midnight.
+3. A meeting dated yesterday: Edit and Delete both give "The meeting date has passed, so this meeting can no longer be edited or deleted."; the grid is unchanged.
+4. Open Edit on tomorrow's meeting, change the hidden meeting id in the browser to yesterday's meeting, Update: the same warning, nothing saved.
+5. Every sort header of the meeting grid sorts the grid, no error page, no log entry.
+6. Stop smtp4dev. Add a meeting dated tomorrow: the warning "The meeting was saved, but the mail could not be sent. The error is in the error log." and the new row in the grid. Edit it and Update: the same warning. Start smtp4dev, Update again: "Successfully Saved" and the mail arrives.
+7. Stop smtp4dev. Reset Password for an active user: "The password was reset to the default password, but the mail could not be sent. The error is in the error log.", no error text on the page.
+8. Error log: one Mail_Mgr / SendWebEmail entry for each failed mail in checks 6 and 7, nothing else.
+
 ## Known items for later steps
 
 - The colour picker on Committee and Meeting (third-party JScript/ColorPicker/js_color_picker_v2.js) asks for its tab and slider images relative to the page (`/Master/images/tab_right_active.gif`, `slider_handle.gif`), which gives 404; its own copies are in JScript/ColorPicker/Images. Seen in step B3, not changed.

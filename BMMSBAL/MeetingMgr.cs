@@ -451,6 +451,18 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region IsMeetingOpenForChange
+        // Edit and Delete on Meeting Master: open for the whole of the meeting date, closed from the next day
+        // (step M1; MeetingTime is not looked at). A meeting with no date stays open so that it can be corrected.
+        public static bool IsMeetingOpenForChange(object MeetingDate, DateTime Today)
+        {
+            if (MeetingDate == null || MeetingDate == DBNull.Value)
+                return true;
+
+            return Convert.ToDateTime(MeetingDate).Date >= Today.Date;
+        }
+        #endregion
+
         #region IsMeetingHeld
         // True when the meeting is dated today or earlier (database server date)
         public static bool IsMeetingHeld(int MeetingId)

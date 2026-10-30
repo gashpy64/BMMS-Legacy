@@ -124,7 +124,7 @@ namespace BMMS.Master
                 if (result == "Success")
                     errMsg = "New passward was sent through mail.";
                 else
-                    errMsg = "The password was reset to the default password, but the mail could not be sent. Error : " + result;
+                    errMsg = "The password was reset to the default password, but the mail could not be sent. The error is in the error log.";   // step M1
             }
 
             MsgDisplay(errMsg, (errMsg == "New passward was sent through mail." || errMsg == "Password reset; no mail sent because the account is inactive.") ? MessageKind.Success

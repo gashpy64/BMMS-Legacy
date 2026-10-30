@@ -16,6 +16,9 @@ namespace BMMS.Master
     {
         private string className = "Meeting";
 
+        private const string MeetingClosedMessage = "The meeting date has passed, so this meeting can no longer be edited or deleted.";
+        private const string MailNotSentMessage = "The meeting was saved, but the mail could not be sent. The error is in the error log.";
+
         #region Page_Load
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -130,6 +133,10 @@ namespace BMMS.Master
         #region grvMeeting_RowCommand
         protected void grvMeeting_RowCommand(object sender, GridViewCommandEventArgs e)
         {
+            // The sort headers raise RowCommand too: only Edit and Delete are handled here (step M1)
+            if (e.CommandName != "EditRec" && e.CommandName != "DeleteRec")
+                return;
+
             try
             {
                 int MeetingId = Convert.ToInt32(e.CommandArgument);
@@ -137,9 +144,15 @@ namespace BMMS.Master
                 DataTable dtMeeting = new DataTable();
                 dtMeeting = MeetingMgr.GetMeetingByMeetingId(MeetingId);
 
-                DateTime MeetingDate = Convert.ToDateTime(dtMeeting.Rows[0]["MeetingDate"].ToString());
+                if (dtMeeting.Rows.Count == 0)
+                {
+                    MsgDisplay(new MeetingChangeResult { Reason = MeetingChangeReason.NotFound }.RefusalMessage());
+                    LoadMeeting();
+                    return;
+                }
 
-                if (MeetingDate > System.DateTime.Now)
+                // Open for the whole of the meeting date, closed from the next day; no date stays open (step M1)
+                if (MeetingMgr.IsMeetingOpenForChange(dtMeeting.Rows[0]["MeetingDate"], DateTime.Today))
                 {
 
                     if (e.CommandName == "EditRec")
@@ -154,10 +167,11 @@ namespace BMMS.Master
                         ddlCommittee.Text = dtMeeting.Rows[0]["CommitteeId"].ToString();
                         txtPlace.Text = dtMeeting.Rows[0]["Place"].ToString();
                         txtVenue.Text = dtMeeting.Rows[0]["Venue"].ToString();
-                        txtMeetingDate.Text = MeetingDate.ToString("dd-MMM-yyyy");
-                        hdnMeetingDate.Value = MeetingDate.ToString("dd-MMM-yyyy");
+                        // A missing date gives an empty box, to be entered again
+                        txtMeetingDate.Text = FormatDate(dtMeeting.Rows[0]["MeetingDate"]);
+                        hdnMeetingDate.Value = FormatDate(dtMeeting.Rows[0]["MeetingDate"]);
                         txtMeetingTime.Text = dtMeeting.Rows[0]["MeetingTime"].ToString();
-                        txtAgendaSubmissionDate.Text = Convert.ToDateTime(dtMeeting.Rows[0]["AgendaSubmissionDate"].ToString()).ToString("dd-MMM-yyyy");
+                        txtAgendaSubmissionDate.Text = FormatDate(dtMeeting.Rows[0]["AgendaSubmissionDate"]);
                         //txtColor.Value = dtMeeting.Rows[0]["MeetingColorCode"].ToString();
                         //txtColor.Attributes.Add("style", "width:80px; background-color:" + dtMeeting.Rows[0]["MeetingColorCode"].ToString() + "; text-align:center;");
 
@@ -195,7 +209,7 @@ namespace BMMS.Master
                 }
                 else
                 {
-                    MsgDisplay("This meeting was closed.");
+                    MsgDisplay(MeetingClosedMessage);
                 }
             }
             catch (Exception ex)
@@ -302,7 +316,12 @@ namespace BMMS.Master
                     bool dateChanged = hdnMeetingDate.Value != string.Empty
                         && Convert.ToDateTime(hdnMeetingDate.Value).Date != myMeeting.MeetingDate.Date;
 
-                    if (btnSave.Text == "Update" && dateChanged && MeetingMgr.HasAttendance(myMeeting.MeetingId))
+                    // The saved meeting date decides, also for a form opened before midnight (step M1)
+                    if (btnSave.Text == "Update" && !IsSavedMeetingOpenForChange(myMeeting.MeetingId))
+                    {
+                        sMsg = MeetingClosedMessage;
+                    }
+                    else if (btnSave.Text == "Update" && dateChanged && MeetingMgr.HasAttendance(myMeeting.MeetingId))
                     {
                         sMsg = MeetingChangeReason.AttendanceLocksMeetingMessage;
                     }
@@ -325,7 +344,8 @@ namespace BMMS.Master
                             else if (btnSave.Text == "Update")
                                 strResult = GenerateMail("Updated");
 
-                            sMsg = strResult == "Success" ? "Successfully Saved" : strResult;
+                            // The meeting is saved either way; the mail error itself is in the error log (step M1)
+                            sMsg = strResult == "Success" ? "Successfully Saved" : MailNotSentMessage;
                         }
                     }
 
@@ -415,66 +435,93 @@ namespace BMMS.Master
         #endregion
 
         #region GenerateMail
+        // "Success", or an error: Mail_Mgr logs its own failures; anything else here is logged once below (step M1)
         private string GenerateMail(string SubjectStatus)
         {
-            string ToMailId = string.Empty;
-            string Bcc = string.Empty;
-
-            DataTable dtUser = UserMgr.GetActiveUserList();   // active users only (stage 2a)
-            if (dtUser.Rows.Count > 0)
+            try
             {
-                for (int i = 0; i <= dtUser.Rows.Count - 1; i++)
+                string ToMailId = string.Empty;
+                string Bcc = string.Empty;
+
+                DataTable dtUser = UserMgr.GetActiveUserList();   // active users only (stage 2a)
+                if (dtUser.Rows.Count > 0)
                 {
-                    if (dtUser.Rows[i]["UserId"].ToString() == Session["UserId"].ToString())
+                    for (int i = 0; i <= dtUser.Rows.Count - 1; i++)
                     {
-                        ToMailId = dtUser.Rows[i]["EmailId"].ToString();
-                    }
-                    else
-                    {
-                        if (i == dtUser.Rows.Count - 1)
-                            Bcc += dtUser.Rows[i]["EmailId"].ToString();
+                        if (dtUser.Rows[i]["UserId"].ToString() == Session["UserId"].ToString())
+                        {
+                            ToMailId = dtUser.Rows[i]["EmailId"].ToString();
+                        }
                         else
-                            Bcc += dtUser.Rows[i]["EmailId"].ToString() + ", ";
+                        {
+                            if (i == dtUser.Rows.Count - 1)
+                                Bcc += dtUser.Rows[i]["EmailId"].ToString();
+                            else
+                                Bcc += dtUser.Rows[i]["EmailId"].ToString() + ", ";
+                        }
                     }
                 }
+
+
+                string Subject = "Meeting (" + txtMeetingNo.Text.Trim() + ") has been " + SubjectStatus;
+                string BodyText = string.Empty;
+                BodyText += "<table>";
+
+                BodyText += "<tr>";
+                BodyText += "<td style='text-align:left; font-weight:bold;'>";
+                BodyText += "Meeting No <br /><br />";
+                BodyText += "Committee Name <br /><br />";
+                BodyText += "Place <br /><br />";
+                BodyText += "Venue <br /><br />";
+                BodyText += "Meeting Date <br /><br />";
+                BodyText += "Meeting Time <br /><br />";
+                BodyText += "Agenda Submission Date <br /><br />";
+                BodyText += "</td>";
+
+                BodyText += "<td style='text-align:left; font-weight:normal;'>";
+                BodyText += ": " + HttpUtility.HtmlEncode(txtMeetingNo.Text.Trim()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(ddlCommittee.SelectedItem.Text.Trim()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(txtPlace.Text.Trim()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(txtVenue.Text.Trim()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(txtMeetingDate.Text.Trim()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(txtMeetingTime.Text.Trim()) + "  Hrs.<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(txtAgendaSubmissionDate.Text.Trim()) + "<br /><br />";
+                BodyText += "</td>";
+
+                BodyText += "</tr>";
+
+                BodyText += "</table>";
+
+                string result = Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, Bcc);
+
+                return result;
             }
+            catch (Exception ex)
+            {
+                // The meeting is already saved: log, and let the page say the mail was not sent
+                Utilities.WriteErrorLog(className, "GenerateMail", ex.ToString());
+                return "Error";
+            }
+        }
+        #endregion
 
+        #region IsSavedMeetingOpenForChange
+        // The rule of the grid's Edit and Delete, applied to the meeting as saved; a meeting that is gone is left
+        // to the procedure (Reason 4)
+        private bool IsSavedMeetingOpenForChange(int MeetingId)
+        {
+            DataTable dtSaved = MeetingMgr.GetMeetingByMeetingId(MeetingId);
 
-            string Subject = "Meeting (" + txtMeetingNo.Text.Trim() + ") has been " + SubjectStatus;
-            string BodyText = string.Empty;
-            BodyText += "<table>";
+            return dtSaved.Rows.Count == 0
+                || MeetingMgr.IsMeetingOpenForChange(dtSaved.Rows[0]["MeetingDate"], DateTime.Today);
+        }
+        #endregion
 
-            BodyText += "<tr>";
-            BodyText += "<td style='text-align:left; font-weight:bold;'>";
-            BodyText += "Meeting No <br /><br />";
-            BodyText += "Committee Name <br /><br />";
-            BodyText += "Place <br /><br />";
-            BodyText += "Venue <br /><br />";
-            BodyText += "Meeting Date <br /><br />";
-            BodyText += "Meeting Time <br /><br />";
-            BodyText += "Agenda Submission Date <br /><br />";
-            BodyText += "</td>";
-
-            BodyText += "<td style='text-align:left; font-weight:normal;'>";
-            BodyText += ": " + HttpUtility.HtmlEncode(txtMeetingNo.Text.Trim()) + "<br /><br />";
-            BodyText += ": " + HttpUtility.HtmlEncode(ddlCommittee.SelectedItem.Text.Trim()) + "<br /><br />";
-            BodyText += ": " + HttpUtility.HtmlEncode(txtPlace.Text.Trim()) + "<br /><br />";
-            BodyText += ": " + HttpUtility.HtmlEncode(txtVenue.Text.Trim()) + "<br /><br />";
-            BodyText += ": " + HttpUtility.HtmlEncode(txtMeetingDate.Text.Trim()) + "<br /><br />";
-            BodyText += ": " + HttpUtility.HtmlEncode(txtMeetingTime.Text.Trim()) + "  Hrs.<br /><br />";
-            BodyText += ": " + HttpUtility.HtmlEncode(txtAgendaSubmissionDate.Text.Trim()) + "<br /><br />";
-            BodyText += "</td>";
-
-            BodyText += "</tr>";
-
-            BodyText += "</table>";
-
-            string result = Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, Bcc);
-
-            
-
-            return result;
-
+        #region FormatDate
+        // dd-MMM-yyyy, or empty when there is no date
+        private static string FormatDate(object value)
+        {
+            return value == null || value == DBNull.Value ? string.Empty : Convert.ToDateTime(value).ToString("dd-MMM-yyyy");
         }
         #endregion
 

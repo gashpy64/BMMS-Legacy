@@ -84,7 +84,7 @@
                                     </asp:TemplateField>
                                     <asp:TemplateField SortExpression="Venue">
                                         <HeaderTemplate>
-                                            <asp:LinkButton ID="lnk3" runat="server" Text="Venue" CommandName="Sort" CommandArgument="Venue"></asp:LinkButton>
+                                            <asp:LinkButton ID="lnk7" runat="server" Text="Venue" CommandName="Sort" CommandArgument="Venue"></asp:LinkButton>
                                         </HeaderTemplate>
                                         <ItemTemplate>
                                             <asp:Label ID="lblVenue" runat="server" SkinID="lblskingen" Text='<%#Eval("Venue")%>'></asp:Label>
