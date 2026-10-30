@@ -1245,6 +1245,28 @@ Later: step F2 (found while planning F1, not changed in this step; all in DashBo
 - BindAgendaDetails: `Convert.ToInt16` of the MeetingId (the same overflow above 32,767).
 - BindMeetingDetails and BindAgendaDetails: an item that is found but has a NULL MeetingDate (or AgendaSubmissionDate) still fails in `Convert.ToDateTime`.
 
+## Step N1: safe names for uploaded files (code only, no database script)
+
+Found during browser testing: an attachment whose name contains & % or + could not be opened by its link (ASP.NET refuses & in a URL path with 400, IIS refuses an escaped + or %), and a comma in an agenda attachment name broke the comma-separated list in Agenda.FilePath.
+
+- BMMSBAL/SafeFileName.cs (new), Clean: only the name is kept (no folder); letters of any script with their combining marks (Tamil and Hindi vowel signs and virama), decimal digits, the zero-width joiner and non-joiner, space, dot, hyphen, underscore and round brackets are kept; any other white space becomes one space; every other character becomes _ (a run of them one _). Composed form (NFC); repeated dots become one; spaces and dots trimmed at both ends; at most 100 characters with the extension (up to 10 characters) kept, never cut between a letter and its marks; an empty name or one of only _ becomes "file"; a Windows reserved name (CON, PRN, AUX, NUL, COM1 to COM9, LPT1 to LPT9, also with an extension) gets _ in front. Never throws, never empty; cleaning again gives the same name.
+- SafeFileName.MakeUnique: when a file of that name is already in the folder, " (2)", " (3)" ... is added before the extension (never longer than the name or 100 characters, whichever is more), so two uploads that clean to the same name no longer overwrite each other.
+- Agenda Entry: attachment `Attach-<agenda no>-<clean name>` and agenda text `<agenda no>-<clean name>`, both made unique in their folder; the agenda number prefix is generated and kept as it is. The attachment grid shows the saved name, so it shows the cleaned name; no extra message.
+- Send Mail: the clean name in Files/Temp (not made unique: the folder is emptied on every upload). The mail attachment carries the clean name.
+- Unchanged: files already on disk and names already stored in the database (a stored name with & % + or a comma still cannot be opened); member photo and CV (named from the member code) and the organisation logo (fixed name); the readers in DashBoard, Reports and Agenda Approval; every procedure.
+- Tamil and Hindi names are stored correctly only on a database with step 31 (NVARCHAR(MAX) FilePath and AgendaTextPath).
+
+Browser checks on `BMMS_Test` (deploy the build first; keep the error log of the day open):
+
+1. Agenda Entry, new agenda: attach `a&b #1.pdf`, `a+b.pdf`, `50% off.pdf`, `a,b.pdf`, a Tamil name, a Hindi name, a name of about 150 characters and a Tamil name of 100 characters. The grid shows the cleaned names (for example `Attach-<agenda no>-a_b _1.pdf`, `...-a_b.pdf`, `...-50_ off.pdf`, `...-a_b (2).pdf` for `a,b.pdf`), every link opens the right PDF. Save.
+2. Edit the same agenda: every attachment link and the agenda text View open.
+3. Agenda text: upload `a&b #1.pdf`, View opens; save, reopen, View opens.
+4. Dashboard popup for that agenda: every attachment link and View open.
+5. The agenda booklet PDF (Reports) and Agenda Approval include the attachments and agenda text, no error.
+6. Send Mail: upload `a&b #1.pdf`, View opens; send: the mail attachment is named `a_b _1.pdf` and opens; a Tamil name arrives in Tamil; `.pdf` gives `file.pdf`.
+7. Same name twice: attach `x&y.pdf` and then `x+y.pdf` to one agenda: two rows, `... x_y.pdf` and `... x_y (2).pdf`, each opens its own file.
+8. No new error log entries.
+
 ## Known items for later steps
 
 - The colour picker on Committee and Meeting (third-party JScript/ColorPicker/js_color_picker_v2.js) asks for its tab and slider images relative to the page (`/Master/images/tab_right_active.gif`, `slider_handle.gif`), which gives 404; its own copies are in JScript/ColorPicker/Images. Seen in step B3, not changed.

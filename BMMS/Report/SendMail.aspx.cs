@@ -103,7 +103,7 @@ namespace BMMS.Report
                 string fName = string.Empty;
                 string fNameWithPath = string.Empty;
 
-                fName = FileUploadAttachment.FileName;
+                fName = SafeFileName.Clean(FileUploadAttachment.FileName);   // safe name (step N1); the folder is emptied above
                 fNameWithPath = fPath + fName;
 
                 FileUploadAttachment.SaveAs(fNameWithPath);

@@ -905,7 +905,9 @@ namespace BMMS.Master
                 string fName = string.Empty;
                 string fNameWithPath = string.Empty;
 
-                fName = "Attach-" + txtAgendaNo.Text + "-" + fuAttachment.FileName;
+                // Safe name, not yet used in the folder (step N1)
+                fName = SafeFileName.MakeUnique(MapPath("~/Files/AgendaAttach/"),
+                    "Attach-" + txtAgendaNo.Text + "-" + SafeFileName.Clean(fuAttachment.FileName));
                 fNameWithPath = MapPath("~/Files/AgendaAttach/" + fName);
 
                 string strExt = System.IO.Path.GetExtension(fNameWithPath).ToLower();
@@ -963,8 +965,9 @@ namespace BMMS.Master
                 string fPath = string.Empty;
                 string fNameWithPath = string.Empty;
 
-                fName = txtAgendaNo.Text + "-" + FileUploadAgendaText.FileName;
                 fPath = MapPath("~/Files/AgendaText/");
+                // Safe name, not yet used in the folder (step N1)
+                fName = SafeFileName.MakeUnique(fPath, txtAgendaNo.Text + "-" + SafeFileName.Clean(FileUploadAgendaText.FileName));
                 fNameWithPath = fPath + fName;
 
                 //string[] strSep = fName.Split('.');

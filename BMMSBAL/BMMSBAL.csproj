@@ -89,6 +89,7 @@
     <Compile Include="AuditTrail_Mgr.cs" />
     <Compile Include="HTML_Report.cs" />
     <Compile Include="HtmlCleaner.cs" />
+    <Compile Include="SafeFileName.cs" />
     <Compile Include="ReportsMgr.cs" />
     <Compile Include="PDF_Reports.cs" />
     <Compile Include="DocToString.cs" />
