@@ -1362,6 +1362,70 @@ Browser checks for group 2 on `BMMS_Test`, in Chrome and in Edge (deploy the bui
 10. Normal names (the seeded committees and members, a name with `&`) look as before.
 11. Error log: one Mail_Mgr entry only if a mail failed; one redacted request validation entry for each save of a ZZ A1b row tried; nothing else.
 
+## Step S1: complete State_Master (what to run where)
+
+dbo.State_Master held three rows: 1 TN Tamil Nadu, 2 AP "Andhra Pradash", 3 KE Kerala. The Member page State dropdown reads it through spr_GetStateMaster (Member.State_Id, used by View_Member and View_Meeting_Member, and by the Notice mail and PDF). No page maintains the table; it is filled only by script. State is optional on the Member page ("- Select -" is stored as NULL, step 5). Reset Database does not touch State_Master, so the rows below survive a reset.
+
+Decision (Consultant, 2026-10-31): State_Id 1, 2 and 3 are kept; id 2 is named "Andhra Pradesh" and the code of id 3 becomes KL; the remaining 25 states and 8 union territories are added (AR Arunachal Pradesh, AS Assam, BR Bihar, CG Chhattisgarh, GA Goa, GJ Gujarat, HR Haryana, HP Himachal Pradesh, JH Jharkhand, KA Karnataka, MP Madhya Pradesh, MH Maharashtra, MN Manipur, ML Meghalaya, MZ Mizoram, NL Nagaland, OD Odisha, PB Punjab, RJ Rajasthan, SK Sikkim, TG Telangana, TR Tripura, UP Uttar Pradesh, UK Uttarakhand, WB West Bengal; AN Andaman and Nicobar Islands, CH Chandigarh, DD Dadra and Nagar Haveli and Daman and Diu, DL Delhi, JK Jammu and Kashmir, LA Ladakh, LD Lakshadweep, PY Puducherry); the dropdown lists the states by name.
+
+`BMMS-Fix-StateMaster-S1.sql` (no USE line; runs on a database whose name starts with BMMS):
+
+- Checks first and stops with nothing changed when one fails: the three columns exist, State_Code holds 2 and State_Name 40 characters, no other column needs a value, id 2 is "Andhra Pradash" or "Andhra Pradesh", id 3 is Kerala with code KE or KL, no other row has KL, no code or name is there twice, and spr_GetStateMaster can be handled (below).
+- Then, in one transaction (SET XACT_ABORT ON, TRY/CATCH; any error rolls everything back with the message "The script failed and was rolled back completely, nothing was changed"): fixes id 2 and id 3 when not yet done; inserts each new row only when neither its code nor its name is there yet (ignoring case and spaces), with ids MAX(State_Id) + 1, + 2 ... in the order above (4 to 36 on a table holding ids 1 to 3; with IDENTITY_INSERT when State_Id is an identity column); a row whose code or name is already there is skipped and listed. On a database that holds other extra rows the new ids start after its own highest id, so ids can differ between databases; nothing in the code refers to an id above 3, and a restored database brings its own State_Master.
+- spr_GetStateMaster: left alone when it already sorts by State_Name. Otherwise replaced (marker StateMaster-S1) by the same columns, in the same order and under the same names as SQL Server describes its result today, from dbo.State_Master ORDER BY State_Name; it is replaced automatically only when it has no parameter, no WHERE and no JOIN and every column comes from State_Master, else the script stops and shows its text. The old text is shown in the results and printed before the change.
+- Prints what it fixed, inserted (id, code, name) and skipped (with the reason), whether the procedure was replaced, and the check below. Nothing is deleted. Safe to run twice: the second run reports 0 fixed, 0 inserted and the procedure left unchanged.
+
+Step 0 on `BMMS_Test` (2026-10-31): State_Id INT identity, primary key PK_State (no unique key on code or name); State_Code and State_Name VARCHAR(50), NULL allowed; rows 1 TN Tamil Nadu, 2 AP Andhra Pradash, 3 KE Kerala; members: 7 with State_Id 1, 1 with no state, none with 2 or 3. spr_GetStateMaster already sorts by name, so the script leaves it unchanged. Its text, for reference:
+
+```sql
+CREATE PROCEDURE [dbo].[spr_GetStateMaster]
+AS
+BEGIN
+    SELECT * FROM State_Master ORDER BY State_Name;
+END
+```
+
+On the test copy (`BMMS_Test`), after a backup of it, in this order:
+
+1. The step 0 query of the S1 plan (read-only): columns, keys, rows, the text of spr_GetStateMaster, and the members per State_Id. Keep the procedure text.
+2. BMMS-Fix-StateMaster-S1.sql   (prints: id 2 fixed, id 3 fixed, 33 inserted with IDENTITY_INSERT as ids 4 to 36, 0 skipped, "spr_GetStateMaster already sorts by State_Name: left unchanged", "Check: 36 row(s)")
+3. BMMS-Fix-StateMaster-S1.sql again   (prints: already fixed, 0 inserted, 0 skipped, procedure left unchanged, 36 rows)
+4. The check query below, then the browser checks.
+
+Then the same on `BMMS` (backup, step 0, the script once, the check query). No build or deploy is needed: no code changes.
+
+Check (read-only):
+
+```sql
+SELECT COUNT(*) AS StateRows FROM dbo.State_Master;                                         -- 36
+SELECT State_Code, COUNT(*) FROM dbo.State_Master GROUP BY State_Code HAVING COUNT(*) > 1;  -- no rows
+SELECT State_Name, COUNT(*) FROM dbo.State_Master GROUP BY State_Name HAVING COUNT(*) > 1;  -- no rows
+SELECT State_Id, State_Code, State_Name FROM dbo.State_Master WHERE State_Id IN (1, 2, 3); -- TN Tamil Nadu, AP Andhra Pradesh, KL Kerala
+EXEC dbo.spr_GetStateMaster;                                                                 -- 36 rows in name order
+```
+
+Browser checks on `BMMS_Test` (keep the error log of the day open):
+
+1. Member Master, Add: the State dropdown shows "- Select -" and then 36 entries in name order, from Andaman and Nicobar Islands to West Bengal; "Andhra Pradash" appears nowhere.
+2. Add a test member with state Karnataka: saved; Edit shows Karnataka. Change to Andhra Pradesh, Update: Edit shows "Andhra Pradesh". Change to Kerala, then to Puducherry: each Update keeps the state chosen.
+3. A member saved earlier with Tamil Nadu (7 on BMMS_Test): Edit shows Tamil Nadu; Update without changes saves and keeps it.
+4. The member with no state: Edit shows "- Select -"; Update saves it still without a state.
+5. Optional, Notice: tag the test member of check 2 to a committee with state Andhra Pradesh; Create PDF or Send Mail for one of its meetings shows "Andhra Pradesh". Untag the member afterwards.
+6. Delete the test member of check 2 (or keep it for later tests). No new error log entries.
+
+Rollback (nothing was deleted, so the rollback is small; or restore the backup taken before the script):
+
+```sql
+-- Members using a new state must be moved first (the key FK_Member_State_Master refuses the delete):
+--   SELECT MemberId, MemberName, State_Id FROM dbo.Member WHERE State_Id > 3;
+UPDATE dbo.State_Master SET State_Name = 'Andhra Pradash' WHERE State_Id = 2;
+UPDATE dbo.State_Master SET State_Code = 'KE' WHERE State_Id = 3;
+DELETE FROM dbo.State_Master WHERE State_Id > 3 AND State_Code IN ('AR','AS','BR','CG','GA','GJ','HR','HP','JH','KA','MP','MH','MN','ML','MZ','NL','OD','PB','RJ','SK','TG','TR','UP','UK','WB','AN','CH','DD','DL','JK','LA','LD','PY');
+-- spr_GetStateMaster: nothing to roll back on BMMS_Test (left unchanged). Only on a database where the script printed
+-- "spr_GetStateMaster replaced": run the old text it printed, with CREATE changed to CREATE OR ALTER.
+-- The identity continues after 36; DBCC CHECKIDENT ('dbo.State_Master', RESEED, 3) after the delete makes the next id 4 again.
+```
+
 ## Known items for later steps
 
 - The colour picker on Committee and Meeting (third-party JScript/ColorPicker/js_color_picker_v2.js) asks for its tab and slider images relative to the page (`/Master/images/tab_right_active.gif`, `slider_handle.gif`), which gives 404; its own copies are in JScript/ColorPicker/Images. Seen in step B3, not changed.
