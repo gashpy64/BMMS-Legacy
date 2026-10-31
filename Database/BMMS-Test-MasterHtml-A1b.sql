@@ -18,8 +18,16 @@
      D  <i>T'&</i>                             (10 characters, for the
                                                  10-character columns)
    Codes are short plain values (ZZB1D, ZZB1G ...), because the code columns
-   are short. Meeting numbers stay numeric (1 and 2): the Reports page reads
-   them with int.Parse.
+   are short. The member and the committee get one letter and digits (A902,
+   A901): spr_GetNextMemberCode and spr_GetNextCommitteeCode read the highest
+   code and convert the characters after the first one to a number, so a
+   code such as ZZB1M or ZZB1C made the Add pages of Member Master and
+   Committee Master fail; A sorts below the M and C codes they generate, so
+   the test codes never become the highest. Because A901 and A902 look like
+   ordinary codes, parts 2 and 3 take the member and the committee only when
+   the name also starts with "ZZ A1b". Parts 2 and 3 also find the rows of an
+   earlier run under the old codes ZZB1M and ZZB1C. Meeting numbers stay
+   numeric (1 and 2): the Reports page reads them with int.Parse.
 
    PART 1  Checks every column it writes (it must exist and the text must
            fit) and stops before writing anything when one fails; refuses
@@ -29,8 +37,8 @@
              Decision Type  ZZB1T  name C
              Subject Type   ZZB1S  name A
              Member Type    ZZB1Y  name B (committee scope, not reserved)
-             Member         ZZB1M  name C, Address1 A, DOJ B, designation ZZB1G
-             Committee      ZZB1C  name A, with the member as committee
+             Member         A902   name C, Address1 A, DOJ B, designation ZZB1G
+             Committee      A901   name A, with the member as committee
                                    member of type ZZB1Y (fee applicable)
              Meeting 2      dated tomorrow, no members: Place A, Venue B,
                             time 10:00 (Edit, Update and Delete on screen)
@@ -47,9 +55,10 @@
                             file name C, IP address B
            Prints the new ids.
    PART 2  Read-only: shows every test row.
-   PART 3  Cleanup. Finds the test rows by their codes (ZZB1D ... ZZB1C,
-           login zza1b, audit table ZZA1b, backup file name starting with
-           "ZZ A1b"), so rows already deleted in the browser are simply
+   PART 3  Cleanup. Finds the test rows by their codes (ZZB1D ... ZZB1Y;
+           member A902 or ZZB1M and committee A901 or ZZB1C, each with a name
+           starting "ZZ A1b"; login zza1b, audit table ZZA1b, backup file name
+           starting with "ZZ A1b"), so rows already deleted in the browser are simply
            skipped. Refuses, changing nothing, when other rows use them: an
            agenda item, another meeting of the test committee, the test
            member in another committee or meeting, another member, user,
@@ -143,11 +152,21 @@ SET @Existing =
     + (SELECT COUNT(*) FROM Decision_Type WHERE DecisionTypeCode = 'ZZB1T' OR DecisionTypeName LIKE 'ZZ A1b%')
     + (SELECT COUNT(*) FROM Subject_Type  WHERE SubjectTypeCode  = 'ZZB1S' OR SubjectTypeName  LIKE 'ZZ A1b%')
     + (SELECT COUNT(*) FROM Member_Type   WHERE MemberTypeCode   = 'ZZB1Y' OR MemberTypeName   LIKE 'ZZ A1b%')
-    + (SELECT COUNT(*) FROM Member        WHERE MemberCode       = 'ZZB1M' OR MemberName       LIKE 'ZZ A1b%')
-    + (SELECT COUNT(*) FROM Committee     WHERE CommitteeCode    = 'ZZB1C' OR CommitteeName    LIKE 'ZZ A1b%')
+    + (SELECT COUNT(*) FROM Member        WHERE MemberCode IN ('A902', 'ZZB1M') OR MemberName LIKE 'ZZ A1b%')
+    + (SELECT COUNT(*) FROM Committee     WHERE CommitteeCode IN ('A901', 'ZZB1C') OR CommitteeName LIKE 'ZZ A1b%')
     + (SELECT COUNT(*) FROM Users         WHERE LoginName        = 'zza1b' OR UserName         LIKE 'ZZ A1b%')
     + (SELECT COUNT(*) FROM Audit_Trail_Master    WHERE Audit_Table = 'ZZA1b')
     + (SELECT COUNT(*) FROM Audit_Trail_SqlBackup WHERE Backup_File_Name LIKE 'ZZ A1b%');
+-- A902 and A901 look like ordinary codes: a real member or committee holding one of them stops the test
+DECLARE @CodeTaken INT;
+SET @CodeTaken =
+      (SELECT COUNT(*) FROM Member    WHERE MemberCode    = 'A902' AND MemberName    NOT LIKE 'ZZ A1b%')
+    + (SELECT COUNT(*) FROM Committee WHERE CommitteeCode = 'A901' AND CommitteeName NOT LIKE 'ZZ A1b%');
+IF (@CodeTaken > 0)
+BEGIN
+    RAISERROR('A member with code A902 or a committee with code A901 already exists and is not a test row. Change the two test codes in this file. Nothing was changed.', 16, 1);
+    RETURN;
+END
 IF (@Existing > 0)
 BEGIN
     RAISERROR('%d test row(s) from an earlier run are still there. Run part 3 first. Nothing was changed.', 16, 1, @Existing);
@@ -198,11 +217,11 @@ BEGIN TRY
     SET @MemberTypeId = SCOPE_IDENTITY();
 
     INSERT INTO Member (MemberCode, MemberName, DesignationId, Address1, DOJ, EmailId, StatusId, CreatedOn, CreatedBy)
-    VALUES ('ZZB1M', @C, @DesigId, @A, @B, 'zzb1m@example.invalid', 1, @Now, @Sys);
+    VALUES ('A902', @C, @DesigId, @A, @B, 'zzb1m@example.invalid', 1, @Now, @Sys);
     SET @MemberId = SCOPE_IDENTITY();
 
     INSERT INTO Committee (CommitteeCode, CommitteeName, Board, IncorporationDate, MeetingStartNo, CommitteeColorCode, StatusId, IsDelete, CreatedOn, CreatedBy)
-    VALUES ('ZZB1C', @A, 0, '2000-01-01', 1, @ColorCode, 1, 0, @Now, @Sys);
+    VALUES ('A901', @A, 0, '2000-01-01', 1, @ColorCode, 1, 0, @Now, @Sys);
     SET @CommitteeId = SCOPE_IDENTITY();
 
     INSERT INTO Committee_Member (CommitteeId, MemberId, MemberTypeId, AppointmentDate, CessationDate, IsFeeApplicable, ApplicableFee, CreatedOn, CreatedBy)
@@ -283,26 +302,26 @@ UNION ALL SELECT 'Designation', DesignationId, DesignationCode, DesignationName 
 UNION ALL SELECT 'Decision_Type', DecisionTypeId, DecisionTypeCode, DecisionTypeName FROM Decision_Type WHERE DecisionTypeCode = 'ZZB1T'
 UNION ALL SELECT 'Subject_Type', SubjectTypeId, SubjectTypeCode, SubjectTypeName FROM Subject_Type WHERE SubjectTypeCode = 'ZZB1S'
 UNION ALL SELECT 'Member_Type', MemberTypeId, MemberTypeCode, MemberTypeName FROM Member_Type WHERE MemberTypeCode = 'ZZB1Y'
-UNION ALL SELECT 'Member', MemberId, MemberCode, MemberName FROM Member WHERE MemberCode = 'ZZB1M'
-UNION ALL SELECT 'Committee', CommitteeId, CommitteeCode, CommitteeName FROM Committee WHERE CommitteeCode = 'ZZB1C'
+UNION ALL SELECT 'Member', MemberId, MemberCode, MemberName FROM Member WHERE MemberCode IN ('A902', 'ZZB1M') AND MemberName LIKE 'ZZ A1b%'
+UNION ALL SELECT 'Committee', CommitteeId, CommitteeCode, CommitteeName FROM Committee WHERE CommitteeCode IN ('A901', 'ZZB1C') AND (CommitteeName LIKE 'ZZ A1b%' OR EXISTS (SELECT 1 FROM Committee_Member tcm JOIN Member tm ON tm.MemberId = tcm.MemberId WHERE tcm.CommitteeId = Committee.CommitteeId AND tm.MemberCode IN ('A902', 'ZZB1M') AND tm.MemberName LIKE 'ZZ A1b%'))
 UNION ALL SELECT 'Users', UserId, LoginName, UserName FROM Users WHERE LoginName = 'zza1b';
 
-SELECT MemberId, MemberCode, MemberName, Address1, DOJ, DesignationId FROM Member WHERE MemberCode = 'ZZB1M';
+SELECT MemberId, MemberCode, MemberName, Address1, DOJ, DesignationId FROM Member WHERE MemberCode IN ('A902', 'ZZB1M') AND MemberName LIKE 'ZZ A1b%';
 
 SELECT mt.MeetingId, mt.MeetingNo, mt.MeetingDate, mt.MeetingTime, mt.Place, mt.Venue, mt.AgendaStatus, mt.MinutesStatus
 FROM Meeting mt
 JOIN Committee c ON c.CommitteeId = mt.CommitteeId
-WHERE c.CommitteeCode = 'ZZB1C'
+WHERE c.CommitteeCode IN ('A901', 'ZZB1C') AND (c.CommitteeName LIKE 'ZZ A1b%' OR EXISTS (SELECT 1 FROM Committee_Member tcm JOIN Member tm ON tm.MemberId = tcm.MemberId WHERE tcm.CommitteeId = c.CommitteeId AND tm.MemberCode IN ('A902', 'ZZB1M') AND tm.MemberName LIKE 'ZZ A1b%'))
 ORDER BY mt.MeetingId;
 
 SELECT 'Committee_Member' AS RowType, cm.CommitteeMemberId AS Id, cm.MemberId, cm.MemberTypeId, NULL AS MeetingId
-FROM Committee_Member cm JOIN Committee c ON c.CommitteeId = cm.CommitteeId WHERE c.CommitteeCode = 'ZZB1C'
+FROM Committee_Member cm JOIN Committee c ON c.CommitteeId = cm.CommitteeId WHERE c.CommitteeCode IN ('A901', 'ZZB1C') AND (c.CommitteeName LIKE 'ZZ A1b%' OR EXISTS (SELECT 1 FROM Committee_Member tcm JOIN Member tm ON tm.MemberId = tcm.MemberId WHERE tcm.CommitteeId = c.CommitteeId AND tm.MemberCode IN ('A902', 'ZZB1M') AND tm.MemberName LIKE 'ZZ A1b%'))
 UNION ALL
 SELECT 'Meeting_Member', mm.MeetingMemberId, mm.MemberId, mm.MemberTypeId, mm.MeetingId
-FROM Meeting_Member mm JOIN Meeting mt ON mt.MeetingId = mm.MeetingId JOIN Committee c ON c.CommitteeId = mt.CommitteeId WHERE c.CommitteeCode = 'ZZB1C'
+FROM Meeting_Member mm JOIN Meeting mt ON mt.MeetingId = mm.MeetingId JOIN Committee c ON c.CommitteeId = mt.CommitteeId WHERE c.CommitteeCode IN ('A901', 'ZZB1C') AND (c.CommitteeName LIKE 'ZZ A1b%' OR EXISTS (SELECT 1 FROM Committee_Member tcm JOIN Member tm ON tm.MemberId = tcm.MemberId WHERE tcm.CommitteeId = c.CommitteeId AND tm.MemberCode IN ('A902', 'ZZB1M') AND tm.MemberName LIKE 'ZZ A1b%'))
 UNION ALL
 SELECT 'Attendance', NULL, a.MemberId, NULL, a.MeetingId
-FROM Attendance a JOIN Committee c ON c.CommitteeId = a.CommitteeId WHERE c.CommitteeCode = 'ZZB1C';
+FROM Attendance a JOIN Committee c ON c.CommitteeId = a.CommitteeId WHERE c.CommitteeCode IN ('A901', 'ZZB1C') AND (c.CommitteeName LIKE 'ZZ A1b%' OR EXISTS (SELECT 1 FROM Committee_Member tcm JOIN Member tm ON tm.MemberId = tcm.MemberId WHERE tcm.CommitteeId = c.CommitteeId AND tm.MemberCode IN ('A902', 'ZZB1M') AND tm.MemberName LIKE 'ZZ A1b%'));
 
 SELECT Audit_Type, Audit_Table, Key_Field, Key_Value, Field_Name, Old_Value, New_Value, Update_By, Update_On
 FROM Audit_Trail_Master WHERE Audit_Table = 'ZZA1b';
@@ -313,7 +332,7 @@ FROM Audit_Trail_SqlBackup WHERE Backup_File_Name LIKE 'ZZ A1b%';
 SELECT am.AlertId, am.SourceType, am.SourceTypeId, am.DisplayText, am.AlertTypeCode, am.CommitteeId
 FROM Alert_Master am
 JOIN Committee c ON c.CommitteeId = am.CommitteeId
-WHERE c.CommitteeCode = 'ZZB1C'
+WHERE c.CommitteeCode IN ('A901', 'ZZB1C') AND (c.CommitteeName LIKE 'ZZ A1b%' OR EXISTS (SELECT 1 FROM Committee_Member tcm JOIN Member tm ON tm.MemberId = tcm.MemberId WHERE tcm.CommitteeId = c.CommitteeId AND tm.MemberCode IN ('A902', 'ZZB1M') AND tm.MemberName LIKE 'ZZ A1b%'))
 ORDER BY am.AlertId;
 GO
 
@@ -335,9 +354,26 @@ DECLARE @DesigId INT      = (SELECT DesignationId  FROM Designation   WHERE Desi
 DECLARE @DecisionId INT   = (SELECT DecisionTypeId FROM Decision_Type WHERE DecisionTypeCode = 'ZZB1T');
 DECLARE @SubjectId INT    = (SELECT SubjectTypeId  FROM Subject_Type  WHERE SubjectTypeCode  = 'ZZB1S');
 DECLARE @MemberTypeId INT = (SELECT MemberTypeId   FROM Member_Type   WHERE MemberTypeCode   = 'ZZB1Y');
-DECLARE @MemberId INT     = (SELECT MemberId       FROM Member        WHERE MemberCode       = 'ZZB1M');
-DECLARE @CommitteeId INT  = (SELECT CommitteeId    FROM Committee     WHERE CommitteeCode    = 'ZZB1C');
+DECLARE @MemberId INT     = (SELECT MemberId       FROM Member        WHERE MemberCode IN ('A902', 'ZZB1M') AND MemberName LIKE 'ZZ A1b%');
+-- The committee name can be edited on screen: a test code and either the test name or the tagged test member
+DECLARE @CommitteeId INT  = (SELECT TOP 1 c.CommitteeId FROM Committee c
+                             WHERE c.CommitteeCode IN ('A901', 'ZZB1C')
+                               AND (c.CommitteeName LIKE 'ZZ A1b%'
+                                    OR EXISTS (SELECT 1 FROM Committee_Member cm WHERE cm.CommitteeId = c.CommitteeId AND cm.MemberId = @MemberId))
+                             ORDER BY c.CommitteeId);
 DECLARE @TestUserId INT   = (SELECT UserId         FROM Users         WHERE LoginName        = 'zza1b');
+
+-- The test member tagged to a committee that is not recognised as a test committee stops the cleanup
+DECLARE @UnknownCommittees NVARCHAR(400);
+IF (@MemberId IS NOT NULL AND @CommitteeId IS NULL)
+    SELECT @UnknownCommittees = STUFF((SELECT N', ' + CAST(cm.CommitteeId AS NVARCHAR(12))
+                                       FROM Committee_Member cm WHERE cm.MemberId = @MemberId
+                                       ORDER BY cm.CommitteeId FOR XML PATH('')), 1, 2, N'');
+IF (@UnknownCommittees IS NOT NULL)
+BEGIN
+    RAISERROR('The test member is tagged to committee(s) %s that part 3 does not recognise as test committees. Nothing was changed.', 16, 1, @UnknownCommittees);
+    RETURN;
+END
 
 DECLARE @Meetings TABLE (MeetingId INT PRIMARY KEY);
 INSERT INTO @Meetings (MeetingId) SELECT MeetingId FROM Meeting WHERE CommitteeId = @CommitteeId AND MeetingNo IN ('1', '2');

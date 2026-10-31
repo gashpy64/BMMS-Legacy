@@ -75,7 +75,7 @@
                                             CommandArgument="Audit_Table"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblAudit_Table" runat="server" SkinID="lblskingen" Text='<%#Eval("Audit_Table")%>'></asp:Label>
+                                        <asp:Label ID="lblAudit_Table" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("Audit_Table")) %>'></asp:Label>
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Left" />
                                 </asp:TemplateField>
@@ -85,7 +85,7 @@
                                             CommandArgument="Key_Field"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblKey_Field" SkinID="lblSkinGen" Text='<%#Eval("Key_Field")%>' runat="server" />
+                                        <asp:Label ID="lblKey_Field" SkinID="lblSkinGen" Text='<%# HttpUtility.HtmlEncode(Eval("Key_Field")) %>' runat="server" />
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
                                 </asp:TemplateField>
@@ -95,7 +95,7 @@
                                             CommandArgument="Key_Value"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblKey_Value" runat="server" SkinID="lblskingen" Text='<%#Eval("Key_Value")%>'></asp:Label>
+                                        <asp:Label ID="lblKey_Value" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("Key_Value")) %>'></asp:Label>
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
                                 </asp:TemplateField>
@@ -105,7 +105,7 @@
                                             CommandArgument="Field_Name"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblField_Name" runat="server" SkinID="lblskingen" Text='<%#Eval("Field_Name")%>'></asp:Label>
+                                        <asp:Label ID="lblField_Name" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("Field_Name")) %>'></asp:Label>
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Left" />
                                 </asp:TemplateField>
@@ -115,7 +115,7 @@
                                             CommandArgument="Update_By_Name"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblUpdate_By_Name" runat="server" SkinID="lblskingen" Text='<%#Eval("Update_By_Name")%>'></asp:Label>
+                                        <asp:Label ID="lblUpdate_By_Name" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("Update_By_Name")) %>'></asp:Label>
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Left" />
                                 </asp:TemplateField>
@@ -125,7 +125,7 @@
                                             Style="color: White" CommandArgument="Update_On"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblUpdate_On" runat="server" SkinID="lblskingen" Text='<%#Eval("Update_On")%>'></asp:Label>
+                                        <asp:Label ID="lblUpdate_On" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("Update_On")) %>'></asp:Label>
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Left" />
                                 </asp:TemplateField>

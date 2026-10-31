@@ -812,7 +812,7 @@ body.wb .ddsubmenustyle li a:focus
 {
 	font-style: italic;
 }
-/* disabled by code-behind (Decision Type for non-admin roles) */
+/* grid buttons disabled by code-behind (for example Member Type, Meeting Member and User rows that may not be changed) */
 .wb-page .wb-link-btn[disabled]
 {
 	color: var(--wb-text-muted);

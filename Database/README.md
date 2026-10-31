@@ -1350,17 +1350,42 @@ Group 2, committee, member and meeting:
 
 Browser checks for group 2 on `BMMS_Test`, in Chrome and in Edge (deploy the build first; smtp4dev running; keep the error log of the day open). Rows whose text holds `<` cannot be saved again from the screen (request validation, as in group 1 check 2); that is the expected result and is not repeated below.
 
-1. Committee: the ZZB1C row shows name A as text; Edit opens it with the same text. Add a committee named `ZZ O'Brien` (any free code): saved; Edit it, Update without changes: saved; Add a second `zz o'brien`: refused with "Duplicate Committee Name not allowed"; Delete `ZZ O'Brien`: the confirm shows, the row is deleted.
-2. Committee Member: choose committee ZZB1C (A in the dropdown, as text): the row shows member C, designation B and member type B as text; Edit opens the right member; Cancel.
-3. Member: the ZZB1M row shows name C and DOJ B as text, designation B as text; Edit opens with name C, Address1 A and DOJ B in the boxes; Cancel.
-4. Dashboard, before check 5: the meeting summary lists the ZZB1C meetings with committee A as text, meeting 2 (dated tomorrow, 10:00) under scheduled and meeting 1 (dated yesterday, time `<i>T'&</i>` as text) under completed, when the summary includes them (part 2 of the test script shows the rows).
-5. Meeting Master: the ZZB1C rows show committee A, place and venue (A, B, C) and the time of meeting 1 as text. Sort by a header, then on meeting 2 (522, tomorrow): Edit opens; change Place and Venue to `ZZ O'Brien & Sons`, Update: "Successfully Saved", the grid shows the new text, the mail arrives with the text as typed; sort again, Delete meeting 2: deleted (no members, no agenda items).
+1. Committee: the A901 row shows name A as text; Edit opens it with the same text. Add a committee named `ZZ O'Brien` (any free code): saved; Edit it, Update without changes: saved; Add a second `zz o'brien`: refused with "Duplicate Committee Name not allowed"; Delete `ZZ O'Brien`: the confirm shows, the row is deleted.
+2. Committee Member: choose committee A901 (A in the dropdown, as text): the row shows member C, designation B and member type B as text; Edit opens the right member; Cancel.
+3. Member: the A902 row shows name C and DOJ B as text, designation B as text; Edit opens with name C, Address1 A and DOJ B in the boxes; Cancel.
+4. Dashboard, before check 5: the meeting summary lists the A901 meetings with committee A as text, meeting 2 (dated tomorrow, 10:00) under scheduled and meeting 1 (dated yesterday, time `<i>T'&</i>` as text) under completed, when the summary includes them (part 2 of the test script shows the rows).
+5. Meeting Master: the A901 rows show committee A, place and venue (A, B, C) and the time of meeting 1 as text. Sort by a header, then on meeting 2 (522, tomorrow): Edit opens; change Place and Venue to `ZZ O'Brien & Sons`, Update: "Successfully Saved", the grid shows the new text, the mail arrives with the text as typed; sort again, Delete meeting 2: deleted (no members, no agenda items).
 6. Meeting Master, meeting 1 (521, yesterday): Edit and Delete each give "The meeting date has passed, so this meeting can no longer be edited or deleted."; the grid is unchanged.
-7. Meeting Member: choose committee ZZB1C and meeting 1: the row shows meeting no, member C and designation B as text; Edit opens the right member; Cancel. Keep the row (the group 3 reports use it).
+7. Meeting Member: choose committee A901 and meeting 1: the row shows meeting no, member C and designation B as text; Edit opens the right member; Cancel. Keep the row (the group 3 reports use it).
 8. Dropdowns show committee A and member C as text on Committee Member, Meeting, Meeting Member, Attendance and Agenda Entry (committee), and on the report filters.
 9. Every header of the five grids sorts ascending then descending; the ZZ A1b rows keep their text after a sort.
 10. Normal names (the seeded committees and members, a name with `&`) look as before.
 11. Error log: one Mail_Mgr entry only if a mail failed; one redacted request validation entry for each save of a ZZ A1b row tried; nothing else.
+
+Test codes of the member and the committee (changed with group 3): part 1 first used ZZB1M and ZZB1C, and while those rows existed the Add pages of Member Master and Committee Master failed. spr_GetNextMemberCode and spr_GetNextCommitteeCode (baseline) take the highest code as text and convert the characters after the first one to a number (`SUBSTRING(MAX(MemberCode), 2, 4)`, `SUBSTRING(MAX(CommitteeCode), 2, 3)`); ZZB1M and ZZB1C sort above every M and C code, so they became the highest and the conversion failed. Part 1 now writes member A902 and committee A901 (one letter and digits; A sorts below M and C, so they never become the highest). Parts 2 and 3 take these two rows only when the name also starts with "ZZ A1b", and also find the rows of an earlier run under ZZB1M and ZZB1C. Part 1 stops when a real member A902 or committee A901 exists. The checks above now name A901 and A902. The two procedures are unchanged: any other code whose second character onward is not a number has the same effect (a later step).
+
+Part 3 (and part 2) finds the test committee through its test code (A901 or ZZB1C) and either its test name or the tagged test member, because the committee name can be edited on screen (the name is the only text field of the Committee form, so it can be saved under a new name). Part 3 stops with "The test member is tagged to committee(s) ... that part 3 does not recognise as test committees" when the test member is tagged to a committee it does not recognise; its other refusals are unchanged.
+
+Group 3, backup and reports:
+
+- Grid Labels now `HttpUtility.HtmlEncode(Eval(...))`: Backup Database (file name, user name, IP address), Attendance Details (committee, meeting no, member, designation, attendance), Audit Trail (table, key field, key value, field name, updated by, updated on), Committee Master report (code, name, status), Meeting Calendar (committee name and code, meeting no, time, venue), Meeting Master report (committee, meeting no, time, venue), Sitting Fees Applicable (committee, meeting no, time, member type, member, designation, attendance, sitting fees) and Followup report (committee, meeting no, agenda no, subject no, department). Dates in `{0:dd-MMM-yyyy}` and the hidden ids are unchanged; the meeting time inside the server comment of the Followup report is not rendered and is left as it is; the Followup short text was encoded in A1a.
+- bmms-workbench.css: the comment of the rule for grid buttons disabled by code now names the pages that still use it (Member Type, Meeting Member, User); Decision Type no longer does. The rule is unchanged.
+- Unchanged: the filters, the PDF and Excel exports (encoded since A1a and U1b), every procedure.
+
+Browser checks for group 3 on `BMMS_Test`, in Chrome and in Edge (deploy the build first; keep the error log of the day open). Rows from the first part 1 run use the old codes: run part 3 of the test script (it finds them), then part 1 again (new codes A902 and A901; new meeting ids, printed by part 1).
+
+1. Member Master and Committee Master, Add: the form opens with the next code (M... and C...), no error page. Cancel.
+2. Backup Database: the test row shows file name C, user name A and IP address B as text; sorting by every header keeps them as text.
+3. Attendance Details: committee A901 (A in the dropdown), meeting 1: committee A, member C, designation B and the attendance as text.
+4. Audit Trail: user "- All -" (or zza1b), today's date range: table ZZA1b, key value D (`<i>T'&</i>`), field name B and updated by A as text.
+5. Committee Master report: committee A901 shows code A901, name A and the status as text; filter and sort keep it as text.
+6. Meeting Calendar, a range covering yesterday and tomorrow: committee A (A901), meeting 1 with time D and venue C, meeting 2 with venue B, as text.
+7. Meeting Master report, committee A901: meeting no, time and venue as text.
+8. Sitting Fees Applicable, committee A901 and a range covering yesterday: committee A, meeting 1, time D, member type B, member C, designation B, attendance and 1000 as text.
+9. Followup report: the test rows have no agenda item, so no ZZ row is listed; normal rows (committee, meeting no, agenda no, subject no, department) look as before. With the A1 test rows (BMMS-Test-StoredHtml-A1.sql) present, their short text still shows as text.
+10. Every sort header of the eight grids sorts ascending then descending; the ZZ A1b rows keep their text.
+11. Member Type, Meeting Member and User rows that may not be changed still show grey Edit or Delete buttons (CSS comment change only).
+12. Normal names look as before. No new error log entries.
 
 ## Step S1: complete State_Master (what to run where)
 

@@ -36,7 +36,7 @@
                                 Style="color: White" CommandArgument="Backup_File_Name"></asp:LinkButton>
                         </HeaderTemplate>
                         <ItemTemplate>
-                            <asp:Label ID="lblBackup_File_Name" Text='<%#Eval("Backup_File_Name")%>' runat="server" />
+                            <asp:Label ID="lblBackup_File_Name" Text='<%# HttpUtility.HtmlEncode(Eval("Backup_File_Name")) %>' runat="server" />
                         </ItemTemplate>
                         <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
                     </asp:TemplateField>
@@ -46,7 +46,7 @@
                                 CommandArgument="UserName"></asp:LinkButton>
                         </HeaderTemplate>
                         <ItemTemplate>
-                            <asp:Label ID="lblUserName" SkinID="lblSkinGen" Text='<%#Eval("UserName")%>' runat="server" />
+                            <asp:Label ID="lblUserName" SkinID="lblSkinGen" Text='<%# HttpUtility.HtmlEncode(Eval("UserName")) %>' runat="server" />
                         </ItemTemplate>
                         <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
                     </asp:TemplateField>
@@ -66,7 +66,7 @@
                                 Style="color: White" CommandArgument="User_IP_Address"></asp:LinkButton>
                         </HeaderTemplate>
                         <ItemTemplate>
-                            <asp:Label ID="lblUser_IP_Address" runat="server" SkinID="lblskingen" Text='<%#Eval("User_IP_Address")%>'></asp:Label>
+                            <asp:Label ID="lblUser_IP_Address" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("User_IP_Address")) %>'></asp:Label>
                         </ItemTemplate>
                         <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
                     </asp:TemplateField>
