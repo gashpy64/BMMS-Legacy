@@ -69,7 +69,7 @@
                             </asp:TemplateField>
                             <asp:TemplateField SortExpression="MemberTypeName">
                                 <HeaderTemplate>
-                                    <asp:LinkButton ID="lnk2" runat="server" Text="Member Type" CommandName="Sort" CommandArgument="MemberTypeName"></asp:LinkButton>
+                                    <asp:LinkButton ID="lnk6" runat="server" Text="Member Type" CommandName="Sort" CommandArgument="MemberTypeName"></asp:LinkButton>
                                 </HeaderTemplate>
                                 <ItemTemplate>
                                     <asp:Label ID="lblMemberTypeName" runat="server" SkinID="lblskingen" Text='<%#Eval("MemberTypeName")%>'></asp:Label>

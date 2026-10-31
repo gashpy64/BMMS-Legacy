@@ -55,8 +55,9 @@ namespace BMMS.Master
 
                 dtSqlBackup = AuditTrail_Mgr.GetAuditTrailSqlBackup();
 
-                grvSqlBackup.DataSource = dtSqlBackup;
-                grvSqlBackup.DataBind();
+                // Kept for the header sort (step A1b-1)
+                ViewState["DataTable"] = dtSqlBackup;
+                BindGridView();
             }
             catch (Exception ex)
             {
@@ -65,6 +66,30 @@ namespace BMMS.Master
             finally
             {
 
+            }
+        }
+        #endregion
+
+        #region BindGridView
+        private void BindGridView()
+        {
+            grvSqlBackup.DataSource = (DataTable)ViewState["DataTable"];
+            grvSqlBackup.DataBind();
+        }
+        #endregion
+
+        #region grvRecord_Sorting
+        protected void grvRecord_Sorting(object sender, GridViewSortEventArgs e)
+        {
+            try
+            {
+                ViewState["DataTable"] = Utilities.GridViewDataTableSorting(sender, e, (DataTable)ViewState["DataTable"]);
+
+                BindGridView();
+            }
+            catch (Exception ex)
+            {
+                Utilities.GoToErrPage(className, "grvRecord_Sorting", ex);
             }
         }
         #endregion

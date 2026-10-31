@@ -68,7 +68,7 @@
                                 </asp:TemplateField>
                                 <asp:TemplateField SortExpression="MeetingNo">
                                     <HeaderTemplate>
-                                        <asp:LinkButton ID="LinkButton1" runat="server" Text="Meeting No" CommandName="Sort"
+                                        <asp:LinkButton ID="LinkButton2" runat="server" Text="Meeting No" CommandName="Sort"
                                             Style="color: White" CommandArgument="MeetingNo"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
@@ -78,7 +78,7 @@
                                 </asp:TemplateField>
                                 <asp:TemplateField SortExpression="MeetingDate">
                                     <HeaderTemplate>
-                                        <asp:LinkButton ID="LinkButton1" runat="server" Text="Meeting Date" CommandName="Sort"
+                                        <asp:LinkButton ID="LinkButton5" runat="server" Text="Meeting Date" CommandName="Sort"
                                             Style="color: White" CommandArgument="MeetingDate"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
@@ -108,7 +108,7 @@
                                 </asp:TemplateField>
                                 <asp:TemplateField SortExpression="Attendance">
                                     <HeaderTemplate>
-                                        <asp:LinkButton ID="LinkButton4" runat="server" Text="Attendance" CommandName="Sort"
+                                        <asp:LinkButton ID="LinkButton6" runat="server" Text="Attendance" CommandName="Sort"
                                             Style="color: White" CommandArgument="Attendance"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>

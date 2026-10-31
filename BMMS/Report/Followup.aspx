@@ -167,7 +167,7 @@
                                             </asp:TemplateField>
                                             <asp:TemplateField SortExpression="MeetingNo">
                                                 <HeaderTemplate>
-                                                    <asp:LinkButton ID="LinkButton1" runat="server" Text="Meeting No" CommandName="Sort"
+                                                    <asp:LinkButton ID="LinkButton7" runat="server" Text="Meeting No" CommandName="Sort"
                                                         Style="color: White" CommandArgument="MeetingNo"></asp:LinkButton>
                                                 </HeaderTemplate>
                                                 <ItemTemplate>

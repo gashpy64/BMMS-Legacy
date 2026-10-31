@@ -41,7 +41,7 @@
                         <asp:GridView ID="grvCommittee" runat="server" SkinID="grvSkinNoPaging" AutoGenerateColumns="false"
                             CssClass="contentTable1" AllowSorting="true" CellPadding="4" DataKeyNames="CommitteeId"
                             Font-Names="Verdana, Arial, Helvetica, sans-serif" Font-Size="X-Small" ForeColor="#333333"
-                            GridLines="Horizontal" Height="32px" Width="100%">
+                            GridLines="Horizontal" Height="32px" Width="100%" OnSorting="grvRecord_Sorting">
                             <HeaderStyle CssClass="contentTableHeader" HorizontalAlign="Center" Font-Bold="true" />
                             <Columns>
                                 <asp:TemplateField HeaderText="S.No.">
@@ -76,7 +76,7 @@
                                 </asp:TemplateField>
                                 <asp:TemplateField SortExpression="IncorporationDate">
                                     <HeaderTemplate>
-                                        <asp:LinkButton ID="lnk2" runat="server" Text="Incorporation Date" CommandName="Sort"
+                                        <asp:LinkButton ID="lnk3" runat="server" Text="Incorporation Date" CommandName="Sort"
                                             Style="color: White" CommandArgument="IncorporationDate"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>

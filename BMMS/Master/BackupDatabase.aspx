@@ -20,7 +20,7 @@
             <asp:GridView ID="grvSqlBackup" runat="server" AutoGenerateColumns="false" CssClass="contentTable1"
                 AllowSorting="true" CellPadding="4" DataKeyNames="Audit_Trail_SqlBackup_Id" Font-Names="Verdana, Arial, Helvetica, sans-serif"
                 Font-Size="X-Small" ForeColor="#333333" GridLines="Horizontal" Height="32px"
-                Width="100%">
+                Width="100%" OnSorting="grvRecord_Sorting">
                 <HeaderStyle CssClass="contentTableHeader" HorizontalAlign="Center" Font-Bold="true" />
                 <Columns>
                     <asp:TemplateField HeaderText="S.No.">
@@ -52,7 +52,7 @@
                     </asp:TemplateField>
                     <asp:TemplateField SortExpression="Backup_Date_Time">
                         <HeaderTemplate>
-                            <asp:LinkButton ID="lnk2" runat="server" Text="Backup Date Time" CommandName="Sort"
+                            <asp:LinkButton ID="lnk3" runat="server" Text="Backup Date Time" CommandName="Sort"
                                 Style="color: White" CommandArgument="Backup_Date_Time"></asp:LinkButton>
                         </HeaderTemplate>
                         <ItemTemplate>

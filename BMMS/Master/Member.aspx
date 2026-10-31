@@ -59,7 +59,7 @@
                             </asp:TemplateField>
                             <asp:TemplateField SortExpression="EmailId">
                                 <HeaderTemplate>
-                                    <asp:LinkButton ID="lnk3" runat="server" Text="Email Id" CommandName="Sort" CommandArgument="EmailId"></asp:LinkButton>
+                                    <asp:LinkButton ID="lnk4" runat="server" Text="Email Id" CommandName="Sort" CommandArgument="EmailId"></asp:LinkButton>
                                 </HeaderTemplate>
                                 <ItemTemplate>
                                     <asp:Label ID="lblEmailId" runat="server" SkinID="lblskingen" Text='<%#Eval("EmailId")%>'></asp:Label>
@@ -67,7 +67,7 @@
                             </asp:TemplateField>
                             <asp:TemplateField SortExpression="DOJ">
                                 <HeaderTemplate>
-                                    <asp:LinkButton ID="lnk3" runat="server" Text="Date of Join" CommandName="Sort" CommandArgument="DOJ"></asp:LinkButton>
+                                    <asp:LinkButton ID="lnk6" runat="server" Text="Date of Join" CommandName="Sort" CommandArgument="DOJ"></asp:LinkButton>
                                 </HeaderTemplate>
                                 <ItemTemplate>
                                     <asp:Label ID="lblDOJ" runat="server" SkinID="lblskingen" Text='<%#Eval("DOJ")%>'></asp:Label>

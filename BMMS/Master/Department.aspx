@@ -55,7 +55,7 @@
                             </asp:TemplateField>
                             <asp:TemplateField SortExpression="OrderNo">
                                 <HeaderTemplate>
-                                    <asp:LinkButton ID="lnk2" runat="server" Text="Display Order" CommandName="Sort"
+                                    <asp:LinkButton ID="lnk3" runat="server" Text="Display Order" CommandName="Sort"
                                         CommandArgument="OrderNo"></asp:LinkButton>
                                 </HeaderTemplate>
                                 <ItemTemplate>

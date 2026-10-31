@@ -1290,6 +1290,25 @@ Browser checks on `BMMS_Test` (deploy the build first; smtp4dev running unless s
 7. Stop smtp4dev. Reset Password for an active user: "The password was reset to the default password, but the mail could not be sent. The error is in the error log.", no error text on the page.
 8. Error log: one Mail_Mgr / SendWebEmail entry for each failed mail in checks 6 and 7, nothing else.
 
+## Step A1b-1: sort headers on seven more grids (markup and code only, no database script)
+
+Found in step M1: two or more sort header links of one grid had the same ID, so every header click of that grid failed with "Multiple controls with the same ID ... were found" (since the baseline). Two of these grids also had no sort handler at all.
+
+- New header IDs, nothing else in the markup changed: Backup Database `lnk2` (Backup Date Time) to `lnk3`; Committee Member `lnk2` (Member Type) to `lnk6`; Department `lnk2` (Display Order) to `lnk3`; Member `lnk3` (Email Id) to `lnk4` and `lnk3` (Date of Join) to `lnk6`; Attendance Details report `LinkButton1` (Meeting No) to `LinkButton2`, `LinkButton1` (Meeting Date) to `LinkButton5` and `LinkButton4` (Attendance) to `LinkButton6`; Committee Master report `lnk2` (Incorporation Date) to `lnk3`; Followup report `LinkButton1` (Meeting No) to `LinkButton7`. No code, script or style refers to these IDs. A scan of all 38 grids finds no duplicate ID left.
+- Backup Database and the Committee Master report: the grid gets `OnSorting="grvRecord_Sorting"`; the bound table is kept in `ViewState["DataTable"]` and sorted by Utilities.GridViewDataTableSorting, as on Department and Member. Before this, a header click there would have failed with "The GridView ... fired event Sorting which wasn't handled" once the IDs were unique.
+- Unchanged: the columns, the data, the filters and every procedure.
+
+Browser checks on `BMMS_Test`, in Chrome and in Edge (deploy the build first; keep the error log of the day open):
+
+1. Each of the seven pages opens with no error: Master/BackupDatabase, Master/CommitteeMember, Master/Department, Master/Member, Report/AttendanceDetails, Report/CommitteeMaster, Report/Followup (after its filter has listed rows).
+2. Every header of each grid sorts ascending on the first click and descending on the second; the arrow style of the header follows.
+3. Committee Member, Department and Member: after a sort, Edit opens the row that was clicked, Cancel returns to the grid, and Delete of a row that may be deleted deletes that row (the delete confirm still shows).
+4. Backup Database: after a sort, Backup Database adds a backup row and the grid shows it.
+5. Committee Master report: after a sort, changing the Committee or Status filter and Submit lists the right rows; sorting again works.
+6. Attendance Details and Followup reports: after a sort, changing the filters lists the right rows; sorting again works.
+7. A grid with no rows (for example Committee Member for a committee without members) shows its no-record text and no error.
+8. No new error log entries.
+
 ## Known items for later steps
 
 - The colour picker on Committee and Meeting (third-party JScript/ColorPicker/js_color_picker_v2.js) asks for its tab and slider images relative to the page (`/Master/images/tab_right_active.gif`, `slider_handle.gif`), which gives 404; its own copies are in JScript/ColorPicker/Images. Seen in step B3, not changed.
