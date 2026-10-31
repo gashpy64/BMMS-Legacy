@@ -240,9 +240,9 @@ namespace BMMS.Master
             dtCommittee.CaseSensitive = false;
 
             if (btnSave.Text == "Save")
-                dv.RowFilter = " CommitteeName = '" + txtCommitteeName.Text.Trim().ToLower() + "'";
+                dv.RowFilter = " CommitteeName = '" + txtCommitteeName.Text.Trim().ToLower().Replace("'", "''") + "'";
             if (btnSave.Text == "Update")
-                dv.RowFilter = " CommitteeName = '" + txtCommitteeName.Text.Trim().ToLower() + "' and CommitteeId <> " + hdnCommitteeId.Value;
+                dv.RowFilter = " CommitteeName = '" + txtCommitteeName.Text.Trim().ToLower().Replace("'", "''") + "' and CommitteeId <> " + hdnCommitteeId.Value;
 
 
             DataTable dtFilter = dv.ToTable("dtCommittee");

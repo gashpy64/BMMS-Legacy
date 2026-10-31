@@ -36,7 +36,7 @@
                                     <asp:LinkButton ID="lnk2" runat="server" Text="User Name" CommandName="Sort" CommandArgument="UserName"></asp:LinkButton>
                                 </HeaderTemplate>
                                 <ItemTemplate>
-                                    <asp:Label ID="lblEmployeName" runat="server" SkinID="lblskingen" Text='<%#Eval("UserName")%>'></asp:Label>
+                                    <asp:Label ID="lblEmployeName" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("UserName")) %>'></asp:Label>
                                 </ItemTemplate>
                             </asp:TemplateField>
                             <asp:TemplateField SortExpression="DepartmentName">
@@ -45,7 +45,7 @@
                                         CommandArgument="DepartmentName"></asp:LinkButton>
                                 </HeaderTemplate>
                                 <ItemTemplate>
-                                    <asp:Label ID="lblDepartmentName" runat="server" SkinID="lblskingen" Text='<%#Eval("DepartmentName")%>'></asp:Label>
+                                    <asp:Label ID="lblDepartmentName" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("DepartmentName")) %>'></asp:Label>
                                 </ItemTemplate>
                             </asp:TemplateField>
                             <asp:TemplateField SortExpression="DesignationName">
@@ -54,7 +54,7 @@
                                         CommandArgument="DesignationName"></asp:LinkButton>
                                 </HeaderTemplate>
                                 <ItemTemplate>
-                                    <asp:Label ID="lblDesignationName" runat="server" SkinID="lblskingen" Text='<%#Eval("DesignationName")%>'></asp:Label>
+                                    <asp:Label ID="lblDesignationName" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("DesignationName")) %>'></asp:Label>
                                 </ItemTemplate>
                             </asp:TemplateField>
                             <asp:TemplateField SortExpression="EmailId">
@@ -62,7 +62,7 @@
                                     <asp:LinkButton ID="lnk5" runat="server" Text="Email Id" CommandName="Sort" CommandArgument="EmailId"></asp:LinkButton>
                                 </HeaderTemplate>
                                 <ItemTemplate>
-                                    <asp:Label ID="lblEmailId" runat="server" SkinID="lblskingen" Text='<%#Eval("EmailId")%>'></asp:Label>
+                                    <asp:Label ID="lblEmailId" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("EmailId")) %>'></asp:Label>
                                 </ItemTemplate>
                             </asp:TemplateField>
                             <asp:TemplateField SortExpression="RoleName">
@@ -70,7 +70,7 @@
                                     <asp:LinkButton ID="lnk6" runat="server" Text="Role Name" CommandName="Sort" CommandArgument="RoleName"></asp:LinkButton>
                                 </HeaderTemplate>
                                 <ItemTemplate>
-                                    <asp:Label ID="lblRoleName" runat="server" SkinID="lblskingen" Text='<%#Eval("RoleName")%>'></asp:Label>
+                                    <asp:Label ID="lblRoleName" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("RoleName")) %>'></asp:Label>
                                 </ItemTemplate>
                             </asp:TemplateField>
                             <asp:TemplateField SortExpression="LoginName">
@@ -79,7 +79,7 @@
                                         CommandArgument="LoginName"></asp:LinkButton>
                                 </HeaderTemplate>
                                 <ItemTemplate>
-                                    <asp:Label ID="lblLoginName" runat="server" SkinID="lblskingen" Text='<%#Eval("LoginName")%>'></asp:Label>
+                                    <asp:Label ID="lblLoginName" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("LoginName")) %>'></asp:Label>
                                 </ItemTemplate>
                             </asp:TemplateField>
                             <asp:TemplateField SortExpression="Status">
@@ -87,7 +87,7 @@
                                     <asp:LinkButton ID="lnk8" runat="server" Text="Status" CommandName="Sort" CommandArgument="Status"></asp:LinkButton>
                                 </HeaderTemplate>
                                 <ItemTemplate>
-                                    <asp:Label ID="lblStatus" runat="server" CssClass="wb-status" Text='<%#Eval("Status")%>'></asp:Label>
+                                    <asp:Label ID="lblStatus" runat="server" CssClass="wb-status" Text='<%# HttpUtility.HtmlEncode(Eval("Status")) %>'></asp:Label>
                                 </ItemTemplate>
                             </asp:TemplateField>
                             <asp:TemplateField>

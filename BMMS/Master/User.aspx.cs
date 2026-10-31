@@ -331,7 +331,7 @@ namespace BMMS.Master
 
             if (btnSave.Text == "Save")
             {
-                dv.RowFilter = " LoginName = '" + txtLoginName.Text.Trim().ToLower() + "'";
+                dv.RowFilter = " LoginName = '" + txtLoginName.Text.Trim().ToLower().Replace("'", "''") + "'";
 
                 int PasswordMinLength = Convert.ToInt16(Common.GetAppSetting("PasswordMinLength"));
                 if (txtPassword.Text.Trim().Length <= PasswordMinLength)
@@ -342,7 +342,7 @@ namespace BMMS.Master
                 }
             }
             if (btnSave.Text == "Update")
-                dv.RowFilter = " LoginName = '" + txtLoginName.Text.Trim().ToLower() + "' and UserId <> " + hdnUserId.Value;
+                dv.RowFilter = " LoginName = '" + txtLoginName.Text.Trim().ToLower().Replace("'", "''") + "' and UserId <> " + hdnUserId.Value;
 
 
             DataTable dtFilter = dv.ToTable("dtDepartment");

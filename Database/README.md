@@ -1309,6 +1309,59 @@ Browser checks on `BMMS_Test`, in Chrome and in Edge (deploy the build first; ke
 7. A grid with no rows (for example Committee Member for a committee without members) shows its no-record text and no error.
 8. No new error log entries.
 
+## Step A1b-2: plain text encoded on the master, meeting and report grids (markup and code only; test script for BMMS_Test)
+
+Found in the A1b review: the grid Labels of the master, meeting and report pages show `Eval(...)` without encoding (a Label does not encode), so a name holding `<`, `>` or `&` was read as HTML by the browser (since the baseline). A name with an apostrophe (O'Brien) could not be saved on six master pages: the duplicate-name check pastes the typed name between quotes in a DataView RowFilter, the filter is then invalid, and the save went to the error page.
+
+Built and tested in three groups. Test rows: `Database/BMMS-Test-MasterHtml-A1b.sql` (BMMS_Test only; part 1 inserts, part 2 shows, part 3 deletes; see its header). The texts are A `ZZ A1b O'Brien & Sons <b>x</b>`, B `ZZ A1b <script>alert(1)</script>`, C `ZZ A1b <img src=x onerror=alert(2)>` and D `<i>T'&</i>`; each must appear exactly as typed, as text.
+
+Group 1, masters:
+
+- Grid Labels now `HttpUtility.HtmlEncode(Eval(...))`, as in A1a: Department (code, name, status), Decision Type (code, name, status), Designation (code, name, status), Subject Type (code, name, status), Member Type (code, name, scope, status), User (name, department, designation, email, role, login, status). The order and display-order numbers are unchanged. The User status label of the system account is still written by the code (already encoded), so it is not encoded twice.
+- Duplicate-name check: the typed text has each `'` doubled in the RowFilter (Department, Decision Type, Designation and Subject Type name; User login), on Save and on Update. The check itself is unchanged (case-insensitive, same messages).
+- Unchanged: Member Type has no duplicate check on the page; the edit boxes and dropdowns (encoded by the controls); every procedure.
+
+Browser checks for group 1 on `BMMS_Test`, in Chrome and in Edge (deploy the build first; part 1 of the test script run; keep the error log of the day open):
+
+1. Department, Decision Type, Designation, Subject Type, Member Type and User: the ZZ A1b row shows its text exactly as stored (`<b>x</b>` with its tags and not bold, `<script>...</script>` as text, the img text as text); no alert box, no broken image, no bold.
+2. Edit on each ZZ A1b row opens the same text in the boxes. These rows cannot be saved again from the screen: their text holds `<`, so request validation stops the postback (the error page, and one error log entry with the field name and without the value, step E2); this is expected. The apostrophe Update is tested on the `ZZ O'Brien` rows of check 3: Edit, Update without changes gives the usual saved message (before this step that save went to the error page).
+3. Department, Decision Type, Designation and Subject Type: Save a new row named `ZZ O'Brien` (any free code): saved. Save a second one named `zz o'brien`: refused with "Duplicate ... not allowed". User: Save a new user with login `zz o'brien` (role User, any department): saved; a second one with the same login is refused with "Duplicate Login User Id not allowed".
+4. Delete the `ZZ O'Brien` rows of check 3: the delete confirm shows its fixed text, and the row is deleted.
+5. User: Delete on `zza1b` gives "This user cannot be deleted because they have history: audit trail, backups." and the row stays.
+6. Dropdowns show the names as text: User page Department (A) and Designation (B); Member page Designation (B); Agenda Entry Subject Type (A); Committee Member Member Type (B); Update Minutes Decision Type (C), when a meeting with minutes is at hand.
+7. Every header of the six grids sorts ascending on the first click and descending on the second; the ZZ A1b rows keep their text after a sort.
+8. Normal names (the seeded departments, designations and types, and a name with `&`) look as before.
+9. No new error log entries, apart from one redacted request validation entry for each save of a ZZ A1b row tried in check 2.
+
+Decision Type Master open to Controllers (decision of the Consultant, 2026-10-31): since the baseline the page hid the Add button and disabled Edit and Delete on every row for every role except Admin (an inline role check in DecisionType.aspx and `Enabled = false` in grvDecisionType_RowDataBound), although PageAccess.xml and the Master menu give the page to Admin and Controller. Both checks are removed, so the page behaves for Admin and Controller exactly like Department. Nothing else restricts it by role: spr_AddEditDecisionType receives no role (only the acting user id), spr_DeleteDecisionTypeByDecisionTypeId refuses only a decision type used by minutes, and other roles still get Access denied from PageAccess.xml.
+
+Browser checks for Decision Type Master:
+
+1. Signed in as a Controller: the Add button shows, and Edit and Delete are enabled (not grey) on every row.
+2. As the Controller: Add `ZZ O'Brien` (any free code) saves; Edit it, Update without changes saves; Add a second `zz o'brien`: refused with "Duplicate Decision Type not allowed"; Delete `ZZ O'Brien`: the confirm shows, the row is deleted.
+3. Signed in as Admin: the same as before (Add, Edit, Update, Delete).
+4. Signed in as a Manager and as a User: opening `Master/DecisionType.aspx` by its address gives Access denied.
+
+Group 2, committee, member and meeting:
+
+- Grid Labels now `HttpUtility.HtmlEncode(Eval(...))`: Committee (code, name, status), Committee Member (committee, member, designation, member type), Member (code, name, designation, email, date of joining text), Meeting (meeting no, committee, place, venue, time), Meeting Member (meeting no, member, designation, member type), and the Dashboard meeting summary UserControl/MeetingSummary.ascx (committee, meeting no and time, in the scheduled and the completed list). Dates in `{0:dd-MMM-yyyy}`, the Yes/No and Active/InActive texts, the hidden MeetingId and the member photo address are unchanged.
+- Committee: the duplicate-name check doubles each `'` of the typed name in the RowFilter, on Save and on Update, as in group 1.
+- Unchanged: the edit forms, the dropdowns (encoded by the controls), the meeting mails (encoded since A1a), every procedure.
+
+Browser checks for group 2 on `BMMS_Test`, in Chrome and in Edge (deploy the build first; smtp4dev running; keep the error log of the day open). Rows whose text holds `<` cannot be saved again from the screen (request validation, as in group 1 check 2); that is the expected result and is not repeated below.
+
+1. Committee: the ZZB1C row shows name A as text; Edit opens it with the same text. Add a committee named `ZZ O'Brien` (any free code): saved; Edit it, Update without changes: saved; Add a second `zz o'brien`: refused with "Duplicate Committee Name not allowed"; Delete `ZZ O'Brien`: the confirm shows, the row is deleted.
+2. Committee Member: choose committee ZZB1C (A in the dropdown, as text): the row shows member C, designation B and member type B as text; Edit opens the right member; Cancel.
+3. Member: the ZZB1M row shows name C and DOJ B as text, designation B as text; Edit opens with name C, Address1 A and DOJ B in the boxes; Cancel.
+4. Dashboard, before check 5: the meeting summary lists the ZZB1C meetings with committee A as text, meeting 2 (dated tomorrow, 10:00) under scheduled and meeting 1 (dated yesterday, time `<i>T'&</i>` as text) under completed, when the summary includes them (part 2 of the test script shows the rows).
+5. Meeting Master: the ZZB1C rows show committee A, place and venue (A, B, C) and the time of meeting 1 as text. Sort by a header, then on meeting 2 (522, tomorrow): Edit opens; change Place and Venue to `ZZ O'Brien & Sons`, Update: "Successfully Saved", the grid shows the new text, the mail arrives with the text as typed; sort again, Delete meeting 2: deleted (no members, no agenda items).
+6. Meeting Master, meeting 1 (521, yesterday): Edit and Delete each give "The meeting date has passed, so this meeting can no longer be edited or deleted."; the grid is unchanged.
+7. Meeting Member: choose committee ZZB1C and meeting 1: the row shows meeting no, member C and designation B as text; Edit opens the right member; Cancel. Keep the row (the group 3 reports use it).
+8. Dropdowns show committee A and member C as text on Committee Member, Meeting, Meeting Member, Attendance and Agenda Entry (committee), and on the report filters.
+9. Every header of the five grids sorts ascending then descending; the ZZ A1b rows keep their text after a sort.
+10. Normal names (the seeded committees and members, a name with `&`) look as before.
+11. Error log: one Mail_Mgr entry only if a mail failed; one redacted request validation entry for each save of a ZZ A1b row tried; nothing else.
+
 ## Known items for later steps
 
 - The colour picker on Committee and Meeting (third-party JScript/ColorPicker/js_color_picker_v2.js) asks for its tab and slider images relative to the page (`/Master/images/tab_right_active.gif`, `slider_handle.gif`), which gives 404; its own copies are in JScript/ColorPicker/Images. Seen in step B3, not changed.

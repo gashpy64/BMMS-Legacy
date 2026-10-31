@@ -210,9 +210,9 @@ namespace BMMS.Master
             dtDesignation.CaseSensitive = false;
 
             if (btnSave.Text == "Save")
-                dv.RowFilter = " DesignationName = '" + txtDesignationName.Text.Trim().ToLower() + "'";
+                dv.RowFilter = " DesignationName = '" + txtDesignationName.Text.Trim().ToLower().Replace("'", "''") + "'";
             if (btnSave.Text == "Update")
-                dv.RowFilter = " DesignationName = '" + txtDesignationName.Text.Trim().ToLower() + "' and DesignationId <> " + hdnDesignationId.Value;
+                dv.RowFilter = " DesignationName = '" + txtDesignationName.Text.Trim().ToLower().Replace("'", "''") + "' and DesignationId <> " + hdnDesignationId.Value;
 
             
             DataTable dtFilter = dv.ToTable("dtDesignation");

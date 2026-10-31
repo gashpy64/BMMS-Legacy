@@ -55,7 +55,7 @@
                                                 CommandArgument="CommitteeCode"></asp:LinkButton>
                                         </HeaderTemplate>
                                         <ItemTemplate>
-                                            <asp:Label ID="lblCommitteeCode" SkinID="lblSkinGen" Text='<%#Eval("CommitteeCode")%>'
+                                            <asp:Label ID="lblCommitteeCode" SkinID="lblSkinGen" Text='<%# HttpUtility.HtmlEncode(Eval("CommitteeCode")) %>'
                                                 runat="server" />
                                             <asp:HiddenField ID="hdnCommitteeCode" runat="server" />
                                         </ItemTemplate>
@@ -66,7 +66,7 @@
                                                 CommandArgument="CommitteeName"></asp:LinkButton>
                                         </HeaderTemplate>
                                         <ItemTemplate>
-                                            <asp:Label ID="lblEmployeName" runat="server" SkinID="lblskingen" Text='<%#Eval("CommitteeName")%>'></asp:Label>
+                                            <asp:Label ID="lblEmployeName" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("CommitteeName")) %>'></asp:Label>
                                         </ItemTemplate>
                                     </asp:TemplateField>
                                     <asp:TemplateField SortExpression="IncorporationDate">
@@ -94,7 +94,7 @@
                                             <asp:LinkButton ID="lnk5" runat="server" Text="Status" CommandName="Sort" CommandArgument="StatusName"></asp:LinkButton>
                                         </HeaderTemplate>
                                         <ItemTemplate>
-                                            <asp:Label ID="lblStatusName" runat="server" SkinID="lblskingen" Text='<%#Eval("StatusName")%>'></asp:Label>
+                                            <asp:Label ID="lblStatusName" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("StatusName")) %>'></asp:Label>
                                         </ItemTemplate>
                                     </asp:TemplateField>
                                     <asp:TemplateField>

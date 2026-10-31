@@ -61,7 +61,7 @@
                                             <asp:LinkButton ID="lnk1" runat="server" Text="Meeting No" CommandName="Sort" CommandArgument="MeetingNo"></asp:LinkButton>
                                         </HeaderTemplate>
                                         <ItemTemplate>
-                                            <asp:Label ID="lblMeetingNoe" SkinID="lblSkinGen" Text='<%#Eval("MeetingNo")%>' runat="server" />
+                                            <asp:Label ID="lblMeetingNoe" SkinID="lblSkinGen" Text='<%# HttpUtility.HtmlEncode(Eval("MeetingNo")) %>' runat="server" />
                                             <asp:HiddenField ID="hdnMeetingNo" runat="server" />
                                         </ItemTemplate>
                                     </asp:TemplateField>
@@ -71,7 +71,7 @@
                                                 CommandArgument="CommitteeName"></asp:LinkButton>
                                         </HeaderTemplate>
                                         <ItemTemplate>
-                                            <asp:Label ID="lblCommitteeName" runat="server" SkinID="lblskingen" Text='<%#Eval("CommitteeName")%>'></asp:Label>
+                                            <asp:Label ID="lblCommitteeName" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("CommitteeName")) %>'></asp:Label>
                                         </ItemTemplate>
                                     </asp:TemplateField>
                                     <asp:TemplateField SortExpression="Place">
@@ -79,7 +79,7 @@
                                             <asp:LinkButton ID="lnk3" runat="server" Text="Place" CommandName="Sort" CommandArgument="Place"></asp:LinkButton>
                                         </HeaderTemplate>
                                         <ItemTemplate>
-                                            <asp:Label ID="lblPlace" runat="server" SkinID="lblskingen" Text='<%#Eval("Place")%>'></asp:Label>
+                                            <asp:Label ID="lblPlace" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("Place")) %>'></asp:Label>
                                         </ItemTemplate>
                                     </asp:TemplateField>
                                     <asp:TemplateField SortExpression="Venue">
@@ -87,7 +87,7 @@
                                             <asp:LinkButton ID="lnk7" runat="server" Text="Venue" CommandName="Sort" CommandArgument="Venue"></asp:LinkButton>
                                         </HeaderTemplate>
                                         <ItemTemplate>
-                                            <asp:Label ID="lblVenue" runat="server" SkinID="lblskingen" Text='<%#Eval("Venue")%>'></asp:Label>
+                                            <asp:Label ID="lblVenue" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("Venue")) %>'></asp:Label>
                                         </ItemTemplate>
                                     </asp:TemplateField>
                                     <asp:TemplateField SortExpression="MeetingDate">
@@ -104,7 +104,7 @@
                                             <asp:LinkButton ID="lnk5" runat="server" Text="MeetingTime" CommandName="Sort" CommandArgument="MeetingTime"></asp:LinkButton>
                                         </HeaderTemplate>
                                         <ItemTemplate>
-                                            <asp:Label ID="lblMeetingTime" runat="server" SkinID="lblskingen" Text='<%#Eval("MeetingTime")%>'></asp:Label> Hrs.
+                                            <asp:Label ID="lblMeetingTime" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("MeetingTime")) %>'></asp:Label> Hrs.
                                         </ItemTemplate>
                                         <ItemStyle CssClass="wb-col-action" />
                                     </asp:TemplateField>

@@ -17,13 +17,9 @@
             <div class="wb-card">
                 <div class="wb-card-header">
                     Decision types</div>
-                <%if (Session["RoleCode"].ToString() == "admin")
-                  { %>
                 <div class="wb-toolbar">
                     <asp:Button ID="btnAdd" runat="server" CssClass="wb-btn" Text="Add" OnClick="btnAdd_Click" />
                 </div>
-                <%
-                    } %>
                 <div class="wb-table-scroll">
                     <asp:GridView ID="grvDecisionType" runat="server" SkinID="grvSkinNoPaging" AutoGenerateColumns="false"
                         CssClass="wb-table" AllowSorting="true" DataKeyNames="DecisionTypeId" GridLines="None"
@@ -41,7 +37,7 @@
                                         CommandArgument="DecisionTypeCode"></asp:LinkButton>
                                 </HeaderTemplate>
                                 <ItemTemplate>
-                                    <asp:Label ID="lblDecisionTypeCode" SkinID="lblSkinGen" Text='<%#Eval("DecisionTypeCode")%>'
+                                    <asp:Label ID="lblDecisionTypeCode" SkinID="lblSkinGen" Text='<%# HttpUtility.HtmlEncode(Eval("DecisionTypeCode")) %>'
                                         runat="server" />
                                     <asp:HiddenField ID="hdnDecisionTypeCode" runat="server" />
                                 </ItemTemplate>
@@ -52,7 +48,7 @@
                                         CommandArgument="DecisionTypeName"></asp:LinkButton>
                                 </HeaderTemplate>
                                 <ItemTemplate>
-                                    <asp:Label ID="lblEmployeName" runat="server" SkinID="lblskingen" Text='<%#Eval("DecisionTypeName")%>'></asp:Label>
+                                    <asp:Label ID="lblEmployeName" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("DecisionTypeName")) %>'></asp:Label>
                                 </ItemTemplate>
                             </asp:TemplateField>
                             <asp:TemplateField SortExpression="StatusName">
@@ -60,7 +56,7 @@
                                     <asp:LinkButton ID="lnk4" runat="server" Text="Status" CommandName="Sort" CommandArgument="StatusName"></asp:LinkButton>
                                 </HeaderTemplate>
                                 <ItemTemplate>
-                                    <asp:Label ID="lblStatusName" runat="server" SkinID="lblskingen" Text='<%#Eval("StatusName")%>'></asp:Label>
+                                    <asp:Label ID="lblStatusName" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("StatusName")) %>'></asp:Label>
                                 </ItemTemplate>
                             </asp:TemplateField>
                             <asp:TemplateField>

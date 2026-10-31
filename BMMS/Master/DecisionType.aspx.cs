@@ -103,15 +103,6 @@ namespace BMMS.Master
                 {
                     //e.Row.Attributes.Add("onmouseover", "MouseEvents(this, event)");
                     //e.Row.Attributes.Add("onmouseout", "MouseEvents(this, event)");
-
-                    if (Session["RoleCode"].ToString() != "admin")
-                    {
-                        Button btnEdit = (Button)e.Row.FindControl("btnEdit");
-                        btnEdit.Enabled = false;
-
-                        Button btnDelete = (Button)e.Row.FindControl("btnDelete");
-                        btnDelete.Enabled = false;
-                    }
                 }
             }
             catch (Exception ex)
@@ -214,9 +205,9 @@ namespace BMMS.Master
             dtDecisionType.CaseSensitive = false;
 
             if (btnSave.Text == "Save")
-                dv.RowFilter = " DecisionTypeName = '" + txtDecisionTypeName.Text.Trim().ToLower() + "'";
+                dv.RowFilter = " DecisionTypeName = '" + txtDecisionTypeName.Text.Trim().ToLower().Replace("'", "''") + "'";
             if (btnSave.Text == "Update")
-                dv.RowFilter = " DecisionTypeName = '" + txtDecisionTypeName.Text.Trim().ToLower() + "' and DecisionTypeId <> " + hdnDecisionTypeId.Value;
+                dv.RowFilter = " DecisionTypeName = '" + txtDecisionTypeName.Text.Trim().ToLower().Replace("'", "''") + "' and DecisionTypeId <> " + hdnDecisionTypeId.Value;
 
 
             DataTable dtFilter = dv.ToTable("dtDecisionType");

@@ -215,9 +215,9 @@ namespace BMMS.Master
             dtSubjectType.CaseSensitive = false;
 
             if (btnSave.Text == "Save")
-                dv.RowFilter = " SubjectTypeName = '" + txtSubjectTypeName.Text.Trim().ToLower() + "'";
+                dv.RowFilter = " SubjectTypeName = '" + txtSubjectTypeName.Text.Trim().ToLower().Replace("'", "''") + "'";
             if (btnSave.Text == "Update")
-                dv.RowFilter = " SubjectTypeName = '" + txtSubjectTypeName.Text.Trim().ToLower() + "' and SubjectTypeId <> " + hdnSubjectTypeId.Value;
+                dv.RowFilter = " SubjectTypeName = '" + txtSubjectTypeName.Text.Trim().ToLower().Replace("'", "''") + "' and SubjectTypeId <> " + hdnSubjectTypeId.Value;
 
 
             DataTable dtFilter = dv.ToTable("dtSubjectType");

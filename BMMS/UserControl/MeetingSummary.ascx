@@ -18,13 +18,13 @@
                     <Columns>
                         <asp:TemplateField HeaderText="Committee">
                             <ItemTemplate>
-                                <asp:Label ID="lblCommitteeName" runat="server" Text='<%#Eval("CommitteeName") %>'></asp:Label>
+                                <asp:Label ID="lblCommitteeName" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("CommitteeName")) %>'></asp:Label>
                             </ItemTemplate>
                             <ItemStyle VerticalAlign="Middle" HorizontalAlign="Left" />
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="Meeting No">
                             <ItemTemplate>
-                                <asp:Label ID="lblMeetingNo" runat="server" Text='<%#Eval("MeetingNo") %>'></asp:Label>
+                                <asp:Label ID="lblMeetingNo" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("MeetingNo")) %>'></asp:Label>
                                 <asp:Label ID="lblMeetingId" runat="server" Text='<%#Eval("MeetingId") %>' Visible="false"></asp:Label>
                             </ItemTemplate>
                             <ItemStyle VerticalAlign="Middle" HorizontalAlign="Center" />
@@ -32,7 +32,7 @@
                         <asp:TemplateField HeaderText="Meeting <br/>Date">
                             <ItemTemplate>
                                 <asp:Label ID="lblMeetingDate" runat="server" Text='<%#Eval("MeetingDate", "{0:dd-MMM-yyyy}") %>'></asp:Label>
-                                <asp:Label ID="lblMeetingTime" runat="server" Text='<%#Eval("MeetingTime") %>'></asp:Label> Hrs.
+                                <asp:Label ID="lblMeetingTime" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("MeetingTime")) %>'></asp:Label> Hrs.
                             </ItemTemplate>
                             <ItemStyle VerticalAlign="Middle" HorizontalAlign="Center" />
                         </asp:TemplateField>
@@ -61,13 +61,13 @@
                     <Columns>
                         <asp:TemplateField HeaderText="Committee">
                             <ItemTemplate>
-                                <asp:Label ID="lblCommitteeName" runat="server" Text='<%#Eval("CommitteeName") %>'></asp:Label>
+                                <asp:Label ID="lblCommitteeName" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("CommitteeName")) %>'></asp:Label>
                             </ItemTemplate>
                             <ItemStyle VerticalAlign="Middle" HorizontalAlign="Left" />
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="Meeting No">
                             <ItemTemplate>
-                                <asp:Label ID="lblMeetingNo" runat="server" Text='<%#Eval("MeetingNo") %>'></asp:Label>
+                                <asp:Label ID="lblMeetingNo" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("MeetingNo")) %>'></asp:Label>
                                 <asp:Label ID="lblMeetingId" runat="server" Text='<%#Eval("MeetingId") %>' Visible="false"></asp:Label>
                             </ItemTemplate>
                             <ItemStyle VerticalAlign="Middle" HorizontalAlign="Center" />
@@ -75,7 +75,7 @@
                         <asp:TemplateField HeaderText="Meeting <br/>Date">
                             <ItemTemplate>
                                 <asp:Label ID="lblMeetingDate" runat="server" Text='<%#Eval("MeetingDate", "{0:dd-MMM-yyyy}") %>'></asp:Label>
-                                <asp:Label ID="lblMeetingTime" runat="server" Text='<%#Eval("MeetingTime") %>'></asp:Label> Hrs.
+                                <asp:Label ID="lblMeetingTime" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("MeetingTime")) %>'></asp:Label> Hrs.
                             </ItemTemplate>
                             <ItemStyle VerticalAlign="Middle" HorizontalAlign="Center" />
                         </asp:TemplateField>

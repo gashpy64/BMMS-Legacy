@@ -37,7 +37,7 @@
                                         CommandArgument="SubjectTypeCode"></asp:LinkButton>
                                 </HeaderTemplate>
                                 <ItemTemplate>
-                                    <asp:Label ID="lblSubjectTypeCode" SkinID="lblSkinGen" Text='<%#Eval("SubjectTypeCode")%>'
+                                    <asp:Label ID="lblSubjectTypeCode" SkinID="lblSkinGen" Text='<%# HttpUtility.HtmlEncode(Eval("SubjectTypeCode")) %>'
                                         runat="server" />
                                     <asp:HiddenField ID="hdnSubjectTypeCode" runat="server" />
                                 </ItemTemplate>
@@ -48,7 +48,7 @@
                                         CommandArgument="SubjectTypeName"></asp:LinkButton>
                                 </HeaderTemplate>
                                 <ItemTemplate>
-                                    <asp:Label ID="lblEmployeName" runat="server" SkinID="lblskingen" Text='<%#Eval("SubjectTypeName")%>'></asp:Label>
+                                    <asp:Label ID="lblEmployeName" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("SubjectTypeName")) %>'></asp:Label>
                                 </ItemTemplate>
                             </asp:TemplateField>
                             <asp:TemplateField SortExpression="StatusName">
@@ -56,7 +56,7 @@
                                     <asp:LinkButton ID="lnk4" runat="server" Text="Status" CommandName="Sort" CommandArgument="StatusName"></asp:LinkButton>
                                 </HeaderTemplate>
                                 <ItemTemplate>
-                                    <asp:Label ID="lblStatusName" runat="server" SkinID="lblskingen" Text='<%#Eval("StatusName")%>'></asp:Label>
+                                    <asp:Label ID="lblStatusName" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("StatusName")) %>'></asp:Label>
                                 </ItemTemplate>
                             </asp:TemplateField>
                             <asp:TemplateField>

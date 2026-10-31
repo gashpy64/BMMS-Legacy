@@ -225,9 +225,9 @@ namespace BMMS.Master
             dtDepartment.CaseSensitive = false;
 
             if (btnSave.Text == "Save")
-                dv.RowFilter = " DepartmentName = '" + txtDeptName.Text.Trim().ToLower() + "'";
+                dv.RowFilter = " DepartmentName = '" + txtDeptName.Text.Trim().ToLower().Replace("'", "''") + "'";
             if (btnSave.Text == "Update")
-                dv.RowFilter = " DepartmentName = '" + txtDeptName.Text.Trim().ToLower() + "' and DepartmentId <> " + hdnDeptId.Value;
+                dv.RowFilter = " DepartmentName = '" + txtDeptName.Text.Trim().ToLower().Replace("'", "''") + "' and DepartmentId <> " + hdnDeptId.Value;
 
 
             DataTable dtFilter = dv.ToTable("dtDepartment");
