@@ -99,7 +99,16 @@ namespace BMMS.Report {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.HtmlControls.HtmlAnchor aAttachment;
-        
+
+        /// <summary>
+        /// lblAttachmentName control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblAttachmentName;
+
         /// <summary>
         /// FileUploadAttachment control.
         /// </summary>
@@ -117,16 +126,7 @@ namespace BMMS.Report {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Button btnAddAttachment;
-        
-        /// <summary>
-        /// txtAttachmentPath control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtAttachmentPath;
-        
+
         /// <summary>
         /// btnSendMail control.
         /// </summary>

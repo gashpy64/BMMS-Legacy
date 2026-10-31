@@ -74,11 +74,11 @@
                                 Attachment :</td>
                             <td>
                                 <a id="aAttachment" runat="server" target="_blank">View</a>
+                                <asp:Label ID="lblAttachmentName" runat="server"></asp:Label>
                                 <asp:FileUpload ID="FileUploadAttachment" runat="server" />
                                 <asp:Button ID="btnAddAttachment" runat="server" Text="AddAttachment" OnClick="btnAttachment_Click"
                                     Style="visibility: hidden" />
-                                <asp:TextBox ID="txtAttachmentPath" runat="server" Width="150px" Style="visibility: hidden"></asp:TextBox>
-                                
+
                             </td>
                         </tr>
                         <tr>

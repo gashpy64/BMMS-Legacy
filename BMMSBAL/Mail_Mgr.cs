@@ -16,6 +16,12 @@ namespace BMMSBAL
         #region SendWebEmail
         public static string SendWebEmail(string ToMailId, string Subject, string BodyText, string AttachFileName, string Bcc)
         {
+            return SendWebEmail(ToMailId, Subject, BodyText, AttachFileName, null, Bcc);
+        }
+
+        // AttachName: the file name the mail attachment shows; null keeps the name of the file on disk (step SM1)
+        public static string SendWebEmail(string ToMailId, string Subject, string BodyText, string AttachFileName, string AttachName, string Bcc)
+        {
 
             string pSMTPServer = string.Empty;
             string pSMTPServerPort = string.Empty;
@@ -84,6 +90,8 @@ namespace BMMSBAL
                     {
                         // A file with a Tamil or Hindi name keeps its name (step U1b)
                         Attachment attachment = new Attachment(AttachFileName);
+                        if (AttachName != null)
+                            attachment.Name = AttachName;
                         attachment.NameEncoding = Encoding.UTF8;
                         eMail.Attachments.Add(attachment);
                     }
@@ -125,6 +133,35 @@ namespace BMMSBAL
                 if (mailId.Trim() != string.Empty)
                     addresses.Add(new MailAddress(mailId.Trim()));
             }
+        }
+        #endregion
+
+        #region FindInvalidMailAddress
+        // Checks addresses by the rule of AddMailAddresses (separated by comma or semicolon, blanks skipped)
+        // before a mail is sent (Send Mail, step SM1). Returns the first address that is not valid, or null;
+        // ValidCount is the number of valid addresses. Sends nothing and changes nothing.
+        public static string FindInvalidMailAddress(string MailIds, out int ValidCount)
+        {
+            ValidCount = 0;
+            if (MailIds == null)
+                return null;
+
+            foreach (string mailId in MailIds.Split(new char[] { ',', ';' }))
+            {
+                if (mailId.Trim() == string.Empty)
+                    continue;
+
+                try
+                {
+                    new MailAddress(mailId.Trim());
+                    ValidCount++;
+                }
+                catch (FormatException)
+                {
+                    return mailId.Trim();
+                }
+            }
+            return null;
         }
         #endregion
 

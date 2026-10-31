@@ -1451,6 +1451,37 @@ DELETE FROM dbo.State_Master WHERE State_Id > 3 AND State_Code IN ('AR','AS','BR
 -- The identity continues after 36; DBCC CHECKIDENT ('dbo.State_Master', RESEED, 3) after the delete makes the next id 4 again.
 ```
 
+## Step SM1: Send Mail attachments, clearing and messages (code only, no database script)
+
+Left over from step N1: every attachment upload on Send Mail deleted every file in `~/Files/Temp` (also `.gitkeep` and the attachment of another user's mail being written; a failed delete was ignored), and nothing was deleted after a send, so files stayed until the next upload. After a send every field and the attachment stayed, so Send sent the same mail again. The attachment's name was not shown. A failed send showed "Error: " and the exception text (a server path, SMTP or SQL text).
+
+- Attachment file per mail: an upload is saved as one plain file `~/Files/Temp/<id>_<clean name>` (a new Guid per upload, 32 hexadecimal characters; the clean name of step N1). Send Mail creates and deletes no folder. The id and the name are kept in ViewState, not in a posted box (the hidden `txtAttachmentPath` is removed); before use the id is parsed as a Guid and the name reduced to a file name again, and the path is built from these two. A new file for the same mail deletes the file of the earlier one. After a successful send the file is deleted; after a failed send the attachment is kept so that Send can be pressed again.
+- Clean-up: each upload first removes the files at the top of Temp whose creation and last write are both more than 24 hours old. `.gitkeep`, folders and anything younger are never touched. Every delete is a file delete; one that fails is written to the error log (SendMail / DeleteAttachment) and never stops the mail.
+- Deleting a directory inside the application folder restarts the application and loses the in-process sessions; code must delete files, never directories, there. The Temp folder outside the application folder is part of step 27. (Found in the browser test of the first SM1 build, which kept each attachment in a folder of its own: after a Send with an attachment the next click went to the login page.)
+- After a successful send: Committee back to "- Select -", Meeting No emptied (the meetings are not loaded again), To, Subject and the body emptied, the attachment removed. After a failed send everything stays.
+- The attachment's clean name is shown, HTML-encoded, next to View once the file is attached. Mail_Mgr.SendWebEmail has a second form with the name the attachment shows; Send Mail passes the clean name, so the mail attachment carries it (not the stored `<id>_<name>`). The first form calls the second with no name, so the other mail pages are unchanged. The View link opens the stored file, so a browser download shows the `<id>_` in front.
+- Mail_Mgr.FindInvalidMailAddress (new): checks the addresses by the rule of AddMailAddresses (comma or semicolon, blanks skipped) and returns the first one that is not valid. Used by Send Mail only; how mails are sent, and every other mail page, are unchanged.
+- Messages: "The mail was sent." (was "Mail was sent to all members."); "The mail could not be sent. The error is in the error log." (the error text is no longer shown; Mail_Mgr logs it once as before); "Enter at least one mail address in To."; "This mail address is not valid: <address>. Correct it and send again." (the address encoded); "The attachment is no longer on the server. Attach the file again."; "The file could not be attached. The error is in the error log." (logged as SendMail / btnAttachment_Click; the earlier attachment of the mail stays); "The file is empty or was not received. Choose the file again.".
+- Unchanged: the Committee and Meeting No loading (the slow Meeting No dropdown is a separate item), the recipient list from the meeting, the body cleaning of A1a, every procedure.
+
+Browser checks on `BMMS_Test`, in Chrome and in Edge (deploy the build first; delete by hand, once, the 32-character folders the first SM1 build left in `Files\Temp`; smtp4dev running unless stated; keep the error log of the day and the folder `Files\Temp` of the site open):
+
+1. Attach `a&b #1.pdf`: "View" and `a_b _1.pdf` appear; View opens the file. Temp holds one new file `<32 hexadecimal characters>_a_b _1.pdf` and no new folder; `.gitkeep` is still there.
+2. Click View, then attach another file to the same mail: the name changes; the first file is gone, one file is left. Choose a Committee: you stay signed in.
+3. Send with the attachment: "The mail was sent."; the mail's attachment is named `a_b _1.pdf` (no id in front). Committee shows "- Select -", Meeting No is empty, To, Subject, body, View and the name are gone; the file is deleted, `.gitkeep` stays. Choose a Committee and a Meeting: you stay signed in and To fills.
+4. Send without an attachment: "The mail was sent."; the page is cleared; choosing a Committee keeps the session.
+5. Two browsers, each signed in as a different Controller: each attaches its own file (one after the other, within a minute); both files stay; each View opens its own file; each sends its own mail with its own attachment; neither upload deleted the other's file.
+6. Stop smtp4dev, send with an attachment: "The mail could not be sent. The error is in the error log."; To, Subject, body, View, the name and the file stay. One Mail_Mgr / SendWebEmail log entry; no server path or SMTP text on the page. Start smtp4dev, Send again: "The mail was sent.", the mail arrives with the attachment, the file is deleted, and the session is kept.
+7. To empty (or only commas and spaces): "Enter at least one mail address in To."; nothing is sent, nothing is logged.
+8. To holding a typed address that is not valid, for example `abc` or `x@` or `a@b.com, <b>bad</b>`: "This mail address is not valid: abc. Correct it and send again." (the address shown as text, `<b>bad</b>` with its tags); nothing is sent, nothing is logged. Correct it, Send: sent.
+9. Attach a file, delete it in Explorer, Send: "The attachment is no longer on the server. Attach the file again."; View and the name are gone; nothing is sent.
+10. Sweep: attach a file and leave the page; in PowerShell set that file's creation and last write time 25 hours back (`$f = Get-Item <file>; $f.CreationTime = $f.LastWriteTime = (Get-Date).AddHours(-25)`); also put a file `old.txt` at the top of Temp and set its times back the same way. Attach a file in a new Send Mail page: the old file and `old.txt` are gone; `.gitkeep` and the new file stay; a file younger than 24 hours is never removed (check 5). Choose a Committee: you stay signed in.
+11. A file of 0 bytes: "The file is empty or was not received. Choose the file again."; an earlier attachment of the mail stays.
+12. A Tamil or a Hindi file name: shown next to View, and the mail's attachment carries that name.
+13. Committee and Meeting No fill To as before, and the page is not slower than before.
+14. The other mail pages (Meeting Master save, Reset Password, Notice): their mails arrive as before.
+15. Error log: only the entries named above; no check goes to the login page.
+
 ## Known items for later steps
 
 - The colour picker on Committee and Meeting (third-party JScript/ColorPicker/js_color_picker_v2.js) asks for its tab and slider images relative to the page (`/Master/images/tab_right_active.gif`, `slider_handle.gif`), which gives 404; its own copies are in JScript/ColorPicker/Images. Seen in step B3, not changed.
@@ -1461,7 +1492,11 @@ DELETE FROM dbo.State_Master WHERE State_Id > 3 AND State_Code IN ('AR','AS','BR
 
 - Files left by a Reset Database: the upload folders (Files/AgendaAttach, AgendaText, MemberPhoto, MemberResume) and the backups in Files/SqlBackup are not removed; the page shows their counts (step 29). Deleting them is a later step.
 - Step 27: a login-checked download page for agenda attachments and agenda text, member photos and CVs, and Send Mail attachments (move `~/Files/Temp` to App_Data); then add Temp to the hidden segments in Web.config. Until then these files can be fetched by URL without logging in.
-- Send Mail deletes every file in `~/Files/Temp` when anyone attaches a new file, so two Controllers composing at once lose each other's attachment (SendMail.aspx.cs).
+- Fixed in step SM1: Send Mail deleted every file in `~/Files/Temp` when anyone attached a new file, so two Controllers composing at once lost each other's attachment.
+- Deleting a directory inside the application folder restarts the application and loses the in-process sessions; code must delete files, never directories, there. The Temp folder outside the application folder is part of step 27.
+- The Send Mail audit row stores the full server path of the attachment: Mail_Mgr.SendWebEmail passes the path it was given to Common.SaveSendMail (Audit_Trail_SendMail). Store the file name only in a later step (Mail_Mgr is shared by every mail page).
+- A mail that was sent but whose audit row could not be saved (Common.SaveSendMail after smtp.Send) is reported by Mail_Mgr.SendWebEmail as a failure, so Send Mail says "The mail could not be sent" although the mail went out.
+- Uploads larger than the ASP.NET default of 4 MB (no maxRequestLength in Web.config) are refused before the page runs and show the safe error page; Send Mail and Agenda Entry give no message of their own.
 - Agenda Approval, an agenda whose text was uploaded as a file: it is read with WordUtilities.ReadWordDocument on a relative path through Word, while uploaded agenda texts are PDF files, so that text is probably missing from the PDF (AgendaApproval.aspx.cs).
 - Database backups should later be written outside the web root (Backup Database writes to `~/Files/SqlBackup`, now hidden but still inside the site folder).
 - Other exception text still shown on purpose (kept by E1 and E2): the mail errors (Mail_Mgr returns "Error: <message>", shown by Agenda Entry and the other mail pages) and the Notice page's "The notice could not be sent: <message>" (HTML-encoded). Replace them with fixed texts in a later step.
