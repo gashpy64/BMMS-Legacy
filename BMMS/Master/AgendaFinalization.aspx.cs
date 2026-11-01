@@ -250,12 +250,17 @@ namespace BMMS.Master
         // "NotRejected" (refused: no mail), or the result of the mail ("Error..."; the item stays rejected).
         private string RejectAgenda(int AgendaId, DataTable dtAgenda, int CurrentRow)
         {
+            // The item as saved now, not the list loaded with the page: the rejection keeps its Short Text and
+            // Proposed Resolution (step N4; the procedure writes both). An item that is gone is not rejected.
+            DataTable dtItem = AgendaMgr.GetAgendaByAgendaId(AgendaId);
+            if (dtItem.Rows.Count == 0)
+                return "NotRejected";
 
             AgendaBAL agendaBal = new AgendaBAL();
 
             agendaBal.AgendaId = AgendaId;
-            agendaBal.ShortText = "";
-            agendaBal.ProposedResolution = "";
+            agendaBal.ShortText = dtItem.Rows[0]["ShortText"].ToString();
+            agendaBal.ProposedResolution = dtItem.Rows[0]["ProposedResolution"].ToString();
             agendaBal.MgrComments = "";
             agendaBal.ControllerComments = "Agenda rejected by Controller on agenda finalized.";
             agendaBal.MgrApprovedStatus = "";

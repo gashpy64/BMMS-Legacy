@@ -19,6 +19,9 @@ namespace BMMS.Master
         // A new item only up to the whole meeting date (step M4, the rule of step M1)
         private const string MeetingDatePassedMessage = "The meeting date has passed, so agenda items can no longer be added to this meeting.";
 
+        // Edit, Update and Delete of an item only up to the whole meeting date, for every role (step M5)
+        private const string ItemMeetingDatePassedMessage = "The meeting date has passed, so agenda items can no longer be edited or deleted.";
+
         // The item is saved before the mail goes out (step M2); the mail error itself is in the error log
         private const string MailNotSentMessage = "The agenda item was saved, but the mail could not be sent. The error is in the error log.";
 
@@ -263,7 +266,13 @@ namespace BMMS.Master
                         dtAgendaEdit = AgendaMgr.GetAgendaByAgendaId(AgendaId);
 
 
-                        if ((Session["RoleCode"].ToString() == "user" || Session["RoleCode"].ToString() == "manager") &&
+                        if (dtAgendaEdit.Rows.Count > 0 && !MeetingMgr.IsMeetingOpenForChange(dtAgendaEdit.Rows[0]["MeetingDate"], DateTime.Today))
+                        {
+                            // Every role; Update checks again (step M5)
+                            MsgDisplay(ItemMeetingDatePassedMessage);
+                            ScriptManager.GetCurrent(this).SetFocus(ddlMeeting.ClientID);
+                        }
+                        else if ((Session["RoleCode"].ToString() == "user" || Session["RoleCode"].ToString() == "manager") &&
                             (dtAgendaEdit.Rows[0]["ControllerApprovedStatus"].ToString() == "Approved" ||
                             dtAgendaEdit.Rows[0]["ControllerApprovedStatus"].ToString() == "Rejected"))
                         {
@@ -297,7 +306,7 @@ namespace BMMS.Master
                             hdnCommitteeId.Value = dtAgendaEdit.Rows[0]["CommitteeId"].ToString();
                             txtMeetingNo.Text = dtAgendaEdit.Rows[0]["MeetingNo"].ToString();
                             hdnMeetingId.Value = dtAgendaEdit.Rows[0]["MeetingId"].ToString();
-                            txtDateOfMeeting.Text = Convert.ToDateTime(dtAgendaEdit.Rows[0]["MeetingDate"].ToString()).ToString("dd-MMM-yyyy");
+                            txtDateOfMeeting.Text = FormatDate(dtAgendaEdit.Rows[0]["MeetingDate"]);   // a meeting with no date is open (step M5)
 
 
                             if (Session["RoleCode"].ToString() == "controller")
@@ -401,29 +410,37 @@ namespace BMMS.Master
                     {
                         int AgendaId = Convert.ToInt32(e.CommandArgument);
 
-                        try
+                        if (!IsItemMeetingOpen(AgendaId))
                         {
-                            MeetingChangeResult deleteResult = AgendaMgr.DeleteAgendaByAgendaId(AgendaId, ActingUserId);
-
-
-                            /// Subject no auto regeneration based on Department
-
-                            //DataTable dt = AgendaMgr.GetAgendaApprovedByMeetingId(MeetingId, -1);
-
-                            //for (int i = 0; i < dt.Rows.Count; i++)
-                            //{
-                            //    int AgendaIdTemp = int.Parse(dt.Rows[i]["AgendaId"].ToString());
-                            //    int SubjectNo = i + 1;
-                            //    AgendaMgr.UpdateSubjectNoByAgendaId(AgendaIdTemp, SubjectNo);
-                            //}
-
-                            MsgDisplay(deleteResult.Result == 1 ? "Record Deleted Successfully" : deleteResult.RefusalMessage(), deleteResult.Result == 1 ? MessageKind.Success : MessageKind.Warning);
+                            // Every role; nothing is deleted (step M5)
+                            MsgDisplay(ItemMeetingDatePassedMessage);
                         }
-                        catch (Exception ex)
+                        else
                         {
-                            Utilities.WriteErrorLog(className, "grvAgenda_RowCommand", ex.ToString());
-                            string _ErrMsg = Common.GetAppSetting("delete_reference");
-                            MsgDisplay(_ErrMsg);
+                            try
+                            {
+                                MeetingChangeResult deleteResult = AgendaMgr.DeleteAgendaByAgendaId(AgendaId, ActingUserId);
+
+
+                                /// Subject no auto regeneration based on Department
+
+                                //DataTable dt = AgendaMgr.GetAgendaApprovedByMeetingId(MeetingId, -1);
+
+                                //for (int i = 0; i < dt.Rows.Count; i++)
+                                //{
+                                //    int AgendaIdTemp = int.Parse(dt.Rows[i]["AgendaId"].ToString());
+                                //    int SubjectNo = i + 1;
+                                //    AgendaMgr.UpdateSubjectNoByAgendaId(AgendaIdTemp, SubjectNo);
+                                //}
+
+                                MsgDisplay(deleteResult.Result == 1 ? "Record Deleted Successfully" : deleteResult.RefusalMessage(), deleteResult.Result == 1 ? MessageKind.Success : MessageKind.Warning);
+                            }
+                            catch (Exception ex)
+                            {
+                                Utilities.WriteErrorLog(className, "grvAgenda_RowCommand", ex.ToString());
+                                string _ErrMsg = Common.GetAppSetting("delete_reference");
+                                MsgDisplay(_ErrMsg);
+                            }
                         }
 
                         LoadAgenda();
@@ -641,6 +658,11 @@ namespace BMMS.Master
                         if (strResult == "Success")
                             strResult = CheckNewItemRoute();
                     }
+                    else if (btnSave.Text == "Update" && !IsItemMeetingOpen(myAgenda.AgendaId))
+                    {
+                        // The item's own saved meeting date, not the dropdown or the form (step M5); nothing is saved
+                        strResult = ItemMeetingDatePassedMessage;
+                    }
 
                     if (strResult == "Success")
                     {
@@ -729,6 +751,19 @@ namespace BMMS.Master
                 Notice = " This item was added after the Agenda Submission Date (" + FormatDate(dtMeeting.Rows[0]["AgendaSubmissionDate"]) + ").";
 
             return "Success";
+        }
+        #endregion
+
+        #region IsItemMeetingOpen
+        // Delete and Update (step M5): the rule of step M1 on the meeting date of the item as saved, read by the
+        // item's id. An item that no longer exists is left to the procedure.
+        private bool IsItemMeetingOpen(int AgendaId)
+        {
+            DataTable dtItem = AgendaMgr.GetAgendaByAgendaId(AgendaId);
+            if (dtItem.Rows.Count == 0)
+                return true;
+
+            return MeetingMgr.IsMeetingOpenForChange(dtItem.Rows[0]["MeetingDate"], DateTime.Today);
         }
         #endregion
 
