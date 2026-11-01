@@ -452,14 +452,27 @@ namespace BMMSBAL
         #endregion
 
         #region IsMeetingOpenForChange
-        // Edit and Delete on Meeting Master: open for the whole of the meeting date, closed from the next day
-        // (step M1; MeetingTime is not looked at). A meeting with no date stays open so that it can be corrected.
+        // Edit and Delete on Meeting Master, and a new item in Agenda Entry (step M4): open for the whole of the
+        // meeting date, closed from the next day (step M1; MeetingTime is not looked at). A meeting with no date
+        // stays open so that it can be corrected.
         public static bool IsMeetingOpenForChange(object MeetingDate, DateTime Today)
         {
             if (MeetingDate == null || MeetingDate == DBNull.Value)
                 return true;
 
             return Convert.ToDateTime(MeetingDate).Date >= Today.Date;
+        }
+        #endregion
+
+        #region IsAfterAgendaSubmissionDate
+        // Agenda Entry notice (step M4): true from the day after the Agenda Submission Date; false on that date,
+        // before it, and for a meeting with no submission date. The submission date blocks nothing.
+        public static bool IsAfterAgendaSubmissionDate(object AgendaSubmissionDate, DateTime Today)
+        {
+            if (AgendaSubmissionDate == null || AgendaSubmissionDate == DBNull.Value)
+                return false;
+
+            return Convert.ToDateTime(AgendaSubmissionDate).Date < Today.Date;
         }
         #endregion
 

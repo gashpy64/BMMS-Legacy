@@ -1482,6 +1482,33 @@ Browser checks on `BMMS_Test`, in Chrome and in Edge (deploy the build first; de
 14. The other mail pages (Meeting Master save, Reset Password, Notice): their mails arrive as before.
 15. Error log: only the entries named above; no check goes to the login page.
 
+## Step M4: Agenda Entry, no new item after the meeting date; notice after the Agenda Submission Date (code only; test script for BMMS_Test)
+
+Decision (Consultant, 2026-11-01): Agenda Entry refuses a new agenda item after the meeting date. The Agenda Submission Date is a provisional deadline and blocks nothing: an urgent item can be added at any time up to the meeting date. Before this step nothing checked a date when an item was added: the Controller's Meeting No list (spr_GetMeetingForController) offers every meeting of the committee whose minutes are open, past meetings included, and only the Users' and Managers' list (spr_GetMeetingForUsers) stops at the Agenda Submission Date.
+
+- The rule of step M1 (MeetingMgr.IsMeetingOpenForChange): the whole meeting date counts, closed from the next day (web server date; the meeting time is not looked at); a meeting with no date is open.
+- Add: after the agenda lock check, a meeting whose date has passed gives the warning "The meeting date has passed, so agenda items can no longer be added to this meeting." and the form does not open. A meeting with no date opens with an empty Date of Meeting (it failed in Convert.ToDateTime before).
+- Save of a new item: the meeting is read again by its id, after the agenda lock check and before the mail, so a form left open past the meeting date cannot add; the same warning, no mail, nothing saved; the form closes as with every refusal. Update is not checked (steps M2 and M3).
+- Notice: MeetingMgr.IsAfterAgendaSubmissionDate (new) is true from the day after the Agenda Submission Date. A new item saved then shows "Successfully Saved. This item was added after the Agenda Submission Date (dd-MMM-yyyy)." (shown as saved, never blocks). No notice on the submission date itself, before it, or for a meeting with no submission date. It is decided at Save, so a form left open over the deadline also gets it.
+- The rule and the notice apply to every role that saves on Agenda Entry. PageAccess.xml lets Controller, Manager and User reach Agenda Entry and each has an add path; roles and PageAccess are unchanged. A User or Manager meets the notice only with a form left open, because their list hides a meeting after its submission date.
+- Unchanged: the meeting lists (the Controller still sees past meetings with open minutes, to view and edit their items), Edit and Delete of an item, the agenda lock, the add procedures, the mail before the save (M2).
+- The three add procedures (spr_AddEditAgenda, spr_AddEditAgendaByManager, spr_AddEditAgendaByController) have no date rule of their own; the page is the only way to them (see Known items).
+
+Test rows: `Database/BMMS-Test-AgendaDates-M4.sql` (BMMS_Test only; part 1 inserts committee A903 "ZZ M4 agenda dates" and meetings 00901 to 00907, part 2 moves 00907 to yesterday, part 3 shows, part 4 deletes; see its header). Part 1 reports a meeting it could not write when a date column does not allow NULL; skip that check.
+
+Browser checks on `BMMS_Test`, in Chrome and in Edge (deploy the build first; run part 1; smtp4dev running; keep the error log of the day open; signed in as a Controller unless stated; committee "ZZ M4 agenda dates"):
+
+1. Meeting 00901 (today, submission today): Add opens; Save gives "Successfully Saved" with no notice; the "Agenda Created" mail arrives.
+2. Meeting 00902 (yesterday): still listed; Add gives "The meeting date has passed, so agenda items can no longer be added to this meeting."; the form does not open; no mail.
+3. Meeting 00903 (no meeting date): Add opens with an empty Date of Meeting; Save gives "Successfully Saved", no notice.
+4. Page left open: choose 00907 (today), press Add and fill the form; run part 2; press Save: the same warning, no mail, no new item in the grid (part 3 shows none for 00907).
+5. Meeting 00904 (in 3 days, submission yesterday): Save gives "Successfully Saved. This item was added after the Agenda Submission Date (<yesterday>)." in green.
+6. Meeting 00905 (in 5 days, submission in 2 days): saved, no notice. Check 1 covers the submission date itself.
+7. Meeting 00906 (no submission date): saved, no notice.
+8. Meeting 00902 stays in the Controller's Meeting No list and its grid opens (no items); the grid's sort headers work.
+9. Signed in as a User and as a Manager: the Meeting No list of the test committee shows 00901 and 00905 only (00907 is gone after part 2; 00903 is listed only when part 1 gave it the submission date today); an item added to 00905 is saved as before ("Successfully Saved", the routing mail).
+10. Run part 3: the items of checks 1, 3, 5, 6, 7 and 9, none on 00902 or 00907. Error log: no entry from these checks. Then run part 4.
+
 ## Known items for later steps
 
 - The colour picker on Committee and Meeting (third-party JScript/ColorPicker/js_color_picker_v2.js) asks for its tab and slider images relative to the page (`/Master/images/tab_right_active.gif`, `slider_handle.gif`), which gives 404; its own copies are in JScript/ColorPicker/Images. Seen in step B3, not changed.
@@ -1501,6 +1528,9 @@ Browser checks on `BMMS_Test`, in Chrome and in Edge (deploy the build first; de
 - Database backups should later be written outside the web root (Backup Database writes to `~/Files/SqlBackup`, now hidden but still inside the site folder).
 - Other exception text still shown on purpose (kept by E1 and E2): the mail errors (Mail_Mgr returns "Error: <message>", shown by Agenda Entry and the other mail pages) and the Notice page's "The notice could not be sent: <message>" (HTML-encoded). Replace them with fixed texts in a later step.
 - Notice Send Mail: no rule yet about meetings in the past.
+- Agenda Entry, step M4: spr_AddEditAgenda, spr_AddEditAgendaByManager and spr_AddEditAgendaByController do not refuse a new item after the meeting date; only the page checks. A database step can add the rule there.
+- Agenda Entry: Add puts the meeting id into Meeting No and the meeting number into the hidden meeting id (btnAdd_Click), so the "Agenda Created" mail shows the id as the Meeting No. Edit of an item of a meeting with no date fails in Convert.ToDateTime.
+- Agenda Entry is reachable by Controller, Manager and User (PageAccess.xml); step M4 kept it so.
 - Sitting Fees can still crash on a missing GetTotAmtByMemberId row, a deleted member, an empty From/To date, and a damaged logo file.
 - A damaged logo file makes the Notice, Agenda Approval and Sitting Fees PDFs throw (PDFUtilities.AddCompanyLogo).
 - Notice page shows no confirmation (fixed in step 28).

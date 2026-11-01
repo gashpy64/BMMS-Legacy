@@ -16,6 +16,9 @@ namespace BMMS.Master
     {
         private string className = "Agenda";
 
+        // A new item only up to the whole meeting date (step M4, the rule of step M1)
+        private const string MeetingDatePassedMessage = "The meeting date has passed, so agenda items can no longer be added to this meeting.";
+
         #region Page_Load
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -471,10 +474,19 @@ namespace BMMS.Master
                 // Same rule as the agenda procedures (BMMS-Fix-MeetingLocks-Step16.sql)
                 MeetingChangeResult agendaLock = AgendaMgr.GetAgendaLock(MeetingId, int.Parse(Session["UserId"].ToString()));
 
+                DataTable dtMeeting = new DataTable();
+                dtMeeting = MeetingMgr.GetMeetingByMeetingId(MeetingId);
+
                 if (agendaLock.Result != 1)
                 {
                     MsgDisplay(agendaLock.RefusalMessage());
                     ScriptManager.GetCurrent(this).SetFocus(ddlCommittee.ClientID);
+                }
+                else if (!MeetingMgr.IsMeetingOpenForChange(dtMeeting.Rows[0]["MeetingDate"], DateTime.Today))
+                {
+                    // The Agenda Submission Date blocks nothing; Save checks the meeting date again (step M4)
+                    MsgDisplay(MeetingDatePassedMessage);
+                    ScriptManager.GetCurrent(this).SetFocus(ddlMeeting.ClientID);
                 }
                 else
                 {
@@ -485,16 +497,13 @@ namespace BMMS.Master
 
                     string nextAgendaNo = AgendaMgr.GetNextAgendaNo(CommitteeId, MeetingId);
 
-                    DataTable dtMeeting = new DataTable();
-                    dtMeeting = MeetingMgr.GetMeetingByMeetingId(MeetingId);
-
                     txtAgendaNo.Text = nextAgendaNo;
                     txtSubjectNo.Text = string.Empty;
                     txtCommittee.Text = ddlCommittee.SelectedItem.Text.ToString();
                     hdnCommitteeId.Value = ddlCommittee.SelectedValue;
                     txtMeetingNo.Text = ddlMeeting.SelectedValue.ToString();
                     hdnMeetingId.Value = ddlMeeting.SelectedItem.Text.ToString();
-                    txtDateOfMeeting.Text = Convert.ToDateTime(dtMeeting.Rows[0]["MeetingDate"].ToString()).ToString("dd-MMM-yyyy");
+                    txtDateOfMeeting.Text = FormatDate(dtMeeting.Rows[0]["MeetingDate"]);   // a meeting with no date is open (step M4)
 
                     UserBAL userBal = new UserBAL();
                     userBal = UserMgr.GetUserByUserId(int.Parse(Session["UserId"].ToString()));
@@ -566,6 +575,8 @@ namespace BMMS.Master
                 AgendaMgr myAgendaMgr = new AgendaMgr();
                 AgendaBAL myAgenda = new AgendaBAL();
                 string sMsg = string.Empty;
+                bool saved = false;
+                string submissionNotice = string.Empty;
 
                 try
                 {
@@ -620,6 +631,9 @@ namespace BMMS.Master
                     if (agendaLock.Result != 1)
                         strResult = agendaLock.RefusalMessage();
                     else if (btnSave.Text == "Save")
+                        strResult = CheckNewItemMeetingDate(myAgenda.MeetingId, out submissionNotice);
+
+                    if (strResult == "Success" && btnSave.Text == "Save")
                         strResult = GenerateMail();
 
                     if (strResult == "Success")
@@ -649,7 +663,8 @@ namespace BMMS.Master
                                 break;
                         }
 
-                        sMsg = result.Result == 1 ? "Successfully Saved" : result.RefusalMessage();
+                        saved = result.Result == 1;
+                        sMsg = saved ? "Successfully Saved" + submissionNotice : result.RefusalMessage();
                     }
                     else
                     {
@@ -667,7 +682,7 @@ namespace BMMS.Master
                     myAgenda = null;
                 }
 
-                MsgDisplay(sMsg, sMsg == "Successfully Saved" ? MessageKind.Success : sMsg.StartsWith("Error: ") ? MessageKind.Error : MessageKind.Warning);
+                MsgDisplay(sMsg, saved ? MessageKind.Success : sMsg.StartsWith("Error: ") ? MessageKind.Error : MessageKind.Warning);
 
                 pnlViewAgenda.Visible = true;
                 pnlEditAgenda.Visible = false;
@@ -675,6 +690,36 @@ namespace BMMS.Master
                 LoadAgenda();
                 BindGridView();
             }
+        }
+        #endregion
+
+        #region CheckNewItemMeetingDate
+        // A new item: the meeting date is read again at Save, so a form left open past the meeting date cannot
+        // add (step M4); checked before the mail goes out. Returns "Success" or the refusal. The Agenda Submission
+        // Date blocks nothing: after it, Notice holds the text added to the saved message; otherwise it is empty.
+        private string CheckNewItemMeetingDate(int MeetingId, out string Notice)
+        {
+            Notice = string.Empty;
+
+            DataTable dtMeeting = MeetingMgr.GetMeetingByMeetingId(MeetingId);
+            if (dtMeeting.Rows.Count == 0)
+                return "Success";   // an unknown meeting is refused by the procedure
+
+            if (!MeetingMgr.IsMeetingOpenForChange(dtMeeting.Rows[0]["MeetingDate"], DateTime.Today))
+                return MeetingDatePassedMessage;
+
+            if (MeetingMgr.IsAfterAgendaSubmissionDate(dtMeeting.Rows[0]["AgendaSubmissionDate"], DateTime.Today))
+                Notice = ". This item was added after the Agenda Submission Date (" + FormatDate(dtMeeting.Rows[0]["AgendaSubmissionDate"]) + ").";
+
+            return "Success";
+        }
+        #endregion
+
+        #region FormatDate
+        // dd-MMM-yyyy, or empty when there is no date
+        private static string FormatDate(object value)
+        {
+            return value == null || value == DBNull.Value ? string.Empty : Convert.ToDateTime(value).ToString("dd-MMM-yyyy");
         }
         #endregion
 
