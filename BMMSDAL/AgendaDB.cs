@@ -290,7 +290,8 @@ namespace BMMSDAL
             parameter[17] = new SqlParameter("@CreatedBy", AgendaDAL.CreatedBy);
             parameter[18] = new SqlParameter("@UpdatedOn", AgendaDAL.UpdatedOn);
             parameter[19] = new SqlParameter("@UpdatedBy", AgendaDAL.UpdatedBy);
-            parameter[20] = new SqlParameter("@SubjectNo", AgendaDAL.SubjectNo);
+            // Step N5: an empty Subject No is NULL, not '' (which the INT parameter turned into 0)
+            parameter[20] = new SqlParameter("@SubjectNo", string.IsNullOrEmpty(AgendaDAL.SubjectNo) ? (object)DBNull.Value : AgendaDAL.SubjectNo);
 
             parameter[21] = new SqlParameter("@ActingUserId", ActingUserId);
 
@@ -323,7 +324,8 @@ namespace BMMSDAL
             parameter[17] = new SqlParameter("@CreatedBy", AgendaDAL.CreatedBy);
             parameter[18] = new SqlParameter("@UpdatedOn", AgendaDAL.UpdatedOn);
             parameter[19] = new SqlParameter("@UpdatedBy", AgendaDAL.UpdatedBy);
-            parameter[20] = new SqlParameter("@SubjectNo", AgendaDAL.SubjectNo);
+            // Step N5: an empty Subject No is NULL, not '' (which the INT parameter turned into 0)
+            parameter[20] = new SqlParameter("@SubjectNo", string.IsNullOrEmpty(AgendaDAL.SubjectNo) ? (object)DBNull.Value : AgendaDAL.SubjectNo);
 
             parameter[21] = new SqlParameter("@ActingUserId", ActingUserId);
 
@@ -356,7 +358,8 @@ namespace BMMSDAL
             parameter[17] = new SqlParameter("@CreatedBy", AgendaDAL.CreatedBy);
             parameter[18] = new SqlParameter("@UpdatedOn", AgendaDAL.UpdatedOn);
             parameter[19] = new SqlParameter("@UpdatedBy", AgendaDAL.UpdatedBy);
-            parameter[20] = new SqlParameter("@SubjectNo", AgendaDAL.SubjectNo);
+            // Step N5: an empty Subject No is NULL, not '' (which the INT parameter turned into 0)
+            parameter[20] = new SqlParameter("@SubjectNo", string.IsNullOrEmpty(AgendaDAL.SubjectNo) ? (object)DBNull.Value : AgendaDAL.SubjectNo);
 
             parameter[21] = new SqlParameter("@ActingUserId", ActingUserId);
 

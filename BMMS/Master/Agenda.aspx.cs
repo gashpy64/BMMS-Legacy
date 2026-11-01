@@ -388,7 +388,10 @@ namespace BMMS.Master
                                 pnlManagerComments.Visible = true;
                                 pnlControllerComments.Visible = true;
                                 
-                                if (txtSubjectNo.Text.Trim() != string.Empty)
+                                // Step N5: the number of a Controller-approved item cannot be changed
+                                if (dtAgendaEdit.Rows[0]["ControllerApprovedStatus"].ToString() == "Approved")
+                                    txtSubjectNo.ReadOnly = true;
+                                else if (txtSubjectNo.Text.Trim() != string.Empty)
                                     txtSubjectNo.ReadOnly = false;
                                 else
                                     txtSubjectNo.ReadOnly = true;
@@ -610,6 +613,17 @@ namespace BMMS.Master
                     myAgenda.AgendaNo = txtAgendaNo.Text.Trim();
 
                     myAgenda.SubjectNo = txtSubjectNo.Text.Trim();
+
+                    // Step N5, Update, every role: a Controller-approved item always keeps its saved Subject No,
+                    // whatever was posted (also when it was approved after this form was opened). For other
+                    // items an empty box keeps the saved value (NULL stays NULL, an old 0 stays 0); a typed number is used.
+                    if (btnSave.Text == "Update")
+                    {
+                        DataTable dtSaved = AgendaMgr.GetAgendaByAgendaId(myAgenda.AgendaId);
+                        if (dtSaved.Rows.Count > 0 &&
+                            (dtSaved.Rows[0]["ControllerApprovedStatus"].ToString() == "Approved" || myAgenda.SubjectNo == string.Empty))
+                            myAgenda.SubjectNo = dtSaved.Rows[0]["SubjectNo"].ToString().Trim();
+                    }
 
                     myAgenda.CommitteeId = Convert.ToInt16(hdnCommitteeId.Value);
                     myAgenda.MeetingId = Convert.ToInt16(ddlMeeting.SelectedValue.ToString());
