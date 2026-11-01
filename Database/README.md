@@ -1650,6 +1650,55 @@ Optional extra test of the saved-number rule alone, `BMMS_Test` only (the box of
 
 Optional data step, `BMMS_Test` only (BMMS has no rows with 0), after the browser checks and only on the Consultant's go-ahead; the Consultant gives the statements inline (no script file): a read-only count of the rows with SubjectNo = 0 (expected 3: AgendaId 384, 683, 685, none approved by the Controller), then, in a transaction, SubjectNo = NULL for those rows (expected 3 rows), then check 8 again.
 
+## Step N2: file names in Agenda Entry taken from the server, checked where they are read (code only, no database script)
+
+Fault (baseline): Agenda Entry stored two file names exactly as the browser posted them: the hidden field hdnFilePath of each attachment row (joined with commas into Agenda.FilePath) and the hidden text box txtAgendaTextPath (Agenda.AgendaTextPath), through spr_AddEditAgenda, spr_AddEditAgendaByManager and spr_AddEditAgendaByController. Any User, Manager or Controller who could update an item could change them with the browser's developer tools. Two readers then opened the stored value as a path: Agenda Approval (`MapPath("..\\Files\\AgendaText\\" + name)`, read as text into the PDF) could read any file inside the application folder, for example Web.config or a log; the Agenda Details report (`MapPath(folder) + name`, opened with PdfReader) could copy any PDF on the same drive into the report. A drive letter, a UNC path, a very long value or characters not allowed in file names made the PDF fail for everyone until the row was corrected. The uploads themselves were already safe (server-built path, cleaned name, step N1), and the links only go to the browser.
+
+- SafeFileName.IsPlainName (BMMSBAL): true only for a bare file name: not empty, at most 255 characters, no character Windows does not allow in a file name (so no \ / : * ? " < > |, no drive letter, no UNC path), not `.` or `..`. Every name SafeFileName.Clean returns passes, Tamil and Hindi names included, and Clean never leaves a comma (it becomes _), so the comma list stays intact. A comma is allowed by IsPlainName, so agenda text names stored before step N1 keep working.
+- Agenda Entry, Save and Update, every role: the attachment names come from the server's own list (ViewState, filled on Edit from the database and on each upload; the grid is bound from it row for row) for the ticked rows, and the agenda text name from the value the server set on Edit or upload. The posted hdnFilePath and txtAgendaTextPath are ignored. Add starts with an empty agenda text name (before, the name of an item opened earlier in the same page stayed in the hidden box and was stored with the new item). A saved name that is not a plain file name (old data) refuses the save: "An attached file name is not valid. Remove the file and attach it again."
+- Agenda Details report (Reports.aspx.cs) and Agenda Approval (AgendaApproval.aspx.cs): a stored name that is not a plain file name is left out, one line goes to the error log (`Agenda <AgendaNo or AgendaId>: file name refused (FilePath or AgendaTextPath), left out of the PDF: <name>`, cut at 300 characters), and the rest of the PDF is built. Agenda Approval now passes `~/Files/AgendaText/<name>`. An Upload item with an empty agenda text name is also left out and logged (before, the PDF failed).
+- Unchanged: every procedure, the uploads, the links on Agenda Entry and the Dashboard, Delete, and the other risks listed under Known items.
+
+Stored names with path characters (read-only, run by the Consultant on each database; each row must be corrected or the file removed and attached again in Agenda Entry, which the refusal message says):
+
+```sql
+SELECT AgendaId, AgendaNo, MeetingId, AgendaType, AgendaTextPath, FilePath
+FROM Agenda
+WHERE CAST(AgendaTextPath AS NVARCHAR(MAX)) LIKE N'%[\/:*?"<>|]%'
+   OR CAST(AgendaTextPath AS NVARCHAR(MAX)) IN (N'.', N'..')
+   OR LEN(CAST(AgendaTextPath AS NVARCHAR(MAX))) > 255
+   OR CAST(FilePath AS NVARCHAR(MAX)) LIKE N'%[\/:*?"<>|]%'
+   OR N',' + CAST(FilePath AS NVARCHAR(MAX)) + N',' LIKE N'%,.,%'
+   OR N',' + CAST(FilePath AS NVARCHAR(MAX)) + N',' LIKE N'%,..,%';
+```
+
+Browser checks on `BMMS_Test` (deploy the build first; run part 1 only of `Database/BMMS-Test-AgendaDates-M4.sql`; all items in meeting 00905 of committee A903; a User whose Manager is active, that Manager, and a Controller; small test PDF files a.pdf, b.pdf, c.pdf, t1.pdf, t2.pdf; after each step `SELECT AgendaId, ShortText, AgendaType, AgendaTextPath, FilePath FROM Agenda WHERE MeetingId = <00905>`; keep the error log of the day open; every item of A903 has an Agenda No ending in -001 (step N3, parked), so a second file of the same name gets " (2)"):
+
+Normal use (nothing may be lost):
+
+1. Upload then Save: the User adds item "N2 one" (Entry), attaches a.pdf and b.pdf, presses Save: FilePath = `Attach-<AgendaNo>-a.pdf,Attach-<AgendaNo>-b.pdf,`.
+2. Edit then Update without touching files: the User opens "N2 one", changes only the Short Text, presses Update: FilePath unchanged.
+3. Upload then Update: the User opens "N2 one", attaches c.pdf, presses Update: the three names.
+4. Untick one: the User opens "N2 one", unticks b.pdf, presses Update: a.pdf and c.pdf only (b.pdf stays in Files/AgendaAttach, see Known items).
+5. Agenda text, then replace it: the User adds item "N2 two" (Upload), uploads t1.pdf, presses Save: AgendaTextPath = `<AgendaNo>-t1.pdf`. The User opens it again, uploads t2.pdf, presses Update: `<AgendaNo>-t2.pdf`. The View link opens the new file.
+6. Manager and Controller Update: the Manager opens "N2 one" and presses Update; then the Controller opens it and presses Update: FilePath and AgendaTextPath unchanged each time.
+7. Add after Edit: the User opens "N2 two" (Upload, t2.pdf), presses Cancel, then Add, and saves item "N2 four" (Entry, no file): AgendaTextPath and FilePath empty (before step N2 it got the agenda text name of "N2 two").
+
+Forged and stored values:
+
+- T1. Forged attachment name (User, "N2 one"): open it; in the developer tools set the value of the hidden input whose name ends in `hdnFilePath` (first attachment row) to each value in turn and press Update each time: `..\..\Web.config`, `C:\Windows\win.ini`, `\\server\share\x.pdf`, a value of 300 characters, `a<b>.pdf`, `x.pdf,..\y.pdf`. Expected: FilePath unchanged after each Update; no entry in the error log.
+- T2. Forged agenda text name (User, "N2 two"): set the value of the hidden text box whose name ends in `txtAgendaTextPath` to the first five values above and press Update each time. Expected: AgendaTextPath unchanged; no entry in the error log.
+- T3. Normal use: checks 1 to 7 above.
+- T4. Bad stored value, readers (the Consultant runs each statement inline on `BMMS_Test` only):
+  - Agenda Details report: the Controller adds item "N2 three" with attachment c.pdf (a Controller's item is approved at once; the report lists approved items only). Then `UPDATE Agenda SET FilePath = '..\AgendaText\<AgendaTextPath of N2 two>,' WHERE AgendaId = <AgendaId of N2 three>` (1 row). The Controller opens Reports, Agenda Details, committee A903, meeting 00905, PDF: the PDF opens without the pages of that file; one error-log line `... file name refused (FilePath) ...`.
+  - Agenda Approval: code review only. The Create PDF button is never shown (the Print option is commented out in AgendaApproval.aspx and was in the baseline), so this reader cannot be reached from the screen; the check was verified by reading the code (AgendaApproval.aspx.cs, CreatePDF: IsPlainName, then one error-log line `... file name refused (AgendaTextPath) ...`).
+  - Agenda text through Agenda Details (replacement test, done and passed): a Controller-approved Upload item in meeting 00905; its stored AgendaTextPath changed by inline SQL to `..\..\Web.config`; Reports, Agenda Details PDF generated again: the item's agenda text pages are left out, no Web.config text appears, one error-log line `... file name refused (AgendaTextPath) ...` is written.
+- T5. Bad stored value, Agenda Entry (done and passed):
+  - Controller: the Controller-approved item "N2 Three", whose stored FilePath is a bad name (`..\AgendaText\<a file name>`, from the Agenda Details test in T4). The Controller opens it and presses Update with no change: "An attached file name is not valid. Remove the file and attach it again." and no change in the table. Unticking the bad row and pressing Update gives "Successfully Saved" and FilePath is empty.
+  - User: inline SQL `UPDATE Agenda SET FilePath = '..\x.pdf,' WHERE AgendaId = <AgendaId of N2 One changed>` (1 row) on the User's waiting item "N2 One changed"; this UPDATE replaces the whole stored list of attachments. The User opens it and presses Update with no change: the same message and no change in the table. Unticking the bad row and pressing Update gives "Successfully Saved" and FilePath is empty.
+
+Part 4 of the M4 script removes the A903 items, meetings and committee; the uploaded files stay in Files/AgendaAttach and Files/AgendaText.
+
 ## Known items for later steps
 
 - The colour picker on Committee and Meeting (third-party JScript/ColorPicker/js_color_picker_v2.js) asks for its tab and slider images relative to the page (`/Master/images/tab_right_active.gif`, `slider_handle.gif`), which gives 404; its own copies are in JScript/ColorPicker/Images. Seen in step B3, not changed.
@@ -1673,6 +1722,14 @@ Optional data step, `BMMS_Test` only (BMMS has no rows with 0), after the browse
 - Agenda Entry: Add puts the meeting id into Meeting No and the meeting number into the hidden meeting id (btnAdd_Click), so the "Agenda Created" mail shows the id as the Meeting No. (Edit of an item of a meeting with no date opens since step M5.)
 - Agenda Entry is reachable by Controller, Manager and User (PageAccess.xml); step M4 kept it so.
 - Agenda Entry, Subject No (step N5): the page reads the item just before the save, so a Dashboard approval that lands between that read and the procedure's UPDATE can still be overwritten by the posted value (NULL, or an old 0). The gap is accepted for now. Future fix, in the install-all script: `SubjectNo = CASE WHEN ControllerApprovedStatus = 'Approved' THEN SubjectNo ELSE @SubjectNo END` in the Update branches of spr_AddEditAgenda, spr_AddEditAgendaByManager and spr_AddEditAgendaByController.
+- Agenda uploads, orphan files (step N2 left it): a file is saved when it is chosen, before Save and without the meeting-date, lock or role checks; files of items never saved, files unticked later and replaced agenda texts stay in Files/AgendaAttach and Files/AgendaText. Nothing removes agenda files.
+- Agenda uploads, content not checked: only the extension .pdf is checked on the server; any content with that name is stored and served from the Files folders (without login until step 27).
+- Agenda Details report: one attachment or agenda text that is missing or not a PDF makes the whole PDF fail (PdfReader throws), for every user of that meeting.
+- Agenda uploads: the Agenda No goes into the saved file name without cleaning (Agenda.aspx.cs, btnAddFile_Click and btnAddAgentaText_Click). It comes from the committee code and the meeting number; a committee code with \, / or .. would change the folder, and one with another character not allowed in file names would make the save refuse the name (step N2).
+- Member: the photo and resume paths (hidden text boxes) are stored as posted; nothing opens a file from them today. The photo and resume uploads have no type check.
+- Agenda.aspx has ValidateRequest="false".
+- Agenda uploads: between SafeFileName.MakeUnique and SaveAs two uploads of the same name at the same moment can overwrite each other (SaveAs overwrites).
+- Reports, Agenda Approval: the Print option and the Create PDF button are dead (the Print option is commented out in AgendaApproval.aspx since the baseline, so the page shows only the list). Restoring or removing them is a later decision.
 - Orphan Meeting alerts: meetings deleted before step D1 left their alerts behind (5 on BMMS_Test and 1 on BMMS at step 0). Step D1 lists and counts them and does not remove them; the Consultant decides after seeing them. New deletes since step D1 leave none.
 - Meeting delete (step D1): the meeting's Agenda alerts are not looked at (a meeting with agenda items cannot be deleted). Alerts of agenda items deleted earlier (spr_DeleteAgendaByAgendaId) refer to an AgendaId that no longer exists and are a separate question.
 - M6: Dashboard Approve and Reject are closed after the meeting date since step M6a (the procedures themselves, spr_UpdateAgendaByAgendaId and spr_GenerateSubjectNoByMeetingId, still have no date rule). Still allowed after the meeting date, as decided: Agenda Finalisation (rejects every item not yet approved and finalizes; refused only when already finalized) and Minutes Update (spr_UpdateMinutes and spr_UpdateAgendaShortText write Agenda.ShortText; refused once the minutes are confirmed and by the step 23 order). The Agenda Finalisation alert (M6b) is not built yet.

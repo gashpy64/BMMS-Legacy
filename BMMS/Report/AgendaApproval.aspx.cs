@@ -123,8 +123,18 @@ namespace BMMS.Report
                         }
                         else
                         {
-                            string fileName = "..\\Files\\AgendaText\\" + dtAgenda.Rows[j]["AgendaTextPath"].ToString();
-                            htmlText = WordUtilities.ReadWordDocument(fileName);
+                            // Step N2: only a plain file name inside ~/Files/AgendaText; any other is left out and logged
+                            string storedName = dtAgenda.Rows[j]["AgendaTextPath"].ToString();
+
+                            if (SafeFileName.IsPlainName(storedName))
+                                htmlText = WordUtilities.ReadWordDocument("~/Files/AgendaText/" + storedName);
+                            else
+                            {
+                                htmlText = string.Empty;
+                                Utilities.WriteErrorLog(className, "CreatePDF",
+                                    "Agenda " + dtAgenda.Rows[j]["AgendaNo"].ToString() + ": file name refused (AgendaTextPath), left out of the PDF: "
+                                    + (storedName.Length > 300 ? storedName.Substring(0, 300) + "..." : storedName));
+                            }
                         }
                         PDFUtilities.AddHTMLText(pdfDocument, htmlText);
 

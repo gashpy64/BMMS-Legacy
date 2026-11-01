@@ -23,7 +23,13 @@ namespace BMMS.Master
         private const string ItemMeetingDatePassedMessage = "The meeting date has passed, so agenda items can no longer be edited or deleted.";
 
         // The item is saved before the mail goes out (step M2); the mail error itself is in the error log
-        private const string MailNotSentMessage = "The agenda item was saved, but the mail could not be sent. The error is in the error log.";
+        // Step N2: a saved attachment or agenda text name that is not a plain file name
+        private const string FileNameNotValidMessage = "An attached file name is not valid. Remove the file and attach it again.";
+
+        // Step N2: the agenda text file name the server set (Edit or upload), not the posted text box
+        private const string AgendaTextPathKey = "AgendaTextPath";
+
+        private const string MailNotSentMessage ="The agenda item was saved, but the mail could not be sent. The error is in the error log.";
 
         #region Page_Load
         protected void Page_Load(object sender, EventArgs e)
@@ -343,6 +349,7 @@ namespace BMMS.Master
 
                             ftxtAgendaText.Text = HtmlCleaner.Clean(dtAgendaEdit.Rows[0]["AgendaText"].ToString());
                             txtAgendaTextPath.Text = dtAgendaEdit.Rows[0]["AgendaTextPath"].ToString();
+                            ViewState[AgendaTextPathKey] = txtAgendaTextPath.Text;
                             ftxtProposedResolution.Text = HtmlCleaner.Clean(dtAgendaEdit.Rows[0]["ProposedResolution"].ToString());
 
                             string[] attFiles = dtAgendaEdit.Rows[0]["FilePath"].ToString().Split(',');
@@ -573,6 +580,11 @@ namespace BMMS.Master
 
                     ViewState["dtAttFiles"] = null;
 
+                    // Step N2: a new item starts without an agenda text file (before, the name of an item opened
+                    // earlier stayed in the hidden box)
+                    ViewState[AgendaTextPathKey] = string.Empty;
+                    txtAgendaTextPath.Text = string.Empty;
+
                     DataTable dtAttFiles = new DataTable();
                     dtAttFiles.Columns.Add("FilePathOrg");
                     dtAttFiles.Columns.Add("FilePath");
@@ -641,11 +653,15 @@ namespace BMMS.Master
                     string strAgendaText = ftxtAgendaText.Text.Trim();
                     myAgenda.AgendaText = strAgendaText;
 
-                    myAgenda.AgendaTextPath = txtAgendaTextPath.Text.Trim();
+                    // Step N2: the file names the server set, never the posted hidden fields
+                    myAgenda.AgendaTextPath = ViewState[AgendaTextPathKey] == null ? string.Empty : ViewState[AgendaTextPathKey].ToString();
 
                     myAgenda.ProposedResolution = HTML_Report.ReplaceRichTextFont(ftxtProposedResolution.Text.Trim());
 
                     myAgenda.FilePath = GetFilePathList();
+
+                    bool fileNamesValid = myAgenda.FilePath != null &&
+                        (myAgenda.AgendaTextPath == string.Empty || SafeFileName.IsPlainName(myAgenda.AgendaTextPath));
 
                     myAgenda.MgrComments = ftxtManagerComments.Text.Trim();
                     myAgenda.ControllerComments = ftxtControllerComments.Text.Trim();
@@ -663,7 +679,9 @@ namespace BMMS.Master
                     int ActingUserId = int.Parse(Session["UserId"].ToString());
                     MeetingChangeResult agendaLock = AgendaMgr.GetAgendaLock(myAgenda.MeetingId, ActingUserId);
 
-                    if (agendaLock.Result != 1)
+                    if (!fileNamesValid)
+                        strResult = FileNameNotValidMessage;   // nothing is saved (step N2)
+                    else if (agendaLock.Result != 1)
                         strResult = agendaLock.RefusalMessage();
                     else if (btnSave.Text == "Save")
                     {
@@ -790,20 +808,28 @@ namespace BMMS.Master
         #endregion
 
         #region GetFilePathList()
+        // Step N2: the names come from the server's own list (ViewState["dtAttFiles"], filled on Edit from the
+        // database and on each upload; the grid is always bound from it, row for row), not from the posted hidden
+        // field hdnFilePath. Returns null when a ticked name is not a plain file name.
         private string GetFilePathList()
         {
             string strFilePath = string.Empty;
+            DataTable dtAttFiles = ViewState["dtAttFiles"] as DataTable;
 
             foreach (GridViewRow gr in grvAttachedFiles.Rows)
             {
                 if (gr.RowType == DataControlRowType.DataRow)
                 {
-                    HiddenField hdnFilePath = (HiddenField)gr.FindControl("hdnFilePath");
                     CheckBox cbAttach = (CheckBox)gr.FindControl("cbAttach");
 
-                    if (cbAttach.Checked == true)
+                    if (cbAttach.Checked == true && dtAttFiles != null && gr.RowIndex < dtAttFiles.Rows.Count)
                     {
-                        strFilePath += hdnFilePath.Value.ToString() + ",";
+                        string name = dtAttFiles.Rows[gr.RowIndex]["FilePathOrg"].ToString();
+
+                        if (!SafeFileName.IsPlainName(name))
+                            return null;
+
+                        strFilePath += name + ",";
                     }
                 }
             }
@@ -1115,6 +1141,7 @@ namespace BMMS.Master
                     //string strPathToConvert = fName + ".htm";
                     aAgendaText.Attributes.Add("href", "../Files/AgendaText/" + Uri.EscapeDataString(fName));
                     txtAgendaTextPath.Text = fName; // strPathToConvert;
+                    ViewState[AgendaTextPathKey] = fName;   // step N2: this is what Save and Update store
 
                     aAgendaText.Visible = true;
 

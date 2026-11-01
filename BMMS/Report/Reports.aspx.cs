@@ -1341,6 +1341,18 @@ namespace BMMS.Report
 
         #region CreateAgendaDetailsPDF
         // Built in memory; the bytes are returned (step 25)
+        // Step N2: one error-log line for a stored file name that is not a plain file name; the PDF goes on
+        private void LogRefusedFileName(DataRow agenda, string column, string storedName)
+        {
+            string item = agenda.Table.Columns.Contains("AgendaNo") ? "Agenda " + agenda["AgendaNo"].ToString()
+                : agenda.Table.Columns.Contains("AgendaId") ? "AgendaId " + agenda["AgendaId"].ToString()
+                : "Agenda (" + agenda["ShortText"].ToString() + ")";
+
+            Utilities.WriteErrorLog(reportCode, "CreateAgendaDetailsPDF",
+                item + ": file name refused (" + column + "), left out of the PDF: "
+                + (storedName.Length > 300 ? storedName.Substring(0, 300) + "..." : storedName));
+        }
+
         private byte[] CreateAgendaDetailsPDF(DataTable dtAgenda)
         {
             Document pdfDocument = new Document(PageSize.A4, 45f, 45f, 30f, 30f);
@@ -1437,9 +1449,13 @@ namespace BMMS.Report
                     else
                     {
                         string fPath = MapPath("~/Files/AgendaText/");
-                        string fileName = fPath + dtAgenda.Rows[j]["AgendaTextPath"].ToString();
+                        string storedName = dtAgenda.Rows[j]["AgendaTextPath"].ToString();
 
-                        PDFUtilities.AddAgendaText(pdfDocument, writer, fileName);
+                        // Step N2: only a plain file name inside the folder; any other is left out and logged
+                        if (SafeFileName.IsPlainName(storedName))
+                            PDFUtilities.AddAgendaText(pdfDocument, writer, fPath + storedName);
+                        else
+                            LogRefusedFileName(dtAgenda.Rows[j], "AgendaTextPath", storedName);
                     }
                     #endregion
 
@@ -1452,9 +1468,12 @@ namespace BMMS.Report
                         if (attFiles[i].ToString() != string.Empty)
                         {
                             string fPath = MapPath("~/Files/AgendaAttach/");
-                            string fileName = fPath + attFiles[i].ToString();
 
-                            PDFUtilities.AddAgendaText(pdfDocument, writer, fileName);
+                            // Step N2: only a plain file name inside the folder; any other is left out and logged
+                            if (SafeFileName.IsPlainName(attFiles[i]))
+                                PDFUtilities.AddAgendaText(pdfDocument, writer, fPath + attFiles[i]);
+                            else
+                                LogRefusedFileName(dtAgenda.Rows[j], "FilePath", attFiles[i]);
                         }
                     }
                     #endregion

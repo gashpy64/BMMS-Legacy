@@ -76,6 +76,23 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region IsPlainName
+        // Step N2: true only for a bare file name that stays in the folder it is joined to: not empty, at most 255
+        // characters, no character Windows does not allow in a file name (this covers \ / : * ? " < > | and control
+        // characters, so no folder, drive letter or UNC path), and not "." or "..". Every name Clean returns passes;
+        // a comma is allowed, so names stored before step N1 keep working.
+        public static bool IsPlainName(string name)
+        {
+            if (string.IsNullOrEmpty(name) || name.Length > 255)
+                return false;
+
+            if (name == "." || name == "..")
+                return false;
+
+            return name.IndexOfAny(Path.GetInvalidFileNameChars()) < 0;
+        }
+        #endregion
+
         #region MakeUnique
         // fileName itself when no file of that name is in folder, else "stem (2).ext", "stem (3).ext" ... up to 999,
         // then a time stamp. Never longer than fileName or MaxLength, whichever is more. fileName is expected to be
