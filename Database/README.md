@@ -1555,6 +1555,24 @@ Browser checks on `BMMS_Test`, in Chrome and in Edge (deploy the build first; on
 9. N4, edit in another tab: in a fresh run (part 4, part 1, two User items in 00905), choose 00905 in Agenda Finalisation, then in another tab change an item's Short Text in Agenda Entry and save, then press Finalize: the changed Short Text is kept.
 10. Error log: no entry from these checks; no check reaches the error page.
 
+## Step M6a: Dashboard Approve and Reject closed after the meeting date (code only, no database script)
+
+Decision (Consultant, 2026-11-01): after the meeting date the agenda area closes; what is decided afterwards is recorded in the minutes. Agenda Entry closed in steps M4 and M5; this step closes Dashboard Approve and Reject. Agenda Finalisation stays allowed after the meeting date while the minutes are open (late finalisation, no code change): it rejects the items still waiting, keeping their text (step N4), sends their mails (step M3) and creates the minutes rows of the approved items, after which Attendance and the minutes follow in the step 23 order.
+
+- The rule of steps M1, M4 and M5 (MeetingMgr.IsMeetingOpenForChange): the whole meeting date counts, closed from the next day (web server date; the meeting time is not looked at); a meeting with no date is open.
+- Dashboard, Approve and Reject: refused after the meeting date, checked against the item's own saved meeting date, after the finalized-agenda check and before anything is saved, with the message "The meeting date has passed, so this item can no longer be approved or rejected. It will be rejected when the agenda is finalized." Nothing changes, no subject number is given, no mail goes out. Past items stay in the alert list (not hidden).
+- Not working as intended: the alert panel of an item of a past meeting opens as a normal panel (Approve, Reject and Close visible, the boxes editable, no message above it, no remove button); only pressing Approve or Reject is refused (see Known items).
+- Unchanged: the alert lists, every procedure, Agenda Finalisation, Attendance, Minutes Update, Minutes Finalisation, Minutes Confirmation, Followup, Followup Action Taken and the reports.
+
+Browser checks on `BMMS_Test`, in Chrome and in Edge (deploy the build first; on the test day run part 4 and then part 1 of `Database/BMMS-Test-AgendaDates-M4.sql`; before part 2 add, as a User whose Manager is active, two items to 00907 and have the Manager approve one of them, and add one User item to 00905; then run part 2; smtp4dev running; keep the error log of the day open):
+
+1. As the Manager, open the alert of the User's pending 00907 item, then press Approve (and Reject): opens normally; refusal on press (the message; nothing saved).
+2. As a Controller, open the alert of the Manager-approved 00907 item, then press Approve (and Reject): opens normally; refusal on press (the message; nothing saved).
+3. Panel left open: as the Manager (or the Controller), open a 00907 item before part 2 is run, run part 2, then press Approve (and, on the other item, Reject): the message; the item's status and subject number are unchanged (part 3); no mail. Tested.
+4. The User's 00905 item (a future meeting): the Manager approves and the Controller approves as before; the subject number is given and the mails arrive. Tested.
+5. Late finalisation: Agenda Finalisation of 00907 after part 2: "Agenda Finalized"; both 00907 items Rejected with their Short Text and Proposed Resolution kept; the rejection mails arrive; their alerts leave the Controller's list (type ACR); Attendance of 00907 now opens. Tested.
+6. Error log: no entry from these checks; no check reaches the error page. Tested.
+
 ## Known items for later steps
 
 - The colour picker on Committee and Meeting (third-party JScript/ColorPicker/js_color_picker_v2.js) asks for its tab and slider images relative to the page (`/Master/images/tab_right_active.gif`, `slider_handle.gif`), which gives 404; its own copies are in JScript/ColorPicker/Images. Seen in step B3, not changed.
@@ -1577,7 +1595,8 @@ Browser checks on `BMMS_Test`, in Chrome and in Edge (deploy the build first; on
 - Agenda Entry, step M4: spr_AddEditAgenda, spr_AddEditAgendaByManager and spr_AddEditAgendaByController do not refuse a new item after the meeting date; only the page checks. A database step can add the rule there.
 - Agenda Entry: Add puts the meeting id into Meeting No and the meeting number into the hidden meeting id (btnAdd_Click), so the "Agenda Created" mail shows the id as the Meeting No. (Edit of an item of a meeting with no date opens since step M5.)
 - Agenda Entry is reachable by Controller, Manager and User (PageAccess.xml); step M4 kept it so.
-- M6, to be decided: after the meeting date agenda items are still changed by Dashboard Approve and Reject (spr_UpdateAgendaByAgendaId, refused only once the agenda is finalized; spr_GenerateSubjectNoByMeetingId has no rule), by Agenda Finalisation (rejects every item not yet approved and finalizes; refused only when already finalized) and by Minutes Update (spr_UpdateMinutes and spr_UpdateAgendaShortText write Agenda.ShortText; refused once the minutes are confirmed and by the step 23 order). Minutes Update stays allowed.
+- M6: Dashboard Approve and Reject are closed after the meeting date since step M6a (the procedures themselves, spr_UpdateAgendaByAgendaId and spr_GenerateSubjectNoByMeetingId, still have no date rule). Still allowed after the meeting date, as decided: Agenda Finalisation (rejects every item not yet approved and finalizes; refused only when already finalized) and Minutes Update (spr_UpdateMinutes and spr_UpdateAgendaShortText write Agenda.ShortText; refused once the minutes are confirmed and by the step 23 order). The Agenda Finalisation alert (M6b) is not built yet.
+- Dashboard alert panel of an item of a past meeting opens as a normal panel (buttons visible, boxes editable); only pressing Approve or Reject is refused (to be taken up later; the branch in BindAgendaDetails that should make it read-only does not take effect on this path).
 - Report/Followup and Report/FollowupActionTaken have Send Mail code (btnSendMail_Click) that no button reaches: Followup.aspx has no Send Mail button and the one in FollowupActionTaken.aspx is commented out. If a button is restored: the Followup report attaches `~/Files/PDF/Followup.pdf`, which that page never writes (another meeting's file written by Followup Action Taken, or none), both pages always say "Mail was sent to all members." whatever the mail result, and the file name is shared by every user (steps M2 and M3 left them unchanged).
 - Sitting Fees can still crash on a missing GetTotAmtByMemberId row, a deleted member, an empty From/To date, and a damaged logo file.
 - A damaged logo file makes the Notice, Agenda Approval and Sitting Fees PDFs throw (PDFUtilities.AddCompanyLogo).

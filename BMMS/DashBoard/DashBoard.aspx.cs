@@ -20,6 +20,9 @@ namespace BMMS.DashBoard
         private const string ApprovedMailNotSentMessage = "The item was approved, but the mail could not be sent. The error is in the error log.";
         private const string RejectedMailNotSentMessage = "The item was rejected, but the mail could not be sent. The error is in the error log.";
 
+        // After the meeting date an agenda item can no longer be approved or rejected, for every role (step M6a)
+        private const string MeetingDatePassedMessage = "The meeting date has passed, so this item can no longer be approved or rejected. It will be rejected when the agenda is finalized.";
+
         #region Page_Load
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -577,6 +580,20 @@ namespace BMMS.DashBoard
                     btnReject.Visible = false;
                     btnDeleteAgendaAlert.Visible = true;
                 }
+
+                // An item the user could decide, of a meeting whose date has passed: shown read-only with the
+                // message (step M6a); Approve and Reject check again
+                if (btnApprove.Visible && !MeetingMgr.IsMeetingOpenForChange(dtAgendaEdit.Rows[0]["MeetingDate"], DateTime.Today))
+                {
+                    txtShortText.ReadOnly = true;
+                    ftxtProposedResolution.ReadOnly = true;
+                    ftxtManagerComments.ReadOnly = true;
+                    ftxtControllerComments.ReadOnly = true;
+                    btnApprove.Visible = false;
+                    btnReject.Visible = false;
+                    btnDeleteAgendaAlert.Visible = true;
+                    MsgDisplay(MeetingDatePassedMessage, MessageKind.Warning);
+                }
             }
 
             return true;
@@ -615,7 +632,8 @@ namespace BMMS.DashBoard
 
             int AgendaId;
             int MeetingId;
-            if (!TryGetAgenda(out AgendaId, out MeetingId))
+            object MeetingDate;
+            if (!TryGetAgenda(out AgendaId, out MeetingId, out MeetingDate))
             {
                 ShowItemGone();
                 LoadAlertGRV();
@@ -636,6 +654,15 @@ namespace BMMS.DashBoard
             if (!MeetingMgr.IsAgendaOpen(MeetingId))
             {
                 ShowAlert(MeetingChangeReason.AgendaFinalizedMessage);
+                pnlAgenda.Visible = false;
+                LoadAlertGRV();
+                return;
+            }
+
+            // The item's own saved meeting date (step M6a): nothing changes, no subject number, no mail
+            if (!MeetingMgr.IsMeetingOpenForChange(MeetingDate, DateTime.Today))
+            {
+                MsgDisplay(MeetingDatePassedMessage, MessageKind.Warning);
                 pnlAgenda.Visible = false;
                 LoadAlertGRV();
                 return;
@@ -691,7 +718,8 @@ namespace BMMS.DashBoard
 
             int AgendaId;
             int MeetingId;
-            if (!TryGetAgenda(out AgendaId, out MeetingId))
+            object MeetingDate;
+            if (!TryGetAgenda(out AgendaId, out MeetingId, out MeetingDate))
             {
                 ShowItemGone();
                 LoadAlertGRV();
@@ -712,6 +740,15 @@ namespace BMMS.DashBoard
             if (!MeetingMgr.IsAgendaOpen(MeetingId))
             {
                 ShowAlert(MeetingChangeReason.AgendaFinalizedMessage);
+                pnlAgenda.Visible = false;
+                LoadAlertGRV();
+                return;
+            }
+
+            // The item's own saved meeting date (step M6a): nothing changes, no subject number, no mail
+            if (!MeetingMgr.IsMeetingOpenForChange(MeetingDate, DateTime.Today))
+            {
+                MsgDisplay(MeetingDatePassedMessage, MessageKind.Warning);
                 pnlAgenda.Visible = false;
                 LoadAlertGRV();
                 return;
@@ -753,10 +790,12 @@ namespace BMMS.DashBoard
 
         #region TryGetAgenda
         // Step F2: the agenda item behind Approve / Reject must still exist; its MeetingId is read from the item
-        // itself, not from the hidden field. False sends no mail and changes nothing.
-        private bool TryGetAgenda(out int AgendaId, out int MeetingId)
+        // itself, not from the hidden field. False sends no mail and changes nothing. MeetingDate is the item's
+        // own saved meeting date (step M6a).
+        private bool TryGetAgenda(out int AgendaId, out int MeetingId, out object MeetingDate)
         {
             MeetingId = 0;
+            MeetingDate = null;
 
             if (!int.TryParse(hdnAgendaId.Value.Trim(), out AgendaId))
                 return false;
@@ -765,6 +804,7 @@ namespace BMMS.DashBoard
             if (dtAgenda == null || dtAgenda.Rows.Count == 0)
                 return false;
 
+            MeetingDate = dtAgenda.Rows[0]["MeetingDate"];
             return int.TryParse(dtAgenda.Rows[0]["MeetingId"].ToString(), out MeetingId);
         }
         #endregion
