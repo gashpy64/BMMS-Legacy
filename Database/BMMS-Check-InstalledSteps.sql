@@ -1,5 +1,5 @@
 /* ============================================================================
-   BMMS - Which numbered steps (README run order 1 to 24, 29, 30 and 31; step 23 is installed after step 28, steps 29, 30 and 31 last) are installed
+   BMMS - Which numbered steps (README run order 1 to 24, 29, 30 and 31; step 23 is installed after step 28, steps 29, 30 and 31 last) and step D1 are installed
    ----------------------------------------------------------------------------
    READ ONLY. It reads object definitions and constraint names; it creates,
    changes and deletes nothing, and it can run on BMMS as well as on a copy.
@@ -57,6 +57,9 @@
    and 23 in them); if step 6, 15, 16, 17, 18, 20 or 23 is re-run afterwards,
    or the original database's spr_UpdateActionItem comes back, step 31 reads
    Partly (the columns stay): run step 31 again, as the last step.
+   Step D1 (shown as step 100) replaces spr_DeleteMeetingByMeetingId, which
+   no numbered script contains: it reads Missing only on a database restored
+   from before step D1, or before D1 was run.
 
    It has no USE line: select the database in SSMS first. It stops if the
    current database name does not start with "BMMS".
@@ -284,6 +287,10 @@ DECLARE @UnicodeColumns INT = (SELECT COUNT(*) FROM sys.columns sc JOIN sys.type
 INSERT INTO @M VALUES
 (31, '13 text columns NVARCHAR(MAX)' + CASE WHEN @UnicodeColumns <> 13 THEN ' (' + CAST(@UnicodeColumns AS VARCHAR(12)) + ' are)' ELSE '' END, CASE WHEN @UnicodeColumns = 13 THEN 1 ELSE 0 END);
 
+-- D1 (shown as step 100). BMMS-Fix-MeetingDelete-D1.sql; no numbered script contains spr_DeleteMeetingByMeetingId
+INSERT INTO @M VALUES
+(100, 'spr_DeleteMeetingByMeetingId (MeetingDelete-D1)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_DeleteMeetingByMeetingId')), '') LIKE '%MeetingDelete-D1%' THEN 1 ELSE 0 END);
+
 DECLARE @Steps TABLE (Step INT, Script VARCHAR(60), IfPartly VARCHAR(200));
 INSERT INTO @Steps VALUES
 (1, 'BMMS-Fix-Login-Procedures.sql', ''),
@@ -312,7 +319,8 @@ INSERT INTO @Steps VALUES
 (24, 'BMMS-Fix-MeetingDates-Step24.sql', 'Missing after a re-run of step 16, 17 or 18: run step 24 again'),
 (29, 'BMMS-Fix-ResetDatabase-Step29.sql', 'the first text of step 29 (old default password seeds): run step 30 (it contains step 29), as the last step'),
 (30, 'BMMS-Fix-SmtpDefault-Step30.sql', 'step 3, 18, 21 or 29 was re-run: run step 30 again, as the last step (it restores the step 29 text too)'),
-(31, 'BMMS-Fix-UnicodeText-Step31.sql', 'step 6, 15, 16, 17, 18, 20 or 23 was re-run, or the original spr_UpdateActionItem came back: run step 31 again, as the last step');
+(31, 'BMMS-Fix-UnicodeText-Step31.sql', 'step 6, 15, 16, 17, 18, 20 or 23 was re-run, or the original spr_UpdateActionItem came back: run step 31 again, as the last step'),
+(100, 'BMMS-Fix-MeetingDelete-D1.sql (step D1)', '');
 
 SELECT s.Step, s.Script,
        CASE WHEN COUNT(m.Step) = 0 THEN 'Not detectable'

@@ -81,6 +81,10 @@ namespace BMMSBAL
                     return MeetingChangeReason.NoActiveControllerMessage;
                 case MeetingChangeReason.MeetingDateNotValid:
                     return MeetingChangeReason.MeetingDateNotValidMessage(ReasonDetail);
+                case MeetingChangeReason.MeetingDatePassed:
+                    return MeetingChangeReason.MeetingDatePassedMessage;
+                case MeetingChangeReason.MeetingInUse:
+                    return Common.GetAppSetting("delete_reference");
                 default:
                     return "Record Not Saved";
             }
@@ -109,6 +113,12 @@ namespace BMMSBAL
         public const int AgendaNotFinalized = 17;      // step 23: attendance, minutes before the agenda is finalized
         public const int AttendanceNotRecorded = 18;   // step 23: minutes before the chairman and a member present are entered
         public const int MinutesNotUpdated = 19;       // step 23: finalize with a minute never updated; ReasonDetail 'not updated/total'
+        public const int MeetingDatePassed = 20;       // step D1: meeting delete after the meeting date (database server date)
+        public const int MeetingInUse = 21;            // step D1: meeting delete while it has members, agenda items or attendance; ReasonDetail names them
+
+        /// <summary>Meeting Master Edit and Delete after the meeting date (step M1; the procedure since step D1).</summary>
+        public const string MeetingDatePassedMessage =
+            "The meeting date has passed, so this meeting can no longer be edited or deleted.";
 
         public const string AgendaNotFinalizedMessage =
             "The agenda of this meeting is not finalized yet. Finalize the agenda (Agenda, Agenda Finalize) first.";
@@ -556,9 +566,10 @@ namespace BMMSBAL
         #endregion
 
         #region DeleteMeetingByMeetingId
-        public static int DeleteMeetingByMeetingId(int MeetingId)
+        // Step D1: Result, Reason (4 not found, 20 date passed, 21 in use) and ReasonDetail
+        public static MeetingChangeResult DeleteMeetingByMeetingId(int MeetingId)
         {
-            return MeetingDB.DeleteMeetingByMeetingId(MeetingId);
+            return MeetingChangeResult.FromTable(MeetingDB.DeleteMeetingByMeetingId(MeetingId));
         }
         #endregion
 

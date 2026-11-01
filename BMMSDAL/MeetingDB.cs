@@ -319,15 +319,13 @@ namespace BMMSDAL
         #endregion
 
         #region DeleteMeetingByMeetingId
-        public static int DeleteMeetingByMeetingId(int MeetingId)
+        // Step D1: Result, Reason, ReasonDetail (BMMS-Fix-MeetingDelete-D1.sql)
+        public static DataTable DeleteMeetingByMeetingId(int MeetingId)
         {
             SqlParameter[] parameter = new SqlParameter[1];
             parameter[0] = new SqlParameter("@MeetingId", MeetingId);
 
-            DataTable dtResult = new DataTable();
-            dtResult = CommonDB.GetDataTable("spr_DeleteMeetingByMeetingId", parameter);
-
-            return Convert.ToInt16(dtResult.Rows[0]["Result"].ToString());
+            return CommonDB.GetDataTable("spr_DeleteMeetingByMeetingId", parameter);
         }
         #endregion
     }

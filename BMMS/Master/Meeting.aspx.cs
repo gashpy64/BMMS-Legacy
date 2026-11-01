@@ -16,7 +16,8 @@ namespace BMMS.Master
     {
         private string className = "Meeting";
 
-        private const string MeetingClosedMessage = "The meeting date has passed, so this meeting can no longer be edited or deleted.";
+        private const string MeetingClosedMessage = MeetingChangeReason.MeetingDatePassedMessage;
+        private const string DeleteFailedMessage = "The meeting could not be deleted. The error is in the error log.";
         private const string MailNotSentMessage = "The meeting was saved, but the mail could not be sent. The error is in the error log.";
 
         #region Page_Load
@@ -191,17 +192,19 @@ namespace BMMS.Master
                         try
                         {
 
-                            int Result = MeetingMgr.DeleteMeetingByMeetingId(MeetingId);
+                            // The procedure checks the date again (database server date), and members, agenda
+                            // items and attendance, and removes the meeting's alerts with it (step D1)
+                            MeetingChangeResult result = MeetingMgr.DeleteMeetingByMeetingId(MeetingId);
 
-                            if (Result == 1)
+                            if (result.Result == 1)
                                 MsgDisplay("Record Deleted Successfully", MessageKind.Success);
                             else
-                                MsgDisplay(Common.GetAppSetting("delete_reference"));
+                                MsgDisplay(result.RefusalMessage());
                         }
                         catch (Exception ex)
                         {
-                            string _ErrMsg = Common.GetAppSetting("delete_reference");
-                            MsgDisplay(_ErrMsg);
+                            Utilities.WriteErrorLog(className, "Delete", ex.ToString());
+                            MsgDisplay(DeleteFailedMessage);
                         }
 
                         LoadMeeting();
