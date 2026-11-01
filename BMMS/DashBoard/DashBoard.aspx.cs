@@ -16,6 +16,10 @@ namespace BMMS.DashBoard
     {
         private string className = "DashBoard";
 
+        // The approval or rejection is saved before the mail goes out (step M3); the mail error itself is in the error log
+        private const string ApprovedMailNotSentMessage = "The item was approved, but the mail could not be sent. The error is in the error log.";
+        private const string RejectedMailNotSentMessage = "The item was rejected, but the mail could not be sent. The error is in the error log.";
+
         #region Page_Load
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -651,12 +655,18 @@ namespace BMMS.DashBoard
 
             if (approveResult.Result == 1)
             {
-                if (agendaBal.MgrApprovedStatus == "Approved")
-                    GenerateMail("approved by Manager", "AMA");
-                if (agendaBal.ControllerApprovedStatus == "Approved")
-                    GenerateMail("approved by Controller", "ACA");
-
+                // The subject number before the mail, so a mail problem cannot leave it out (step M3)
                 AgendaMgr.GenerateSubjectNoByMeetingId(MeetingId, AgendaId);
+
+                string mailResult = "Success";
+                if (agendaBal.MgrApprovedStatus == "Approved")
+                    mailResult = GenerateMail("approved by Manager", "AMA");
+                if (agendaBal.ControllerApprovedStatus == "Approved")
+                    mailResult = GenerateMail("approved by Controller", "ACA");
+
+                // Nothing is shown on success, as before; the mail error itself is in the error log
+                if (mailResult != "Success")
+                    MsgDisplay(ApprovedMailNotSentMessage, MessageKind.Warning);
             }
             else if (approveResult.Reason == MeetingChangeReason.NotFound)
                 ShowItemGone();
@@ -721,10 +731,15 @@ namespace BMMS.DashBoard
 
             if (rejectResult.Result == 1)
             {
+                string mailResult = "Success";
                 if (agendaBal.MgrApprovedStatus == "Rejected")
-                    GenerateMail("rejected by Manager", "AMR");
+                    mailResult = GenerateMail("rejected by Manager", "AMR");
                 if (agendaBal.ControllerApprovedStatus == "Rejected")
-                    GenerateMail("rejected by Controller", "ACR");
+                    mailResult = GenerateMail("rejected by Controller", "ACR");
+
+                // Nothing is shown on success, as before; the mail error itself is in the error log (step M3)
+                if (mailResult != "Success")
+                    MsgDisplay(RejectedMailNotSentMessage, MessageKind.Warning);
             }
             else if (rejectResult.Reason == MeetingChangeReason.NotFound)
                 ShowItemGone();
@@ -765,64 +780,72 @@ namespace BMMS.DashBoard
         #region GenerateMail
         private string GenerateMail(string AgendaStatus, string MailCode)
         {
-            string ToMailId = string.Empty;
-            string Bcc = string.Empty;
-            int AgendaId = int.Parse(hdnAgendaId.Value);
-            int UserId = int.Parse(Session["UserId"].ToString());
+            try
+            {
+                string ToMailId = string.Empty;
+                string Bcc = string.Empty;
+                int AgendaId = int.Parse(hdnAgendaId.Value);
+                int UserId = int.Parse(Session["UserId"].ToString());
 
-            UserBAL userBal = UserMgr.GetUserByUserId(UserId);
-            ToMailId = userBal.EmailId.ToString();
+                UserBAL userBal = UserMgr.GetUserByUserId(UserId);
+                ToMailId = userBal.EmailId.ToString();
 
-            Bcc = AlertMgr.GetAlertMailId(MailCode, UserId, AgendaId);
+                Bcc = AlertMgr.GetAlertMailId(MailCode, UserId, AgendaId);
 
-            string Subject = "Agenda (" + txtAgendaNo.Text.Trim() + ") has been " + AgendaStatus.ToString();
-            string BodyText = string.Empty;
-            BodyText += "<table>";
+                string Subject = "Agenda (" + txtAgendaNo.Text.Trim() + ") has been " + AgendaStatus.ToString();
+                string BodyText = string.Empty;
+                BodyText += "<table>";
 
-            BodyText += "<tr>";
-            BodyText += "<td style='text-align:left; font-weight:bold; width:150px;'>";
-            BodyText += "Agenda No <br /><br />";
-            BodyText += "Committee Name <br /><br />";
-            BodyText += "Meeting No <br /><br />";
-            BodyText += "Meeting Date <br /><br />";
-            BodyText += "Department <br /><br />";
-            BodyText += "Subject Type <br /><br />";
-            //BodyText += " <br /><br />";
-            BodyText += "</td>";
+                BodyText += "<tr>";
+                BodyText += "<td style='text-align:left; font-weight:bold; width:150px;'>";
+                BodyText += "Agenda No <br /><br />";
+                BodyText += "Committee Name <br /><br />";
+                BodyText += "Meeting No <br /><br />";
+                BodyText += "Meeting Date <br /><br />";
+                BodyText += "Department <br /><br />";
+                BodyText += "Subject Type <br /><br />";
+                //BodyText += " <br /><br />";
+                BodyText += "</td>";
 
-            BodyText += "<td style='text-align:left; font-weight:normal;'>";
-            BodyText += ": " + HttpUtility.HtmlEncode(txtAgendaNo.Text.Trim()) + "<br /><br />";
-            BodyText += ": " + HttpUtility.HtmlEncode(txtAgendaCommittee.Text.Trim()) + "<br /><br />";
-            BodyText += ": " + HttpUtility.HtmlEncode(txtAgendaMeeting.Text.Trim()) + "<br /><br />";
-            BodyText += ": " + HttpUtility.HtmlEncode(txtDateOfMeeting.Text.Trim()) + "<br /><br />";
-            BodyText += ": " + HttpUtility.HtmlEncode(txtAgendaDepartment.Text.Trim()) + "<br /><br />";
-            BodyText += ": " + HttpUtility.HtmlEncode(txtSubjectType.Text.Trim()) + "<br /><br />";
-            //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
-            BodyText += "</td>";
+                BodyText += "<td style='text-align:left; font-weight:normal;'>";
+                BodyText += ": " + HttpUtility.HtmlEncode(txtAgendaNo.Text.Trim()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(txtAgendaCommittee.Text.Trim()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(txtAgendaMeeting.Text.Trim()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(txtDateOfMeeting.Text.Trim()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(txtAgendaDepartment.Text.Trim()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(txtSubjectType.Text.Trim()) + "<br /><br />";
+                //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
+                BodyText += "</td>";
 
-            BodyText += "</tr>";
+                BodyText += "</tr>";
 
-            BodyText += "<tr>";
-            BodyText += "<td style='text-align:left; font-weight:bold; width:150px;'>";
-            BodyText += "Short Text <br /><br />";
-            //BodyText += " <br /><br />";
-            BodyText += "</td>";
+                BodyText += "<tr>";
+                BodyText += "<td style='text-align:left; font-weight:bold; width:150px;'>";
+                BodyText += "Short Text <br /><br />";
+                //BodyText += " <br /><br />";
+                BodyText += "</td>";
 
-            BodyText += "<td style='text-align:left; font-weight:normal;'>";
-            BodyText += ": " + HttpUtility.HtmlEncode(txtShortText.Text.Trim()) + "<br /><br />";
-            //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
-            BodyText += "</td>";
+                BodyText += "<td style='text-align:left; font-weight:normal;'>";
+                BodyText += ": " + HttpUtility.HtmlEncode(txtShortText.Text.Trim()) + "<br /><br />";
+                //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
+                BodyText += "</td>";
 
-            BodyText += "</tr>";
+                BodyText += "</tr>";
 
-            BodyText += "</table>";
+                BodyText += "</table>";
 
-            string result = Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, Bcc);
+                string result = Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, Bcc);
 
-            
 
-            return result;
 
+                return result;
+            }
+            catch (Exception ex)
+            {
+                // The approval or rejection is already saved: log, and let the page say the mail was not sent
+                Utilities.WriteErrorLog(className, "GenerateMail", ex.ToString());
+                return "Error";
+            }
         }
         #endregion
 

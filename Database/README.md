@@ -1509,6 +1509,30 @@ Browser checks on `BMMS_Test`, in Chrome and in Edge (deploy the build first; ru
 9. Signed in as a User and as a Manager: the Meeting No list of the test committee shows 00901 and 00905 only (00907 is gone after part 2; 00903 is listed only when part 1 gave it the submission date today); an item added to 00905 is saved as before ("Successfully Saved", the routing mail).
 10. Run part 3: the items of checks 1, 3, 5, 6, 7 and 9, none on 00902 or 00907. Error log: no entry from these checks. Then run part 4.
 
+## Steps M2 and M3: mail after the save on Agenda Entry, Dashboard Approve and Reject, and Agenda Finalisation (code only, no database script)
+
+Found in the mail review after step M1: Agenda Entry sent the "Agenda Created" mail before saving, so a failed mail lost the new item and showed the mail error text, and a save the procedure refused still left a sent mail. Dashboard Approve and Reject ignored the mail result, and a failure while the mail was prepared ended on the error page after the change was saved (for the Controller's approval, before the subject number was given). Agenda Finalisation sent each "rejected" mail before the rejection was saved and ignored both results.
+
+- Agenda Entry (M2), new item: the agenda lock, the meeting date (M4) and the route of step 20 (inactive Manager, no active Controller) are checked first; then the item is saved; the mail goes out only when the save succeeded. A refused save or a refused route sends no mail. When the mail fails, the warning "The agenda item was saved, but the mail could not be sent. The error is in the error log." and the grid shows the item; the M4 notice is added to either message when it applies. Update sends no mail, as before.
+- Dashboard Approve and Reject (M3): the change is saved first, as before; for an approval the subject number is now given before the mail. When the mail fails, the warning "The item was approved, but the mail could not be sent. The error is in the error log." or "The item was rejected, but the mail could not be sent. The error is in the error log."; nothing is shown on success, as before.
+- Agenda Finalisation (M3): each item not yet approved is rejected first; its mail goes out only when the rejection was saved. The message adds " n item(s) could not be rejected." and " n rejection mail(s) could not be sent. The error is in the error log." when they apply (for example "Agenda Finalized. 1 item(s) could not be rejected. 2 rejection mail(s) could not be sent. The error is in the error log.", a warning); "Agenda Finalized" when all went well. Finalisation goes on as before.
+- Logging: a failed send is written once by Mail_Mgr (Mail_Mgr / SendWebEmail), as before. Each GenerateMail of the three pages now has the try/catch of Meeting Master: a failure while the mail is prepared is written once as Agenda / GenerateMail, DashBoard / GenerateMail or AgendaFinalization / GenerateMail, and the page shows its warning instead of the error page.
+- Unchanged: the mail texts, recipients and Bcc, Mail_Mgr, every procedure and the database; Meeting Master, Reset Password, Notice and Send Mail (already handled in steps 24, M1, 28 and SM1).
+- Not changed: Report/Followup and Report/FollowupActionTaken have Send Mail code that no button reaches (see Known items).
+
+Browser checks on `BMMS_Test`, in Chrome and in Edge (deploy the build first; keep the error log of the day open; test rows as in the step report; first with smtp4dev stopped, then checks 1, 5, 6, 7 and 8 again with smtp4dev started):
+
+1. Agenda Entry as a Controller, a new item: "The agenda item was saved, but the mail could not be sent. The error is in the error log."; the item is in the grid; one Mail_Mgr / SendWebEmail log entry; no SMTP text or path on screen.
+2. The same as a User whose Manager is active and as a Manager: the same warning, the item saved. As a User whose Manager is inactive: the inactive-manager refusal, no item, no mail, no log entry.
+3. Agenda Entry, a new item after the Agenda Submission Date (M4 meeting 00904): the warning followed by "This item was added after the Agenda Submission Date (...)."
+4. Agenda Entry, Update of an item: "Successfully Saved", no log entry.
+5. Dashboard, a Manager approves an item waiting for the Manager: "The item was approved, but the mail could not be sent. ..."; the alert of the item moves on to the Controllers; one log entry.
+6. Dashboard, a Controller approves an item waiting for the Controller: the same warning; the item has its subject number in the Agenda Entry grid; one log entry.
+7. Dashboard, a Manager rejects and a Controller rejects an item: "The item was rejected, but the mail could not be sent. ..." each time; the item shows Rejected; one log entry each.
+8. Agenda Finalisation of a meeting with two items not yet approved: "Agenda Finalized. 2 rejection mail(s) could not be sent. The error is in the error log."; both items Rejected, the agenda finalized; two log entries.
+9. With smtp4dev started: check 1 gives "Successfully Saved" and the mail arrives; checks 5 to 7 show nothing new and the mails arrive; check 8 gives "Agenda Finalized" and two mails. No log entries.
+10. No check reaches the error page.
+
 ## Known items for later steps
 
 - The colour picker on Committee and Meeting (third-party JScript/ColorPicker/js_color_picker_v2.js) asks for its tab and slider images relative to the page (`/Master/images/tab_right_active.gif`, `slider_handle.gif`), which gives 404; its own copies are in JScript/ColorPicker/Images. Seen in step B3, not changed.
@@ -1526,11 +1550,12 @@ Browser checks on `BMMS_Test`, in Chrome and in Edge (deploy the build first; ru
 - Uploads larger than the ASP.NET default of 4 MB (no maxRequestLength in Web.config) are refused before the page runs and show the safe error page; Send Mail and Agenda Entry give no message of their own.
 - Agenda Approval, an agenda whose text was uploaded as a file: it is read with WordUtilities.ReadWordDocument on a relative path through Word, while uploaded agenda texts are PDF files, so that text is probably missing from the PDF (AgendaApproval.aspx.cs).
 - Database backups should later be written outside the web root (Backup Database writes to `~/Files/SqlBackup`, now hidden but still inside the site folder).
-- Other exception text still shown on purpose (kept by E1 and E2): the mail errors (Mail_Mgr returns "Error: <message>", shown by Agenda Entry and the other mail pages) and the Notice page's "The notice could not be sent: <message>" (HTML-encoded). Replace them with fixed texts in a later step.
+- Other exception text still shown on purpose (kept by E1 and E2): the Notice page's "The notice could not be sent: <message>" (HTML-encoded). Replace it with a fixed text in a later step. The mail error text of Mail_Mgr ("Error: <message>") is no longer shown by any page (steps M1, SM1, M2).
 - Notice Send Mail: no rule yet about meetings in the past.
 - Agenda Entry, step M4: spr_AddEditAgenda, spr_AddEditAgendaByManager and spr_AddEditAgendaByController do not refuse a new item after the meeting date; only the page checks. A database step can add the rule there.
 - Agenda Entry: Add puts the meeting id into Meeting No and the meeting number into the hidden meeting id (btnAdd_Click), so the "Agenda Created" mail shows the id as the Meeting No. Edit of an item of a meeting with no date fails in Convert.ToDateTime.
 - Agenda Entry is reachable by Controller, Manager and User (PageAccess.xml); step M4 kept it so.
+- Report/Followup and Report/FollowupActionTaken have Send Mail code (btnSendMail_Click) that no button reaches: Followup.aspx has no Send Mail button and the one in FollowupActionTaken.aspx is commented out. If a button is restored: the Followup report attaches `~/Files/PDF/Followup.pdf`, which that page never writes (another meeting's file written by Followup Action Taken, or none), both pages always say "Mail was sent to all members." whatever the mail result, and the file name is shared by every user (steps M2 and M3 left them unchanged).
 - Sitting Fees can still crash on a missing GetTotAmtByMemberId row, a deleted member, an empty From/To date, and a damaged logo file.
 - A damaged logo file makes the Notice, Agenda Approval and Sitting Fees PDFs throw (PDFUtilities.AddCompanyLogo).
 - Notice page shows no confirmation (fixed in step 28).

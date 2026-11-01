@@ -19,6 +19,9 @@ namespace BMMS.Master
         // A new item only up to the whole meeting date (step M4, the rule of step M1)
         private const string MeetingDatePassedMessage = "The meeting date has passed, so agenda items can no longer be added to this meeting.";
 
+        // The item is saved before the mail goes out (step M2); the mail error itself is in the error log
+        private const string MailNotSentMessage = "The agenda item was saved, but the mail could not be sent. The error is in the error log.";
+
         #region Page_Load
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -576,6 +579,7 @@ namespace BMMS.Master
                 AgendaBAL myAgenda = new AgendaBAL();
                 string sMsg = string.Empty;
                 bool saved = false;
+                bool mailFailed = false;
                 string submissionNotice = string.Empty;
 
                 try
@@ -624,17 +628,19 @@ namespace BMMS.Master
                     string strResult = "Success";
 
                     // Another tab may have finalized the agenda since the form opened: check before
-                    // the mail goes out. The procedure checks again (BMMS-Fix-MeetingLocks-Step16.sql).
+                    // saving. The procedure checks again (BMMS-Fix-MeetingLocks-Step16.sql).
                     int ActingUserId = int.Parse(Session["UserId"].ToString());
                     MeetingChangeResult agendaLock = AgendaMgr.GetAgendaLock(myAgenda.MeetingId, ActingUserId);
 
                     if (agendaLock.Result != 1)
                         strResult = agendaLock.RefusalMessage();
                     else if (btnSave.Text == "Save")
+                    {
                         strResult = CheckNewItemMeetingDate(myAgenda.MeetingId, out submissionNotice);
 
-                    if (strResult == "Success" && btnSave.Text == "Save")
-                        strResult = GenerateMail();
+                        if (strResult == "Success")
+                            strResult = CheckNewItemRoute();
+                    }
 
                     if (strResult == "Success")
                     {
@@ -664,7 +670,18 @@ namespace BMMS.Master
                         }
 
                         saved = result.Result == 1;
-                        sMsg = saved ? "Successfully Saved" + submissionNotice : result.RefusalMessage();
+
+                        // Save first; the "Agenda Created" mail goes out only when the database accepted the new
+                        // item, and the item stays saved when the mail fails (step M2)
+                        if (!saved)
+                            sMsg = result.RefusalMessage();
+                        else if (btnSave.Text == "Save" && GenerateMail() != "Success")
+                        {
+                            mailFailed = true;
+                            sMsg = MailNotSentMessage + submissionNotice;
+                        }
+                        else
+                            sMsg = submissionNotice == string.Empty ? "Successfully Saved" : "Successfully Saved." + submissionNotice;
                     }
                     else
                     {
@@ -682,7 +699,7 @@ namespace BMMS.Master
                     myAgenda = null;
                 }
 
-                MsgDisplay(sMsg, saved ? MessageKind.Success : sMsg.StartsWith("Error: ") ? MessageKind.Error : MessageKind.Warning);
+                MsgDisplay(sMsg, saved && !mailFailed ? MessageKind.Success : sMsg.StartsWith("Error: ") ? MessageKind.Error : MessageKind.Warning);
 
                 pnlViewAgenda.Visible = true;
                 pnlEditAgenda.Visible = false;
@@ -696,7 +713,7 @@ namespace BMMS.Master
         #region CheckNewItemMeetingDate
         // A new item: the meeting date is read again at Save, so a form left open past the meeting date cannot
         // add (step M4); checked before the mail goes out. Returns "Success" or the refusal. The Agenda Submission
-        // Date blocks nothing: after it, Notice holds the text added to the saved message; otherwise it is empty.
+        // Date blocks nothing: after it, Notice holds the sentence added to the saved message; otherwise it is empty.
         private string CheckNewItemMeetingDate(int MeetingId, out string Notice)
         {
             Notice = string.Empty;
@@ -709,7 +726,7 @@ namespace BMMS.Master
                 return MeetingDatePassedMessage;
 
             if (MeetingMgr.IsAfterAgendaSubmissionDate(dtMeeting.Rows[0]["AgendaSubmissionDate"], DateTime.Today))
-                Notice = ". This item was added after the Agenda Submission Date (" + FormatDate(dtMeeting.Rows[0]["AgendaSubmissionDate"]) + ").";
+                Notice = " This item was added after the Agenda Submission Date (" + FormatDate(dtMeeting.Rows[0]["AgendaSubmissionDate"]) + ").";
 
             return "Success";
         }
@@ -767,117 +784,140 @@ namespace BMMS.Master
         }
         #endregion
 
+        #region CheckNewItemRoute
+        // A user's new item, before it is saved: refused while the manager is inactive (BMMS-Fix-UserStatus-Stage2b.sql)
+        // or when it would go to the Controllers and none is active (BMMS-Fix-AgendaRouting-Step20.sql). Returns
+        // "Success" or the refusal; nothing is saved and no mail goes out on a refusal. The procedure checks again.
+        private string CheckNewItemRoute()
+        {
+            string roleCode = Session["RoleCode"].ToString();
+            if (roleCode == "controller" || roleCode == "manager")
+                return "Success";
+
+            DataTable dtRoute = AgendaMgr.GetAgendaCreationMailId(int.Parse(Session["UserId"].ToString()));
+            string route = dtRoute.Rows[0]["Route"].ToString();
+
+            if (route == "I")
+                return MeetingChangeReason.ManagerInactiveMessage(dtRoute.Rows[0]["ManagerName"].ToString());
+
+            if (route == "C" && Convert.ToInt32(dtRoute.Rows[0]["ActiveControllers"]) == 0)
+                return MeetingChangeReason.NoActiveControllerMessage;
+
+            return "Success";
+        }
+        #endregion
+
         #region GenerateMail
         private string GenerateMail()
         {
-            string ToMailId = string.Empty;
-            string Bcc = string.Empty;
-
-            int mgrUserId = 0;
-
-            DataTable dtUser = UserMgr.GetActiveUserList();   // active users only (stage 2a)
-            if (dtUser.Rows.Count > 0)
+            try
             {
-                for (int i = 0; i <= dtUser.Rows.Count - 1; i++)
+                string ToMailId = string.Empty;
+                string Bcc = string.Empty;
+
+                int mgrUserId = 0;
+
+                DataTable dtUser = UserMgr.GetActiveUserList();   // active users only (stage 2a)
+                if (dtUser.Rows.Count > 0)
                 {
-                    if (dtUser.Rows[i]["UserId"].ToString() == Session["UserId"].ToString())
+                    for (int i = 0; i <= dtUser.Rows.Count - 1; i++)
                     {
-                        ToMailId = dtUser.Rows[i]["EmailId"].ToString();
-                        // ManagerId is NULL when the user has no manager
-                        if (!int.TryParse(dtUser.Rows[i]["ManagerId"].ToString(), out mgrUserId))
-                            mgrUserId = 0;
-                        break;
+                        if (dtUser.Rows[i]["UserId"].ToString() == Session["UserId"].ToString())
+                        {
+                            ToMailId = dtUser.Rows[i]["EmailId"].ToString();
+                            // ManagerId is NULL when the user has no manager
+                            if (!int.TryParse(dtUser.Rows[i]["ManagerId"].ToString(), out mgrUserId))
+                                mgrUserId = 0;
+                            break;
+                        }
                     }
                 }
-            }
-            if (dtUser.Rows.Count > 0)
-            {
-                for (int i = 0; i <= dtUser.Rows.Count - 1; i++)
+                if (dtUser.Rows.Count > 0)
                 {
-                    if (dtUser.Rows[i]["UserId"].ToString() == mgrUserId.ToString())
+                    for (int i = 0; i <= dtUser.Rows.Count - 1; i++)
                     {
-                        Bcc += dtUser.Rows[i]["EmailId"].ToString();
-                        break;
+                        if (dtUser.Rows[i]["UserId"].ToString() == mgrUserId.ToString())
+                        {
+                            Bcc += dtUser.Rows[i]["EmailId"].ToString();
+                            break;
+                        }
                     }
                 }
-            }
 
-            // A user's new item follows the route of BMMS-Fix-AgendaRouting-Step20.sql: it waits for an active
-            // Manager (Bcc the manager), or goes straight to the Controllers (Bcc the active Controllers). Refused,
-            // before any mail goes out, while the manager is inactive (BMMS-Fix-UserStatus-Stage2b.sql) or when it
-            // would go to the Controllers and none is active. The procedure checks again.
-            string roleCode = Session["RoleCode"].ToString();
-            if (roleCode != "controller" && roleCode != "manager")
-            {
-                DataTable dtRoute = AgendaMgr.GetAgendaCreationMailId(int.Parse(Session["UserId"].ToString()));
-                string route = dtRoute.Rows[0]["Route"].ToString();
-
-                if (route == "I")
-                    return MeetingChangeReason.ManagerInactiveMessage(dtRoute.Rows[0]["ManagerName"].ToString());
-
-                if (route == "C" && Convert.ToInt32(dtRoute.Rows[0]["ActiveControllers"]) == 0)
-                    return MeetingChangeReason.NoActiveControllerMessage;
-
-                Bcc = string.Empty;
-                for (int i = 0; i <= dtRoute.Rows.Count - 1; i++)
+                // A user's new item follows the route of BMMS-Fix-AgendaRouting-Step20.sql: it waits for an active
+                // Manager (Bcc the manager), or goes straight to the Controllers (Bcc the active Controllers). The
+                // refusals of the route are checked before saving (CheckNewItemRoute).
+                string roleCode = Session["RoleCode"].ToString();
+                if (roleCode != "controller" && roleCode != "manager")
                 {
-                    string emailId = dtRoute.Rows[i]["EmailId"].ToString().Trim();
-                    if (emailId != string.Empty)
-                        Bcc += (Bcc == string.Empty ? "" : ", ") + emailId;
+                    DataTable dtRoute = AgendaMgr.GetAgendaCreationMailId(int.Parse(Session["UserId"].ToString()));
+
+                    Bcc = string.Empty;
+                    for (int i = 0; i <= dtRoute.Rows.Count - 1; i++)
+                    {
+                        string emailId = dtRoute.Rows[i]["EmailId"].ToString().Trim();
+                        if (emailId != string.Empty)
+                            Bcc += (Bcc == string.Empty ? "" : ", ") + emailId;
+                    }
                 }
+
+                string Subject = "Agenda (" + txtAgendaNo.Text.Trim() + ") has been Created";
+                string BodyText = string.Empty;
+                BodyText += "<table>";
+
+                BodyText += "<tr>";
+                BodyText += "<td style='text-align:left; font-weight:bold; width:150px;'>";
+                BodyText += "Agenda No <br /><br />";
+                BodyText += "Committee Name <br /><br />";
+                BodyText += "Meeting No <br /><br />";
+                BodyText += "Meeting Date <br /><br />";
+                BodyText += "Department <br /><br />";
+                BodyText += "Subject Type <br /><br />";
+                //BodyText += " <br /><br />";
+                BodyText += "</td>";
+
+                BodyText += "<td style='text-align:left; font-weight:normal;'>";
+                BodyText += ": " + HttpUtility.HtmlEncode(txtAgendaNo.Text.Trim()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(txtCommittee.Text.Trim()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(txtMeetingNo.Text.Trim()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(txtDateOfMeeting.Text.Trim()) + "<br /><br />";
+                if (Session["RoleCode"].ToString() == "controller")
+                    BodyText += ": " + HttpUtility.HtmlEncode(ddlDepartment.SelectedItem.Text.ToString().Trim()) + "<br /><br />";
+                else
+                    BodyText += ": " + HttpUtility.HtmlEncode(txtDepartment.Text.Trim()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(ddlSubjectType.SelectedItem.Text.Trim()) + "<br /><br />";
+                //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
+                BodyText += "</td>";
+
+                BodyText += "</tr>";
+
+                BodyText += "<tr>";
+                BodyText += "<td style='text-align:left; font-weight:bold; width:150px;'>";
+                BodyText += "Short Text <br /><br />";
+                //BodyText += " <br /><br />";
+                BodyText += "</td>";
+
+                BodyText += "<td style='text-align:left; font-weight:normal;'>";
+                BodyText += ": " + HttpUtility.HtmlEncode(txtShortText.Text.Trim()) + "<br /><br />";
+                //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
+                BodyText += "</td>";
+
+                BodyText += "</tr>";
+
+                BodyText += "</table>";
+
+                string result = Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, Bcc);
+
+
+
+                return result;
             }
-
-            string Subject = "Agenda (" + txtAgendaNo.Text.Trim() + ") has been Created";
-            string BodyText = string.Empty;
-            BodyText += "<table>";
-
-            BodyText += "<tr>";
-            BodyText += "<td style='text-align:left; font-weight:bold; width:150px;'>";
-            BodyText += "Agenda No <br /><br />";
-            BodyText += "Committee Name <br /><br />";
-            BodyText += "Meeting No <br /><br />";
-            BodyText += "Meeting Date <br /><br />";
-            BodyText += "Department <br /><br />";
-            BodyText += "Subject Type <br /><br />";
-            //BodyText += " <br /><br />";
-            BodyText += "</td>";
-
-            BodyText += "<td style='text-align:left; font-weight:normal;'>";
-            BodyText += ": " + HttpUtility.HtmlEncode(txtAgendaNo.Text.Trim()) + "<br /><br />";
-            BodyText += ": " + HttpUtility.HtmlEncode(txtCommittee.Text.Trim()) + "<br /><br />";
-            BodyText += ": " + HttpUtility.HtmlEncode(txtMeetingNo.Text.Trim()) + "<br /><br />";
-            BodyText += ": " + HttpUtility.HtmlEncode(txtDateOfMeeting.Text.Trim()) + "<br /><br />";
-            if (Session["RoleCode"].ToString() == "controller")
-                BodyText += ": " + HttpUtility.HtmlEncode(ddlDepartment.SelectedItem.Text.ToString().Trim()) + "<br /><br />";
-            else
-                BodyText += ": " + HttpUtility.HtmlEncode(txtDepartment.Text.Trim()) + "<br /><br />";
-            BodyText += ": " + HttpUtility.HtmlEncode(ddlSubjectType.SelectedItem.Text.Trim()) + "<br /><br />";
-            //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
-            BodyText += "</td>";
-
-            BodyText += "</tr>";
-
-            BodyText += "<tr>";
-            BodyText += "<td style='text-align:left; font-weight:bold; width:150px;'>";
-            BodyText += "Short Text <br /><br />";
-            //BodyText += " <br /><br />";
-            BodyText += "</td>";
-
-            BodyText += "<td style='text-align:left; font-weight:normal;'>";
-            BodyText += ": " + HttpUtility.HtmlEncode(txtShortText.Text.Trim()) + "<br /><br />";
-            //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
-            BodyText += "</td>";
-
-            BodyText += "</tr>";
-
-            BodyText += "</table>";
-
-            string result = Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, Bcc);
-
-            
-
-            return result;
-
+            catch (Exception ex)
+            {
+                // The item is already saved: log, and let the page say the mail was not sent
+                Utilities.WriteErrorLog(className, "GenerateMail", ex.ToString());
+                return "Error";
+            }
         }
         #endregion
 
