@@ -36,7 +36,7 @@
                                 <asp:RadioButtonList ID="rdoViewFormat" runat="server" AutoPostBack="True" OnSelectedIndexChanged="rdoViewFormat_SelectedIndexChanged"
                                     RepeatDirection="Horizontal">
                                     <asp:ListItem Text="View" Value="View" Selected="True"></asp:ListItem>
-                                    <%--<asp:ListItem Text="Print" Value="Print"></asp:ListItem>--%>
+                                    <asp:ListItem Text="Print" Value="Print"></asp:ListItem>
                                 </asp:RadioButtonList>
                             </td>
                         </tr>

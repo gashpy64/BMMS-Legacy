@@ -1699,6 +1699,34 @@ Forged and stored values:
 
 Part 4 of the M4 script removes the A903 items, meetings and committee; the uploaded files stay in Files/AgendaAttach and Files/AgendaText.
 
+## Step AP1: Print option on Reports, Agenda Approval (code only, no database script)
+
+Before: the page (Controller only, heading "Agenda Approval / Reject Report") showed only the list. The Print option was commented out in AgendaApproval.aspx since the baseline, so the Create PDF button was never shown. Its PDF would have printed every item of the meeting whatever its status (spr_GetAgendaByMeetingId is `SELECT * FROM View_Agenda WHERE MeetingId = @MeetingId ORDER BY AgendaStatusCode, SubjectNo`), and it read an uploaded agenda text (always a PDF file) as plain text.
+
+- AgendaApproval.aspx: the Print option is back; View stays the default. Print shows the meeting venue, date and time and the Create PDF button once a committee and a meeting are chosen (the existing handlers).
+- Create PDF prints only the items the Controller has approved (AgendaStatusCode ACA), filtered in the page; the list on View keeps every item. No approved item: "No approved agenda items for this meeting". The Tamil/Hindi refusal is unchanged and looks at the approved items only.
+- An Upload item's agenda text file is added page by page (PDFUtilities.AddAgendaText, as in the Agenda Details report), after the step N2 name check; a refused name is still left out with one error-log line `file name refused (AgendaTextPath)`.
+- The line "The agenda details opened in a new window ..." is hidden when the view format changes.
+- Unchanged: the procedures, the layout of the PDF (no Subject No, no title, no attachments, no meeting date), every other page.
+
+Browser checks on `BMMS_Test` (deploy the build first; run part 1 only of `Database/BMMS-Test-AgendaDates-M4.sql`; all items in meeting 00905 of committee A903; a User whose Manager is active, that Manager, and a Controller; small test PDF files a.pdf and t1.pdf; keep the error log of the day open; after each step `SELECT AgendaId, ShortText, AgendaType, AgendaStatusCode, AgendaTextPath, FilePath FROM Agenda WHERE MeetingId = <00905>`):
+
+Items, part one (before test 4): the User adds "AP1 waiting" (Entry): AC. The User adds "AP1 manager" (Entry) and the Manager approves it on the Dashboard: AMA. The User adds "AP1 rejected" (Entry), the Manager approves it, the Controller rejects it on the Dashboard: ACR.
+
+Items, part two (after test 4): the Controller adds "AP1 entry" (Entry, some rich text, a proposed resolution, attachment a.pdf) and "AP1 upload" (Upload, agenda text t1.pdf, a proposed resolution); a Controller's item is approved at once: ACA. Note the AgendaTextPath of "AP1 upload" for tests 6 and 7.
+
+1. Page states (Controller, Reports, Agenda Approval): the page opens with View chosen. Choosing Print before a committee and a meeting are chosen shows nothing more. Committee A903, meeting 00905, View: the list shows every item with its status. Print: venue, date, time and Create PDF; the list is hidden.
+2. Create PDF (after part two): the pop-up opens the PDF with "AP1 entry" and "AP1 upload" only. Each item starts on a new page with the logo (or organisation name), "Note to the <committee>", Agenda No, Meeting No, Department, the Short Text, the agenda text and "Proposed Resolution :". "AP1 entry": its rich text; no pages of a.pdf. "AP1 upload": the pages of t1.pdf, then the proposed resolution on the next page. No "AP1 waiting", "AP1 manager" or "AP1 rejected"; no Subject No. Error log: nothing.
+3. The list still shows all five items: Print, then View again.
+4. No approved item (after part one, before part two): Print, Create PDF: the message "No approved agenda items for this meeting"; no pop-up.
+5. Tamil or Hindi: the User puts a Tamil word in the Short Text of "AP1 waiting" (Update): Create PDF makes the PDF. The Controller puts a Tamil word in the Short Text of "AP1 entry" (Update): Create PDF shows "Tamil or Hindi text cannot be printed correctly in a PDF; choose View on this page." and no PDF. Remove both words afterwards.
+6. Bad stored name (the Consultant runs inline, `BMMS_Test` only): `UPDATE Agenda SET AgendaTextPath = '..\..\Web.config' WHERE AgendaId = <AgendaId of AP1 upload>` (1 row). Create PDF: the PDF opens; "AP1 upload" has no agenda text pages and no Web.config text; "AP1 entry" is complete; one error-log line `Agenda <AgendaNo>: file name refused (AgendaTextPath), left out of the PDF: ..\..\Web.config`. Then put the name back: `UPDATE Agenda SET AgendaTextPath = '<AgendaTextPath of AP1 upload noted before>' WHERE AgendaId = <AgendaId of AP1 upload>` (1 row).
+7. Missing file (inline, `BMMS_Test` only): `UPDATE Agenda SET AgendaTextPath = 'AP1-missing.pdf' WHERE AgendaId = <AgendaId of AP1 upload>` (1 row). Create PDF: the standard error message bar, no pop-up, one entry in the error log (file not found). Then put the name back as in test 6.
+8. Switch back: after a Create PDF, View: the list, without the line "The agenda details opened in a new window ..."; Print again: the panel without that line.
+9. Other roles: the Manager and the User have no Agenda Approval entry under Reports; opening `Report/AgendaApproval.aspx` directly gives the access-denied page (PageAccess.xml).
+
+Part 4 of the M4 script removes the A903 items, meetings and committee; the uploaded files stay in Files/AgendaAttach and Files/AgendaText.
+
 ## Known items for later steps
 
 - The colour picker on Committee and Meeting (third-party JScript/ColorPicker/js_color_picker_v2.js) asks for its tab and slider images relative to the page (`/Master/images/tab_right_active.gif`, `slider_handle.gif`), which gives 404; its own copies are in JScript/ColorPicker/Images. Seen in step B3, not changed.
@@ -1729,7 +1757,17 @@ Part 4 of the M4 script removes the A903 items, meetings and committee; the uplo
 - Member: the photo and resume paths (hidden text boxes) are stored as posted; nothing opens a file from them today. The photo and resume uploads have no type check.
 - Agenda.aspx has ValidateRequest="false".
 - Agenda uploads: between SafeFileName.MakeUnique and SaveAs two uploads of the same name at the same moment can overwrite each other (SaveAs overwrites).
-- Reports, Agenda Approval: the Print option and the Create PDF button are dead (the Print option is commented out in AgendaApproval.aspx since the baseline, so the page shows only the list). Restoring or removing them is a later decision.
+- Reports, Agenda Approval (step AP1 left it): CreatePDF rethrows with `throw ex`, which loses the original stack, and `pdfDocument.Close()` in `finally` can raise its own error and hide the first one.
+- WordUtilities.ReadWordDocument is no longer called (step AP1); it does not close the file if reading fails (no `using`).
+- Reports, Agenda Approval: no rule on the meeting date or on finalisation; the PDF can be made for any meeting.
+- Reports, Agenda Approval: the meeting venue, date and time boxes shown with Create PDF can be edited but are not used in the PDF.
+- Reports, Agenda Approval: SetMargins is called after the document is opened, so the first page has other margins than the rest.
+- PDFUtilities.AddHTMLText drops without a sign any HTML element iTextSharp cannot place.
+- Reports, Agenda Approval: the Agenda No is printed as the third part of AgendaNo split on - (step N3, parked); an Agenda No with fewer parts makes the whole PDF fail.
+- Reports, Agenda Approval: the Tamil/Hindi message says "choose View on this page", but View shows only the list, without the agenda text.
+- Reports, Agenda Approval: the Company Secretary signature lines are commented out.
+- Reports, Agenda Approval: ViewState["dtAgenda"] carries all the rich text of the meeting, so the page is heavy.
+- PDFUtilities.AddAgendaText leaves the page size of the last page of the uploaded file for the pages that follow (Agenda Approval and Agenda Details reports).
 - Orphan Meeting alerts: meetings deleted before step D1 left their alerts behind (5 on BMMS_Test and 1 on BMMS at step 0). Step D1 lists and counts them and does not remove them; the Consultant decides after seeing them. New deletes since step D1 leave none.
 - Meeting delete (step D1): the meeting's Agenda alerts are not looked at (a meeting with agenda items cannot be deleted). Alerts of agenda items deleted earlier (spr_DeleteAgendaByAgendaId) refer to an AgendaId that no longer exists and are a separate question.
 - M6: Dashboard Approve and Reject are closed after the meeting date since step M6a (the procedures themselves, spr_UpdateAgendaByAgendaId and spr_GenerateSubjectNoByMeetingId, still have no date rule). Still allowed after the meeting date, as decided: Agenda Finalisation (rejects every item not yet approved and finalizes; refused only when already finalized) and Minutes Update (spr_UpdateMinutes and spr_UpdateAgendaShortText write Agenda.ShortText; refused once the minutes are confirmed and by the step 23 order). The Agenda Finalisation alert (M6b) is not built yet.

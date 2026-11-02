@@ -32,17 +32,23 @@ namespace BMMS.Report
         #region CreatePDF
         // The agenda notes as PDF bytes; null when there is no agenda. Built in memory: nothing is written
         // to ~/Files/PDF (step 26; it used to overwrite AgendaDetails.pdf behind a link to AgendaApproval.pdf)
+        // Step AP1: only the items the Controller has approved (AgendaStatusCode ACA); the grid keeps every item
         private byte[] CreatePDF()
         {
             byte[] pdf = null;
 
-            DataTable dtAgenda = new DataTable();
-            dtAgenda = GetAgendaDetails();
-            ViewState["dtAgenda"] = dtAgenda;
+            DataTable dtAll = GetAgendaDetails();
+            DataTable dtAgenda = dtAll.Clone();
+
+            foreach (DataRow row in dtAll.Rows)
+            {
+                if (row["AgendaStatusCode"].ToString() == "ACA")
+                    dtAgenda.ImportRow(row);
+            }
 
             if (dtAgenda.Rows.Count <= 0)
             {
-                ScriptManager.RegisterStartupScript(this, this.GetType(), "msg", "alert('No Agenda Available');", true);
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "msg", "alert('No approved agenda items for this meeting');", true);
                 ScriptManager.GetCurrent(this).SetFocus(ddlMeeting.ClientID);
             }
             else if (HasIndicText(dtAgenda))
@@ -123,14 +129,15 @@ namespace BMMS.Report
                         }
                         else
                         {
-                            // Step N2: only a plain file name inside ~/Files/AgendaText; any other is left out and logged
+                            // Step N2: only a plain file name inside ~/Files/AgendaText; any other is left out and logged.
+                            // Step AP1: the uploaded agenda text is a PDF; its pages are added as in the Agenda Details report
                             string storedName = dtAgenda.Rows[j]["AgendaTextPath"].ToString();
+                            htmlText = string.Empty;
 
                             if (SafeFileName.IsPlainName(storedName))
-                                htmlText = WordUtilities.ReadWordDocument("~/Files/AgendaText/" + storedName);
+                                PDFUtilities.AddAgendaText(pdfDocument, writer, MapPath("~/Files/AgendaText/") + storedName);
                             else
                             {
-                                htmlText = string.Empty;
                                 Utilities.WriteErrorLog(className, "CreatePDF",
                                     "Agenda " + dtAgenda.Rows[j]["AgendaNo"].ToString() + ": file name refused (AgendaTextPath), left out of the PDF: "
                                     + (storedName.Length > 300 ? storedName.Substring(0, 300) + "..." : storedName));
@@ -285,6 +292,9 @@ namespace BMMS.Report
         #region rdoViewFormat_SelectedIndexChanged
         protected void rdoViewFormat_SelectedIndexChanged(object sender, EventArgs e)
         {
+            // Step AP1: the line about the pop-up belongs to the last Create PDF only
+            pnlAgendaDetailsDownload.Visible = false;
+
             if (ddlMeeting.Items.Count >= 1)
                 if (ddlMeeting.Text != "0")
                 {
