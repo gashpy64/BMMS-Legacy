@@ -1,6 +1,6 @@
 <%@ Page Language="C#" MasterPageFile="~/MasterPage/Main.Master" AutoEventWireup="true"
     Codebehind="Agenda.aspx.cs" Inherits="BMMS.Master.Agenda" Title="Untitled Page"
-    ValidateRequest="false" MaintainScrollPositionOnPostback="true" %>
+    MaintainScrollPositionOnPostback="true" %>
 
 <%@ Register Assembly="FreeTextBox" Namespace="FreeTextBoxControls" TagPrefix="FTB" %>
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="cc1" %>
@@ -306,11 +306,7 @@
                         </div>
                         <div class="divRowRight" style="width: 650px;">
                             <a id="aAgendaText" runat="server" target="_blank">View</a>
-                            <FTB:FreeTextBox ID="ftxtAgendaText" runat="server" Height="100px" AllowHtmlMode="false" ShowTagPath="false"
-                                    AutoGenerateToolbarsFromString="True" ButtonSet="Office2003"  
-                                    ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                    ToolbarStyleConfiguration="Office2003">
-                                </FTB:FreeTextBox>
+                            <bmms:RichTextEditor ID="ftxtAgendaText" runat="server" Height="100px" Label="Agenda Text" />
                             <asp:Button ID="btnAddAgentaText" runat="server" Text="AddFile" OnClick="btnAddAgentaText_Click"
                                 Style="visibility: hidden" />
                             <asp:TextBox ID="txtAgendaTextPath" runat="server" Width="150px" Style="visibility: hidden"></asp:TextBox>
@@ -321,12 +317,7 @@
                             Proposed Resolution :
                         </div>
                         <div class="divRowRight" style="width: 650px;">
-                            <FTB:FreeTextBox ID="ftxtProposedResolution" runat="server" Height="100px"
-                                    AllowHtmlMode="false" ShowTagPath="false"
-                                    AutoGenerateToolbarsFromString="True" ButtonSet="Office2003" 
-                                    ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                    ToolbarStyleConfiguration="Office2003">
-                                </FTB:FreeTextBox>
+                            <bmms:RichTextEditor ID="ftxtProposedResolution" runat="server" Height="100px" Label="Proposed Resolution" />
                         </div>
                     </div>
                     <div class="divRow">
@@ -371,12 +362,7 @@
                                 Manager Comments :
                             </div>
                             <div class="divRowRight" style="width: 650px;">
-                                <FTB:FreeTextBox ID="ftxtManagerComments" runat="server" Height="100px"
-                                    AllowHtmlMode="false" ShowTagPath="false"
-                                    AutoGenerateToolbarsFromString="True" ButtonSet="Office2003" 
-                                    ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                    ToolbarStyleConfiguration="Office2003">
-                                </FTB:FreeTextBox>
+                                <bmms:RichTextEditor ID="ftxtManagerComments" runat="server" Height="100px" Label="Manager Comments" />
                             </div>
                         </div>
                     </asp:Panel>
@@ -386,12 +372,7 @@
                                 Controller Comments :
                             </div>
                             <div class="divRowRight" style="width: 650px;">
-                                <FTB:FreeTextBox ID="ftxtControllerComments" runat="server" Height="100px"
-                                    AllowHtmlMode="false" ShowTagPath="false"
-                                    AutoGenerateToolbarsFromString="True" ButtonSet="Office2003" 
-                                    ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                    ToolbarStyleConfiguration="Office2003">
-                                </FTB:FreeTextBox>
+                                <bmms:RichTextEditor ID="ftxtControllerComments" runat="server" Height="100px" Label="Controller Comments" />
                             </div>
                         </div>
                     </asp:Panel>

@@ -90,6 +90,8 @@
     <Compile Include="HTML_Report.cs" />
     <Compile Include="HtmlCleaner.cs" />
     <Compile Include="SafeFileName.cs" />
+    <Compile Include="RichTextLimits.cs" />
+    <Compile Include="RichTextPost.cs" />
     <Compile Include="ReportsMgr.cs" />
     <Compile Include="PDF_Reports.cs" />
     <Compile Include="DocToString.cs" />

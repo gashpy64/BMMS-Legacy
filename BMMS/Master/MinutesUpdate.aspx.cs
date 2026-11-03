@@ -8,6 +8,7 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Web.UI.WebControls.WebParts;
 using System.Web.UI.HtmlControls;
+using BMMS.Controls;
 using BMMSBAL;
 
 namespace BMMS.Master
@@ -408,6 +409,9 @@ namespace BMMS.Master
         #region btnDirectionsSave_Click
         protected void btnDirectionsSave_Click(object sender, EventArgs e)
         {
+            // Step A2a: rich text over the limit (Web.config): nothing is saved, the editor stays open
+            if (RichTextEditor.IsTooLong(this)) { MsgDisplay(RichTextLimits.TooLongMessage); return; }
+
             MinutesBAL myMinutesBAL = new MinutesBAL();
 
             myMinutesBAL.Code = "Directions";
@@ -446,6 +450,9 @@ namespace BMMS.Master
         #region btnActualResolutionSave_Click
         protected void btnActualResolutionSave_Click(object sender, EventArgs e)
         {
+            // Step A2a: rich text over the limit (Web.config): nothing is saved, the editor stays open
+            if (RichTextEditor.IsTooLong(this)) { MsgDisplay(RichTextLimits.TooLongMessage); return; }
+
             MinutesBAL myMinutesBAL = new MinutesBAL();
 
             myMinutesBAL.Code = "ActualResolution";

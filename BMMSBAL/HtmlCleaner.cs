@@ -82,6 +82,27 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region IsBlank
+        // Step A2a: true when cleaned HTML (the output of Clean) shows no text: only tags, spaces, line breaks
+        // and &nbsp;. An editor left empty, "<p>&nbsp;</p>" or "<p><br /></p>", or a table of empty cells is
+        // blank; the editor stores empty text for it.
+        public static bool IsBlank(string cleanedHtml)
+        {
+            if (string.IsNullOrEmpty(cleanedHtml))
+                return true;
+
+            string text = TagPattern.Replace(cleanedHtml, string.Empty).Replace("&nbsp;", " ");
+
+            foreach (char c in text)
+                if (!char.IsWhiteSpace(c))
+                    return false;
+
+            return true;
+        }
+
+        private static readonly Regex TagPattern = new Regex("<[^>]*>", RegexOptions.CultureInvariant);
+        #endregion
+
         #region EncodeText
         // & < > as entities, U+00A0 as &nbsp;, control characters other than tab and line breaks left out
         private static string EncodeText(string text)

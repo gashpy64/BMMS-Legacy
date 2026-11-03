@@ -1,6 +1,6 @@
 <%@ Page Language="C#" MasterPageFile="~/MasterPage/Main.Master" AutoEventWireup="true"
     Codebehind="MinutesUpdate.aspx.cs" Inherits="BMMS.Master.MinutesUpdate" Title="Untitled Page"
-    ValidateRequest="false" MaintainScrollPositionOnPostback="false" %>
+    MaintainScrollPositionOnPostback="false" %>
 
 <%@ Register Assembly="FreeTextBox" Namespace="FreeTextBoxControls" TagPrefix="FTB" %>
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="cc1" %>
@@ -155,11 +155,7 @@
                                 <div class="divHeader">
                                     :: Edit Minute Directions</div>
                                 <div class="divRow" style="text-align: center;">
-                                    <FTB:FreeTextBox ID="ftxtDirections" runat="server" Width="600px" Height="200px"
-                                        AllowHtmlMode="false" ShowTagPath="false" AutoGenerateToolbarsFromString="True"
-                                        ButtonSet="Office2003" ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                        ToolbarStyleConfiguration="Office2003">
-                                    </FTB:FreeTextBox>
+                                    <bmms:RichTextEditor ID="ftxtDirections" runat="server" Width="600px" Height="200px" Label="Directions" />
                                 </div>
                                 <div class="divRow" style="text-align: center;">
                                     <asp:Button ID="btnDirectionsSave" runat="server" CssClass="button" Text="Save" OnClick="btnDirectionsSave_Click" />
@@ -206,11 +202,7 @@
                                 <div class="divHeader">
                                     :: View Proposed Resolution</div>
                                 <div class="divRow" style="text-align: center;">
-                                    <FTB:FreeTextBox ID="ftxtProposedResolution" runat="server" Height="200px" AllowHtmlMode="false"
-                                        ShowTagPath="false" AutoGenerateToolbarsFromString="True" ButtonSet="Office2003"
-                                        ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                        ToolbarStyleConfiguration="Office2003">
-                                    </FTB:FreeTextBox>
+                                    <bmms:RichTextEditor ID="ftxtProposedResolution" runat="server" Width="600px" Height="200px" ReadOnly="true" Label="Proposed Resolution" />
                                 </div>
                                 <div class="divRow" style="text-align: center;">
                                     <asp:Button ID="btnProposedResolutionCancel" runat="server" CssClass="button" Text="Cancel"
@@ -229,11 +221,7 @@
                                 <div class="divHeader">
                                     :: Edit Actual Resolution</div>
                                 <div class="divRow" style="text-align: center;">
-                                    <FTB:FreeTextBox ID="ftxtActualResolution" runat="server" Width="600px" Height="200px"
-                                        AllowHtmlMode="false" ShowTagPath="false" AutoGenerateToolbarsFromString="True"
-                                        ButtonSet="Office2003" ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                        ToolbarStyleConfiguration="Office2003">
-                                    </FTB:FreeTextBox>
+                                    <bmms:RichTextEditor ID="ftxtActualResolution" runat="server" Width="600px" Height="200px" Label="Actual Resolution" />
                                 </div>
                                 <div class="divRow" style="text-align: center;">
                                     <asp:Button ID="btnActualResolutionSave" runat="server" CssClass="button" Text="Save"

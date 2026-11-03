@@ -16,6 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link href="../CSS/bmms-colours.css" rel="stylesheet" type="text/css" />
     <link href="../CSS/bmms-workbench.css" rel="stylesheet" type="text/css" />
+    <link href="../CSS/RichTextEditor.css" rel="stylesheet" type="text/css" />
     <link rel="icon" href="../favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="192x192" href="../Images/Brand/bmms-favicon-192.png" />
 
@@ -29,6 +30,7 @@
                 <asp:ScriptReference Path="~/JScript/ddlevelsmenu.js" />
                 <asp:ScriptReference Path="~/JScript/Validation.js" />
                 <asp:ScriptReference Path="~/JScript/AsyncPostBackError.js" />
+                <asp:ScriptReference Path="~/JScript/RichTextEditor.js" />
             </Scripts>
         </asp:ScriptManager>
         <div id="mainContainer">

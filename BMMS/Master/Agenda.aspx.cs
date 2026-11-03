@@ -8,6 +8,7 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Web.UI.WebControls.WebParts;
 using System.Web.UI.HtmlControls;
+using BMMS.Controls;
 using BMMSBAL;
 
 namespace BMMS.Master
@@ -605,6 +606,9 @@ namespace BMMS.Master
         #region btnSave_Click
         protected void btnSave_Click(object sender, EventArgs e)
         {
+            // Step A2a: rich text over the limit (Web.config): nothing is saved
+            if (RichTextEditor.IsTooLong(this)) { MsgDisplay(RichTextLimits.TooLongMessage); return; }
+
             if (PageValidation())
             {
                 AgendaMgr myAgendaMgr = new AgendaMgr();
@@ -1028,7 +1032,6 @@ namespace BMMS.Master
             if (rdoAgendaType.Text == "Entry")
             {
                 ftxtAgendaText.Visible = true;
-                ftxtAgendaText.Text = string.Empty;
                 aAgendaText.Visible = false;
                 pnlUploadAgendaText.Visible = false;
             }
@@ -1059,6 +1062,9 @@ namespace BMMS.Master
         #region btnAddFile_Click
         protected void btnAddFile_Click(object sender, EventArgs e)
         {
+            // Step A2a: rich text over the limit (Web.config): the whole post is refused, no file is kept
+            if (RichTextEditor.IsTooLong(this)) { MsgDisplay(RichTextLimits.TooLongMessage); return; }
+
             if (fuAttachment.HasFile)
             {
 
@@ -1116,6 +1122,9 @@ namespace BMMS.Master
         #region btnAddAgentaText_Click
         protected void btnAddAgentaText_Click(object sender, EventArgs e)
         {
+            // Step A2a: rich text over the limit (Web.config): the whole post is refused, no file is kept
+            if (RichTextEditor.IsTooLong(this)) { MsgDisplay(RichTextLimits.TooLongMessage); return; }
+
             MsgHide();
 
             if (FileUploadAgendaText.HasFile)
