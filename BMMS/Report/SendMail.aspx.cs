@@ -8,6 +8,7 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Web.UI.WebControls.WebParts;
 using System.Web.UI.HtmlControls;
+using BMMS.Controls;
 using BMMSBAL;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
@@ -33,9 +34,7 @@ namespace BMMS.Report
             Common.InitSetup(className);
             InitCtrlAttributes();
 
-            // The editor shows the posted body again on every postback: cleaned to the allow-list first (step A1a)
-            if (IsPostBack)
-                ftxtBodyText.Text = HtmlCleaner.Clean(ftxtBodyText.Xhtml);
+            // Step A3: the editor keeps the posted body itself (cleaned by the control), so nothing is copied here
 
             if (!IsPostBack)
             {
@@ -57,6 +56,9 @@ namespace BMMS.Report
         protected void btnSendMail_Click(object sender, EventArgs e)
         {
             MsgHide();
+
+            // Step A3: rich text over the limit (Web.config): nothing is sent, the typed text stays
+            if (RichTextEditor.IsTooLong(this)) { MsgDisplay(RichTextLimits.TooLongMessage); return; }
 
             string ToMailId = txtToMailId.Text.Trim();
 
@@ -105,7 +107,7 @@ namespace BMMS.Report
         private string CreateBodyText(string ToMailId, string AttachFile, string AttachName)
         {
             // The typed mail body cleaned to the rich-text allow-list (step A1a)
-            string BodyText = HtmlCleaner.Clean(ftxtBodyText.Xhtml.Trim());
+            string BodyText = HtmlCleaner.Clean(ftxtBodyText.Text.Trim());
 
             string Subject = txtSubject.Text.Trim();
 
@@ -118,6 +120,9 @@ namespace BMMS.Report
         protected void btnAttachment_Click(object sender, EventArgs e)
         {
             MsgHide();
+
+            // Step A3: this post carries the body too; over the limit no file is stored and the typed text stays
+            if (RichTextEditor.IsTooLong(this)) { MsgDisplay(RichTextLimits.TooLongMessage); return; }
 
             // HasFile is false when no file arrived or the file is empty
             if (!FileUploadAttachment.HasFile)

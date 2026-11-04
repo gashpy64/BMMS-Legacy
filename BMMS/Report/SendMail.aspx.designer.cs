@@ -89,7 +89,7 @@ namespace BMMS.Report {
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::FreeTextBoxControls.FreeTextBox ftxtBodyText;
+        protected global::BMMS.Controls.RichTextEditor ftxtBodyText;
         
         /// <summary>
         /// aAttachment control.

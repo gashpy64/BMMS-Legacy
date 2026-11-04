@@ -1,9 +1,7 @@
 <%@ Page Language="C#" MasterPageFile="~/MasterPage/Main.Master" AutoEventWireup="true"
-    Codebehind="DashBoard.aspx.cs" Inherits="BMMS.DashBoard.DashBoard" Title="Untitled Page"
-    ValidateRequest="false" %>
+    Codebehind="DashBoard.aspx.cs" Inherits="BMMS.DashBoard.DashBoard" Title="Untitled Page" %>
 
 <%@ Register Src="../UserControl/MeetingSummary.ascx" TagName="MeetingSummary" TagPrefix="uc1" %>
-<%@ Register Assembly="FreeTextBox" Namespace="FreeTextBoxControls" TagPrefix="FTB" %>
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="cc1" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
@@ -436,11 +434,7 @@
                                             Agenda Text :
                                         </div>
                                         <div class="divRowRight" style="width: 550px;">
-                                            <FTB:FreeTextBox ID="ftxtAgendaText" runat="server" Width="550px" Height="100px"
-                                                AllowHtmlMode="false" ShowTagPath="false" AutoGenerateToolbarsFromString="True"
-                                                ButtonSet="Office2003" ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                                ToolbarStyleConfiguration="Office2003">
-                                            </FTB:FreeTextBox>
+                                            <bmms:RichTextEditor ID="ftxtAgendaText" runat="server" Width="550px" Height="100px" ReadOnly="true" Label="Agenda Text" />
                                             <a id="aAgendaText" runat="server" target="_blank">View</a>
                                         </div>
                                     </div>
@@ -451,11 +445,7 @@
                                         <div class="divRowRight" style="width: 550px;">
                                             <%--<asp:TextBox ID="txtProposedResolution" runat="server" ReadOnly="true" TextMode="MultiLine"
                                             Height="100px" Width="550px"></asp:TextBox>--%>
-                                            <FTB:FreeTextBox ID="ftxtProposedResolution" runat="server" Width="550px" Height="100px"
-                                                AllowHtmlMode="false" ShowTagPath="false" AutoGenerateToolbarsFromString="True"
-                                                ButtonSet="Office2003" ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                                ToolbarStyleConfiguration="Office2003">
-                                            </FTB:FreeTextBox>
+                                            <bmms:RichTextEditor ID="ftxtProposedResolution" runat="server" Width="550px" Height="100px" Label="Proposed Resolution" />
                                         </div>
                                     </div>
                                     <div class="divRow">
@@ -488,11 +478,7 @@
                                             Manager Comments :
                                         </div>
                                         <div class="divRowRight" style="width: 550px;">
-                                            <FTB:FreeTextBox ID="ftxtManagerComments" runat="server" Width="550px" Height="100px"
-                                                AllowHtmlMode="false" ShowTagPath="false" AutoGenerateToolbarsFromString="True"
-                                                ButtonSet="Office2003" ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                                ToolbarStyleConfiguration="Office2003">
-                                            </FTB:FreeTextBox>
+                                            <bmms:RichTextEditor ID="ftxtManagerComments" runat="server" Width="550px" Height="100px" Label="Manager Comments" />
                                         </div>
                                     </div>
                                     <div class="divRow">
@@ -500,11 +486,7 @@
                                             Controller Comments :
                                         </div>
                                         <div class="divRowRight" style="width: 550px;">
-                                            <FTB:FreeTextBox ID="ftxtControllerComments" runat="server" Width="550px" Height="100px"
-                                                AllowHtmlMode="false" ShowTagPath="false" AutoGenerateToolbarsFromString="True"
-                                                ButtonSet="Office2003" ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                                ToolbarStyleConfiguration="Office2003">
-                                            </FTB:FreeTextBox>
+                                            <bmms:RichTextEditor ID="ftxtControllerComments" runat="server" Width="550px" Height="100px" Label="Controller Comments" />
                                         </div>
                                     </div>
                                 </div>
@@ -604,11 +586,7 @@
                                             Actual Resolution :
                                         </div>
                                         <div class="divRowRight" style="width: 550px;">
-                                            <FTB:FreeTextBox ID="ftxtActualResolution" runat="server" Width="550px" Height="100px"
-                                                ReadOnly="true" AllowHtmlMode="false" ShowTagPath="false" AutoGenerateToolbarsFromString="True"
-                                                ButtonSet="Office2003" ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                                ToolbarStyleConfiguration="Office2003">
-                                            </FTB:FreeTextBox>
+                                            <bmms:RichTextEditor ID="ftxtActualResolution" runat="server" Width="550px" Height="100px" ReadOnly="true" Label="Actual Resolution" />
                                         </div>
                                     </div>
                                     <div class="divRow">
@@ -616,11 +594,7 @@
                                             Action Text :
                                         </div>
                                         <div class="divRowRight" style="width: 550px;">
-                                            <FTB:FreeTextBox ID="ftxtActionText" runat="server" Width="550px" Height="100px"
-                                                ReadOnly="true" AllowHtmlMode="false" ShowTagPath="false" AutoGenerateToolbarsFromString="True"
-                                                ButtonSet="Office2003" ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                                ToolbarStyleConfiguration="Office2003">
-                                            </FTB:FreeTextBox>
+                                            <bmms:RichTextEditor ID="ftxtActionText" runat="server" Width="550px" Height="100px" ReadOnly="true" Label="Action Text" />
                                         </div>
                                     </div>
                                 </div>

@@ -8,6 +8,7 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Web.UI.WebControls.WebParts;
 using System.Web.UI.HtmlControls;
+using BMMS.Controls;
 using BMMSBAL;
 
 namespace BMMS.DashBoard
@@ -475,6 +476,7 @@ namespace BMMS.DashBoard
             else
             {
                 ftxtAgendaText.Visible = false;
+                ftxtAgendaText.Text = string.Empty;   // step A3: no text of an earlier item stays in the hidden editor
                 aAgendaText.Visible = true;
                 aAgendaText.Attributes.Add("href", "../Files/AgendaText/" + Uri.EscapeDataString(dtAgendaEdit.Rows[0]["AgendaTextPath"].ToString()));
             }
@@ -630,6 +632,9 @@ namespace BMMS.DashBoard
             if (!HasSessionUser(out UserId, out RoleCode))
                 return;
 
+            // Step A3: rich text over the limit (Web.config): nothing is saved, no mail, the panel stays open
+            if (RichTextEditor.IsTooLong(this)) { MsgDisplay(RichTextLimits.TooLongMessage); return; }
+
             int AgendaId;
             int MeetingId;
             object MeetingDate;
@@ -694,6 +699,8 @@ namespace BMMS.DashBoard
                 // Nothing is shown on success, as before; the mail error itself is in the error log
                 if (mailResult != "Success")
                     MsgDisplay(ApprovedMailNotSentMessage, MessageKind.Warning);
+
+                ClearAgendaEditors();   // step A3: saved, the panel closes
             }
             else if (approveResult.Reason == MeetingChangeReason.NotFound)
                 ShowItemGone();
@@ -715,6 +722,9 @@ namespace BMMS.DashBoard
             string RoleCode;
             if (!HasSessionUser(out UserId, out RoleCode))
                 return;
+
+            // Step A3: rich text over the limit (Web.config): nothing is saved, no mail, the panel stays open
+            if (RichTextEditor.IsTooLong(this)) { MsgDisplay(RichTextLimits.TooLongMessage); return; }
 
             int AgendaId;
             int MeetingId;
@@ -777,6 +787,8 @@ namespace BMMS.DashBoard
                 // Nothing is shown on success, as before; the mail error itself is in the error log (step M3)
                 if (mailResult != "Success")
                     MsgDisplay(RejectedMailNotSentMessage, MessageKind.Warning);
+
+                ClearAgendaEditors();   // step A3: saved, the panel closes
             }
             else if (rejectResult.Reason == MeetingChangeReason.NotFound)
                 ShowItemGone();
@@ -899,6 +911,9 @@ namespace BMMS.DashBoard
             if (!HasSessionUser(out UserId, out RoleCode))
                 return;
 
+            // Step A3: rich text over the limit (Web.config): nothing is saved, the panel stays open
+            if (RichTextEditor.IsTooLong(this)) { MsgDisplay(RichTextLimits.TooLongMessage); return; }
+
             // Step F2: the action item must still exist before it is saved
             int ActionItemId;
             DataTable dtActionItem = int.TryParse(hdnActionItemId.Value.Trim(), out ActionItemId)
@@ -920,13 +935,16 @@ namespace BMMS.DashBoard
             ActionItemMgr.UpdateActionItem(Code, ActionItemId, Directions, ActionText, IsComplied, IsConfirmed);
 
             pnlActionItemDetails.Visible = false;
+            ClearActionItemEditors();   // step A3: saved, the panel closes
         }
         #endregion
 
         #region btnActionItemClose_Click
+        // Close and the X button of the panel
         protected void btnActionItemClose_Click(object sender, EventArgs e)
         {
             pnlActionItemDetails.Visible = false;
+            ClearActionItemEditors();   // step A3
         }
         #endregion
 
@@ -934,6 +952,29 @@ namespace BMMS.DashBoard
         protected void btnActionItemCancel_Click(object sender, EventArgs e)
         {
             pnlActionItemDetails.Visible = false;
+            ClearActionItemEditors();   // step A3
+        }
+        #endregion
+
+        #region ClearAgendaEditors
+        // Step A3: a closed agenda panel keeps no text in its editors (else the texts of the item travel in view
+        // state with every later postback of the Dashboard). Called only after a done action or Close, never on an
+        // error or too-long path, where the panel and the typed text stay.
+        private void ClearAgendaEditors()
+        {
+            ftxtAgendaText.Text = string.Empty;
+            ftxtProposedResolution.Text = string.Empty;
+            ftxtManagerComments.Text = string.Empty;
+            ftxtControllerComments.Text = string.Empty;
+        }
+        #endregion
+
+        #region ClearActionItemEditors
+        // Step A3: the same for the action item panel
+        private void ClearActionItemEditors()
+        {
+            ftxtActualResolution.Text = string.Empty;
+            ftxtActionText.Text = string.Empty;
         }
         #endregion
 
@@ -948,6 +989,7 @@ namespace BMMS.DashBoard
         protected void btnAgendaClose_Click(object sender, EventArgs e)
         {
             pnlAgenda.Visible = false;
+            ClearAgendaEditors();   // step A3
             LoadAlertGRV();
         }
         #endregion
@@ -968,6 +1010,7 @@ namespace BMMS.DashBoard
 
             AlertMgr.UpdateAlertByAlertUserId(AlertUserId);
             pnlAgenda.Visible = false;
+            ClearAgendaEditors();   // step A3: alert deleted, the panel closes
             LoadAlertGRV();
         }
         #endregion

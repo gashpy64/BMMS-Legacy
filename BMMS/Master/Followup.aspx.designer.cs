@@ -260,7 +260,7 @@ namespace BMMS.Master {
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::FreeTextBoxControls.FreeTextBox ftxtActualResolution;
+        protected global::BMMS.Controls.RichTextEditor ftxtActualResolution;
         
         /// <summary>
         /// btnActualResolutionCancel control.
@@ -287,7 +287,7 @@ namespace BMMS.Master {
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::FreeTextBoxControls.FreeTextBox ftxtActionText;
+        protected global::BMMS.Controls.RichTextEditor ftxtActionText;
         
         /// <summary>
         /// btnActionTextSave control.

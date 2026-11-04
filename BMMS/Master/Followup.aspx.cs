@@ -8,6 +8,7 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Web.UI.WebControls.WebParts;
 using System.Web.UI.HtmlControls;
+using BMMS.Controls;
 using BMMSBAL;
 
 namespace BMMS.Master
@@ -332,6 +333,7 @@ namespace BMMS.Master
         protected void btnActualResolutionCancel_Click(object sender, EventArgs e)
         {
             pnlActualResolution.Visible = false;
+            ftxtActualResolution.Text = string.Empty;   // step A3: a closed panel keeps no text in view state
         }
         #endregion
 
@@ -339,12 +341,16 @@ namespace BMMS.Master
         protected void btnActionTextCancel_Click(object sender, EventArgs e)
         {
             pnlActionText.Visible = false;
+            ftxtActionText.Text = string.Empty;   // step A3
         }
         #endregion
 
         #region btnActionTextSave_Click
         protected void btnActionTextSave_Click(object sender, EventArgs e)
         {
+            // Step A3: rich text over the limit (Web.config): nothing is saved, the panel stays open
+            if (RichTextEditor.IsTooLong(this)) { MsgDisplay(RichTextLimits.TooLongMessage); return; }
+
             string Code = "ActionText";
             int ActionItemId = Convert.ToInt16(ViewState["ActionItemId"].ToString());
             string ActualResolution = "";
@@ -356,6 +362,7 @@ namespace BMMS.Master
 
 
             pnlActionText.Visible = false;
+            ftxtActionText.Text = string.Empty;   // step A3: saved, the panel closes
         }
         #endregion
 

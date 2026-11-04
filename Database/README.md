@@ -1794,6 +1794,67 @@ Test setup for Update Minutes (and, from step A3, Followup and the Dashboard act
 - Seen by the other users of `BMMS_Test` until part 3 (accepted): the committee, meeting and agenda alerts, and the 00952 action item on every Dashboard.
 - Run twice: part 1 refuses while the earlier rows exist; part 3 with nothing left says so. The meetings carry the date part 1 ran; for a fresh setup run part 3, then part 1.
 
+## Step A3: rich-text editor on Dashboard, Followup and Send Mail (code only, no database script)
+
+The nine FreeTextBox editors of these three pages become `BMMS.Controls.RichTextEditor` (step A2a): the same toolbar, paste, Base64 post, cleaning, read-only and view-state rules, and the same limits (`RichTextMaxChars`, `RichTextMaxTotalChars`). FreeTextBox stays referenced by the project and `bin/FreeTextBox.dll` stays until step A4.
+
+- Dashboard (`DashBoard/DashBoard.aspx`), agenda panel: Agenda Text (always read-only), Proposed Resolution, Manager Comments, Controller Comments. Who may edit which editor is unchanged (the Controller: Proposed Resolution and Controller Comments; the Manager on an item waiting for the Manager: Manager Comments; read-only after the meeting date, step M6a). Approve and Reject save through spr_UpdateAgendaByAgendaId as before: the Manager's approval writes only MgrComments, the Controller's ShortText, ProposedResolution and ControllerComments.
+- Dashboard, action item panel: Actual Resolution (read-only) and Action Text (editable for controller, manager and user; read-only for the other roles). Submit saves Action Text through spr_UpdateActionItem (code `ActionText`).
+- Followup (`Master/Followup.aspx`): Action Text (Edit, Save) as before; Actual Resolution is now read-only (it was editable but never saved) and its popup header reads "View Minute Actual Resolution" (was "Edit Minute Actual Resolution").
+- Send Mail (`Report/SendMail.aspx`): Body Text. The mail body is the editor's cleaned HTML (HtmlCleaner.Clean, the rich-text allow-list), sent as HTML in UTF-8 as before. The Page_Load line that copied the posted body back into the editor on every postback is gone (the control keeps its posted value). An empty body is still sent (no rule, as before).
+- Request validation is on again on the three pages (`ValidateRequest="false"` removed), as on Agenda Entry and Update Minutes since step A2a.
+- Too long: Approve, Reject and the action item Submit (Dashboard), Save of Action Text (Followup), Send Mail and choosing an attachment (Send Mail) check `RichTextEditor.IsTooLong` first. Over the limit nothing is saved or sent, no mail goes out and no file is stored; the panel stays open with the typed text, and the message shows at the top and under the editor. At most two editors are editable at once on these pages (2 x 200000 is below 600000), so only the limit of one editor can be reached.
+- Closed panels keep no text: the Dashboard agenda panel clears its four editors after Approve or Reject is done, after Close (and its X) and after Delete; the action item panel clears its two editors after Submit, Close (and its X) and Cancel; Followup clears Actual Resolution on Cancel and Action Text on Cancel and after Save; an Upload item on the Dashboard clears the hidden Agenda Text. Nothing is cleared on an error, refusal or too-long path.
+- Unchanged: every procedure; the mails of Approve and Reject (they carry no editor text); the Followup Submit (IsConfirmed only); the pages that show these texts (Agenda Entry, Agenda Approval PDF, Report/Followup) read them through HtmlCleaner.Clean as before.
+
+Browser checks on `BMMS_Test`, each in Chrome and again in Edge (deploy the build first; smtp4dev running; keep the error log of the day open). Agenda alerts: run part 1 of `Database/BMMS-Test-AgendaDates-M4.sql` (meeting 00905 of committee A903, in 5 days); as a User whose Manager is active add "A3 approve" and "A3 reject" to 00905 on Agenda Entry, each with a formatted Agenda Text, a Word paste and Tamil, Hindi and rupee text in Proposed Resolution, and one Upload item "A3 upload". Action items and Followup: part 1 of `Database/BMMS-Test-MinutesEditor-A2.sql` (the Pending action item of 00952, committee A92, mapped to every active user). After each Dashboard agenda step `SELECT AgendaId, ShortText, ProposedResolution, MgrComments, ControllerComments, AgendaStatusCode FROM Agenda WHERE ShortText LIKE N'A3 %';`.
+
+Limit tests fill an editor by its label (read-only editors come first on the Dashboard, so the index of A2a test 14 does not fit): `var b = document.querySelector('.rte-box[aria-label="<label>"]'); b.focus(); document.execCommand('selectAll'); document.execCommand('insertText', false, 'x'.repeat(L));` with the label Proposed Resolution, Action Text or Body Text. The browser check is turned off for the server check with `var s = b.closest('.rte').rteState; s.max = 999999; s.maxTotal = 9999999;`.
+
+Dashboard, agenda alerts:
+
+1. Manager approval (the Manager opens the alert of "A3 approve"): Agenda Text, Proposed Resolution and Controller Comments show their formatting, read-only, without toolbar. In Manager Comments make a word bold, add a bulleted list, paste from Word and type Tamil text; Approve: MgrComments is the cleaned HTML; ProposedResolution and ControllerComments unchanged; status AMA; the approval mail arrives.
+2. Controller approval (the Controller opens the same alert): Proposed Resolution and Controller Comments editable, Manager Comments read-only. Change both, Approve: saved, status ACA, Subject No given, the mail arrives.
+3. Blank save: the Manager approves "A3 reject"; the Controller opens it, selects all in Controller Comments and deletes, Reject: ControllerComments is empty text (not `<p>&nbsp;</p>`), status ACR.
+4. Read-only cases: the User opens the alert of an own item: every editor read-only, no Approve or Reject. "A3 upload": Agenda Text hidden, the View link shown; open an Entry item next: its Agenda Text shows. After part 2 of the M4 script (00907 yesterday), an item of 00907 waiting for the Manager: read-only with the meeting-date message (step M6a).
+5. Limits (run between tests 1 and 2: the Controller opens "A3 approve", waiting for the Controller; Proposed Resolution with L = 200001): the message shows under the editor; Approve, Reject, Close and X do nothing. Delete one character (200000): the message goes. Server check (L = 200001 again, the browser check off, then Approve): the message at the top and under the editor, the panel open with the text still there; status still AMA, nothing saved, no mail, no error-log entry. Reload the Dashboard and go on with test 2.
+6. Partial postbacks: open an agenda alert and Close; open the action item and Close; change the page of a grid; open the agenda alert again: the editors still format, paste and save, and no text of the earlier item shows.
+
+Dashboard, action items (the 00952 action item):
+
+7. Controller: Actual Resolution read-only. In Action Text make a word bold, paste a Word table and type Tamil text; Submit. Open it again: the same text; Followup and Report/Followup show it too. `SELECT ActionItemId, ActionText FROM Action_Item WHERE ActionItemId = <id>;` gives the cleaned HTML.
+8. Manager and User: Action Text editable; Submit saves.
+9. Admin, mgmt or md_sect: Action Text read-only; Submit saves the shown text again (see Known items).
+10. Limit: Action Text with L = 200001: the message; Submit, Close, X and Cancel do nothing; shorten and Submit: saved.
+
+Followup (the Controller, then md_sect; committee "ZZ A2 minutes editor"):
+
+11. Actual Resolution, View: the header "View Minute Actual Resolution"; the formatting shows, read-only, without toolbar; Cancel.
+12. Action Text, Edit: make a word bold, paste from Word, paste Excel A1:B2, type Tamil, Hindi and rupee text; Save. Edit again: the same text; the query of test 7 gives the cleaned HTML.
+13. Blank save: select all in Action Text and delete, Save: ActionText is empty text.
+14. Limit: Action Text with L = 200001: the message; Save and Cancel do nothing; shorten and Save: saved.
+15. Partial postbacks: after Cancel of Actual Resolution open Action Text, and after Save of Action Text open Actual Resolution and then Action Text again: the editors still format, paste and save, and each shows the text of the item it was opened for.
+
+Send Mail (the Controller; To = an address smtp4dev receives):
+
+16. Formatting and Unicode: in Body Text bold, italic and underline a word each, add a bulleted and a numbered list, paste a Word list and an Excel range, type Tamil, Hindi and rupee text. Attach a file: the body is kept after the attach postback. Send Mail: "The mail was sent."; the page is cleared. In smtp4dev the mail shows the formatting, the lists and the table, the Tamil and Hindi letters joined correctly; its HTML source has only the allow-list tags (p, br, b, strong, i, em, u, ul, ol, li, table parts) with align, colspan and rowspan: no `<script>`, `<style>`, `<img>`, `<a>`, no `on...=` or `class=` attribute.
+17. Script and markup: type `<script>alert(1)</script>` and `<b>x</b>` in Body Text, send: the mail shows them as text (`&lt;script&gt;` in the source).
+18. Empty body: the mail is sent with an empty body, as before.
+19. Failed send (stop smtp4dev): "The mail could not be sent. The error is in the error log."; Body Text and the attachment kept.
+20. Limit: Body Text with L = 200001: the message; Send Mail and choosing a file do nothing. Server check (the browser check off): Send Mail and choosing a file each show the message at the top and under the editor; nothing sent, no file stored, the text still there.
+21. Request validation: Subject `a<b`, Send Mail: the safe error page and one redacted request validation entry in the error log; nothing sent. Subject `5 < 6` sends normally.
+
+22. Keyboard (each page once): Tab reaches the first toolbar button of an editable editor; arrow keys move along it, Enter applies; Tab moves into the box; Ctrl+B and Ctrl+Z work. A read-only editor has no toolbar and is reached with Tab.
+
+Results on `BMMS_Test`, 2026-11-04 (Chrome; the core tests repeated in Edge), all passed:
+
+- Dashboard, agenda alerts (tests 1 to 6): Manager approve, Controller approve and reject, blank Controller Comments stored as empty text, the read-only cases, the limits in the browser and on the server, partial postbacks.
+- Dashboard, action items (tests 7 to 10): Action Text editable and saved; read-only for mgmt.
+- Followup (tests 11 to 15): passed.
+- Send Mail (tests 16 to 21): the mail received in smtp4dev; `a<b` gives the safe error page and one redacted error-log line; `5 < 6` sends normally.
+
+Part 4 of the M4 script and part 3 of the A2 script remove the test rows (the agenda items, their alerts and audit rows, the action item); smtp4dev keeps the test mails.
+
 ## Known items for later steps
 
 - The colour picker on Committee and Meeting (third-party JScript/ColorPicker/js_color_picker_v2.js) asks for its tab and slider images relative to the page (`/Master/images/tab_right_active.gif`, `slider_handle.gif`), which gives 404; its own copies are in JScript/ColorPicker/Images. Seen in step B3, not changed.
@@ -1822,12 +1883,23 @@ Test setup for Update Minutes (and, from step A3, Followup and the Dashboard act
 - Agenda Details report: one attachment or agenda text that is missing or not a PDF makes the whole PDF fail (PdfReader throws), for every user of that meeting.
 - Agenda uploads: the Agenda No goes into the saved file name without cleaning (Agenda.aspx.cs, btnAddFile_Click and btnAddAgentaText_Click). It comes from the committee code and the meeting number; a committee code with \, / or .. would change the folder, and one with another character not allowed in file names would make the save refuse the name (step N2).
 - Member: the photo and resume paths (hidden text boxes) are stored as posted; nothing opens a file from them today. The photo and resume uploads have no type check.
-- Request validation (step A2a): on again on Agenda.aspx and MinutesUpdate.aspx. Text such as `a<b` in a plain text box of those pages (Short Text, the Subject No box) gives the safe error page and one redacted error-log entry, as on the master pages since step A1b (accepted). The Dashboard, Followup and Send Mail keep ValidateRequest="false" until step A3; eleven other pages keep it for other reasons (ChangePasswordFirst, Logout, AgendaFinalization, Attendance, BackupDatabase, ChangePassword, MinutesConfirmation, MinutesFinalization, ResetPassword, SMTPServerConfig, Report/AttendanceDetails).
+- Request validation (step A2a): on again on Agenda.aspx and MinutesUpdate.aspx. Text such as `a<b` in a plain text box of those pages (Short Text, the Subject No box) gives the safe error page and one redacted error-log entry, as on the master pages since step A1b (accepted). The Dashboard, Followup and Send Mail have it on again since step A3 (see the step A3 item); eleven other pages keep it for other reasons (ChangePasswordFirst, Logout, AgendaFinalization, Attendance, BackupDatabase, ChangePassword, MinutesConfirmation, MinutesFinalization, ResetPassword, SMTPServerConfig, Report/AttendanceDetails).
 - Rich-text editor (step A2a): it uses document.execCommand, deprecated but supported by Chrome and Edge; if a browser version drops it, the fallback is the Squire library (MIT) under the same control. Word list conversion is best effort: a list Word does not mark with mso-list stays paragraphs.
 - Rich-text limits (step A2a) count characters of HTML, so formatting counts too; a post that the script cannot stop (a drop-down that posts back on change) still goes, and the server refuses the next save while the text is over the limit.
 - Agenda Entry, Agenda Type Upload (step A2a): text typed into Agenda Text before choosing Upload stays in the hidden editor and is saved as AgendaText of the Upload item; it is never shown for an Upload item.
 - Fixed in step A2a: choosing Agenda Type Entry again after Upload blanked Agenda Text (baseline, rdoAgendaType_SelectedIndexChanged); the text typed before the switch now stays.
 - Update Minutes (baseline, kept in step A2a): the Directions column (Add button, Directions editor) and the Proposed Resolution column (View button, read-only Proposed Resolution editor) are in the page and its code but both grid columns are Visible="false" (MinutesUpdate.aspx), so neither editor can be opened for any decision type; for Followup the code still shows the Directions button inside the hidden column. Both editors were moved to the new control and are otherwise unchanged; the Agenda Short Text View button is hidden too, so its popup cannot be opened either. The grid has AllowSorting="true" but no column has a SortExpression, so sorting does nothing (baseline).
+- Request validation (step A3): on again on the Dashboard, Followup and Send Mail. A `<` followed by a letter, such as `a<b`, typed into Dashboard Short Text (editable for the Controller) or into Send Mail To or Subject gives the safe error page and one redacted error-log entry, as on Agenda Entry since step A2a (accepted). Followup has no plain text box that takes free text.
+- Rich-text limits (steps A2a and A3): while an editor is over its limit every button post of the page is held back, Close, Cancel and X too (Dashboard panels, Followup popups, Update Minutes panels); shorten the text or reload the page.
+- Dashboard, action item (baseline, kept in step A3): for admin, mgmt and md_sect Action Text is read-only but Submit is shown; it saves the shown text again (spr_UpdateActionItem, code ActionText), so a change made meanwhile in Followup is overwritten.
+- Dashboard, Approve and Reject (baseline): spr_UpdateAgendaByAgendaId writes the audit rows of MgrComments or ControllerComments on every approval or rejection, changed or not (Old_Value empty).
+- Followup, Save of Action Text (baseline, kept in step A3): the action item id is read with Convert.ToInt16 (Followup.aspx.cs, btnActionTextSave_Click), so an ActionItemId above 32767 gives the error page.
+- Followup, Save of Action Text (baseline, kept in step A3): no check of the session, the role or that the action item still exists, and no message on success (the popup closes).
+- Send Mail (baseline, kept in step A3): a mail with an empty Body Text is sent without a warning.
+- Rich-text limits (step A3 test): the limits count characters of HTML, not typed characters. The browser stores a trailing space as `&nbsp;` (6 characters), so `abcd ` repeated 40000 times (200000 typed characters) gave about 200005 characters of HTML and was refused, while 39990 repeats were accepted.
+- Send Mail (step A3): the editor has no fixed width, so one unbroken string of about 200000 characters (for example a very long URL) widens the editor and the page scrolls sideways; text with spaces wraps normally. Cosmetic; a CSS line that wraps such strings inside the editor is a later item.
+- Dashboard (step A3): when the server refuses a too-long text (browser check switched off), the page comes back and shows the message under the editor; the message at the top of the page is not seen because the alert panel is long. Nothing is saved and no mail goes out (tested on Approve).
+- Step A4: seven pages still carry only the FreeTextBox Register line and no FreeTextBox editor: Master/Agenda.aspx, Master/MinutesUpdate.aspx, Master/AgendaFinalization.aspx, Master/Attendance.aspx, Master/MinutesConfirmation.aspx, Master/MinutesFinalization.aspx and Report/AttendanceDetails.aspx. Step A4 removes those lines, the FreeTextBox reference from BMMS.csproj and bin/FreeTextBox.dll.
 - Update Minutes, Followup, Minutes Finalisation and Report/Followup call `MinutesFinalizeValidation()`, which no script defines (baseline): the browser logs a script error and the post goes on.
 - Agenda Entry: HTML_Report.ReplaceRichTextFont changes typed text such as "color:" or "font-size:" in Proposed Resolution (baseline).
 - Agenda uploads: between SafeFileName.MakeUnique and SaveAs two uploads of the same name at the same moment can overwrite each other (SaveAs overwrites).

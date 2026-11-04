@@ -1,8 +1,7 @@
 <%@ Page Language="C#" MasterPageFile="~/MasterPage/Main.Master" AutoEventWireup="true"
     Codebehind="SendMail.aspx.cs" Inherits="BMMS.Report.SendMail" Title="Untitled Page"
-    ValidateRequest="false" MaintainScrollPositionOnPostback="true" %>
+    MaintainScrollPositionOnPostback="true" %>
 
-<%@ Register Assembly="FreeTextBox" Namespace="FreeTextBoxControls" TagPrefix="FTB" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
 
     <script language="javascript" type="text/javascript">
@@ -61,12 +60,7 @@
                             <td valign="top" class="Lable" style="width: 30%">
                                 Body Text :</td>
                             <td>
-                                <FTB:FreeTextBox ID="ftxtBodyText" runat="server" Height="100px" 
-                                    AllowHtmlMode="false" ShowTagPath="false"
-                                    AutoGenerateToolbarsFromString="True" ButtonSet="Office2003" 
-                                    ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                    ToolbarStyleConfiguration="Office2003">
-                                </FTB:FreeTextBox>
+                                <bmms:RichTextEditor ID="ftxtBodyText" runat="server" Height="100px" Label="Body Text" />
                             </td>
                         </tr>
                         <tr>
