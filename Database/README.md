@@ -1738,7 +1738,7 @@ FreeTextBox 3.2.2 is replaced in stages (A2a Agenda Entry and Update Minutes; A3
 - Audit trail: an untouched Update posts back exactly the cleaned text, so a row saved after step A1a writes no audit row for an editor nobody changed. A row saved before step A1a (not yet in cleaned form) can write one audit row on its first save, the known step A1a behaviour.
 - Read-only and hidden editors: shown without toolbar, nothing posted, any posted value ignored; their text is kept in view state, as FreeTextBox did. An editable, visible editor keeps its text only in the hidden field, so it is not sent twice. The Update Minutes "View Proposed Resolution" editor is now read-only (it was editable but never saved) (the panel cannot be opened from the screen; see Known items).
 - Limits: `RichTextMaxChars` (one editor, default 200000) and `RichTextMaxTotalChars` (all editors of one page, default 600000) in Web.config `<appSettings>`, read by `BMMSBAL/RichTextLimits.cs`; a missing key or one that is not a positive whole number gives the default. They count characters of the editor's HTML (formatting tags included). The control writes them into the page; the script shows "The text is too long. Shorten it or attach the document as a file." under the editor and stops a post started by a button. The server checks again: Save or Update and the Attach and Upload agenda text handlers on Agenda Entry, and the Directions and Actual Resolution Save on Update Minutes, call `RichTextEditor.IsTooLong(this)` first and refuse the whole post with the same message (nothing saved, no file kept). The editor keeps the text that was typed.
-- Unchanged: the code of steps N5, N2, M2, M4 and M5; AgendaValidation (it checks Subject Type and Short Text only; no rule reads an editor); Update Minutes accepts an empty Directions or Actual Resolution as before (no rule on the page or in spr_UpdateMinutes); every procedure; the display of stored text on every page (it was already shown through HtmlCleaner.Clean); the PDF, Word and Excel exports; the mails. FreeTextBox stays on the Dashboard, Followup and Send Mail until step A3 and in the project until step A4.
+- Unchanged: the code of steps N5, N2, M2, M4 and M5; AgendaValidation (it checks Subject Type and Short Text only; no rule reads an editor); Update Minutes accepts an empty Directions or Actual Resolution as before (no rule on the page or in spr_UpdateMinutes); every procedure; the display of stored text on every page (it was already shown through HtmlCleaner.Clean); the PDF, Word and Excel exports; the mails. FreeTextBox stays on the Dashboard, Followup and Send Mail until step A3 and in the project until step A4 (both done; see steps A3 and A4).
 
 Settings to raise together with the limits. In the worst case (all Tamil or Hindi text) each character of an editor posts about 4.3 bytes (3 bytes of UTF-8, as Base64 and form-encoded). With the defaults the editors of one page post at most about 2.6 MB, inside the 4 MB request limit. If `RichTextMaxTotalChars` is raised, raise these together:
 
@@ -1796,7 +1796,7 @@ Test setup for Update Minutes (and, from step A3, Followup and the Dashboard act
 
 ## Step A3: rich-text editor on Dashboard, Followup and Send Mail (code only, no database script)
 
-The nine FreeTextBox editors of these three pages become `BMMS.Controls.RichTextEditor` (step A2a): the same toolbar, paste, Base64 post, cleaning, read-only and view-state rules, and the same limits (`RichTextMaxChars`, `RichTextMaxTotalChars`). FreeTextBox stays referenced by the project and `bin/FreeTextBox.dll` stays until step A4.
+The nine FreeTextBox editors of these three pages become `BMMS.Controls.RichTextEditor` (step A2a): the same toolbar, paste, Base64 post, cleaning, read-only and view-state rules, and the same limits (`RichTextMaxChars`, `RichTextMaxTotalChars`). FreeTextBox stays referenced by the project and `bin/FreeTextBox.dll` stays until step A4 (removed in step A4).
 
 - Dashboard (`DashBoard/DashBoard.aspx`), agenda panel: Agenda Text (always read-only), Proposed Resolution, Manager Comments, Controller Comments. Who may edit which editor is unchanged (the Controller: Proposed Resolution and Controller Comments; the Manager on an item waiting for the Manager: Manager Comments; read-only after the meeting date, step M6a). Approve and Reject save through spr_UpdateAgendaByAgendaId as before: the Manager's approval writes only MgrComments, the Controller's ShortText, ProposedResolution and ControllerComments.
 - Dashboard, action item panel: Actual Resolution (read-only) and Action Text (editable for controller, manager and user; read-only for the other roles). Submit saves Action Text through spr_UpdateActionItem (code `ActionText`).
@@ -1855,6 +1855,23 @@ Results on `BMMS_Test`, 2026-11-04 (Chrome; the core tests repeated in Edge), al
 
 Part 4 of the M4 script and part 3 of the A2 script remove the test rows (the agenda items, their alerts and audit rows, the action item); smtp4dev keeps the test mails.
 
+## Step A4: FreeTextBox removed from the project (code only, no database script)
+
+Since steps A2a and A3 every editor is `BMMS.Controls.RichTextEditor`; FreeTextBox 3.2.2 is no longer used anywhere.
+
+- The `<%@ Register Assembly="FreeTextBox" ... TagPrefix="FTB" %>` line is removed from the seven pages that still carried it: Master/Agenda.aspx, Master/MinutesUpdate.aspx, Master/AgendaFinalization.aspx, Master/Attendance.aspx, Master/MinutesConfirmation.aspx, Master/MinutesFinalization.aspx and Report/AttendanceDetails.aspx. The commented-out FreeTextBox tag of the Short Text popup on Update Minutes is removed too.
+- BMMS.csproj: the FreeTextBox reference and the `Properties\licenses.licx` resource are removed. `BMMS/bin/FreeTextBox.dll` and `BMMS/Properties/licenses.licx` (it listed FreeTextBox only) are deleted from the repository.
+- The comment of BMMSBAL/HtmlCleaner.cs and the list of third-party libraries in Documentation/Architecture/BMMS-Architecture.md name the own editor instead of FreeTextBox.
+- Unchanged: every page's behaviour and every procedure; the other third-party DLLs under BMMS/bin and BMMSBAL/bin/Debug.
+
+Deployment note: when a release is deployed later, the new BMMS.dll and all pages go together; the old FreeTextBox.dll in the target bin can then be deleted (leaving it does no harm). Check the target's own Web.config for a FreeTextBox entry.
+
+Browser checks, from Visual Studio on the repository (FreeTextBox.dll is already gone there; if the Solution Explorer still shows the FreeTextBox reference, restart Visual Studio or reload the project first; keep the error log of the day open):
+
+1. Pages that had the Register line open without an error page and without a new error-log entry: Agenda Entry (Controller, Manager, User), Update Minutes, Agenda Finalisation, Attendance (Admin or Controller), Minutes Confirmation, Minutes Finalisation and Report / Attendance Details (Controller).
+2. One quick check on each page with an editor (bold a word, add a bulleted list, save, open again): Agenda Entry (Agenda Text and Proposed Resolution), Update Minutes (Actual Resolution), Dashboard (Manager Comments on an approval), Followup (Action Text), Send Mail (Body Text; the mail in smtp4dev shows the formatting).
+3. Reports, Agenda Approval: the PDF of a meeting with an item that has formatted Agenda Text and Proposed Resolution opens and shows the formatting.
+
 ## Known items for later steps
 
 - The colour picker on Committee and Meeting (third-party JScript/ColorPicker/js_color_picker_v2.js) asks for its tab and slider images relative to the page (`/Master/images/tab_right_active.gif`, `slider_handle.gif`), which gives 404; its own copies are in JScript/ColorPicker/Images. Seen in step B3, not changed.
@@ -1899,7 +1916,7 @@ Part 4 of the M4 script and part 3 of the A2 script remove the test rows (the ag
 - Rich-text limits (step A3 test): the limits count characters of HTML, not typed characters. The browser stores a trailing space as `&nbsp;` (6 characters), so `abcd ` repeated 40000 times (200000 typed characters) gave about 200005 characters of HTML and was refused, while 39990 repeats were accepted.
 - Send Mail (step A3): the editor has no fixed width, so one unbroken string of about 200000 characters (for example a very long URL) widens the editor and the page scrolls sideways; text with spaces wraps normally. Cosmetic; a CSS line that wraps such strings inside the editor is a later item.
 - Dashboard (step A3): when the server refuses a too-long text (browser check switched off), the page comes back and shows the message under the editor; the message at the top of the page is not seen because the alert panel is long. Nothing is saved and no mail goes out (tested on Approve).
-- Step A4: seven pages still carry only the FreeTextBox Register line and no FreeTextBox editor: Master/Agenda.aspx, Master/MinutesUpdate.aspx, Master/AgendaFinalization.aspx, Master/Attendance.aspx, Master/MinutesConfirmation.aspx, Master/MinutesFinalization.aspx and Report/AttendanceDetails.aspx. Step A4 removes those lines, the FreeTextBox reference from BMMS.csproj and bin/FreeTextBox.dll.
+- Fixed in step A4: seven pages carried only the FreeTextBox Register line and no FreeTextBox editor (Master/Agenda.aspx, Master/MinutesUpdate.aspx, Master/AgendaFinalization.aspx, Master/Attendance.aspx, Master/MinutesConfirmation.aspx, Master/MinutesFinalization.aspx and Report/AttendanceDetails.aspx); the lines, the FreeTextBox reference and licenses.licx in BMMS.csproj and bin/FreeTextBox.dll are removed.
 - Update Minutes, Followup, Minutes Finalisation and Report/Followup call `MinutesFinalizeValidation()`, which no script defines (baseline): the browser logs a script error and the post goes on.
 - Agenda Entry: HTML_Report.ReplaceRichTextFont changes typed text such as "color:" or "font-size:" in Proposed Resolution (baseline).
 - Agenda uploads: between SafeFileName.MakeUnique and SaveAs two uploads of the same name at the same moment can overwrite each other (SaveAs overwrites).

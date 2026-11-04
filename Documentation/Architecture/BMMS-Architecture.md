@@ -36,7 +36,7 @@ BMMS runs the board and committee meeting cycle of a company:
 
 References run one way: `BMMS` → `BMMSBAL` → `BMMSDAL`. The pages never call the data layer directly.
 
-Third-party libraries (tracked under `BMMS/bin` and `BMMSBAL/bin/Debug`, found there by the build): AjaxControlToolkit, FreeTextBox (rich-text editor), iTextSharp 4 (PDF), Microsoft Office Word interop (Word output).
+Third-party libraries (tracked under `BMMS/bin` and `BMMSBAL/bin/Debug`, found there by the build): AjaxControlToolkit, iTextSharp 4 (PDF), Microsoft Office Word interop (Word output). The rich-text editor is the project's own control `BMMS.Controls.RichTextEditor` (`BMMS/RichTextEditor.cs`, steps A2a and A3; FreeTextBox removed in step A4).
 
 ## 3. Request flow
 

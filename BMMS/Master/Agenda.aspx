@@ -2,7 +2,6 @@
     Codebehind="Agenda.aspx.cs" Inherits="BMMS.Master.Agenda" Title="Untitled Page"
     MaintainScrollPositionOnPostback="true" %>
 
-<%@ Register Assembly="FreeTextBox" Namespace="FreeTextBoxControls" TagPrefix="FTB" %>
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="cc1" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
 

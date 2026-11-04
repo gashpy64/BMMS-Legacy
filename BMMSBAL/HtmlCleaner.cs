@@ -7,7 +7,7 @@ using HtmlAgilityPack;
 namespace BMMSBAL
 {
     /// <summary>
-    /// Rich text (FreeTextBox) cleaned to a fixed allow-list before it is saved or shown (step A1a).
+    /// Rich text (the rich-text editor, BMMS.Controls.RichTextEditor) cleaned to a fixed allow-list before it is saved or shown (step A1a).
     /// Kept: p, br, b, strong, i, em, u, ul, ol, li, table, thead, tbody, tr, th, td; align (left, right,
     /// center, justify) on p, td and th, also taken from style="text-align:..."; colspan and rowspan 1 to 100
     /// on td and th. Every table is written with border="1" cellpadding="4" cellspacing="0".

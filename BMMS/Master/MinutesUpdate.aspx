@@ -2,7 +2,6 @@
     Codebehind="MinutesUpdate.aspx.cs" Inherits="BMMS.Master.MinutesUpdate" Title="Untitled Page"
     MaintainScrollPositionOnPostback="false" %>
 
-<%@ Register Assembly="FreeTextBox" Namespace="FreeTextBoxControls" TagPrefix="FTB" %>
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="cc1" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
@@ -175,12 +174,6 @@
                                 <div class="divHeader">
                                     :: Edit Agenda Short Text</div>
                                 <div class="divRow" style="text-align: center;">
-                                    <%--<FTB:FreeTextBox ID="ftxtShortText" runat="server" Width="600px" Height="200px"
-                                    AllowHtmlMode="false" ShowTagPath="false"
-                                    AutoGenerateToolbarsFromString="True" ButtonSet="Office2003" 
-                                    ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                    ToolbarStyleConfiguration="Office2003">
-                                </FTB:FreeTextBox>--%>
                                     <asp:TextBox ID="txtShortText" runat="server" ReadOnly="false" TextMode="MultiLine"
                                         Height="100px" Width="600px"></asp:TextBox>
                                 </div>
