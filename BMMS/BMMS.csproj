@@ -88,6 +88,7 @@
     <Content Include="CSS\bmms-workbench.css" />
     <Content Include="CSS\bmms-colours.css" />
     <Content Include="CSS\RichTextEditor.css" />
+    <Content Include="CSS\bmms-forms.css" />
     <Content Include="favicon.ico" />
     <Content Include="Images\Brand\bmms-favicon-192.png" />
     <Content Include="Images\Brand\bmms-login-banner.png" />

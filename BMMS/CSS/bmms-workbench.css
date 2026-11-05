@@ -646,8 +646,11 @@ body.wb .ddsubmenustyle li a:focus
 	background: var(--bmms-primary-active);
 	border-color: var(--bmms-primary-active);
 }
-/* secondary: Cancel (matched by ID as well, because the class can be overwritten) */
+/* secondary: Cancel (matched by ID as well, because the class can be overwritten). The
+   .wb-actions input[type="submit"].wb-btn-secondary selectors outrank the primary .wb-actions rules
+   above, so a secondary button in an action bar (e.g. Close, Remove logo) keeps the secondary look. */
 .wb-page .wb-btn-secondary,
+.wb-actions input[type="submit"].wb-btn-secondary,
 .wb-actions input[type="submit"][id$="btnCancel"]
 {
 	background: var(--bmms-btn-secondary-bg);
@@ -655,11 +658,20 @@ body.wb .ddsubmenustyle li a:focus
 	color: var(--bmms-btn-secondary-text);
 }
 .wb-page .wb-btn-secondary:hover,
+.wb-actions input[type="submit"].wb-btn-secondary:hover,
 .wb-actions input[type="submit"][id$="btnCancel"]:hover
 {
 	background: var(--bmms-btn-secondary-hover-bg);
 	border-color: var(--bmms-btn-secondary-hover-border);
 	color: var(--bmms-btn-secondary-hover-text);
+}
+.wb-page .wb-btn-secondary:active,
+.wb-actions input[type="submit"].wb-btn-secondary:active,
+.wb-actions input[type="submit"][id$="btnCancel"]:active
+{
+	background: var(--bmms-btn-secondary-hover-bg);
+	border-color: var(--bmms-primary-active);
+	color: var(--bmms-primary-active);
 }
 .wb-page .wb-btn[disabled],
 .wb-actions input[type="submit"][disabled]
