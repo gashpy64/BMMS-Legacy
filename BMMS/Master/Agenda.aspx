@@ -58,10 +58,12 @@
             <div class="wb-card">
                 <div class="wb-card-header">
                     Agenda items in this meeting</div>
-                <%if (Session["RoleCode"].ToString() != "controller")
+                <%-- Step C1: the list of a User (and for now of a Manager) holds only the items they entered
+                     (spr_GetAgendaByMeetingIdDeptId, CreatedBy); the Manager's line returns with step C2 --%>
+                <%if (Session["RoleCode"].ToString() == "user")
                   { %>
                 <p class="bmms-card-note">
-                    Items of your department.</p>
+                    Items you entered.</p>
                 <%} %>
                 <div class="wb-table-scroll">
                     <asp:GridView ID="grvAgenda" runat="server" SkinID="grvSkinNoPaging" AutoGenerateColumns="false"

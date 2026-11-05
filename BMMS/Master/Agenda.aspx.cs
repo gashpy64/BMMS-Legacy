@@ -408,6 +408,7 @@ namespace BMMS.Master
                                 ftxtControllerComments.Text = HtmlCleaner.Clean(dtAgendaEdit.Rows[0]["ControllerComments"].ToString());
                             }
 
+                            ApplyCommentRoles();   // step C1
 
 
 
@@ -578,6 +579,7 @@ namespace BMMS.Master
                     ftxtProposedResolution.Text = string.Empty;
                     ftxtControllerComments.Text = string.Empty;
                     ftxtManagerComments.Text = string.Empty;
+                    ApplyCommentRoles();   // step C1
 
                     ViewState["dtAttFiles"] = null;
 
@@ -630,6 +632,11 @@ namespace BMMS.Master
 
                     myAgenda.SubjectNo = txtSubjectNo.Text.Trim();
 
+                    // Step C1: the comments as saved now (empty on a new item); the column of another role is
+                    // written back unchanged
+                    string savedMgrComments = string.Empty;
+                    string savedControllerComments = string.Empty;
+
                     // Step N5, Update, every role: a Controller-approved item always keeps its saved Subject No,
                     // whatever was posted (also when it was approved after this form was opened). For other
                     // items an empty box keeps the saved value (NULL stays NULL, an old 0 stays 0); a typed number is used.
@@ -639,6 +646,12 @@ namespace BMMS.Master
                         if (dtSaved.Rows.Count > 0 &&
                             (dtSaved.Rows[0]["ControllerApprovedStatus"].ToString() == "Approved" || myAgenda.SubjectNo == string.Empty))
                             myAgenda.SubjectNo = dtSaved.Rows[0]["SubjectNo"].ToString().Trim();
+
+                        if (dtSaved.Rows.Count > 0)
+                        {
+                            savedMgrComments = dtSaved.Rows[0]["MgrComments"].ToString();
+                            savedControllerComments = dtSaved.Rows[0]["ControllerComments"].ToString();
+                        }
                     }
 
                     myAgenda.CommitteeId = Convert.ToInt16(hdnCommitteeId.Value);
@@ -667,8 +680,12 @@ namespace BMMS.Master
                     bool fileNamesValid = myAgenda.FilePath != null &&
                         (myAgenda.AgendaTextPath == string.Empty || SafeFileName.IsPlainName(myAgenda.AgendaTextPath));
 
-                    myAgenda.MgrComments = ftxtManagerComments.Text.Trim();
-                    myAgenda.ControllerComments = ftxtControllerComments.Text.Trim();
+                    // Step C1: each comment only from the editor of the role that writes it (Manager Comments by the
+                    // Manager, Controller Comments by the Controller); every other role, the User included, keeps
+                    // the saved text. Before, a Manager's Update blanked the Controller comment, a User's both.
+                    string roleCode = Session["RoleCode"].ToString();
+                    myAgenda.MgrComments = roleCode == "manager" ? ftxtManagerComments.Text.Trim() : savedMgrComments;
+                    myAgenda.ControllerComments = roleCode == "controller" ? ftxtControllerComments.Text.Trim() : savedControllerComments;
 
                     myAgenda.CurrentStatus = "New";
                     myAgenda.CreatedOn = System.DateTime.Now;
@@ -708,15 +725,11 @@ namespace BMMS.Master
                         {
                             case "controller":
 
-                                myAgenda.ControllerComments = ftxtControllerComments.Text.Trim();
-
                                 result = myAgendaMgr.AddEditAgendaByController(myAgenda, ActingUserId);
 
                                 break;
 
                             case "manager":
-
-                                myAgenda.MgrComments = ftxtManagerComments.Text.Trim();
 
                                 result = myAgendaMgr.AddEditAgendaByManager(myAgenda, ActingUserId);
 
@@ -1023,6 +1036,17 @@ namespace BMMS.Master
             txtShortText.Text = string.Empty;
             ftxtAgendaText.Text = string.Empty;
             ftxtProposedResolution.Text = string.Empty;
+        }
+        #endregion
+
+        #region ApplyCommentRoles
+        // Step C1: each comment editor is editable only by the role that writes it; for every other role it is
+        // read-only (no toolbar, its text kept in view state, a posted value ignored). Which panels show is unchanged.
+        private void ApplyCommentRoles()
+        {
+            string roleCode = Session["RoleCode"].ToString();
+            ftxtManagerComments.ReadOnly = roleCode != "manager";
+            ftxtControllerComments.ReadOnly = roleCode != "controller";
         }
         #endregion
 

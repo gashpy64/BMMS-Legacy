@@ -507,6 +507,10 @@ namespace BMMS.DashBoard
             DataTable dtAgenda = new DataTable();
             dtAgenda = AgendaMgr.CheckAgendaFinalizeByMeetingId(MeetingId);
 
+            // Step C1: whether Approve / Reject are shown, kept here because btnApprove.Visible reads false while
+            // pnlAgenda is still hidden (lnkSource_Click shows it only after this method returns)
+            bool canDecide = false;
+
             if (dtAgenda.Rows.Count <= 0)
             {
                 txtShortText.ReadOnly = true;
@@ -516,6 +520,7 @@ namespace BMMS.DashBoard
                 ftxtControllerComments.ReadOnly = true;
                 btnApprove.Visible = false;
                 btnReject.Visible = false;
+                canDecide = false;
                 btnDeleteAgendaAlert.Visible = true;
             }
             else
@@ -526,6 +531,7 @@ namespace BMMS.DashBoard
                 ftxtProposedResolution.ReadOnly = true;
                 btnApprove.Visible = false;
                 btnReject.Visible = false;
+                canDecide = false;
                 btnDeleteAgendaAlert.Visible = true;
 
                 switch (Convert.ToString(Session["RoleCode"]))
@@ -540,6 +546,7 @@ namespace BMMS.DashBoard
                         {
                             btnApprove.Visible = true;
                             btnReject.Visible = true;
+                            canDecide = true;
                             btnDeleteAgendaAlert.Visible = false;
                         }
 
@@ -552,6 +559,7 @@ namespace BMMS.DashBoard
                             ftxtManagerComments.ReadOnly = false;
                             btnApprove.Visible = true;
                             btnReject.Visible = true;
+                            canDecide = true;
                             btnDeleteAgendaAlert.Visible = false;
                         }
 
@@ -561,6 +569,7 @@ namespace BMMS.DashBoard
                         ftxtControllerComments.ReadOnly = true;
                         btnApprove.Visible = false;
                         btnReject.Visible = false;
+                        canDecide = false;
                         btnDeleteAgendaAlert.Visible = true;
                         break;
                     default:
@@ -570,6 +579,7 @@ namespace BMMS.DashBoard
                         ftxtControllerComments.ReadOnly = true;
                         btnApprove.Visible = false;
                         btnReject.Visible = false;
+                        canDecide = false;
                         btnDeleteAgendaAlert.Visible = true;
                         break;
 
@@ -580,6 +590,7 @@ namespace BMMS.DashBoard
                 {
                     btnApprove.Visible = false;
                     btnReject.Visible = false;
+                    canDecide = false;
                     btnDeleteAgendaAlert.Visible = true;
                 }
 
@@ -593,9 +604,16 @@ namespace BMMS.DashBoard
                     ftxtControllerComments.ReadOnly = true;
                     btnApprove.Visible = false;
                     btnReject.Visible = false;
+                    canDecide = false;
                     btnDeleteAgendaAlert.Visible = true;
                     MsgDisplay(MeetingDatePassedMessage, MessageKind.Warning);
                 }
+
+                // Step C1: a comment is editable only for the role that writes it, and only while Approve / Reject
+                // can save it (before, the Controller's comment was editable on every item, with nothing to save it)
+                string commentRole = Convert.ToString(Session["RoleCode"]);
+                ftxtManagerComments.ReadOnly = !(canDecide && commentRole == "manager");
+                ftxtControllerComments.ReadOnly = !(canDecide && commentRole == "controller");
             }
 
             return true;

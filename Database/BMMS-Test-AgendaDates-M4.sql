@@ -16,10 +16,14 @@
    date; the page compares with the web server date (the same machine on
    BMMS_Test).
 
-   Test committee: code A903, name "ZZ M4 agenda dates". One letter and digits,
+   Test committee: code A93, name "ZZ M4 agenda dates". One letter and digits,
    as in A1b (spr_GetNextCommitteeCode reads the characters after the first
    one as a number; A sorts below the C codes it generates). Parts 2, 3 and 4
    take the committee only when the name also starts with "ZZ M4".
+   Three characters (step C1; it was A903): with a 4-character code every
+   agenda item gets an Agenda No ending in -001 (step N3, parked). Remove the
+   rows of an earlier run (part 4) before this version of the file is used:
+   part 4 now looks for A93 only.
 
    PART 1  Inserts the committee and seven meetings (Agenda and Minutes
            status Open), numbered as Meeting Master numbers them:
@@ -34,7 +38,7 @@
            MeetingDate is NOT NULL; its submission date is today, and 00906
            is not written, when AgendaSubmissionDate is NOT NULL. Both are
            reported. Refuses when rows of an earlier run are still there, or
-           when a committee A903 exists that is not a test row.
+           when a committee A93 exists that is not a test row.
    PART 2  Moves meeting 00907 to yesterday (submission two days ago): the
            "page left open past the meeting date" check.
    PART 3  Read-only: the test meetings and the agenda items added to them.
@@ -57,14 +61,14 @@ BEGIN
     RETURN;
 END
 
-DECLARE @CodeTaken INT = (SELECT COUNT(*) FROM Committee WHERE CommitteeCode = 'A903' AND CommitteeName NOT LIKE 'ZZ M4%');
+DECLARE @CodeTaken INT = (SELECT COUNT(*) FROM Committee WHERE CommitteeCode = 'A93' AND CommitteeName NOT LIKE 'ZZ M4%');
 IF (@CodeTaken > 0)
 BEGIN
-    RAISERROR('A committee with code A903 already exists and is not a test row. Change the test code in this file. Nothing was changed.', 16, 1);
+    RAISERROR('A committee with code A93 already exists and is not a test row. Change the test code in this file. Nothing was changed.', 16, 1);
     RETURN;
 END
 
-DECLARE @Existing INT = (SELECT COUNT(*) FROM Committee WHERE CommitteeCode = 'A903' OR CommitteeName LIKE 'ZZ M4%');
+DECLARE @Existing INT = (SELECT COUNT(*) FROM Committee WHERE CommitteeCode = 'A93' OR CommitteeName LIKE 'ZZ M4%');
 IF (@Existing > 0)
 BEGIN
     RAISERROR('%d test committee(s) from an earlier run are still there. Run part 4 first. Nothing was changed.', 16, 1, @Existing);
@@ -106,7 +110,7 @@ BEGIN TRY
     BEGIN TRANSACTION;
 
     INSERT INTO Committee (CommitteeCode, CommitteeName, Board, IncorporationDate, MeetingStartNo, CommitteeColorCode, StatusId, IsDelete, CreatedOn, CreatedBy)
-    VALUES ('A903', 'ZZ M4 agenda dates', 0, '2000-01-01', 901, @ColorCode, 1, 0, @Now, @Sys);
+    VALUES ('A93', 'ZZ M4 agenda dates', 0, '2000-01-01', 901, @ColorCode, 1, 0, @Now, @Sys);
     SET @CommitteeId = SCOPE_IDENTITY();
 
     INSERT INTO Meeting (MeetingNo, CommitteeId, Place, Venue, MeetingDate, MeetingTime, AgendaSubmissionDate, AgendaStatus, MinutesStatus)
@@ -142,7 +146,7 @@ BEGIN CATCH
 END CATCH
 
 DECLARE @Line NVARCHAR(400);
-SET @Line = N'CommitteeId ' + CAST(@CommitteeId AS NVARCHAR(12)) + N' (A903, ZZ M4 agenda dates), ' + CAST(@MeetingRows AS NVARCHAR(12)) + N' meeting(s).';
+SET @Line = N'CommitteeId ' + CAST(@CommitteeId AS NVARCHAR(12)) + N' (A93, ZZ M4 agenda dates), ' + CAST(@MeetingRows AS NVARCHAR(12)) + N' meeting(s).';
 PRINT @Line;
 IF (@MeetingDateNullable = 0)
     PRINT N'Meeting.MeetingDate does not allow NULL: meeting 00903 (no meeting date) was not written; skip that check.';
@@ -164,10 +168,10 @@ BEGIN
     RETURN;
 END
 
-DECLARE @CommitteeId INT = (SELECT TOP 1 CommitteeId FROM Committee WHERE CommitteeCode = 'A903' AND CommitteeName LIKE 'ZZ M4%' ORDER BY CommitteeId);
+DECLARE @CommitteeId INT = (SELECT TOP 1 CommitteeId FROM Committee WHERE CommitteeCode = 'A93' AND CommitteeName LIKE 'ZZ M4%' ORDER BY CommitteeId);
 IF (@CommitteeId IS NULL)
 BEGIN
-    RAISERROR('The test committee A903 was not found. Run part 1 first. Nothing was changed.', 16, 1);
+    RAISERROR('The test committee A93 was not found. Run part 1 first. Nothing was changed.', 16, 1);
     RETURN;
 END
 
@@ -195,7 +199,7 @@ BEGIN
     RETURN;
 END
 
-DECLARE @CommitteeId INT = (SELECT TOP 1 CommitteeId FROM Committee WHERE CommitteeCode = 'A903' AND CommitteeName LIKE 'ZZ M4%' ORDER BY CommitteeId);
+DECLARE @CommitteeId INT = (SELECT TOP 1 CommitteeId FROM Committee WHERE CommitteeCode = 'A93' AND CommitteeName LIKE 'ZZ M4%' ORDER BY CommitteeId);
 
 SELECT mt.MeetingId, mt.MeetingNo, mt.Venue, mt.MeetingDate, mt.AgendaSubmissionDate, mt.AgendaStatus, mt.MinutesStatus,
        (SELECT COUNT(*) FROM Agenda a WHERE a.MeetingId = mt.MeetingId) AS AgendaItems
@@ -226,10 +230,10 @@ BEGIN
     RETURN;
 END
 
-DECLARE @CommitteeId INT = (SELECT TOP 1 CommitteeId FROM Committee WHERE CommitteeCode = 'A903' AND CommitteeName LIKE 'ZZ M4%' ORDER BY CommitteeId);
+DECLARE @CommitteeId INT = (SELECT TOP 1 CommitteeId FROM Committee WHERE CommitteeCode = 'A93' AND CommitteeName LIKE 'ZZ M4%' ORDER BY CommitteeId);
 IF (@CommitteeId IS NULL)
 BEGIN
-    PRINT N'The test committee A903 was not found: nothing to delete.';
+    PRINT N'The test committee A93 was not found: nothing to delete.';
     RETURN;
 END
 
@@ -283,7 +287,7 @@ BEGIN TRY
 
     -- Audit rows of the test agenda items (their numbers start with the test committee code)
     DELETE FROM Audit_Trail_Master
-    WHERE Audit_Table = 'Agenda' AND Key_Field = 'AgendaNo' AND Key_Value LIKE 'A903-%'
+    WHERE Audit_Table = 'Agenda' AND Key_Field = 'AgendaNo' AND Key_Value LIKE 'A93-%'
       AND Key_Value IN (SELECT AgendaNo FROM @Agendas);
     SET @AuditRows = @@ROWCOUNT;
 
