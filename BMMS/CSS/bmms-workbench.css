@@ -169,6 +169,8 @@ body.wb div#footer
 .wb-user-name
 {
 	color: var(--wb-header-text-dim);
+	/* a long name without a space breaks inside the word instead of widening the page (step UN2) */
+	overflow-wrap: anywhere;
 }
 /* focus on the dark bar: light blue, visible on the bar and on the selected (blue) menu item */
 .wb-header a:focus

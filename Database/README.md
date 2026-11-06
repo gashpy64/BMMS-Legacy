@@ -65,6 +65,10 @@ Step 33 is installed after step D1 (step 32 is reserved for RolePermissions-Step
 
 33. BMMS-Fix-ManagerDepartment-Step33.sql   (Agenda Entry list, step C2: a Manager sees the items of their department (Agenda.DepartmentId) and the items they entered, a User only the items they entered; both list procedures add EnteredByName (" (inactive)" for an inactive creator); replaces the baseline spr_GetAgendaByMeetingIdDeptId and spr_GetAgendaByMeetingId (in no numbered script); changes no data; BMMS-Rollback-ManagerDepartment-Step33.sql restores both baseline texts; run BEFORE deploying the build of step C2: see its section)
 
+Step 34 is installed after step 33:
+
+34. BMMS-Fix-LoginName-Step34.sql          (access log, step UN2 (names): adds Audit_Trial_Login.Login_Name, VARCHAR(50) NULL; spr_RecordLoginByUserId of step 1 also writes the login ID (Users.LoginName, read by @UserId) into the new row of a successful login, parameters unchanged; the existing rows stay NULL; BMMS-Rollback-LoginName-Step34.sql restores the step 1 procedure and keeps the column; either order with the build of step UN2 (names): see its section)
+
 On a new database (restored from the baseline, not `BMMS`), after step 30: `EXEC dbo.spr_sys_SetSmtpDefault @ConfirmDatabaseName = N'<the database name>';` (Result 1). The restored row would otherwise keep mailing through whatever server it names. Never on `BMMS`: it keeps its real settings.
 
 Steps 1 to 18 are installed and verified on the local `BMMS` (steps 10, 11 and 13 on 2026-10-15). Steps 1 to 12 are applied to `BMMS_bak1` (step 13 too, if it was run there as its section says). Steps 1 to 22 are installed on `BMMS_Test` and `BMMS` (tags organisation-settings-19, member-types-21, agenda-routing-20, minutes-gating-22). Step 24 is tagged meeting-dates-24; steps 25, 26 and 28 are code only (step 28 also fixed the error log). Step 23 is written and not yet installed anywhere: install it after step 28, on `BMMS_Test` first (see its section). Step 29 is installed on `BMMS_Test`, `BMMS_Quality` and `BMMS` (Consultant, 2026-10-22). Step 30 is written and not yet installed anywhere: install it after step 29 (see its section). BMMS-Check-InstalledSteps.sql shows the real state of any database.
@@ -118,7 +122,9 @@ Do NOT run BMMS-Test-ResetDatabase.sql on `BMMS`. It refuses to, by name.
 ## Test and check scripts
 
 - BMMS-Check-Orphans.sql                  (read-only check of candidate foreign keys, and of every user-id column)
-- BMMS-Check-InstalledSteps.sql           (read-only: which of steps 1 to 24, 29, 30 and 31 and step D1 (shown as step 100) are installed in the selected database, for step 18 whether exactly one user is the system account, for step 19 whether the 12 setting rows exist, and for step 21 whether types 2, 3 and 6 are reserved; allowed on `BMMS`)
+- BMMS-Check-InstalledSteps.sql           (read-only: which of steps 1 to 24, 29, 30, 31, 33 and 34 and step D1 (shown as step 100) are installed in the selected database, for step 18 whether exactly one user is the system account, for step 19 whether the 12 setting rows exist, and for step 21 whether types 2, 3 and 6 are reserved; allowed on `BMMS`)
+- BMMS-Check-UserNames.sql                (read-only, step UN-data: every user with LoginName, UserName, role, department, active flag and the problems of the name: blank name, name equals login, name is a role word (every RoleName and RoleCode in Roles; the words are listed), duplicate name, duplicate login; then the counts per problem; allowed on `BMMS`)
+- BMMS-Test-LoginName-Step34.sql          (tests for step 34: the column, the marker, the unchanged parameters, a login of mgruser writes its login ID and closes the earlier rows, an id with no user row writes NULL, and nothing is left; 7 checks; BMMS_Test only; inside a transaction that is rolled back, only the identity counter moves on)
 - BMMS-Test-Delete-Procedures.sql         (delete-procedure tests for the master tables; deletes real unreferenced rows, inside a transaction that is rolled back. With step 21 installed the member type part passes an active Admin, also tries a reserved type (expect Reason 7) and deletes a free type, adding one inside the transaction when none is unreferenced)
 - BMMS-Test-FK-Procedures.sql             (tests for steps 6 to 9; rolled back)
 - BMMS-Test-UserDelete.sql                (tests for steps 10 and 11, with step 13 installed: user delete rules, one test per protected column, one per key; rolled back)
@@ -2004,7 +2010,72 @@ WHERE a.ShortText LIKE N'C2 %' ORDER BY a.AgendaId;
 11. Error log: no entry from these checks except the one of test 6 (when event validation refused it).
 12. Run BMMS-Test-ManagerDepartment-Step33.sql again: checks 5 and 7 now PASS (they have items), the others PASS.
 
+## Step UN-data: which users still have no real name (read-only check script, no change)
+
+Decision (Consultant, 2026-11-06): Users.LoginName is the login ID (for example mgruser), Users.UserName is the person's actual name, and wherever a person or a role is shown the actual name appears. Most of the work is data: the Consultant enters the real names on User Master. On BMMS_Test (2026-11-07) 11 of the 14 users still have a User Name equal to their login (Controller's is also a role word), creduser has the role word "User" as its name, and credmanager already has a real name.
+
+- BMMS-Check-UserNames.sql (read-only; on `BMMS_Test` and on `BMMS`). Result 1: the role words it compares against, every RoleName and RoleCode in Roles once each (also printed in the Messages tab). Result 2: one row per user (inactive users and the system account included) with UserId, LoginName, UserName, RoleName, DepartmentName, Active and Problem. Result 3: the number of users per problem, zero included, the users with at least one problem, and all users.
+- The problems, separated by "; " when a user has more than one; every comparison ignores case and leading and trailing spaces:
+  - blank name: the User Name is empty or spaces only (not compared further);
+  - name equals login: the User Name is the login ID;
+  - name is a role word: the User Name is a RoleName or a RoleCode of Roles (as Result 1 lists them; on BMMS_Test Admin, Controller, Management, Manager, MD Secretariat, User and the codes md_sect and mgmt);
+  - duplicate name: another user has the same User Name;
+  - duplicate login: another user has the same login ID (Users has no unique index on LoginName; User Master refuses a duplicate on save).
+- Run it before and after entering the names; the aim is a blank Problem column for every user who uses the system.
+
+## Step UN2 (names): header "Name | Role" with the login ID as tooltip; logged-in check by UserId; login ID in the access log (database script step 34 and code; test script for BMMS_Test)
+
+The names series has the prefix UN (Consultant, 2026-11-07), so it does not clash with steps N2 (file names in Agenda Entry), N3 (agenda numbering), N4 and N5. Step UN-data comes first; the later name steps are separate: UN3 (Manager drop-down, Audit Trail, backup grid), UN4 (approver names on the comment captions), UN5 (mails) and UN6.
+
+- Login (Default.aspx.cs): the session keeps UserId, UserName (the person's name, as before) and RoleName, and now also LoginName (Users.LoginName, the login ID).
+- Header (MasterPage/Main.Master and MainNoMenu.Master): "Name | Role" as before (UserName | RoleName), with the login ID as the tooltip (title) of the name; both HTML-encoded. No "(inactive)" in the header: an inactive user cannot log in (Default.aspx.cs), and one deactivated while logged in is sent to the login page at the next request (PageAccessModule). The tooltip cannot be opened on a touch screen (see Known items).
+- Logged-in check by UserId (Common.IsLoggedIn: the session holds a UserId above 0): PageAccessModule (every page), Common.InitSetup, Error/ErrorPage.aspx and Master/ResetDatabase.aspx. Before, these tested Session["UserName"], the name; a user with an empty name was then sent back to the login page on every page. The active-user check (by UserId) and the role check (by RoleCode) are unchanged.
+- App_Data/PageAccessLog.txt: the user column is "Name (login)" (only the name for a session without a login ID).
+- Access log, Audit_Trial_Login (BMMS-Fix-LoginName-Step34.sql, marker LoginName-Step34): new column Login_Name, VARCHAR(50) NULL. spr_RecordLoginByUserId, called after a successful login, closes the user's earlier rows and writes the new open row as before, and now writes the login ID into it, read from Users by @UserId inside the procedure. Its parameters are unchanged, so no C# change is needed for it and the build before step UN2 (names) keeps working. The rows from before step 34 (411 on BMMS_Test) stay NULL. The table has no name column, so none is kept or added.
+- BMMS-Rollback-LoginName-Step34.sql restores the step 1 procedure and keeps the column with the login IDs already written; BMMS-Check-InstalledSteps.sql then reads step 34 Partly.
+- BMMS-Check-InstalledSteps.sql: step 34 (the column and the procedure marker). Re-running step 1 (BMMS-Fix-Login-Procedures.sql) afterwards brings back the old procedure: step 34 reads Partly; run step 34 again.
+- Header CSS (BMMS/CSS/bmms-workbench.css, `.wb-user-name`): `overflow-wrap: anywhere`, so a long name without a space breaks inside the word instead of pushing the page wider than the window (40 times W at 390 px measured in Edge: 517 px wide before, no sideways scroll after).
+- Unchanged: a wrong password or an unknown login writes no row; logout and the end of a session (spr_AddEditAuditTrialLogin) close the user's open rows by User_Id; a second login of the same user works next to the first; no stored procedure other than spr_RecordLoginByUserId.
+
+What to run where (the Consultant runs the scripts):
+
+1. `BMMS_Test`: BMMS-Check-UserNames.sql (the problems as listed above).
+2. `BMMS_Test`: BMMS-Check-InstalledSteps.sql (step 34 reads Missing).
+3. `BMMS_Test`: BMMS-Fix-LoginName-Step34.sql. It prints "Audit_Trial_Login.Login_Name added" and "Step 34 installed".
+4. `BMMS_Test`: BMMS-Test-LoginName-Step34.sql (7 checks, all PASS; nobody logging in meanwhile).
+5. BMMS-Check-InstalledSteps.sql again: step 34 reads Installed.
+6. Deploy the build of step UN2 (names) (either order with step 3 is safe).
+7. The browser checks below.
+8. `BMMS`, after the backup: BMMS-Check-UserNames.sql, steps 3 and 5 (no test script on `BMMS`), then deploy the build.
+9. If step 34 must be undone: BMMS-Rollback-LoginName-Step34.sql, then BMMS-Check-InstalledSteps.sql (step 34 reads Partly; the column stays).
+
+Browser checks on `BMMS_Test`, in Chrome and in Edge (deploy the build first; keep the error log of the day and App_Data/PageAccessLog.txt open). After the login checks:
+
+```sql
+SELECT TOP 10 l.Audit_Trial_Login_Id, l.User_Id, l.Login_Name, u.UserName, l.Login_DateTime, l.Logout_DateTime, l.Login_Status, l.User_IP_Address
+FROM Audit_Trial_Login l LEFT JOIN Users u ON u.UserId = l.User_Id
+ORDER BY l.Audit_Trial_Login_Id DESC;
+```
+
+1. Names: as Admin on User Master, enter real names for mgruser and depuser. Run BMMS-Check-UserNames.sql: neither shows "name equals login" any more.
+2. Header: log in as each of the 14 test users in turn (inactiveuser is refused with "Your account is inactive"). Each shows "<User Name> | <Role Name>"; mgruser and depuser show the new names; the tooltip of the name (hover) shows the login ID exactly as stored (for example `Controller` with a capital C). Alerts, Change Password and Logout work as before. The same on a page with MainNoMenu.Master (ChangePasswordFirst.aspx after a login with the default password, if one is at hand).
+3. A name equal to the login (ituser): "ituser | User", tooltip "ituser".
+4. Encoding: User Master refuses `<` (request validation), so set it by SQL: `UPDATE Users SET UserName = 'A&B <i>x</i> O''Neil "Q"' WHERE LoginName = 'ituser';` and log in as ituser: the header shows the text exactly, nothing in italics; View Source shows `A&amp;B &lt;i&gt;x&lt;/i&gt; O&#39;Neil &quot;Q&quot;` in the span. Then `UPDATE Users SET UserName = 'ituser' WHERE LoginName = 'ituser';`.
+5. Layout at 390 px (device toolbar), 1105 px and 1366 px: the header as before. With long names: as Admin set the name of ituser on User Master to 40 letters with no space (for example `Venkataramanasubramaniancharlesvijayaram`), then to 40 times W, then to 50 characters with spaces; log in as ituser each time: at 390 px the name may take its own line (40 times W breaks inside the word) and the page does not scroll sideways; at 1105 and 1366 px one line. Restore the name.
+6. Two users at once: Chrome as mgruser, Edge as depuser, an InPrivate window as Controller: each keeps its own name, role and lists after several clicks.
+7. The same user twice (Chrome and InPrivate as mgruser): both work. The query shows two rows of mgruser with Login_Name `mgruser`: the first closed ('C', no logout time), the second open ('O'), as before.
+8. Logout in one of the two windows: both rows of mgruser are closed ('C'; the open one gets a logout time), as before; the other window still works until its session ends.
+9. A wrong password for mgruser, and an unknown login: "Invalid User Id / Password", no new row in the query (as before).
+10. Session end: log in as depuser and leave the window for 10 minutes (the session timeout): the open row of depuser gets a logout time; Login_Name is `depuser`. The next click goes to the login page.
+11. Deactivate while logged in: depuser logged in in Edge; as Admin deactivate depuser; in Edge click a menu item: the login page with "Your account is inactive. Contact the administrator."; activate depuser again.
+12. Logged out: in a new InPrivate window open DashBoard/DashBoard.aspx, Error/ErrorPage.aspx and Master/ResetDatabase.aspx directly: the login page each time.
+13. PageAccessLog.txt: as depuser type the address of a page the role may not open (for example Master/User.aspx): the new line carries "<name> (depuser)" as the user.
+14. Error log: no entry from these checks.
+
 ## Known items for later steps
+
+- The login ID in the header is a tooltip only, which a touch screen cannot open (accepted for phones, step UN2 (names)).
+- Access log, as before step UN2 (names): a second login of the same user closes the first row without a logout time, and a logout or session end in one window closes the user's open rows of every window (spr_AddEditAuditTrialLogin closes by User_Id); a wrong password or an unknown login writes nothing.
 
 - The colour picker on Committee and Meeting (third-party JScript/ColorPicker/js_color_picker_v2.js) asks for its tab and slider images relative to the page (`/Master/images/tab_right_active.gif`, `slider_handle.gif`), which gives 404; its own copies are in JScript/ColorPicker/Images. Seen in step B3, not changed.
 - Mail has no TLS or STARTTLS: Mail_Mgr never sets EnableSsl, so a mail provider that requires an encrypted connection (usually port 587) refuses every mail (step 30).

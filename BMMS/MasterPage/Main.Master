@@ -42,7 +42,8 @@
                 </div>
                 <div class="wb-user">
                     <a href="../DashBoard/DashBoard.aspx">Alerts (<%: AlertCount %>)</a>
-                    <span class="wb-user-name"><%: Session["UserName"] %> | <%: Session["RoleName"] %></span>
+                    <%-- Name | Role; the login ID as the tooltip (step UN2; a tooltip cannot be opened on a touch screen) --%>
+                    <span class="wb-user-name" title="<%: Session["LoginName"] %>"><%: Session["UserName"] %> | <%: Session["RoleName"] %></span>
                     <a href="../Master/ChangePassword.aspx">Change Password</a>
                     <asp:LinkButton ID="lnkLogout" runat="server" Text="Logout" PostBackUrl="~/Logout.aspx"></asp:LinkButton>
                 </div>

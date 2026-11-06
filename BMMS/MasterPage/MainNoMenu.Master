@@ -38,7 +38,8 @@
                 <span class="wb-brand" title="Board Minutes and Meeting Software"><img src="<%= ResolveUrl("~/Images/Brand/bmms-logo-horizontal-white.png") %>" srcset="<%= ResolveUrl("~/Images/Brand/bmms-logo-horizontal-white-2x.png") %> 2x" width="223" height="36" alt="BMMS - Board Minutes and Meeting Software" /></span>
                 <div class="wb-nav"></div>
                 <div class="wb-user">
-                    <span class="wb-user-name"><%: Session["UserName"] %> | <%: Session["RoleName"] %></span>
+                    <%-- Name | Role; the login ID as the tooltip (step UN2; a tooltip cannot be opened on a touch screen) --%>
+                    <span class="wb-user-name" title="<%: Session["LoginName"] %>"><%: Session["UserName"] %> | <%: Session["RoleName"] %></span>
                     <a href="../Master/ChangePassword.aspx">Change Password</a>
                     <asp:LinkButton ID="lnkLogout" runat="server" Text="Logout" PostBackUrl="~/Logout.aspx"></asp:LinkButton>
                 </div>

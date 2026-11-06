@@ -73,9 +73,8 @@ namespace BMMS.Security
             if (policy.PublicPages.Contains(page))
                 return;
 
-            // --- 1. must be logged in -------------------------------------------------
-            string userName = ctx.Session == null ? null : ctx.Session["UserName"] as string;
-            if (string.IsNullOrEmpty(userName))
+            // --- 1. must be logged in: a UserId in the session (step UN2) ---------------
+            if (!BMMSBAL.Common.IsLoggedIn())
             {
                 RedirectToLogin(app, ctx);
                 return;
@@ -248,6 +247,17 @@ namespace BMMS.Security
             return path;
         }
 
+        // The user column of the log (step UN2): "Name (login)"; only the name when the session has no login ID
+        private static string LogUser(HttpContext ctx)
+        {
+            if (ctx.Session == null)
+                return string.Empty;
+
+            string name = Convert.ToString(ctx.Session["UserName"]);
+            string login = Convert.ToString(ctx.Session["LoginName"]);
+            return string.IsNullOrEmpty(login) ? name : name + " (" + login + ")";
+        }
+
         // Written to App_Data, which IIS/ASP.NET never serves to browsers.
         private static void Log(HttpContext ctx, string action, string page, string role, string reason)
         {
@@ -255,7 +265,7 @@ namespace BMMS.Security
             {
                 string dir = ctx.Server.MapPath("~/App_Data");
                 Directory.CreateDirectory(dir);
-                string user = ctx.Session == null ? string.Empty : Convert.ToString(ctx.Session["UserName"]);
+                string user = LogUser(ctx);
                 string line = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\t" + action + "\t" + user + "\t" + role +
                               "\t" + page + "\t" + reason + Environment.NewLine;
                 lock (LogLock)

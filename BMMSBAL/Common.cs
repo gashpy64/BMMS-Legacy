@@ -171,7 +171,7 @@ namespace BMMSBAL
         #region InitSetup
         public static void InitSetup(string className)
         {
-            if (HttpContext.Current.Session["UserName"] == null)
+            if (!IsLoggedIn())
             {
                 HttpContext.Current.Response.Redirect("~/", true);
             }
@@ -373,6 +373,20 @@ namespace BMMSBAL
                 UserDetails += "<br /><b>Email Id      : </b>" + HttpUtility.HtmlEncode(dtUser.Rows[0]["EmailId"].ToString());
             }
             return UserDetails;
+        }
+        #endregion
+
+        #region IsLoggedIn
+        // Step UN2: a user is logged in when the session holds a UserId (set at login, Default.aspx). Until step UN2
+        // the pages tested Session["UserName"], the person's name, which is display text and not an identity.
+        public static bool IsLoggedIn()
+        {
+            HttpContext context = HttpContext.Current;
+            if (context == null || context.Session == null)
+                return false;
+
+            int userId;
+            return int.TryParse(Convert.ToString(context.Session["UserId"]), out userId) && userId > 0;
         }
         #endregion
 

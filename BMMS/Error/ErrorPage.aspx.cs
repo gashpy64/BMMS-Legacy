@@ -23,10 +23,10 @@ namespace BMMS.Error
         // PreInit runs before the master page and its menu are created and before any postback event (Exit), and
         // Response.Redirect(url, true) ends the request here, as Common.InitSetup does on the other pages; the
         // ThreadAbortException it uses is the normal end of a request and does not reach Application_Error.
-        // The test is the one PageAccessModule uses: Session["UserName"] empty.
+        // The test is the one PageAccessModule uses: no UserId in the session (Common.IsLoggedIn, step UN2).
         protected override void OnPreInit(EventArgs e)
         {
-            if (string.IsNullOrEmpty(Session["UserName"] as string))
+            if (!Common.IsLoggedIn())
                 Response.Redirect("~/Default.aspx", true);
 
             base.OnPreInit(e);

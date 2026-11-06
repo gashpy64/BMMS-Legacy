@@ -117,7 +117,9 @@ namespace BMMS
                     if (Common.IsLegacyFormat(dtUser.Rows[0]["Password"].ToString()))
                         UserMgr.ResetPasswordByUserId(loggedInUserId, Common.HashPassword(sPasswordInput), loggedInUserId);
                     Session["UserId"] = dtUser.Rows[0]["UserId"].ToString();
+                    // UserName is the person's name (shown); LoginName is the login ID (header tooltip, logs; step UN2)
                     Session["UserName"] = dtUser.Rows[0]["UserName"].ToString();
+                    Session["LoginName"] = dtUser.Rows[0]["LoginName"].ToString();
                     Session["DesignName"] = dtUser.Rows[0]["DesignationName"].ToString();
                     Session["RoleCode"] = dtUser.Rows[0]["RoleCode"].ToString();
                     Session["RoleName"] = dtUser.Rows[0]["RoleName"].ToString();

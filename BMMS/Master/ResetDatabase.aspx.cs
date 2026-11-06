@@ -35,7 +35,7 @@ namespace BMMS.Master
             // fire. This page invokes spr_sys_ResetDatabase, which deletes every record
             // in the database and re-creates the default users and masters. It must
             // never be reachable without an authenticated administrator.
-            if (Session["UserName"] == null)
+            if (!Common.IsLoggedIn())
             {
                 HttpContext.Current.Response.Redirect("~/", true);
             }
