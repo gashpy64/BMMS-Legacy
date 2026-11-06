@@ -32,6 +32,15 @@ namespace BMMS.Master
 
         private const string MailNotSentMessage ="The agenda item was saved, but the mail could not be sent. The error is in the error log.";
 
+        // Step C2: Edit and Update by the rule of the list (BMMS-Fix-ManagerDepartment-Step33.sql); Delete for the
+        // Controller only. Nothing is opened, saved or deleted on a refusal.
+        private const string ItemNotOwnMessage = "You can open only the agenda items you entered.";
+        private const string ItemNotInDepartmentMessage = "You can open only the agenda items of your department and the items you entered.";
+        private const string DeleteControllerOnlyMessage = "Only the Controller can delete agenda items. Nothing was deleted.";
+
+        // Step C2: a new item of a User or Manager takes the department from the user master, read at Save
+        private const string DepartmentMismatchMessage = "The department does not match your department. Nothing was saved.";
+
         #region Page_Load
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -273,7 +282,15 @@ namespace BMMS.Master
                         dtAgendaEdit = AgendaMgr.GetAgendaByAgendaId(AgendaId);
 
 
-                        if (dtAgendaEdit.Rows.Count > 0 && !MeetingMgr.IsMeetingOpenForChange(dtAgendaEdit.Rows[0]["MeetingDate"], DateTime.Today))
+                        string accessMsg = dtAgendaEdit.Rows.Count > 0 ? CheckItemAccess(dtAgendaEdit.Rows[0]) : "Success";
+
+                        if (accessMsg != "Success")
+                        {
+                            // Step C2: not an item of this user's list; the form is not opened
+                            MsgDisplay(accessMsg);
+                            ScriptManager.GetCurrent(this).SetFocus(ddlMeeting.ClientID);
+                        }
+                        else if (dtAgendaEdit.Rows.Count > 0 && !MeetingMgr.IsMeetingOpenForChange(dtAgendaEdit.Rows[0]["MeetingDate"], DateTime.Today))
                         {
                             // Every role; Update checks again (step M5)
                             MsgDisplay(ItemMeetingDatePassedMessage);
@@ -422,7 +439,12 @@ namespace BMMS.Master
                     {
                         int AgendaId = Convert.ToInt32(e.CommandArgument);
 
-                        if (!IsItemMeetingOpen(AgendaId))
+                        if (Session["RoleCode"].ToString() != "controller")
+                        {
+                            // Step C2: the button is shown to the Controller only; a forged post is refused here
+                            MsgDisplay(DeleteControllerOnlyMessage);
+                        }
+                        else if (!IsItemMeetingOpen(AgendaId))
                         {
                             // Every role; nothing is deleted (step M5)
                             MsgDisplay(ItemMeetingDatePassedMessage);
@@ -657,10 +679,32 @@ namespace BMMS.Master
                     myAgenda.CommitteeId = Convert.ToInt16(hdnCommitteeId.Value);
                     myAgenda.MeetingId = Convert.ToInt16(ddlMeeting.SelectedValue.ToString());
 
+                    // Step C2: the Controller chooses the department. For every other role a new item (Save) takes the
+                    // department of the user master, read now (as the Edit check does), never the posted hidden field
+                    // hdnDepartmentId; a posted value that differs is refused (departmentRefusal) and nothing is saved.
+                    // An Update of a User or Manager does not write the department (spr_AddEditAgenda and
+                    // spr_AddEditAgendaByManager leave Agenda.DepartmentId unchanged), so the posted value is passed
+                    // as before, read without an error for a value that is not a number.
+                    string departmentRefusal = "Success";
+
                     if (Session["RoleCode"].ToString() == "controller")
                         myAgenda.DepartmentId = int.Parse(ddlDepartment.SelectedValue.ToString());
                     else
-                        myAgenda.DepartmentId = int.Parse(hdnDepartmentId.Value.ToString());
+                    {
+                        int postedDepartmentId;
+                        bool postedDepartmentValid = int.TryParse(hdnDepartmentId.Value, out postedDepartmentId);
+
+                        if (btnSave.Text == "Save")
+                        {
+                            UserBAL actingUserForDepartment = UserMgr.GetUserByUserId(int.Parse(Session["UserId"].ToString()));
+                            myAgenda.DepartmentId = actingUserForDepartment.DepartmentId;
+
+                            if (!postedDepartmentValid || postedDepartmentId != actingUserForDepartment.DepartmentId)
+                                departmentRefusal = DepartmentMismatchMessage;
+                        }
+                        else
+                            myAgenda.DepartmentId = postedDepartmentValid ? postedDepartmentId : 0;
+                    }
 
                     myAgenda.SubjectTypeId = Convert.ToInt16(ddlSubjectType.SelectedValue);
                     myAgenda.ShortText = txtShortText.Text.Trim();
@@ -700,16 +744,27 @@ namespace BMMS.Master
                     int ActingUserId = int.Parse(Session["UserId"].ToString());
                     MeetingChangeResult agendaLock = AgendaMgr.GetAgendaLock(myAgenda.MeetingId, ActingUserId);
 
+                    // Step C2: Update only of an item of this user's list (Save is a new item)
+                    string updateAccess = btnSave.Text == "Update" ? CheckItemAccessById(myAgenda.AgendaId) : "Success";
+
                     if (!fileNamesValid)
                         strResult = FileNameNotValidMessage;   // nothing is saved (step N2)
                     else if (agendaLock.Result != 1)
                         strResult = agendaLock.RefusalMessage();
+                    else if (departmentRefusal != "Success")
+                        strResult = departmentRefusal;   // step C2: before the date and route checks and the mail
                     else if (btnSave.Text == "Save")
                     {
                         strResult = CheckNewItemMeetingDate(myAgenda.MeetingId, out submissionNotice);
 
                         if (strResult == "Success")
                             strResult = CheckNewItemRoute();
+                    }
+                    else if (updateAccess != "Success")
+                    {
+                        // Step C2: the id comes from the hidden field hdnAgendaId, so the item is checked again by
+                        // its saved creator and department; nothing is saved
+                        strResult = updateAccess;
                     }
                     else if (btnSave.Text == "Update" && !IsItemMeetingOpen(myAgenda.AgendaId))
                     {
@@ -813,6 +868,64 @@ namespace BMMS.Master
                 return true;
 
             return MeetingMgr.IsMeetingOpenForChange(dtItem.Rows[0]["MeetingDate"], DateTime.Today);
+        }
+        #endregion
+
+        #region CheckItemAccess
+        // Step C2: may the acting user open and update this item? The rule of the list
+        // (spr_GetAgendaByMeetingIdDeptId, BMMS-Fix-ManagerDepartment-Step33.sql): the Controller every item; a
+        // Manager the items of their department (the item's Agenda.DepartmentId) and the items they entered; every
+        // other role only the items it entered. The Manager's department is read from the database, not from the
+        // session or the form. Returns "Success" or the refusal.
+        private string CheckItemAccess(DataRow item)
+        {
+            string roleCode = Session["RoleCode"].ToString();
+            if (roleCode == "controller")
+                return "Success";
+
+            int userId = int.Parse(Session["UserId"].ToString());
+
+            int createdBy;
+            if (int.TryParse(item["CreatedBy"].ToString(), out createdBy) && createdBy == userId)
+                return "Success";
+
+            if (roleCode == "manager")
+            {
+                int itemDepartmentId;
+                UserBAL actingUser = UserMgr.GetUserByUserId(userId);
+
+                if (int.TryParse(item["DepartmentId"].ToString(), out itemDepartmentId)
+                    && actingUser != null && itemDepartmentId == actingUser.DepartmentId)
+                    return "Success";
+
+                return ItemNotInDepartmentMessage;
+            }
+
+            return ItemNotOwnMessage;
+        }
+
+        // The same, by the item's id as saved; an item that no longer exists is left to the procedure, as in
+        // IsItemMeetingOpen
+        private string CheckItemAccessById(int AgendaId)
+        {
+            DataTable dtItem = AgendaMgr.GetAgendaByAgendaId(AgendaId);
+            if (dtItem.Rows.Count == 0)
+                return "Success";
+
+            return CheckItemAccess(dtItem.Rows[0]);
+        }
+        #endregion
+
+        #region EnteredBy
+        // Step C2: the "Entered by" column; empty when the list procedure has no EnteredByName column (step 33 not
+        // installed, or rolled back), so the grid still shows
+        protected string EnteredBy(object dataItem)
+        {
+            DataRowView row = dataItem as DataRowView;
+            if (row == null || !row.Row.Table.Columns.Contains("EnteredByName"))
+                return string.Empty;
+
+            return row["EnteredByName"].ToString();
         }
         #endregion
 

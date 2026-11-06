@@ -58,12 +58,18 @@
             <div class="wb-card">
                 <div class="wb-card-header">
                     Agenda items in this meeting</div>
-                <%-- Step C1: the list of a User (and for now of a Manager) holds only the items they entered
-                     (spr_GetAgendaByMeetingIdDeptId, CreatedBy); the Manager's line returns with step C2 --%>
+                <%-- Step C2: the list of a User holds the items they entered; the list of a Manager the items of the
+                     Manager's department and the items the Manager entered (spr_GetAgendaByMeetingIdDeptId,
+                     BMMS-Fix-ManagerDepartment-Step33.sql). The Controller sees every item and no line. --%>
                 <%if (Session["RoleCode"].ToString() == "user")
                   { %>
                 <p class="bmms-card-note">
                     Items you entered.</p>
+                <%}
+                  else if (Session["RoleCode"].ToString() == "manager")
+                  { %>
+                <p class="bmms-card-note">
+                    Items of your department.</p>
                 <%} %>
                 <div class="wb-table-scroll">
                     <asp:GridView ID="grvAgenda" runat="server" SkinID="grvSkinNoPaging" AutoGenerateColumns="false"
@@ -125,6 +131,18 @@
                                 <ItemTemplate>
                                     <asp:Label ID="lblSubjectTypeName" runat="server" SkinID="lblskingen" Text='<%#Eval("SubjectTypeName") %>'></asp:Label>
                                 </ItemTemplate>
+                            </asp:TemplateField>
+                            <%-- Step C2: who entered the item, every role, the same position; EnteredByName of the list
+                                 procedures (step 33), empty when they do not return it --%>
+                            <asp:TemplateField SortExpression="EnteredByName">
+                                <HeaderTemplate>
+                                    <asp:LinkButton ID="lnkEnteredBy" runat="server" Text="Entered by" CommandName="Sort"
+                                        Style="color: White" CommandArgument="EnteredByName"></asp:LinkButton>
+                                </HeaderTemplate>
+                                <ItemTemplate>
+                                    <asp:Label ID="lblEnteredBy" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(EnteredBy(Container.DataItem)) %>'></asp:Label>
+                                </ItemTemplate>
+                                <ItemStyle CssClass="bmms-col-person" />
                             </asp:TemplateField>
                             <asp:TemplateField SortExpression="ShortText">
                                 <HeaderTemplate>

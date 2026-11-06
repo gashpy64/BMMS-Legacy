@@ -105,6 +105,14 @@ body.wb div#contentArea:has(.bmms-form-agenda, .bmms-form-minutes)
 	font-size: 13px;
 }
 
+/* Agenda Entry list, "Entered by" (step C2): a name wraps between words and never squeezes to one word a
+   line; a long name without spaces breaks inside the cell. The table keeps its own sideways scroll. */
+.bmms-form .wb-table td.bmms-col-person
+{
+	min-width: 9em;
+	overflow-wrap: anywhere;
+}
+
 /* ---------- Fields inside cards ---------- */
 .bmms-form .bmms-field
 {
