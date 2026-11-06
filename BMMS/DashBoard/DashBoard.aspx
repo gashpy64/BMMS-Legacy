@@ -509,8 +509,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="MyPopupOuter">
-                    </div>
+                </div>
             </asp:Panel>
             <asp:Panel ID="pnlActionItemDetails" runat="server" Style="background-color: White;">
                 <div class="MyPopupOuter">

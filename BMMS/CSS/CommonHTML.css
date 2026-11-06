@@ -27,6 +27,26 @@
 	padding: 5px;
 }
 
+/* Step H1: on the Workbench pages a popup panel covers the content area only, not the whole window, so the
+   header (logo, menu, user) stays visible above it. Used by the Dashboard (Agenda Alert, Action Item Details)
+   and Followup (Actual Resolution, Action Text); applies only while such a panel is rendered. The panel keeps
+   scrolling inside its own box; border-box keeps the 5px padding inside the width (no sideways page scroll). */
+body.wb div#contentArea:has(.MyPopupOuter)
+{
+	position: relative;
+	min-height: 70vh;      /* room for the panel when the page behind it is short */
+	overflow: visible;
+}
+body.wb div#contentArea .MyPopupOuter
+{
+	position: absolute;
+	background-color: var(--bmms-panel-bg);
+}
+body.wb div#contentArea .MyPopupContent
+{
+	box-sizing: border-box;
+}
+
 .MyPopupContentInner
 {
 	background-color: var(--bmms-panel-bg);
