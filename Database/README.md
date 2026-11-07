@@ -2105,7 +2105,7 @@ Where a user is picked from a list or an action is recorded for audit, the accou
 - Reset Password: label "User :" (was "Login Name :"); every user except the protected system account, inactive ones marked.
 - Audit Trail: label "User :" (was "User Name :"); "- All -" first, then every user (inactive ones and the system account included). The column "Update By" shows "Name (login)" by Update_By, and "(unknown user)" when the user no longer exists (the same text as the Entered by column). The procedure's Update_By_Name (login only) is no longer shown.
 - Audit Trail, header sort (finding F-2): a click on a column header sorted the rows and then read them again from the database, so the order was lost; the rows are now read only on opening the page and on Submit, and a header click sorts the rows already shown.
-- Audit Trail (finding F-1): the list of users is no longer kept in ViewState. It was never read back, and View_Users carries the password hash, so every user's hash went to the browser. User Master still keeps its user list (spr_GetUserListForUserPage, with the hash) in ViewState; see Known items.
+- Audit Trail (finding F-1): the list of users is no longer kept in ViewState. It was never read back, and View_Users carries the password hash, so every user's hash was written into the page's ViewState (encrypted and signed by ASP.NET, because the grid has DataKeyNames, so not readable in the browser; see step PW1). User Master kept its user list (spr_GetUserListForUserPage, with the hash) in ViewState the same way; removed in step PW1.
 - Backup Database list: the column "Backup By" (was "User Name", the name alone) shows "Name (login)" by User_Id, inactive ones marked. A backup by a user that no longer exists is still not listed (the procedure joins Users).
 - App_Data/PageAccessLog.txt: the user column uses the same format (`PageAccessModule.LogUser`); no visible change, except that a blank name gives "mgruser" and not " (mgruser)".
 - Layout (BMMS/CSS/bmms-workbench.css): the user lists of Reset Password and Audit Trail (`select.wb-user-select`, was 150 px wide) take their column up to 360 px; the Reporting Person list already does (`.wb-page select`). A long text is cut in the closed list and never widens the page; the open list shows it whole. The grid cells (`td.wb-user-cell`) break a long name without a space inside the word.
@@ -2164,10 +2164,126 @@ Browser checks on `BMMS_Test`, in Chrome and in Edge (deploy the CSS first and r
 5. The other five grids look exactly as before, at 1366 px and at 1900 px: Agenda Entry (a meeting with items), Committee Member (a committee with members), Meeting (a committee with meetings), Member, and Update Minutes (a meeting with minutes). Each heading on one line, the heading row as high as before, no new sideways scroll bar; click a heading to sort and the arrow shows after it as before; Edit and Delete work.
 6. A narrower window (about 1100 px): every grid still scrolls inside its own card, as before step G1.
 
+## Step PW1: no password hashes in the User Master ViewState (code only, no database script)
+
+Finding F-1 of step UN3. User Master keeps its user list in ViewState (`ViewState["dtUser"]`, BMMS/Master/User.aspx.cs) for the header sort and the "Duplicate Login User Id not allowed" check. The list comes from spr_GetUserListForUserPage, which returns `v.*` of View_Users, the Password column included, so every user's password hash was written into the page's ViewState.
+
+How far that went: the User Master ViewState is encrypted by ASP.NET. A GridView with DataKeyNames and AutoGenerateColumns="false" registers ViewState encryption in its OnInit (read in the IL of System.Web.dll 4.8.10002), and with the default `viewStateEncryptionMode` ("Auto"; not set in Web.config, machine.config or the framework web.config) the page then encrypts its whole ViewState and writes the field `__VIEWSTATEENCRYPTED`. grvUser has `DataKeyNames="UserId"` and `AutoGenerateColumns="false"`. The ViewState is also signed (enableViewStateMac, always on since .NET 4.5.2) with the machine key that ASP.NET generates for this machine and application (no `<machineKey>` is set). So the old exposure was limited: the hashes reached the browser encrypted and signed, readable only with the server's machine key, that is by someone who already has the server. Proven on a test site in IIS Express with the same settings: without DataKeyNames the ViewState was readable (it starts with the bytes FF 01; a login and a sample hash were found in it), with DataKeyNames it was encrypted and neither was found. Audit Trail's grid (`DataKeyNames="Audit_Trail_Maser_Id"`) is encrypted the same way, so the user list removed there in step UN3 was encrypted too.
+
+Step PW1 is defence in depth: the hash never reaches the browser at all, even if the grid loses its DataKeyNames (the page's ViewState would then be readable after base64 decoding) or the encryption is switched off.
+
+- BMMSBAL/UserMgr.cs, `GetUserListForUserPage`: the Password column is removed from the list before the page gets it. No part of the page used it: the grid, the row buttons (CanEdit, CanDelete, CanDeactivate, CanActivate, ManagedCount, IsSystem), the sort and the duplicate check (LoginName, UserId) use other columns. Edit reads its user separately (spr_GetUserByUserId) and keeps nothing.
+- The procedure is unchanged (it keeps `v.*`), so the test scripts of steps 13, 14 and 18, which fill a table from it with `INSERT INTO ... EXEC`, and BMMS-Check-InstalledSteps.sql are unchanged. No .aspx change, no database change; the build before step PW1 keeps working.
+- What the column holds: on BMMS_Test all 14 users have PBKDF2 hashes (`100000.<salt>.<hash>`, 100,000 iterations, a random 16-byte salt per user), not readable passwords. Still, with a hash and its salt anyone can try the default password of the source code on every user in seconds and find who still has it, and weak passwords can be guessed offline. A value in the older ("legacy") format would be worse: it is TripleDES with an empty key and an IV that are in the source code (Common.DecryptVal), so it can be turned back into the password. Such a user cannot log in (VerifyPassword refuses the format).
+- The rest of the solution, checked: SQL Server reports seven procedures whose rows carry a Password column (spr_GetUserListForUserPage, spr_GetUser, spr_GetActiveUserList, spr_GetMgrControllerByDeptId, spr_GetUserByUserId, spr_GetUserByLoginName and spr_GetSMTPMaster, the mail password). Only the User Master list was kept in ViewState. The others stay on the server: the pick lists keep only their item texts and values, Session keeps the user's id, names and role, Reset Password's hidden field keeps the e-mail address, and the SMTP page shows only stars (the mail password is stored DPAPI-protected).
+- No browser check can prove step PW1 on User Master: its ViewState is encrypted, so neither the hash nor any login can be found in it, before or after the step. The proof is the server-side check below: the built UserMgr.GetUserListForUserPage returns the rows with no Password column.
+
+Server-side check (repeatable; there is no test script for the C# layer). It reads BMMS_Test only (spr_GetUserListForUserPage is read-only) and uses the DLLs of the build under test. In PowerShell, in a new empty folder (for example `C:\Temp\pw1check`):
+
+1. Copy `BMMSBAL.dll` and `BMMSDAL.dll` from `C:\Repositories\BMMS-Legacy\BMMS\bin` into the folder.
+2. Save this as `PW1Check.cs`:
+
+```csharp
+// Step PW1: the list User Master keeps in ViewState must have no Password column (reads BMMS_Test only)
+using System;
+using System.Data;
+using BMMSBAL;
+
+class PW1Check
+{
+    static void Main()
+    {
+        DataTable dt = UserMgr.GetUserListForUserPage(6);   // acting user 6 = Controller
+        string[] used = { "UserId", "UserName", "LoginName", "Status", "AccountStatus", "IsSystem",
+                          "CanEdit", "CanDelete", "CanDeactivate", "CanActivate", "ManagedCount" };
+        bool allUsed = true;
+        foreach (string c in used)
+            if (!dt.Columns.Contains(c)) { allUsed = false; Console.WriteLine("missing column: " + c); }
+
+        Console.WriteLine("rows=" + dt.Rows.Count + "  Password column=" + dt.Columns.Contains("Password")
+                          + "  page columns present=" + allUsed);
+        Console.WriteLine(!dt.Columns.Contains("Password") && allUsed && dt.Rows.Count > 0 ? "PASS" : "FAIL");
+    }
+}
+```
+
+3. Save this as `PW1Check.exe.config` (the data layer reads the connection string "ConnectionString"; Windows login to the local server):
+
+```xml
+<?xml version="1.0"?>
+<configuration>
+  <connectionStrings>
+    <add name="ConnectionString" connectionString="Server=.;Database=BMMS_Test;Integrated Security=SSPI"/>
+  </connectionStrings>
+</configuration>
+```
+
+4. Compile and run:
+
+```powershell
+& "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /nologo /r:BMMSBAL.dll /r:System.Data.dll /r:System.Web.dll /out:PW1Check.exe PW1Check.cs
+.\PW1Check.exe
+```
+
+Expected: `rows=14  Password column=False  page columns present=True` and `PASS` (the row count is that of BMMS_Test). On the build before step PW1 the same check gives `Password column=True` and `FAIL`.
+
+Optional check on the real `BMMS` (counts only, no values): which format the stored passwords have.
+
+```sql
+SELECT CASE WHEN Password IS NULL OR Password = '' THEN 'empty'
+            WHEN Password LIKE '[0-9]%.%.%' AND LEN(Password) - LEN(REPLACE(Password, '.', '')) = 2 THEN 'PBKDF2 hash'
+            ELSE 'legacy (reversible)' END AS format,
+       COUNT(*) AS users
+FROM Users
+GROUP BY CASE WHEN Password IS NULL OR Password = '' THEN 'empty'
+              WHEN Password LIKE '[0-9]%.%.%' AND LEN(Password) - LEN(REPLACE(Password, '.', '')) = 2 THEN 'PBKDF2 hash'
+              ELSE 'legacy (reversible)' END;
+```
+
+Browser check of the ViewState on `BMMS_Test`, in Chrome or Edge (deploy the build first). Open DevTools (F12), tab Console, paste this and press Enter. It joins the ViewState fields if the page splits them, says whether the ViewState is readable or encrypted, and searches for hashes and a login only when it is readable:
+
+```js
+(function () {
+  var c = document.getElementById('__VIEWSTATEFIELDCOUNT');
+  var n = c ? parseInt(c.value, 10) : 1, v = '';
+  for (var i = 0; i < n; i++) v += document.getElementById(i === 0 ? '__VIEWSTATE' : '__VIEWSTATE' + i).value;
+  var b = atob(v);
+  var plain = b.charCodeAt(0) === 0xFF && b.charCodeAt(1) === 0x01;
+  var r = {
+    fields: n,
+    bytes: b.length,
+    encryptedField: !!document.getElementById('__VIEWSTATEENCRYPTED'),
+    format: plain ? 'plain (readable)' : 'encrypted (not readable in the browser)'
+  };
+  if (plain) {
+    r.hashes = (b.match(/\d{4,7}\.[A-Za-z0-9+\/=]{20,}\.[A-Za-z0-9+\/=]{20,}/g) || []).length;
+    r.loginFound = b.indexOf('credmanager') >= 0;
+  }
+  return r;
+})()
+```
+
+Expected on User Master: `fields: 1`, `encryptedField: true`, `format: 'encrypted (not readable in the browser)'`. There is no `hashes` or `loginFound` in the result: they are only searched in a readable ViewState. `bytes` is the size of the encrypted ViewState.
+
+Regression checks on `BMMS_Test` (the page must behave as before):
+
+1. Controller, User Master: the console check above gives the expected result.
+2. Sort every column twice (User Name, Department Name, Designation Name, Email Id, Role Name, Login / User ID, Status): A to Z, then Z to A.
+3. Edit s20user, Cancel; Edit again and Update without a change: saved.
+4. Duplicate check: Add a user with the login `mgruser`: "Duplicate Login User Id not allowed". Edit depuser (the User ID is read-only on Edit) and Update without a change: saved, with no "Duplicate" message.
+5. Deactivate s20user: the confirmation names s20user; the row turns inactive (greyed). Activate it again.
+6. Delete: a user with history (mgruser) is refused with the reason; a new test user you add is deleted.
+7. The system account row (admin): greyed, "(System account)", the three buttons disabled with the tooltip "Protected system account".
+8. Admin: checks 1 and 2 again; rows the Admin may not change show disabled buttons with their tooltips, as before.
+9. Manager (mgruser) and User (depuser): `Master/User.aspx` opened directly gives "Access denied", as before.
+10. Unchanged: login, Change Password (the old password is checked) and Reset Password (the details box) work as before.
+11. Error log: no entry from these checks.
+
 ## Known items for later steps
 
+- The four user-list procedures (spr_GetUser, spr_GetActiveUserList, spr_GetMgrControllerByDeptId, spr_GetUserListForUserPage) still return the Password column (`v.*` of View_Users), though no caller of theirs needs it; the hashes stay on the server (step PW1). Leaving it out of them is a database step of its own, and the test scripts of steps 13, 14 and 18 that fill a table from spr_GetUserListForUserPage would need the same column change. View_Users itself keeps Password: the login and the password change read it through spr_GetUserByLoginName and spr_GetUserByUserId.
+- Optional: ViewState encryption on the six pages whose ViewState is still readable. A page's ViewState is encrypted only when a control on it asks for it (a GridView, DetailsView, FormView or DataList with data keys; `viewStateEncryptionMode` is the default "Auto"), and by their markup six pages that keep tables in ViewState have none: DashBoard, Attendance, Minutes Confirmation, Minutes Finalization, Attendance Details and Notice. Their ViewState is signed but can be read after base64 decoding. None of them carries a password (step PW1 checked every procedure that returns a Password column). `viewStateEncryptionMode="Always"` on `<pages>` in Web.config would encrypt the ViewState of every page; a step of its own, to test on every page.
 - Agenda Entry, sorted by "Subject Type Name": the sort arrow makes the grid about 3 px wider than its card, so it scrolls sideways a little (measured with the BMMS_Test rows of meeting 516; the same before and after step G1, so not caused by it). Not changed in step G1.
-- User Master keeps its user list in ViewState (`ViewState["dtUser"]`, User.aspx.cs; spr_GetUserListForUserPage returns `v.*` of View_Users, the password hash included), so every user's password hash goes to the browser inside the ViewState (MAC-protected, not encrypted). Found in step UN3 (F-1); its own step, when asked.
 - The login ID in the header is a tooltip only, which a touch screen cannot open (accepted for phones, step UN2 (names)).
 - Access log, as before step UN2 (names): a second login of the same user closes the first row without a logout time, and a logout or session end in one window closes the user's open rows of every window (spr_AddEditAuditTrialLogin closes by User_Id); a wrong password or an unknown login writes nothing.
 

@@ -417,9 +417,21 @@ namespace BMMSBAL
         #endregion
 
         #region GetUserListForUserPage
+        // Step PW1: without the Password column. spr_GetUserListForUserPage returns View_Users v.*, which includes
+        // each user's password hash, and User Master keeps this list in ViewState (sorting, the duplicate login
+        // check). ASP.NET encrypts that ViewState today because the grid has DataKeyNames, so the hash was never
+        // readable in the browser; removing it here is defence in depth in case the page ever stops encrypting.
+        // No caller needs the hash: the grid, the row buttons, the sort and the duplicate check use other columns.
+        // The procedure keeps its columns, so the test scripts of steps 13, 14 and 18 that fill a table from it
+        // are unchanged.
         public static DataTable GetUserListForUserPage(int ActingUserId)
         {
-            return UserDB.GetUserListForUserPage(ActingUserId);
+            DataTable dt = UserDB.GetUserListForUserPage(ActingUserId);
+
+            if (dt.Columns.Contains("Password"))
+                dt.Columns.Remove("Password");
+
+            return dt;
         }
         #endregion
 
