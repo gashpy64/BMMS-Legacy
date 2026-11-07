@@ -55,6 +55,8 @@
             </div>
             <div id="footer">
                 <asp:Label ID="lblFooter" runat="server" Text="Footer"></asp:Label>
+                <%-- "Database: <name>" for Admin and Controller only (step F1); otherwise not rendered --%>
+                <asp:Label ID="lblFooterDatabase" runat="server" CssClass="wb-footer-db" Visible="false"></asp:Label>
             </div>
         </div>
     </form>

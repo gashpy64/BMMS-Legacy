@@ -33,6 +33,20 @@ namespace BMMS.MasterPage
                 Page.Title = Common.GetAppSetting("PageTitle");
 
             lblFooter.Text = Common.ProductFooter(typeof(Main).Assembly);
+            SetFooterDatabase();
+        }
+        #endregion
+
+        #region SetFooterDatabase
+        // Step F1: "Database: <name>" under the footer line for Admin and Controller; for every other role and when
+        // the name cannot be read the label is not rendered. Common.FooterDatabaseName returns the name HTML-encoded.
+        private void SetFooterDatabase()
+        {
+            string databaseName = Common.FooterDatabaseName(Session["RoleCode"] as string);
+
+            lblFooterDatabase.Visible = databaseName != null;
+            if (databaseName != null)
+                lblFooterDatabase.Text = "Database: " + databaseName;
         }
         #endregion
 

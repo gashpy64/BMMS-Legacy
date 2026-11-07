@@ -2072,6 +2072,29 @@ ORDER BY l.Audit_Trial_Login_Id DESC;
 13. PageAccessLog.txt: as depuser type the address of a page the role may not open (for example Master/User.aspx): the new line carries "<name> (depuser)" as the user.
 14. Error log: no entry from these checks.
 
+## Step F1: footer version 1.1.0 from one place; database name for Admin and Controller (code only, no database script)
+
+- Version: the footer line "BMMS 1.1.0, Board Minutes and Meeting Software. Copyright © 2026 Gashpy Software. All Rights Reserved." is built by Common.ProductFooter (BMMSBAL/Common.cs) from three attributes of the web assembly, BMMS/Properties/AssemblyInfo.cs: AssemblyInformationalVersion (the version, "1.1.0"; the one place to change it), AssemblyProduct and AssemblyCopyright. The text is the same as before apart from the number. Without AssemblyInformationalVersion the footer falls back to AssemblyVersion, three parts. The login page (Default.aspx), Main.Master and MainNoMenu.Master use it; no other page, report, PDF or mail carries a version.
+- AssemblyVersion and AssemblyFileVersion of BMMS, BMMSBAL and BMMSDAL: 1.1.0.0.
+- Database name: under the footer line, on its own line, "Database: <name>" for a logged-in user with RoleCode admin or controller only (Main.Master and MainNoMenu.Master, label lblFooterDatabase). For the other roles the label is not rendered at all. The login page, the safe error page, "Page not found" and "Access denied" have no database line; Error/ErrorPage.aspx sends a logged-out visitor to the login page first. No server name.
+- The name is the database the server opened for the application's connection (ConnectDB.GetConnectedDatabaseName: SqlConnection.Database after Open), not the text of connectionStrings.config; HTML-encoded; read once and kept for the application's lifetime (Common.FooterDatabaseName). A change to connectionStrings.config restarts the application, so the new name shows after the switch.
+- When the connection cannot be opened: one entry in the error log (class Common, method FooterDatabaseName), the footer shows the version line only, the page goes on; the next try waits 60 seconds.
+- CSS (bmms-workbench.css, `body.wb div#footer`): `overflow-wrap: anywhere`, so a long name without a space breaks inside the word; `.wb-footer-db` on its own line.
+
+Browser checks on `BMMS_Test`, in Chrome and in Edge (deploy the build first; keep the error log of the day open):
+
+1. Logged out, login page: the footer line with 1.1.0; View Source has no "Database:".
+2. Controller: Dashboard, Agenda Entry and a Dashboard popup: the footer line, then "Database: BMMS_Test". View Source: no server name.
+3. Admin: Dashboard, User Master, Reset Database: the same as check 2.
+4. Manager, then User: the footer line only; View Source has neither "Database:" nor `lblFooterDatabase`.
+5. ChangePasswordFirst.aspx (MainNoMenu.Master), if a login with the default password is at hand: a User sees no database line, an Admin sees it.
+6. Logged out, in a new InPrivate window: Error/ErrorPage.aspx (login page), /NoSuchPage.aspx ("Page not found"): no database line anywhere.
+7. Admin, Error/ErrorPage.aspx opened directly: "Database: BMMS_Test" (logged-in user).
+8. Switch: set `database=BMMS` in connectionStrings.config and log in as Controller: "Database: BMMS"; set `database=BMMS_Test` again: the login page footer shows no database line, and after login "Database: BMMS_Test".
+9. Layout: as Admin, in DevTools replace the text of the `wb-footer-db` span with `Database: BMMS_Test_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_XYZ` (a 50-character name); at 390 px (device toolbar), 1105 px and 1366 px the footer wraps and the page does not scroll sideways (in the Console, `document.documentElement.scrollWidth <= window.innerWidth` is true).
+10. BMMS/bin/BMMS.dll, Properties, Details: File version 1.1.0.0, Product version 1.1.0.
+11. Error log: no entry from these checks.
+
 ## Known items for later steps
 
 - The login ID in the header is a tooltip only, which a touch screen cannot open (accepted for phones, step UN2 (names)).

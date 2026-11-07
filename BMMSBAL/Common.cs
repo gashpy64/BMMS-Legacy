@@ -103,13 +103,97 @@ namespace BMMSBAL
 
 
         #region ProductFooter
-        // The fixed product footer of every master page; the version is the web application's
-        // assembly version, three parts (1.0.0.0 -> 1.0.0)
+        // The product footer of every master page and the login page (step F1): "BMMS <version>, <product>.
+        // <copyright>", all three read from the web application's assembly (BMMS/Properties/AssemblyInfo.cs):
+        // AssemblyInformationalVersion (when missing: AssemblyVersion, three parts, 1.1.0.0 -> 1.1.0),
+        // AssemblyProduct and AssemblyCopyright (when missing: the text the footer had before step F1)
         public static string ProductFooter(System.Reflection.Assembly WebAssembly)
         {
-            Version version = WebAssembly.GetName().Version;
-            return "BMMS " + version.Major + "." + version.Minor + "." + version.Build
-                 + ", Board Minutes and Meeting Software. Copyright © 2026 Gashpy Software. All Rights Reserved.";
+            string version = null;
+            System.Reflection.AssemblyInformationalVersionAttribute informational =
+                (System.Reflection.AssemblyInformationalVersionAttribute)Attribute.GetCustomAttribute(
+                    WebAssembly, typeof(System.Reflection.AssemblyInformationalVersionAttribute));
+            if (informational != null && !string.IsNullOrEmpty(informational.InformationalVersion))
+                version = informational.InformationalVersion;
+            else
+            {
+                Version assemblyVersion = WebAssembly.GetName().Version;
+                version = assemblyVersion.Major + "." + assemblyVersion.Minor + "." + assemblyVersion.Build;
+            }
+
+            System.Reflection.AssemblyProductAttribute product =
+                (System.Reflection.AssemblyProductAttribute)Attribute.GetCustomAttribute(
+                    WebAssembly, typeof(System.Reflection.AssemblyProductAttribute));
+            string productName = product != null && !string.IsNullOrEmpty(product.Product)
+                ? product.Product : "Board Minutes and Meeting Software";
+
+            System.Reflection.AssemblyCopyrightAttribute copyright =
+                (System.Reflection.AssemblyCopyrightAttribute)Attribute.GetCustomAttribute(
+                    WebAssembly, typeof(System.Reflection.AssemblyCopyrightAttribute));
+            string copyrightText = copyright != null && !string.IsNullOrEmpty(copyright.Copyright)
+                ? copyright.Copyright : "Copyright © 2026 Gashpy Software. All Rights Reserved.";
+
+            return "BMMS " + version + ", " + productName + ". " + copyrightText;
+        }
+        #endregion
+
+
+        #region FooterDatabaseName
+        // Step F1: the name of the database the application is connected to, for the footer line "Database: <name>"
+        // of the master pages. Only for a logged-in Admin or Controller (by RoleCode); null for every other role,
+        // for a visitor who is not logged in, and when the name cannot be read. Never the server name.
+        // The name comes from the open connection (ConnectDB.GetConnectedDatabaseName, SqlConnection.Database),
+        // not from the connection string text, and is kept for the application's lifetime: a change to
+        // connectionStrings.config restarts the application and so reads it again. Returned HTML-encoded.
+        // A connection that cannot be opened: written to the error log, null (the footer shows the version line
+        // only, the page goes on), and the next try waits 60 seconds so a database that is down does not add a
+        // connect timeout to every page. Never throws.
+        private const string FooterDatabaseRoleAdmin = "admin";
+        private const string FooterDatabaseRoleController = "controller";
+        private static readonly object FooterDatabaseLock = new object();
+        private static volatile string footerDatabaseName;              // HTML-encoded; null until read
+        private static DateTime footerDatabaseRetryAfterUtc = DateTime.MinValue;
+
+        public static string FooterDatabaseName(string RoleCode)
+        {
+            if (!string.Equals(RoleCode, FooterDatabaseRoleAdmin, StringComparison.Ordinal)
+                && !string.Equals(RoleCode, FooterDatabaseRoleController, StringComparison.Ordinal))
+                return null;
+
+            if (!IsLoggedIn())
+                return null;
+
+            string name = footerDatabaseName;
+            if (name != null)
+                return name;
+
+            lock (FooterDatabaseLock)
+            {
+                if (footerDatabaseName != null)
+                    return footerDatabaseName;
+
+                if (DateTime.UtcNow < footerDatabaseRetryAfterUtc)
+                    return null;
+
+                try
+                {
+                    string raw = ConnectDB.GetConnectedDatabaseName();
+                    if (string.IsNullOrEmpty(raw))
+                    {
+                        footerDatabaseRetryAfterUtc = DateTime.UtcNow.AddSeconds(60);
+                        return null;
+                    }
+
+                    footerDatabaseName = HttpUtility.HtmlEncode(raw);
+                    return footerDatabaseName;
+                }
+                catch (Exception ex)
+                {
+                    footerDatabaseRetryAfterUtc = DateTime.UtcNow.AddSeconds(60);
+                    Utilities.WriteErrorLog("Common", "FooterDatabaseName", ex.ToString());
+                    return null;
+                }
+            }
         }
         #endregion
 

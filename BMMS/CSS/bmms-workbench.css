@@ -111,6 +111,14 @@ body.wb div#footer
 	font-family: var(--wb-font);
 	font-size: 13px;
 	text-align: center;
+	overflow-wrap: anywhere;   /* a long word (a database name without spaces) breaks, no horizontal scroll (step F1) */
+	word-wrap: break-word;     /* older browsers */
+}
+/* "Database: <name>" for Admin and Controller, on its own line under the footer line (step F1) */
+body.wb div#footer .wb-footer-db
+{
+	display: block;
+	margin-top: var(--wb-space-1);
 }
 
 /* ---------- Header bar ---------- */
