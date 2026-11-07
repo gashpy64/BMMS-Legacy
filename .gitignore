@@ -1,0 +1,64 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+ 
+# Build folders
+# The third-party DLLs still tracked under BMMS/bin and BMMSBAL/bin/Debug are
+# kept on purpose: the projects reference them from there.
+bin/
+obj/
+ 
+# SQL Server backups
+*.bak
+*.suo
+
+# Logs
+Log/
+ 
+# Temporary files
+Files/Temp/
+ 
+# Generated PDFs
+Files/PDF/
+ 
+# SQL backup folder
+Files/SqlBackup/
+ 
+# NuGet
+packages/
+ 
+# ReSharper
+_ReSharper*/
+
+BMMS/connectionStrings.config
+
+Files/SqlBackup/*.bak
+
+App_Data/PageAccessLog.txt
+
+BMMS/Files/MemberPhoto/
+BMMS/Files/MemberResume/
+BMMS/Files/PDF/
+
+
+
+
+/BMMS/ConnectionStrings.config
+**/App_Data/PageAccessLog.txt
+**/Files/SqlBackup/*.bak
+/BMMS/Files/AgendaAttach/
+/BMMS/Files/MemberPhoto/
+/BMMS/Files/MemberResume/
+# Upload leftovers; .gitkeep keeps the folder, which the Send Mail page needs
+/BMMS/Files/Temp/*
+!/BMMS/Files/Temp/.gitkeep
+BMMS/Files/SqlBackup/
+
+# The organisation logo uploaded on System Settings (back it up with the database)
+/BMMS/Files/Branding/
+
+# Windows thumbnails, Visual Studio upgrade leftovers
+Thumbs.db
+/Backup/
+UpgradeLog*.htm

@@ -5,6 +5,8 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
     <title>Report</title>
+    <link rel="icon" href="../favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="192x192" href="../Images/Brand/bmms-favicon-192.png" />
 </head>
 <body onload="window.print();window.close();">
     <form id="form1" runat="server">

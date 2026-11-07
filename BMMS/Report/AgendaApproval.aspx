@@ -36,7 +36,7 @@
                                 <asp:RadioButtonList ID="rdoViewFormat" runat="server" AutoPostBack="True" OnSelectedIndexChanged="rdoViewFormat_SelectedIndexChanged"
                                     RepeatDirection="Horizontal">
                                     <asp:ListItem Text="View" Value="View" Selected="True"></asp:ListItem>
-                                    <%--<asp:ListItem Text="Print" Value="Print"></asp:ListItem>--%>
+                                    <asp:ListItem Text="Print" Value="Print"></asp:ListItem>
                                 </asp:RadioButtonList>
                             </td>
                         </tr>
@@ -78,7 +78,7 @@
                                     &nbsp;</td>
                                 <td>
                                     <asp:Panel ID="pnlAgendaDetailsDownload" runat="server" Visible="false">
-                                        <a href="../Files/PDF/AgendaApproval.pdf" target="_blank">Download Agenda Details</a>
+                                        The agenda details opened in a new window; allow pop-ups if it did not.
                                     </asp:Panel>
                                 </td>
                             </tr>
@@ -169,7 +169,7 @@
                                                 Style="color: White" Text="Agenda Short Text"></asp:LinkButton>
                                         </HeaderTemplate>
                                         <ItemTemplate>
-                                            <asp:Label ID="lblShortText" runat="server" SkinID="lblskingen" Text='<%#Eval("ShortText")%>'></asp:Label>
+                                            <asp:Label ID="lblShortText" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("ShortText")) %>'></asp:Label>
                                         </ItemTemplate>
                                         <ItemStyle CssClass="contentTabletd" HorizontalAlign="Left" VerticalAlign="Middle" />
                                     </asp:TemplateField>

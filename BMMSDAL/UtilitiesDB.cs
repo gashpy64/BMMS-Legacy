@@ -11,9 +11,40 @@ namespace BMMSDAL
     {
 
         #region ResetDatabase
-        public static int ResetDatabase()
+        // One row: Result, Reason, ReasonDetail; only an active Admin who names the current database
+        // (BMMS-Fix-ResetDatabase-Step29.sql). Its own command with a 300-second timeout: the reset
+        // runs in one transaction, and a timeout rolls all of it back.
+        public static DataTable ResetDatabase(int ActingUserId, string ConfirmDatabaseName)
         {
-            return CommonDB.ExecuteProcedure("spr_sys_ResetDatabase", null); ;
+            DataTable dt = new DataTable();
+
+            using (SqlConnection conn = new SqlConnection(ConnectDB.GetConnectionString()))
+            using (SqlCommand cmd = new SqlCommand("spr_sys_ResetDatabase", conn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.CommandTimeout = 300;
+                cmd.Parameters.Add(new SqlParameter("@ActingUserId", ActingUserId));
+                cmd.Parameters.Add(new SqlParameter("@ConfirmDatabaseName", SqlDbType.NVarChar, 128)).Value = ConfirmDatabaseName ?? string.Empty;
+
+                conn.Open();
+
+                using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                {
+                    da.Fill(dt);
+                }
+            }
+
+            return dt;
+        }
+        #endregion
+
+        #region GetDatabaseName
+        // The database the application is connected to (Reset Database asks the Admin to type it)
+        public static string GetDatabaseName()
+        {
+            DataTable dt = CommonDB.GetDataTableFromQuery("SELECT DB_NAME() AS DatabaseName");
+
+            return dt.Rows.Count == 0 ? string.Empty : dt.Rows[0]["DatabaseName"].ToString();
         }
         #endregion
 
@@ -56,7 +87,75 @@ namespace BMMSDAL
             return CommonDB.ExecuteProcedure("spr_AddEditAuditTrialLogin", parameter); ;
         }
         #endregion
-    
+
+        #region GetAppSetting
+        // SettingCode, SettingValue, Description, LastChangedOn, LastChangedBy; no row if the
+        // setting is not stored (BMMS-Fix-MeetingLocks-Step16.sql)
+        public static DataTable GetAppSetting(string SettingCode)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@SettingCode", SettingCode);
+
+            return CommonDB.GetDataTable("spr_GetAppSetting", parameter);
+        }
+        #endregion
+
+        #region SetAppSetting
+        // One row: Result, Reason, ReasonDetail; only an active Admin may change a setting
+        public static DataTable SetAppSetting(string SettingCode, string SettingValue, int ActingUserId)
+        {
+            SqlParameter[] parameter = new SqlParameter[3];
+            parameter[0] = new SqlParameter("@SettingCode", SettingCode);
+            parameter[1] = new SqlParameter("@SettingValue", SettingValue);
+            parameter[2] = new SqlParameter("@ActingUserId", ActingUserId);
+
+            return CommonDB.GetDataTable("spr_SetAppSetting", parameter);
+        }
+        #endregion
+
+        #region GetOrganisationSettings
+        // Seq, SettingCode, SettingValue, LastChangedOn, LastChangedBy; always the 12 rows in a fixed
+        // order, '' for a setting that is not stored (BMMS-Fix-OrganisationSettings-Step19.sql)
+        public static DataTable GetOrganisationSettings()
+        {
+            return CommonDB.GetDataTable("spr_GetOrganisationSettings", null);
+        }
+        #endregion
+
+        #region SetOrganisationSettings
+        // One row: Result, Reason, ReasonDetail; all 12 saved or none; only an active Admin.
+        // Values holds the 12 settings in the order of spr_GetOrganisationSettings.
+        public static DataTable SetOrganisationSettings(string[] Values, int ActingUserId)
+        {
+            string[] names = { "@OrganisationName", "@OrganisationShortName", "@OrganisationTerm", "@CertificateSignOff",
+                               "@RegisteredOfficeLabel", "@RegisteredOfficeLine1", "@RegisteredOfficeLine2", "@RegisteredOfficeCity",
+                               "@RegisteredOfficePinCode", "@OrganisationPhone", "@OrganisationFax", "@OrganisationEmail" };
+
+            SqlParameter[] parameter = new SqlParameter[13];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            for (int i = 0; i < names.Length; i++)
+            {
+                parameter[i + 1] = new SqlParameter(names[i], SqlDbType.NVarChar, 400);
+                parameter[i + 1].Value = Values[i] ?? string.Empty;
+            }
+
+            return CommonDB.GetDataTable("spr_SetOrganisationSettings", parameter);
+        }
+        #endregion
+
+        #region RecordOrganisationLogo
+        // One row: Result, Reason, ReasonDetail; Action 'Upload' or 'Remove'; only an active Admin
+        public static DataTable RecordOrganisationLogo(string Action, string FileDetail, int ActingUserId)
+        {
+            SqlParameter[] parameter = new SqlParameter[3];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = new SqlParameter("@Action", Action);
+            parameter[2] = new SqlParameter("@FileDetail", FileDetail);
+
+            return CommonDB.GetDataTable("spr_RecordOrganisationLogo", parameter);
+        }
+        #endregion
+
     }
     #endregion
     

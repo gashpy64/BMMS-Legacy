@@ -42,7 +42,7 @@
 
 	<page Name="Department">
 		<pageTitle>Department</pageTitle>
-		<pageURL>~/Master/.aspx</pageURL>
+		<pageURL>~/Master/Department.aspx</pageURL>
 	</page>
 
 	<page Name="Designation">
@@ -78,11 +78,6 @@
 	<page Name="MinutesUpdate">
 		<pageTitle>MinutesUpdate</pageTitle>
 		<pageURL>~/Master/MinutesUpdate.aspx</pageURL>
-	</page>
-
-	<page Name="SubjectNoAllocation">
-		<pageTitle>SubjectNoAllocation</pageTitle>
-		<pageURL>~/Master/SubjectNoAllocation.aspx</pageURL>
 	</page>
 
 	<page Name="SubjectType">
@@ -142,11 +137,6 @@
 	<page Name="SendMail">
 		<pageTitle>Send Mail</pageTitle>
 		<pageURL>~/Report/SendMail.aspx</pageURL>
-	</page>
-
-	<page Name="-">
-		<pageTitle>-</pageTitle>
-		<pageURL>~/Report/-.aspx</pageURL>
 	</page>
 
 </pageSettings>

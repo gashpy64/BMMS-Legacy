@@ -190,7 +190,7 @@ namespace BMMS.Master
                     myDesignation = null;
                 }
 
-                MsgDisplay(sMsg);
+                MsgDisplay(sMsg, sMsg == "Successfully Saved" ? MessageKind.Success : sMsg == "Record Not Saved" ? MessageKind.Error : MessageKind.Warning);
 
                 pnlViewDesignation.Visible = true;
                 pnlEditDesignation.Visible = false;
@@ -210,9 +210,9 @@ namespace BMMS.Master
             dtDesignation.CaseSensitive = false;
 
             if (btnSave.Text == "Save")
-                dv.RowFilter = " DesignationName = '" + txtDesignationName.Text.Trim().ToLower() + "'";
+                dv.RowFilter = " DesignationName = '" + txtDesignationName.Text.Trim().ToLower().Replace("'", "''") + "'";
             if (btnSave.Text == "Update")
-                dv.RowFilter = " DesignationName = '" + txtDesignationName.Text.Trim().ToLower() + "' and DesignationId <> " + hdnDesignationId.Value;
+                dv.RowFilter = " DesignationName = '" + txtDesignationName.Text.Trim().ToLower().Replace("'", "''") + "' and DesignationId <> " + hdnDesignationId.Value;
 
             
             DataTable dtFilter = dv.ToTable("dtDesignation");
@@ -269,9 +269,12 @@ namespace BMMS.Master
 
                     try
                     {
-                        DesignationMgr.DeleteDesignationByDesignationId(DesignationId);
+                        int Result = DesignationMgr.DeleteDesignationByDesignationId(DesignationId);
 
-                        MsgDisplay("Record Deleted Successfully");
+                        if (Result == 1)
+                            MsgDisplay("Record Deleted Successfully", MessageKind.Success);
+                        else
+                            MsgDisplay(Common.GetAppSetting("delete_reference"));
                     }
                     catch (Exception ex)
                     {
@@ -299,9 +302,9 @@ namespace BMMS.Master
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

@@ -1,9 +1,7 @@
 <%@ Page Language="C#" MasterPageFile="~/MasterPage/Main.Master" AutoEventWireup="true"
-    Codebehind="DashBoard.aspx.cs" Inherits="BMMS.DashBoard.DashBoard" Title="Untitled Page"
-    ValidateRequest="false" %>
+    Codebehind="DashBoard.aspx.cs" Inherits="BMMS.DashBoard.DashBoard" Title="Untitled Page" %>
 
 <%@ Register Src="../UserControl/MeetingSummary.ascx" TagName="MeetingSummary" TagPrefix="uc1" %>
-<%@ Register Assembly="FreeTextBox" Namespace="FreeTextBoxControls" TagPrefix="FTB" %>
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="cc1" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
@@ -14,6 +12,11 @@
                         <uc1:MeetingSummary ID="MeetingSummary1" runat="server"></uc1:MeetingSummary>
                         <td valign="top">
                             <div class="formPanel">
+                                <div aria-live="polite">
+                                    <div id="divErrLogin" runat="server" class="divErrorHide">
+                                        <span id="spanErrLogin" runat="server" class="lblError"></span>
+                                    </div>
+                                </div>
                                 <div>
                                     <table width="100%" border="0" cellspacing="0" cellpadding="0">
                                         <tr>
@@ -37,7 +40,7 @@
                                         <Columns>
                                             <asp:TemplateField HeaderText="Source">
                                                 <ItemTemplate>
-                                                    <asp:LinkButton ID="lnkSource" runat="server" Text='<%#Bind("DisplayText") %>' OnClick="lnkSource_Click">
+                                                    <asp:LinkButton ID="lnkSource" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("DisplayText")) %>' OnClick="lnkSource_Click">
                                                     </asp:LinkButton>
                                                     <asp:Label ID="lblSourceType" runat="server" Text='<%#Bind("SourceType") %>' Visible="false"></asp:Label>
                                                     <asp:Label ID="lblSourceTypeId" runat="server" Text='<%#Bind("SourceTypeId") %>'
@@ -48,19 +51,19 @@
                                             </asp:TemplateField>
                                             <asp:TemplateField HeaderText="Department">
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblDepartmentName" runat="server" Text='<%#Bind("DepartmentName") %>'></asp:Label>
+                                                    <asp:Label ID="lblDepartmentName" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("DepartmentName")) %>'></asp:Label>
                                                 </ItemTemplate>
                                             </asp:TemplateField>
                                             <asp:TemplateField HeaderText="Alert Type">
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblAlertTypeName" runat="server" Text='<%#Bind("AlertTypeName") %>'></asp:Label>
+                                                    <asp:Label ID="lblAlertTypeName" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("AlertTypeName")) %>'></asp:Label>
                                                 </ItemTemplate>
                                                 <ItemStyle Width="100px" VerticalAlign="Middle" HorizontalAlign="Center" />
                                             </asp:TemplateField>
                                             <asp:BoundField DataField="CommitteeName" HeaderText="Committee" SortExpression="CommitteeName" />
                                             <asp:TemplateField HeaderText="CreatedOn">
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblCreatedOn" runat="server" Text='<%#Bind("CreatedOn") %>'></asp:Label>
+                                                    <asp:Label ID="lblCreatedOn" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("CreatedOn")) %>'></asp:Label>
                                                 </ItemTemplate>
                                                 <ItemStyle Width="100px" VerticalAlign="Middle" HorizontalAlign="Center" />
                                             </asp:TemplateField>
@@ -101,7 +104,7 @@
                                         <Columns>
                                             <asp:TemplateField HeaderText="Committee">
                                                 <ItemTemplate>
-                                                    <asp:LinkButton ID="lnkActionItem" runat="server" Text='<%#Bind("CommitteeName") %>'
+                                                    <asp:LinkButton ID="lnkActionItem" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("CommitteeName")) %>'
                                                         OnClick="lnkActionItem_Click">
                                                     </asp:LinkButton>
                                                     <asp:Label ID="lblActionItemId" runat="server" Text='<%#Bind("ActionItemId") %>'
@@ -111,25 +114,25 @@
                                             </asp:TemplateField>
                                             <asp:TemplateField HeaderText="Agenda No" Visible="true">
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblAgendaNo" runat="server" Text='<%#Eval("AgendaNo") %>'></asp:Label>
+                                                    <asp:Label ID="lblAgendaNo" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("AgendaNo")) %>'></asp:Label>
                                                 </ItemTemplate>
                                                 <ItemStyle VerticalAlign="Middle" HorizontalAlign="Center" />
                                             </asp:TemplateField>
                                             <asp:TemplateField HeaderText="Subject No" Visible="true">
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblSubjectNo" runat="server" Text='<%#Eval("SubjectNo") %>'></asp:Label>
+                                                    <asp:Label ID="lblSubjectNo" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("SubjectNo")) %>'></asp:Label>
                                                 </ItemTemplate>
                                                 <ItemStyle VerticalAlign="Middle" HorizontalAlign="Center" />
                                             </asp:TemplateField>
                                             <asp:TemplateField HeaderText="Meeting Date" Visible="true">
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblMeetingDate" runat="server" Text='<%#Eval("MeetingDate","{0:dd/MM/yyyy}") %>'></asp:Label>
+                                                    <asp:Label ID="lblMeetingDate" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("MeetingDate","{0:dd/MM/yyyy}")) %>'></asp:Label>
                                                 </ItemTemplate>
                                                 <ItemStyle Width="100px" Height="35px" VerticalAlign="Middle" HorizontalAlign="Center" />
                                             </asp:TemplateField>
                                             <asp:TemplateField HeaderText="Decision Type" Visible="true">
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblDecisionTypeName" runat="server" Text='<%#Eval("DecisionTypeName") %>'></asp:Label>
+                                                    <asp:Label ID="lblDecisionTypeName" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("DecisionTypeName")) %>'></asp:Label>
                                                 </ItemTemplate>
                                                 <ItemStyle VerticalAlign="Middle" HorizontalAlign="Center" />
                                             </asp:TemplateField>
@@ -431,11 +434,7 @@
                                             Agenda Text :
                                         </div>
                                         <div class="divRowRight" style="width: 550px;">
-                                            <FTB:FreeTextBox ID="ftxtAgendaText" runat="server" Width="550px" Height="100px"
-                                                AllowHtmlMode="false" ShowTagPath="false" AutoGenerateToolbarsFromString="True"
-                                                ButtonSet="Office2003" ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                                ToolbarStyleConfiguration="Office2003">
-                                            </FTB:FreeTextBox>
+                                            <bmms:RichTextEditor ID="ftxtAgendaText" runat="server" Width="550px" Height="100px" ReadOnly="true" Label="Agenda Text" />
                                             <a id="aAgendaText" runat="server" target="_blank">View</a>
                                         </div>
                                     </div>
@@ -446,11 +445,7 @@
                                         <div class="divRowRight" style="width: 550px;">
                                             <%--<asp:TextBox ID="txtProposedResolution" runat="server" ReadOnly="true" TextMode="MultiLine"
                                             Height="100px" Width="550px"></asp:TextBox>--%>
-                                            <FTB:FreeTextBox ID="ftxtProposedResolution" runat="server" Width="550px" Height="100px"
-                                                AllowHtmlMode="false" ShowTagPath="false" AutoGenerateToolbarsFromString="True"
-                                                ButtonSet="Office2003" ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                                ToolbarStyleConfiguration="Office2003">
-                                            </FTB:FreeTextBox>
+                                            <bmms:RichTextEditor ID="ftxtProposedResolution" runat="server" Width="550px" Height="100px" Label="Proposed Resolution" />
                                         </div>
                                     </div>
                                     <div class="divRow">
@@ -459,22 +454,22 @@
                                         </div>
                                         <div class="divRowRight" style="width: 550px;">
                                             <asp:GridView ID="grvAttachedFiles" runat="server" AutoGenerateColumns="False" ShowHeader="False"
-                                                BackColor="#DEBA84" BorderColor="#DEBA84" BorderStyle="None" BorderWidth="1px"
+                                                CssClass="contentTable1" BorderStyle="None" BorderWidth="1px"
                                                 CellPadding="3" CellSpacing="2">
                                                 <Columns>
                                                     <asp:TemplateField SortExpression="FilePath">
                                                         <ItemTemplate>
-                                                            <a href='<%#Eval("FilePath") %>' target="_blank">
-                                                                <%#Eval("DisplayName") %>
+                                                            <a href='<%# HttpUtility.HtmlEncode(Eval("FilePath")) %>' target="_blank">
+                                                                <%# HttpUtility.HtmlEncode(Eval("DisplayName")) %>
                                                             </a>
                                                         </ItemTemplate>
                                                     </asp:TemplateField>
                                                 </Columns>
-                                                <RowStyle BackColor="#FFF7E7" ForeColor="#8C4510" />
-                                                <FooterStyle BackColor="#F7DFB5" ForeColor="#8C4510" />
-                                                <PagerStyle ForeColor="#8C4510" HorizontalAlign="Center" />
-                                                <SelectedRowStyle BackColor="#738A9C" Font-Bold="True" ForeColor="White" />
-                                                <HeaderStyle BackColor="#A55129" Font-Bold="True" ForeColor="White" />
+                                                <RowStyle CssClass="contentTabletd" />
+                                                <FooterStyle CssClass="contentTabletd" />
+                                                <PagerStyle HorizontalAlign="Center" />
+                                                <SelectedRowStyle CssClass="bmms-row-selected" Font-Bold="True" />
+                                                <HeaderStyle CssClass="contentTableHeader" Font-Bold="True" />
                                             </asp:GridView>
                                         </div>
                                     </div>
@@ -483,11 +478,7 @@
                                             Manager Comments :
                                         </div>
                                         <div class="divRowRight" style="width: 550px;">
-                                            <FTB:FreeTextBox ID="ftxtManagerComments" runat="server" Width="550px" Height="100px"
-                                                AllowHtmlMode="false" ShowTagPath="false" AutoGenerateToolbarsFromString="True"
-                                                ButtonSet="Office2003" ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                                ToolbarStyleConfiguration="Office2003">
-                                            </FTB:FreeTextBox>
+                                            <bmms:RichTextEditor ID="ftxtManagerComments" runat="server" Width="550px" Height="100px" Label="Manager Comments" />
                                         </div>
                                     </div>
                                     <div class="divRow">
@@ -495,11 +486,7 @@
                                             Controller Comments :
                                         </div>
                                         <div class="divRowRight" style="width: 550px;">
-                                            <FTB:FreeTextBox ID="ftxtControllerComments" runat="server" Width="550px" Height="100px"
-                                                AllowHtmlMode="false" ShowTagPath="false" AutoGenerateToolbarsFromString="True"
-                                                ButtonSet="Office2003" ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                                ToolbarStyleConfiguration="Office2003">
-                                            </FTB:FreeTextBox>
+                                            <bmms:RichTextEditor ID="ftxtControllerComments" runat="server" Width="550px" Height="100px" Label="Controller Comments" />
                                         </div>
                                     </div>
                                 </div>
@@ -522,8 +509,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="MyPopupOuter">
-                    </div>
+                </div>
             </asp:Panel>
             <asp:Panel ID="pnlActionItemDetails" runat="server" Style="background-color: White;">
                 <div class="MyPopupOuter">
@@ -599,11 +585,7 @@
                                             Actual Resolution :
                                         </div>
                                         <div class="divRowRight" style="width: 550px;">
-                                            <FTB:FreeTextBox ID="ftxtActualResolution" runat="server" Width="550px" Height="100px"
-                                                ReadOnly="true" AllowHtmlMode="false" ShowTagPath="false" AutoGenerateToolbarsFromString="True"
-                                                ButtonSet="Office2003" ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                                ToolbarStyleConfiguration="Office2003">
-                                            </FTB:FreeTextBox>
+                                            <bmms:RichTextEditor ID="ftxtActualResolution" runat="server" Width="550px" Height="100px" ReadOnly="true" Label="Actual Resolution" />
                                         </div>
                                     </div>
                                     <div class="divRow">
@@ -611,11 +593,7 @@
                                             Action Text :
                                         </div>
                                         <div class="divRowRight" style="width: 550px;">
-                                            <FTB:FreeTextBox ID="ftxtActionText" runat="server" Width="550px" Height="100px"
-                                                ReadOnly="true" AllowHtmlMode="false" ShowTagPath="false" AutoGenerateToolbarsFromString="True"
-                                                ButtonSet="Office2003" ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                                ToolbarStyleConfiguration="Office2003">
-                                            </FTB:FreeTextBox>
+                                            <bmms:RichTextEditor ID="ftxtActionText" runat="server" Width="550px" Height="100px" ReadOnly="true" Label="Action Text" />
                                         </div>
                                     </div>
                                 </div>

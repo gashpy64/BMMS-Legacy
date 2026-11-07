@@ -126,6 +126,37 @@ namespace BMMSDAL
         }
         #endregion
 
+        #region GetMinutesReport
+        // Minutes and Minutes Extract reports: only meetings with finalized or confirmed minutes (BMMS-Fix-MinutesGating-Step22.sql)
+        public static DataTable GetMinutesReport(int CommitteeId, int DepartmentId, int MeetingNoSearch, int MeetingId, int FromMeetingId, int ToMeetingId,
+            int SubjectNoSearch, int FromSubjectNo, int ToSubjectNo)
+        {
+            SqlParameter[] parameter = new SqlParameter[9];
+            parameter[0] = new SqlParameter("@CommitteeId", CommitteeId);
+            parameter[1] = new SqlParameter("@DepartmentId", DepartmentId);
+            parameter[2] = new SqlParameter("@MeetingNoSearch", MeetingNoSearch);
+            parameter[3] = new SqlParameter("@MeetingId", MeetingId);
+            parameter[4] = new SqlParameter("@FromMeetingId", FromMeetingId);
+            parameter[5] = new SqlParameter("@ToMeetingId", ToMeetingId);
+            parameter[6] = new SqlParameter("@SubjectNoSearch", SubjectNoSearch);
+            parameter[7] = new SqlParameter("@FromSubjectNo", FromSubjectNo);
+            parameter[8] = new SqlParameter("@ToSubjectNo", ToSubjectNo);
+
+            return CommonDB.GetDataTable("spr_GetMinutesReport", parameter);
+        }
+        #endregion
+
+        #region GetMinutesReportMeetings
+        // Meetings of a committee with finalized or confirmed minutes, for the minutes report lists (BMMS-Fix-MinutesGating-Step22.sql)
+        public static DataTable GetMinutesReportMeetings(int CommitteeId)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@CommitteeId", CommitteeId);
+
+            return CommonDB.GetDataTable("spr_GetMinutesReportMeetings", parameter);
+        }
+        #endregion
+
         #region GetMinutesByMeetingIdAgendaId
         public static DataTable GetMinutesByMeetingIdAgendaId(int MeetingId, int AgendaId)
         {
@@ -148,7 +179,7 @@ namespace BMMSDAL
         #endregion
 
         #region UpdateMinutes
-        public static int UpdateMinutes(MinutesDAL myMinutesDAL)
+        public static DataTable UpdateMinutes(MinutesDAL myMinutesDAL)
         {
             SqlParameter[] parameter = new SqlParameter[8];
             parameter[0] = new SqlParameter("@Code", myMinutesDAL.Code);
@@ -161,7 +192,8 @@ namespace BMMSDAL
             parameter[6] = new SqlParameter("@CreatedBy", myMinutesDAL.CreatedBy);
             parameter[7] = new SqlParameter("@UpdatedBy", myMinutesDAL.UpdatedBy);
 
-            return CommonDB.ExecuteProcedure("spr_UpdateMinutes", parameter); ;
+            // One row: Result, Reason, ReasonDetail; refused once the minutes are confirmed (BMMS-Fix-MeetingLocks-Step16.sql)
+            return CommonDB.GetDataTable("spr_UpdateMinutes", parameter);
         }
         #endregion
     }

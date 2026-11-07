@@ -144,68 +144,23 @@ namespace BMMSBAL
         #endregion
 
         #region GetMinutesReport
-        public static DataTable GetMinutesReport(int CommitteeId, int DepartmentId, int MeetingNoSearch, int MeetingId, int FromMeetingId, int ToMeetingId, 
+        // Only meetings with finalized or confirmed minutes; same filters and order as the
+        // query built here before (BMMS-Fix-MinutesGating-Step22.sql)
+        public static DataTable GetMinutesReport(int CommitteeId, int DepartmentId, int MeetingNoSearch, int MeetingId, int FromMeetingId, int ToMeetingId,
             int SubjectNoSearch, int FromSubjectNo, int ToSubjectNo)
         {
-            string SQL_Query_Text = string.Empty;
-
-            if (CommitteeId > 0)
-            {
-                SQL_Query_Text += "SELECT * FROM View_Minute WHERE 1=1";
-            
-                SQL_Query_Text += " AND CommitteeId = " + CommitteeId;
-
-                if (DepartmentId > 0)
-                    SQL_Query_Text += " AND DepartmentId = " + DepartmentId;
-
-                if (MeetingNoSearch == 0)
-                    if (MeetingId > 0)
-                        SQL_Query_Text += " AND MeetingId = " + MeetingId;
-
-                if (MeetingNoSearch == 1)
-                    SQL_Query_Text += " AND (MeetingId BETWEEN " + FromMeetingId + " AND " + ToMeetingId + ")";
-
-                if (SubjectNoSearch == 1)
-                    SQL_Query_Text += " AND (SubjectNo BETWEEN " + FromSubjectNo + " AND " + ToSubjectNo + ")";
-            }
-
-
-            SQL_Query_Text += " ORDER BY CommitteeId, MeetingId, SubjectNo;";
-
-            return CommonDB.GetDataTableFromQuery(SQL_Query_Text);
+            return MinutesDB.GetMinutesReport(CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
+                SubjectNoSearch, FromSubjectNo, ToSubjectNo);
         }
         #endregion
 
         #region GetMinutesExtractReport
+        // The extract used the same query as the minutes report, so it reads the same procedure
         public static DataTable GetMinutesExtractReport(int CommitteeId, int DepartmentId, int MeetingNoSearch, int MeetingId, int FromMeetingId, int ToMeetingId,
             int SubjectNoSearch, int FromSubjectNo, int ToSubjectNo)
         {
-            string SQL_Query_Text = string.Empty;
-
-            if (CommitteeId > 0)
-            {
-                SQL_Query_Text += "SELECT * FROM View_Minute WHERE 1=1";
-
-                SQL_Query_Text += " AND CommitteeId = " + CommitteeId;
-
-                if (DepartmentId > 0)
-                    SQL_Query_Text += " AND DepartmentId = " + DepartmentId;
-
-                if (MeetingNoSearch == 0)
-                    if (MeetingId > 0)
-                        SQL_Query_Text += " AND MeetingId = " + MeetingId;
-
-                if (MeetingNoSearch == 1)
-                    SQL_Query_Text += " AND (MeetingId BETWEEN " + FromMeetingId + " AND " + ToMeetingId + ")";
-
-                if (SubjectNoSearch == 1)
-                    SQL_Query_Text += " AND (SubjectNo BETWEEN " + FromSubjectNo + " AND " + ToSubjectNo + ")";
-            }
-
-
-            SQL_Query_Text += " ORDER BY CommitteeId, MeetingId, SubjectNo;";
-
-            return CommonDB.GetDataTableFromQuery(SQL_Query_Text);
+            return MinutesDB.GetMinutesReport(CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
+                SubjectNoSearch, FromSubjectNo, ToSubjectNo);
         }
         #endregion
 

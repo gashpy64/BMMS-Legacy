@@ -60,9 +60,9 @@ namespace BMMSDAL
             {
                 if (dtResult.Rows[i]["EmailId"].ToString().Trim() != string.Empty)
                     if (i == dtResult.Rows.Count - 1)
-                        EmailId += dtResult.Rows[0]["EmailId"].ToString();
+                        EmailId += dtResult.Rows[i]["EmailId"].ToString();
                     else
-                        EmailId += dtResult.Rows[0]["EmailId"].ToString() + ", ";
+                        EmailId += dtResult.Rows[i]["EmailId"].ToString() + ", ";
             }
 
             return EmailId;

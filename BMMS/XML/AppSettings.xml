@@ -1,7 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <appSettings>
-  <add key="PageTitle" value=".:: BMMS ::." />
-  <add key="FooterText" value="Copyright © 2010 - The Lakshmi Vilas Bank Ltd. All Rights Reserved" />
+  <add key="PageTitle" value="BMMS - Board Minutes and Meeting Software" />
   <add key="CommonErrMsg" value="The Web server may be busy or down.  Please try again later or contact your System Administrator" />
   <add key="delete_reference" value="You cannot delete this record, because it has references." />
   <add key="data.notDelete" value="This is master record.  So you cannot delete." />

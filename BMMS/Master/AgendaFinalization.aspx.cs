@@ -186,28 +186,52 @@ namespace BMMS.Master
 
                     if (dtAgenda.Rows.Count <= 0)
                     {
-                        sMsg = "No Agenda For the selected Committee/Meeting";
-                        MsgDisplay(sMsg);
+                        // A meeting without agenda items can still be finalized, so its attendance can be entered
+                        // (step 23); it has no minutes to finalize later (Reason 19)
+                        MeetingChangeResult noItems = AgendaMgr.AgendaFinalizeByMeetingId(MeetingId);
+
+                        sMsg = noItems.Result == 1 ? "Agenda Finalized (no agenda items)." : noItems.RefusalMessage();
+                        MsgDisplay(sMsg, sMsg == "Agenda Finalized (no agenda items)." ? MessageKind.Success : MessageKind.Warning);
                     }
                     else
                     {
                         dtAgenda = new DataTable();
                         dtAgenda = (DataTable)ViewState["dtAgenda"];
 
+                        // Each rejection is saved before its mail goes out (step M3); refused rejections and
+                        // mails that could not be sent are counted for the message
+                        int notRejected = 0;
+                        int mailsFailed = 0;
+
                         if (dtAgenda.Rows.Count > 0)
                         {
                             for(int i=0; i<= dtAgenda.Rows.Count-1;i++)
                             {
                                 int AgendaId = int.Parse(dtAgenda.Rows[i]["AgendaId"].ToString());
-                                RejectAgenda(AgendaId, dtAgenda, i);
+                                string rejectResult = RejectAgenda(AgendaId, dtAgenda, i);
+
+                                if (rejectResult == "NotRejected")
+                                    notRejected += 1;
+                                else if (rejectResult != "Success")
+                                    mailsFailed += 1;
                             }
                         }
 
-                        int result = AgendaMgr.AgendaFinalizeByMeetingId(MeetingId);
+                        // Refused if another tab finalized it first (BMMS-Fix-MeetingLocks.sql)
+                        MeetingChangeResult result = AgendaMgr.AgendaFinalizeByMeetingId(MeetingId);
 
-                        sMsg = "Agenda Finalized";
+                        sMsg = result.Result == 1 ? "Agenda Finalized" : result.RefusalMessage();
 
-                        MsgDisplay(sMsg);
+                        string rejectNotes = string.Empty;
+                        if (notRejected > 0)
+                            rejectNotes += " " + notRejected + " item(s) could not be rejected.";
+                        if (mailsFailed > 0)
+                            rejectNotes += " " + mailsFailed + " rejection mail(s) could not be sent. The error is in the error log.";
+
+                        if (rejectNotes != string.Empty)
+                            MsgDisplay((result.Result == 1 ? "Agenda Finalized." : sMsg) + rejectNotes, MessageKind.Warning);
+                        else
+                            MsgDisplay(sMsg, (sMsg == "Agenda Finalized" || sMsg == "Agenda Finalized (no agenda items).") ? MessageKind.Success : MessageKind.Warning);
 
                     }
 
@@ -222,88 +246,106 @@ namespace BMMS.Master
         #endregion
 
         #region RejectAgenda
-        private void RejectAgenda(int AgendaId, DataTable dtAgenda, int CurrentRow)
+        // Saves the rejection, then sends its mail only when the rejection was saved. Returns "Success",
+        // "NotRejected" (refused: no mail), or the result of the mail ("Error..."; the item stays rejected).
+        private string RejectAgenda(int AgendaId, DataTable dtAgenda, int CurrentRow)
         {
+            // The item as saved now, not the list loaded with the page: the rejection keeps its Short Text and
+            // Proposed Resolution (step N4; the procedure writes both). An item that is gone is not rejected.
+            DataTable dtItem = AgendaMgr.GetAgendaByAgendaId(AgendaId);
+            if (dtItem.Rows.Count == 0)
+                return "NotRejected";
 
             AgendaBAL agendaBal = new AgendaBAL();
 
             agendaBal.AgendaId = AgendaId;
-            agendaBal.ShortText = "";
-            agendaBal.ProposedResolution = "";
+            agendaBal.ShortText = dtItem.Rows[0]["ShortText"].ToString();
+            agendaBal.ProposedResolution = dtItem.Rows[0]["ProposedResolution"].ToString();
             agendaBal.MgrComments = "";
             agendaBal.ControllerComments = "Agenda rejected by Controller on agenda finalized.";
             agendaBal.MgrApprovedStatus = "";
             agendaBal.ControllerApprovedStatus = "";
 
             agendaBal.ControllerApprovedStatus = "Rejected";
-            GenerateMail("rejected by Controller on agenda finalized", "ACR", dtAgenda, CurrentRow);
-            
+
             agendaBal.UpdatedBy = Convert.ToInt16(Session["UserId"].ToString());
 
-            AgendaMgr.UpdateAgendaByAgendaId(agendaBal);
+            if (AgendaMgr.UpdateAgendaByAgendaId(agendaBal).Result != 1)
+                return "NotRejected";
+
+            return GenerateMail("rejected by Controller on agenda finalized", "ACR", dtAgenda, CurrentRow);
         }
         #endregion
 
         #region GenerateMail
         private string GenerateMail(string AgendaStatus, string MailCode, DataTable dtAgenda, int CurrentRow)
         {
-            string ToMailId = string.Empty;
-            string Bcc = string.Empty;
-            int AgendaId = int.Parse(dtAgenda.Rows[CurrentRow]["AgendaId"].ToString());
-            int UserId = int.Parse(Session["UserId"].ToString());
+            try
+            {
+                string ToMailId = string.Empty;
+                string Bcc = string.Empty;
+                int AgendaId = int.Parse(dtAgenda.Rows[CurrentRow]["AgendaId"].ToString());
+                int UserId = int.Parse(Session["UserId"].ToString());
 
-            UserBAL userBal = UserMgr.GetUserByUserId(UserId);
-            ToMailId = userBal.EmailId.ToString();
+                UserBAL userBal = UserMgr.GetUserByUserId(UserId);
+                ToMailId = userBal.EmailId.ToString();
 
-            Bcc = AlertMgr.GetAlertMailId(MailCode, UserId, AgendaId);
+                Bcc = AlertMgr.GetAlertMailId(MailCode, UserId, AgendaId);
 
-            string Subject = "Agenda (" + dtAgenda.Rows[CurrentRow]["AgendaNo"].ToString() + ") has been " + AgendaStatus.ToString();
-            string BodyText = string.Empty;
-            BodyText += "<table>";
+                string Subject = "Agenda (" + dtAgenda.Rows[CurrentRow]["AgendaNo"].ToString() + ") has been " + AgendaStatus.ToString();
+                string BodyText = string.Empty;
+                BodyText += "<table>";
 
-            BodyText += "<tr>";
-            BodyText += "<td style='text-align:left; font-weight:bold; width:150px;'>";
-            BodyText += "Agenda No <br /><br />";
-            BodyText += "Committee Name <br /><br />";
-            BodyText += "Meeting No <br /><br />";
-            BodyText += "Meeting Date <br /><br />";
-            BodyText += "Department <br /><br />";
-            BodyText += "Subject Type <br /><br />";
-            //BodyText += " <br /><br />";
-            BodyText += "</td>";
+                BodyText += "<tr>";
+                BodyText += "<td style='text-align:left; font-weight:bold; width:150px;'>";
+                BodyText += "Agenda No <br /><br />";
+                BodyText += "Committee Name <br /><br />";
+                BodyText += "Meeting No <br /><br />";
+                BodyText += "Meeting Date <br /><br />";
+                BodyText += "Department <br /><br />";
+                BodyText += "Subject Type <br /><br />";
+                //BodyText += " <br /><br />";
+                BodyText += "</td>";
 
-            BodyText += "<td style='text-align:left; font-weight:normal;'>";
-            BodyText += ": " + dtAgenda.Rows[CurrentRow]["AgendaNo"].ToString() + "<br /><br />";
-            BodyText += ": " + dtAgenda.Rows[CurrentRow]["CommitteeName"].ToString() + "<br /><br />";
-            BodyText += ": " + dtAgenda.Rows[CurrentRow]["MeetingNo"].ToString() + "<br /><br />";
-            BodyText += ": " + dtAgenda.Rows[CurrentRow]["MeetingDate"].ToString() + "<br /><br />";
-            BodyText += ": " + dtAgenda.Rows[CurrentRow]["DepartmentName"].ToString() + "<br /><br />";
-            BodyText += ": " + dtAgenda.Rows[CurrentRow]["SubjectTypeName"].ToString() + "<br /><br />";
-            //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
-            BodyText += "</td>";
+                BodyText += "<td style='text-align:left; font-weight:normal;'>";
+                BodyText += ": " + HttpUtility.HtmlEncode(dtAgenda.Rows[CurrentRow]["AgendaNo"].ToString()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(dtAgenda.Rows[CurrentRow]["CommitteeName"].ToString()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(dtAgenda.Rows[CurrentRow]["MeetingNo"].ToString()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(dtAgenda.Rows[CurrentRow]["MeetingDate"].ToString()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(dtAgenda.Rows[CurrentRow]["DepartmentName"].ToString()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(dtAgenda.Rows[CurrentRow]["SubjectTypeName"].ToString()) + "<br /><br />";
+                //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
+                BodyText += "</td>";
 
-            BodyText += "</tr>";
+                BodyText += "</tr>";
 
-            BodyText += "<tr>";
-            BodyText += "<td style='text-align:left; font-weight:bold; width:150px;'>";
-            BodyText += "Short Text <br /><br />";
-            //BodyText += " <br /><br />";
-            BodyText += "</td>";
+                BodyText += "<tr>";
+                BodyText += "<td style='text-align:left; font-weight:bold; width:150px;'>";
+                BodyText += "Short Text <br /><br />";
+                //BodyText += " <br /><br />";
+                BodyText += "</td>";
 
-            BodyText += "<td style='text-align:left; font-weight:normal;'>";
-            BodyText += ": " + dtAgenda.Rows[CurrentRow]["ShortText"].ToString() + "<br /><br />";
-            //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
-            BodyText += "</td>";
+                BodyText += "<td style='text-align:left; font-weight:normal;'>";
+                BodyText += ": " + HttpUtility.HtmlEncode(dtAgenda.Rows[CurrentRow]["ShortText"].ToString()) + "<br /><br />";
+                //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
+                BodyText += "</td>";
 
-            BodyText += "</tr>";
+                BodyText += "</tr>";
 
-            BodyText += "</table>";
+                BodyText += "</table>";
 
-            string result = Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, Bcc);
+                string result = Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, Bcc);
 
-            
 
-            return result;
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                // The rejection is already saved: log, and let the page say the mail was not sent
+                Utilities.WriteErrorLog(className, "GenerateMail", ex.ToString());
+                return "Error";
+            }
         }
         #endregion
 
@@ -390,9 +432,9 @@ namespace BMMS.Master
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

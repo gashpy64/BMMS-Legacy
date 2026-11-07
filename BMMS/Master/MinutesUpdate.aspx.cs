@@ -8,6 +8,7 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Web.UI.WebControls.WebParts;
 using System.Web.UI.HtmlControls;
+using BMMS.Controls;
 using BMMSBAL;
 
 namespace BMMS.Master
@@ -152,6 +153,25 @@ namespace BMMS.Master
                 try
                 {
                     int MeetingId = int.Parse(ddlMeeting.SelectedValue.ToString());
+
+                    // A meeting created after step 23: the database's workflow state decides, with the same messages
+                    // as the procedures (BMMS-Fix-WorkflowOrder-Step23.sql). Older meetings keep the checks below.
+                    MeetingWorkflowState state = MeetingMgr.GetMeetingWorkflowState(MeetingId);
+
+                    if (state.IsNew)
+                    {
+                        if (!state.AgendaFinalized)
+                            MsgDisplay(MeetingChangeReason.AgendaNotFinalizedMessage);
+                        else if (!state.AttendanceRecorded)
+                            MsgDisplay(MeetingChangeReason.AttendanceNotRecordedMessage);
+                        else
+                        {
+                            pnlViewMinute.Visible = true;
+                            grvMinutes.DataSource = MinutesMgr.GetMinutesByMeetingId(MeetingId, -1, -1);
+                            grvMinutes.DataBind();
+                        }
+                        return;
+                    }
 
                     DataTable dtAgendaFinalize = new DataTable();
                     dtAgendaFinalize = AgendaMgr.CheckAgendaFinalizeByMeetingId(MeetingId); // MinutesMgr.GetMinutesByMeetingId(MeetingId);
@@ -329,21 +349,21 @@ namespace BMMS.Master
                         pnlDirections.Visible = true;
                         
                         if (dtMinutes.Rows[0]["Directions"].ToString().Trim() == string.Empty)
-                            ftxtDirections.Text = dtMinutes.Rows[0]["ActualResolution"].ToString();
+                            ftxtDirections.Text = HtmlCleaner.Clean(dtMinutes.Rows[0]["ActualResolution"].ToString());
                         else
-                            ftxtDirections.Text = dtMinutes.Rows[0]["Directions"].ToString();
+                            ftxtDirections.Text = HtmlCleaner.Clean(dtMinutes.Rows[0]["Directions"].ToString());
 
                     }
                     if (e.CommandName == "ViewProposedResolution")
                     {
                         pnlProposedResolution.Visible = true;
-                        ftxtProposedResolution.Text = dtMinutes.Rows[0]["ProposedResolution"].ToString();
+                        ftxtProposedResolution.Text = HtmlCleaner.Clean(dtMinutes.Rows[0]["ProposedResolution"].ToString());
 
                     }
                     if (e.CommandName == "EditActualResolution")
                     {
                         pnlActualResolution.Visible = true;
-                        ftxtActualResolution.Text = dtMinutes.Rows[0]["ActualResolution"].ToString();
+                        ftxtActualResolution.Text = HtmlCleaner.Clean(dtMinutes.Rows[0]["ActualResolution"].ToString());
                         //txtaActualResolution.InnerText = dtMinutes.Rows[0]["ProposedResolution"].ToString();
                     }
                 }
@@ -389,6 +409,9 @@ namespace BMMS.Master
         #region btnDirectionsSave_Click
         protected void btnDirectionsSave_Click(object sender, EventArgs e)
         {
+            // Step A2a: rich text over the limit (Web.config): nothing is saved, the editor stays open
+            if (RichTextEditor.IsTooLong(this)) { MsgDisplay(RichTextLimits.TooLongMessage); return; }
+
             MinutesBAL myMinutesBAL = new MinutesBAL();
 
             myMinutesBAL.Code = "Directions";
@@ -397,7 +420,7 @@ namespace BMMS.Master
             myMinutesBAL.ActualResolution = "";
             myMinutesBAL.UpdatedBy = int.Parse(Session["UserId"].ToString());
 
-            MinutesMgr.UpdateMinutes(myMinutesBAL);
+            ShowRefusal(MinutesMgr.UpdateMinutes(myMinutesBAL));
 
             pnlDirections.Visible = false;
         }
@@ -427,6 +450,9 @@ namespace BMMS.Master
         #region btnActualResolutionSave_Click
         protected void btnActualResolutionSave_Click(object sender, EventArgs e)
         {
+            // Step A2a: rich text over the limit (Web.config): nothing is saved, the editor stays open
+            if (RichTextEditor.IsTooLong(this)) { MsgDisplay(RichTextLimits.TooLongMessage); return; }
+
             MinutesBAL myMinutesBAL = new MinutesBAL();
 
             myMinutesBAL.Code = "ActualResolution";
@@ -436,7 +462,7 @@ namespace BMMS.Master
             //myMinutesBAL.ActualResolution = txtaActualResolution.InnerHtml.ToString();
             myMinutesBAL.UpdatedBy = int.Parse(Session["UserId"].ToString());
 
-            MinutesMgr.UpdateMinutes(myMinutesBAL);
+            ShowRefusal(MinutesMgr.UpdateMinutes(myMinutesBAL));
 
             pnlActualResolution.Visible = false;
         }
@@ -451,9 +477,21 @@ namespace BMMS.Master
             myAgenda.ShortText = txtShortText.Text.Trim();
             myAgenda.UpdatedBy = Convert.ToInt16(Session["UserId"].ToString());
 
-            AgendaMgr.UpdateAgendaShortText(myAgenda);
-            
+            ShowRefusal(AgendaMgr.UpdateAgendaShortText(myAgenda));
+
             pnlShortText.Visible = false;
+        }
+        #endregion
+
+        #region ShowRefusal
+        // Minutes confirmed in another tab since the list was shown (BMMS-Fix-MeetingLocks-Step16.sql)
+        private void ShowRefusal(MeetingChangeResult result)
+        {
+            if (result.Result != 1)
+            {
+                MsgDisplay(result.RefusalMessage());
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "scroll", "window.scrollTo(0,0);", true);
+            }
         }
         #endregion
 
@@ -496,7 +534,14 @@ namespace BMMS.Master
                     myMinutesBAL.ActualResolution = "";
                     myMinutesBAL.UpdatedBy = int.Parse(Session["UserId"].ToString());
 
-                    MinutesMgr.UpdateMinutes(myMinutesBAL);
+                    MeetingChangeResult result = MinutesMgr.UpdateMinutes(myMinutesBAL);
+
+                    if (result.Result != 1)
+                    {
+                        // Confirmed in another tab: every row is refused the same way
+                        strMsg = result.RefusalMessage();
+                        break;
+                    }
 
                     int MeetingId = Convert.ToInt16(ddlMeeting.SelectedValue.ToString());
                     AlertMgr.UpdateAlertByMeetingId(MeetingId);
@@ -504,7 +549,7 @@ namespace BMMS.Master
                     strMsg = "Successfully Saved";
                 }
             }
-            MsgDisplay(strMsg);
+            MsgDisplay(strMsg, strMsg == "Successfully Saved" ? MessageKind.Success : MessageKind.Warning);
             ScriptManager.RegisterStartupScript(this, this.GetType(), "scroll", "window.scrollTo(0,0);", true);
             ScriptManager.GetCurrent(this).SetFocus(ddlCommittee.ClientID);
         }
@@ -513,9 +558,9 @@ namespace BMMS.Master
 
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

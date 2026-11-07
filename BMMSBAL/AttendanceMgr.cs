@@ -112,7 +112,14 @@ namespace BMMSBAL
 
             return AttendanceDB.UpdateAttendance(AttendanceDAL);
         }
-        #endregion   
+        #endregion
+
+        #region IsMeetingHeld
+        public static bool IsMeetingHeld(int MeetingId)
+        {
+            return AttendanceDB.IsMeetingHeld(MeetingId);
+        }
+        #endregion
     
         #region GetAttendanceByMeetingId
         public static DataTable GetAttendanceByMeetingId(int MeetingId, string MemberOf)

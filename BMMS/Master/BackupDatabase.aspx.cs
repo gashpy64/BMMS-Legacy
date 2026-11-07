@@ -12,7 +12,7 @@ using BMMSBAL;
 
 namespace BMMS.Master
 {
-    /*public partial class BackupDatabase : System.Web.UI.Page
+    public partial class BackupDatabase : System.Web.UI.Page
     {
         private string className = "BackupDatabase";
 
@@ -55,8 +55,13 @@ namespace BMMS.Master
 
                 dtSqlBackup = AuditTrail_Mgr.GetAuditTrailSqlBackup();
 
-                grvSqlBackup.DataSource = dtSqlBackup;
-                grvSqlBackup.DataBind();
+                // "Backup By": "Name (login)" by User_Id, " (inactive)" added (step UN3); the procedure returns
+                // UserName and LoginName but not AccountStatus
+                UserMgr.AddUserDisplayColumn(dtSqlBackup, "User_Id");
+
+                // Kept for the header sort (step A1b-1)
+                ViewState["DataTable"] = dtSqlBackup;
+                BindGridView();
             }
             catch (Exception ex)
             {
@@ -68,7 +73,31 @@ namespace BMMS.Master
             }
         }
         #endregion
+
+        #region BindGridView
+        private void BindGridView()
+        {
+            grvSqlBackup.DataSource = (DataTable)ViewState["DataTable"];
+            grvSqlBackup.DataBind();
+        }
+        #endregion
+
+        #region grvRecord_Sorting
+        protected void grvRecord_Sorting(object sender, GridViewSortEventArgs e)
+        {
+            try
+            {
+                ViewState["DataTable"] = Utilities.GridViewDataTableSorting(sender, e, (DataTable)ViewState["DataTable"]);
+
+                BindGridView();
+            }
+            catch (Exception ex)
+            {
+                Utilities.GoToErrPage(className, "grvRecord_Sorting", ex);
+            }
+        }
+        #endregion
         
 
-    } */
+    } 
 }

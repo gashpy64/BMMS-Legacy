@@ -11,8 +11,34 @@ using System.Data.SqlClient;
 
 namespace BMMSBAL
 {
+    // The look of a page message (step B3): Warning (the default) for refusals, "please select" and checks,
+    // Success when the action was done, Error when it failed on the server. Shown with the icons and tints
+    // of the palette (CSS classes divError, msg-success, msg-error in bmms-workbench.css).
+    public enum MessageKind
+    {
+        Warning,
+        Success,
+        Error
+    }
+
     public class Common
     {
+        #region MessageCss
+        // The class attribute of a page's message box (divErrLogin) for a message of this kind (step B3)
+        public static string MessageCss(MessageKind Kind)
+        {
+            switch (Kind)
+            {
+                case MessageKind.Success:
+                    return "divError msg-success";
+                case MessageKind.Error:
+                    return "divError msg-error";
+                default:
+                    return "divError";
+            }
+        }
+        #endregion
+
         private static string lscryptoKey = "";
         private static byte[] lbtVector = { 240, 3, 45, 29, 0, 76, 173, 59 };
 
@@ -76,6 +102,102 @@ namespace BMMSBAL
         #endregion
 
 
+        #region ProductFooter
+        // The product footer of every master page and the login page (step F1): "BMMS <version>, <product>.
+        // <copyright>", all three read from the web application's assembly (BMMS/Properties/AssemblyInfo.cs):
+        // AssemblyInformationalVersion (when missing: AssemblyVersion, three parts, 1.1.0.0 -> 1.1.0),
+        // AssemblyProduct and AssemblyCopyright (when missing: the text the footer had before step F1)
+        public static string ProductFooter(System.Reflection.Assembly WebAssembly)
+        {
+            string version = null;
+            System.Reflection.AssemblyInformationalVersionAttribute informational =
+                (System.Reflection.AssemblyInformationalVersionAttribute)Attribute.GetCustomAttribute(
+                    WebAssembly, typeof(System.Reflection.AssemblyInformationalVersionAttribute));
+            if (informational != null && !string.IsNullOrEmpty(informational.InformationalVersion))
+                version = informational.InformationalVersion;
+            else
+            {
+                Version assemblyVersion = WebAssembly.GetName().Version;
+                version = assemblyVersion.Major + "." + assemblyVersion.Minor + "." + assemblyVersion.Build;
+            }
+
+            System.Reflection.AssemblyProductAttribute product =
+                (System.Reflection.AssemblyProductAttribute)Attribute.GetCustomAttribute(
+                    WebAssembly, typeof(System.Reflection.AssemblyProductAttribute));
+            string productName = product != null && !string.IsNullOrEmpty(product.Product)
+                ? product.Product : "Board Minutes and Meeting Software";
+
+            System.Reflection.AssemblyCopyrightAttribute copyright =
+                (System.Reflection.AssemblyCopyrightAttribute)Attribute.GetCustomAttribute(
+                    WebAssembly, typeof(System.Reflection.AssemblyCopyrightAttribute));
+            string copyrightText = copyright != null && !string.IsNullOrEmpty(copyright.Copyright)
+                ? copyright.Copyright : "Copyright © 2026 Gashpy Software. All Rights Reserved.";
+
+            return "BMMS " + version + ", " + productName + ". " + copyrightText;
+        }
+        #endregion
+
+
+        #region FooterDatabaseName
+        // Step F1: the name of the database the application is connected to, for the footer line "Database: <name>"
+        // of the master pages. Only for a logged-in Admin or Controller (by RoleCode); null for every other role,
+        // for a visitor who is not logged in, and when the name cannot be read. Never the server name.
+        // The name comes from the open connection (ConnectDB.GetConnectedDatabaseName, SqlConnection.Database),
+        // not from the connection string text, and is kept for the application's lifetime: a change to
+        // connectionStrings.config restarts the application and so reads it again. Returned HTML-encoded.
+        // A connection that cannot be opened: written to the error log, null (the footer shows the version line
+        // only, the page goes on), and the next try waits 60 seconds so a database that is down does not add a
+        // connect timeout to every page. Never throws.
+        private const string FooterDatabaseRoleAdmin = "admin";
+        private const string FooterDatabaseRoleController = "controller";
+        private static readonly object FooterDatabaseLock = new object();
+        private static volatile string footerDatabaseName;              // HTML-encoded; null until read
+        private static DateTime footerDatabaseRetryAfterUtc = DateTime.MinValue;
+
+        public static string FooterDatabaseName(string RoleCode)
+        {
+            if (!string.Equals(RoleCode, FooterDatabaseRoleAdmin, StringComparison.Ordinal)
+                && !string.Equals(RoleCode, FooterDatabaseRoleController, StringComparison.Ordinal))
+                return null;
+
+            if (!IsLoggedIn())
+                return null;
+
+            string name = footerDatabaseName;
+            if (name != null)
+                return name;
+
+            lock (FooterDatabaseLock)
+            {
+                if (footerDatabaseName != null)
+                    return footerDatabaseName;
+
+                if (DateTime.UtcNow < footerDatabaseRetryAfterUtc)
+                    return null;
+
+                try
+                {
+                    string raw = ConnectDB.GetConnectedDatabaseName();
+                    if (string.IsNullOrEmpty(raw))
+                    {
+                        footerDatabaseRetryAfterUtc = DateTime.UtcNow.AddSeconds(60);
+                        return null;
+                    }
+
+                    footerDatabaseName = HttpUtility.HtmlEncode(raw);
+                    return footerDatabaseName;
+                }
+                catch (Exception ex)
+                {
+                    footerDatabaseRetryAfterUtc = DateTime.UtcNow.AddSeconds(60);
+                    Utilities.WriteErrorLog("Common", "FooterDatabaseName", ex.ToString());
+                    return null;
+                }
+            }
+        }
+        #endregion
+
+
         #region GetAppSetting
         public static string GetAppSetting(string KeyName)
         {
@@ -133,7 +255,7 @@ namespace BMMSBAL
         #region InitSetup
         public static void InitSetup(string className)
         {
-            if (HttpContext.Current.Session["UserName"] == null)
+            if (!IsLoggedIn())
             {
                 HttpContext.Current.Response.Redirect("~/", true);
             }
@@ -249,11 +371,11 @@ namespace BMMSBAL
             if (dtMember.Rows.Count > 0)
             {
                 MemberDetails += "<u><b>Member Details :</b></u>";
-                MemberDetails += "<br /><b>Member Code  : </b>" + dtMember.Rows[0]["MemberCode"].ToString();
-                MemberDetails += "<br /><b>Member Name  : </b>" + dtMember.Rows[0]["MemberName"].ToString();
-                MemberDetails += "<br /><b>Designation  : </b>" + dtMember.Rows[0]["DesignationName"].ToString();
-                MemberDetails += "<br /><b>Date of Join : </b>" + dtMember.Rows[0]["DOJ"].ToString();
-                MemberDetails += "<br /><b>EmailId : </b>" + dtMember.Rows[0]["EmailId"].ToString();
+                MemberDetails += "<br /><b>Member Code  : </b>" + HttpUtility.HtmlEncode(dtMember.Rows[0]["MemberCode"].ToString());
+                MemberDetails += "<br /><b>Member Name  : </b>" + HttpUtility.HtmlEncode(dtMember.Rows[0]["MemberName"].ToString());
+                MemberDetails += "<br /><b>Designation  : </b>" + HttpUtility.HtmlEncode(dtMember.Rows[0]["DesignationName"].ToString());
+                MemberDetails += "<br /><b>Date of Join : </b>" + HttpUtility.HtmlEncode(dtMember.Rows[0]["DOJ"].ToString());
+                MemberDetails += "<br /><b>EmailId : </b>" + HttpUtility.HtmlEncode(dtMember.Rows[0]["EmailId"].ToString());
             }
             return MemberDetails;
         }
@@ -328,13 +450,65 @@ namespace BMMSBAL
             if (dtUser.Rows.Count > 0)
             {
                 UserDetails += "<u><b>User Details :</b></u>";
-                UserDetails += "<br /><b>User Name     : </b>" + dtUser.Rows[0]["UserName"].ToString();
-                UserDetails += "<br /><b>Department    : </b>" + dtUser.Rows[0]["DepartmentName"].ToString();
-                UserDetails += "<br /><b>Designation   : </b>" + dtUser.Rows[0]["DesignationName"].ToString();
-                UserDetails += "<br /><b>Date of Birth : </b>" + dtUser.Rows[0]["DOB"].ToString();
-                UserDetails += "<br /><b>Email Id      : </b>" + dtUser.Rows[0]["EmailId"].ToString();
+                UserDetails += "<br /><b>User Name     : </b>" + HttpUtility.HtmlEncode(dtUser.Rows[0]["UserName"].ToString());
+                UserDetails += "<br /><b>Department    : </b>" + HttpUtility.HtmlEncode(dtUser.Rows[0]["DepartmentName"].ToString());
+                UserDetails += "<br /><b>Designation   : </b>" + HttpUtility.HtmlEncode(dtUser.Rows[0]["DesignationName"].ToString());
+                UserDetails += "<br /><b>Date of Birth : </b>" + HttpUtility.HtmlEncode(dtUser.Rows[0]["DOB"].ToString());
+                UserDetails += "<br /><b>Email Id      : </b>" + HttpUtility.HtmlEncode(dtUser.Rows[0]["EmailId"].ToString());
             }
             return UserDetails;
+        }
+        #endregion
+
+        #region UserDisplayName
+        // Step UN3: the one format for a specific account, where it is chosen from a list or recorded for audit:
+        // "Name (login)", for example "MohanKumar (mgruser)"; a name equal to the login is shown in full
+        // ("admin (admin)"). A blank name gives the login alone, a blank login the name alone. " (inactive)" is
+        // added for an inactive account. Plain text: the page encodes it (a Label with HttpUtility.HtmlEncode;
+        // a DropDownList encodes its item texts itself, so they are not encoded again).
+        public static string UserDisplayName(string UserName, string LoginName, bool IsActive)
+        {
+            string name = (UserName ?? string.Empty).Trim();
+            string login = (LoginName ?? string.Empty).Trim();
+
+            string text;
+            if (name.Length == 0)
+                text = login;
+            else if (login.Length == 0)
+                text = name;
+            else
+                text = name + " (" + login + ")";
+
+            return IsActive ? text : text + " (inactive)";
+        }
+        #endregion
+
+        #region IsLoggedIn
+        // Step UN2: a user is logged in when the session holds a UserId (set at login, Default.aspx). Until step UN2
+        // the pages tested Session["UserName"], the person's name, which is display text and not an identity.
+        public static bool IsLoggedIn()
+        {
+            HttpContext context = HttpContext.Current;
+            if (context == null || context.Session == null)
+                return false;
+
+            int userId;
+            return int.TryParse(Convert.ToString(context.Session["UserId"]), out userId) && userId > 0;
+        }
+        #endregion
+
+        #region IsSystemAccountSession / IsSystemAccountRow
+        // The protected system account (BMMS-Fix-SystemAccount-Stage3.sql): Session["IsSystem"] is set at login
+        public static bool IsSystemAccountSession()
+        {
+            object flag = HttpContext.Current == null || HttpContext.Current.Session == null ? null : HttpContext.Current.Session["IsSystem"];
+            return flag != null && flag.ToString() == "1";
+        }
+
+        // A row of View_Users (or a list built on it); false when the column is not there
+        public static bool IsSystemAccountRow(DataRow row)
+        {
+            return row.Table.Columns.Contains("IsSystem") && row["IsSystem"] != DBNull.Value && Convert.ToBoolean(row["IsSystem"]);
         }
         #endregion
 
@@ -388,6 +562,110 @@ namespace BMMSBAL
 
         }
 
+        #endregion
+
+        #region HashPassword / VerifyPassword
+        // PBKDF2 (RFC 2898), 100,000 iterations, 16-byte random salt per password.
+        // Stored format: "100000.<base64 salt>.<base64 hash>" — self-describing,
+        // so the iteration count can be raised later without breaking old hashes.
+        private const int HashIterations = 100000;
+        private const int HashSaltSize = 16;
+        private const int HashKeySize = 32;
+
+        // The default password: given by Reset Password and seeded by Reset Database
+        // (BMMS-Fix-ResetDatabase-Step29.sql holds its hashes). Signing in with it opens
+        // ChangePasswordFirst.
+        public const string DefaultPassword = "gashpy@123";
+
+        public static string HashPassword(string plainPassword)
+        {
+            using (var rng = new RNGCryptoServiceProvider())
+            {
+                byte[] salt = new byte[HashSaltSize];
+                rng.GetBytes(salt);
+                using (var pbkdf2 = new Rfc2898DeriveBytes(plainPassword, salt, HashIterations))
+                {
+                    return HashIterations + "." + Convert.ToBase64String(salt) + "." +
+                           Convert.ToBase64String(pbkdf2.GetBytes(HashKeySize));
+                }
+            }
+        }
+        // Old format = a single base64 blob. New format = "iterations.salt.hash".
+        public static bool IsLegacyFormat(string stored)
+        {
+            if (string.IsNullOrEmpty(stored)) return false;
+            string[] parts = stored.Split('.');
+            int n;
+            return !(parts.Length == 3 && int.TryParse(parts[0], out n));
+        }
+        public static bool VerifyPassword(string plainPassword, string stored)
+        {
+            if (string.IsNullOrEmpty(stored)) return false;
+
+            if (IsLegacyFormat(stored)) return false;
+           
+            string[] parts = stored.Split('.');
+            int iterations;
+            byte[] salt, expected;
+            try
+            {
+                iterations = int.Parse(parts[0]);
+                salt = Convert.FromBase64String(parts[1]);
+                expected = Convert.FromBase64String(parts[2]);
+            }
+            catch (FormatException) { return false; }
+
+            using (var pbkdf2 = new Rfc2898DeriveBytes(plainPassword, salt, iterations))
+            {
+                byte[] actual = pbkdf2.GetBytes(expected.Length);
+                if (actual.Length != expected.Length) return false;
+                int diff = 0;                       // constant-time compare
+                for (int i = 0; i < actual.Length; i++) diff |= actual[i] ^ expected[i];
+                return diff == 0;
+            }
+        }
+
+        // Constant-time comparison — a plain == or SequenceEqual leaks timing
+        // information about how many leading bytes matched, which is the kind
+        // of side channel password-verification code should avoid.
+        private static bool FixedTimeEquals(byte[] a, byte[] b)
+        {
+            if (a.Length != b.Length) return false;
+            int diff = 0;
+            for (int i = 0; i < a.Length; i++)
+                diff |= a[i] ^ b[i];
+            return diff == 0;
+        }
+
+
+        #endregion
+        #region ProtectSecret / UnprotectSecret
+        // For secrets that must stay recoverable (e.g. the SMTP password).
+        // Windows DPAPI, machine scope: no key in code or config. The stored value
+        // can only be decrypted on this machine, so after restoring the database on
+        // another server the SMTP password must be re-entered once.
+        private static readonly byte[] SecretEntropy = Encoding.UTF8.GetBytes("BMMS.Secret.v1");
+        private const string SecretPrefix = "dpapi:";
+
+        public static string ProtectSecret(string plainText)
+        {
+            byte[] data = Encoding.UTF8.GetBytes(plainText);
+            byte[] enc = ProtectedData.Protect(data, SecretEntropy, DataProtectionScope.LocalMachine);
+            return SecretPrefix + Convert.ToBase64String(enc);
+        }
+
+        public static string UnprotectSecret(string stored)
+        {
+            if (string.IsNullOrEmpty(stored)) return stored;
+
+            // TRANSITIONAL: a value saved before this change has no prefix. Remove
+            // this line once the SMTP password has been re-saved.
+            if (!stored.StartsWith(SecretPrefix)) return DecryptVal(stored);
+
+            byte[] enc = Convert.FromBase64String(stored.Substring(SecretPrefix.Length));
+            byte[] data = ProtectedData.Unprotect(enc, SecretEntropy, DataProtectionScope.LocalMachine);
+            return Encoding.UTF8.GetString(data);
+        }
         #endregion
     }
 }

@@ -69,7 +69,8 @@ namespace BMMSBAL
         #region UpdateActionItem
         public static void UpdateActionItem(string Code, int ActionItemId, string ActualResolution, string ActionText, int IsComplied, int IsConfirmed)
         {
-            ActionItemDB.UpdateActionItem(Code, ActionItemId, ActualResolution, ActionText, IsComplied, IsConfirmed);
+            // Rich text cleaned before it is stored (step A1a)
+            ActionItemDB.UpdateActionItem(Code, ActionItemId, HtmlCleaner.Clean(ActualResolution), HtmlCleaner.Clean(ActionText), IsComplied, IsConfirmed);
         }
         #endregion
 

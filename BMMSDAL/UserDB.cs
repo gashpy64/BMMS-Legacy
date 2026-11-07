@@ -146,6 +146,17 @@ namespace BMMSDAL
         }
         #endregion
 
+        #region RecordLogin
+        public static void RecordLogin(int UserId, string User_IP_Address, string Server_Url)
+        {
+            SqlParameter[] parameter = new SqlParameter[3];
+            parameter[0] = new SqlParameter("@UserId", UserId);
+            parameter[1] = new SqlParameter("@User_IP_Address", User_IP_Address);
+            parameter[2] = new SqlParameter("@Server_Url", Server_Url);
+
+            CommonDB.ExecuteProcedure("spr_RecordLoginByUserId", parameter);
+        }
+        #endregion
         #region GetUserList
         public static DataTable GetUserList()
         {
@@ -153,13 +164,58 @@ namespace BMMSDAL
         }
         #endregion
 
+        #region GetActiveUserList
+        // Same rows as GetUserList, active users only (BMMS-Fix-UserStatus-Stage2a.sql)
+        public static DataTable GetActiveUserList()
+        {
+            return CommonDB.GetDataTable("spr_GetActiveUserList", null);
+        }
+        #endregion
+
         #region GetMgrControllerByDeptId
         public static DataTable GetMgrControllerByDeptId(int DepartmentId)
         {
-            SqlParameter[] parameter = new SqlParameter[1];
-            parameter[0] = new SqlParameter("@DepartmentId", DepartmentId);
+            return GetMgrControllerByDeptId(DepartmentId, 0);
+        }
 
-            return CommonDB.GetDataTable("spr_GetMgrControllerByDeptId", parameter); ;
+        // Active Managers / Controllers of the department, plus IncludeUserId (the edited
+        // user's current manager) even if inactive. Column ManagerText marks it "(inactive)".
+        public static DataTable GetMgrControllerByDeptId(int DepartmentId, int IncludeUserId)
+        {
+            SqlParameter[] parameter = new SqlParameter[2];
+            parameter[0] = new SqlParameter("@DepartmentId", DepartmentId);
+            parameter[1] = new SqlParameter("@IncludeUserId", IncludeUserId <= 0 ? (object)DBNull.Value : IncludeUserId);
+
+            return CommonDB.GetDataTable("spr_GetMgrControllerByDeptId", parameter);
+        }
+        #endregion
+
+        #region GetUserStatusByUserId
+        // AccountStatus of the user (1 active, 0 inactive), or -1 if the user does not exist
+        public static int GetUserStatusByUserId(int UserId)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@UserId", UserId);
+
+            DataTable dt = CommonDB.GetDataTable("spr_GetUserStatusByUserId", parameter);
+
+            if (dt.Rows.Count == 0)
+                return -1;
+
+            return ToInt(dt.Rows[0]["AccountStatus"]);
+        }
+        #endregion
+
+        #region SetUserStatusByUserId
+        public static DataTable SetUserStatusByUserId(int UserId, int AccountStatus, int ActingUserId)
+        {
+            SqlParameter[] parameter = new SqlParameter[3];
+            parameter[0] = new SqlParameter("@UserId", UserId);
+            parameter[1] = new SqlParameter("@AccountStatus", AccountStatus);
+            parameter[2] = new SqlParameter("@ActingUserId", ActingUserId);
+
+            // One row: Result, Reason, ReasonDetail
+            return CommonDB.GetDataTable("spr_SetUserStatusByUserId", parameter);
         }
         #endregion
 
@@ -174,13 +230,13 @@ namespace BMMSDAL
             dt = CommonDB.GetDataTable("spr_GetUserByUserId", parameter);
 
             UserDAL UserDAL = new UserDAL();
-            UserDAL.UserId = Convert.ToInt16(dt.Rows[0]["UserId"].ToString());
+            UserDAL.UserId = ToInt(dt.Rows[0]["UserId"]);
             UserDAL.UserName = dt.Rows[0]["UserName"].ToString();
-            UserDAL.DepartmentId = Convert.ToInt16(dt.Rows[0]["DepartmentId"].ToString());
+            UserDAL.DepartmentId = ToInt(dt.Rows[0]["DepartmentId"]);
             UserDAL.DepartmentName = dt.Rows[0]["DepartmentName"].ToString();
-            UserDAL.DesignationId = Convert.ToInt16(dt.Rows[0]["DesignationId"].ToString());
-            UserDAL.ManagerId = Convert.ToInt16(dt.Rows[0]["ManagerId"].ToString());
-            UserDAL.RoleId = Convert.ToInt16(dt.Rows[0]["RoleId"].ToString());
+            UserDAL.DesignationId = ToInt(dt.Rows[0]["DesignationId"]);
+            UserDAL.ManagerId = ToInt(dt.Rows[0]["ManagerId"]);   // NULL = no manager = 0
+            UserDAL.RoleId = ToInt(dt.Rows[0]["RoleId"]);
             UserDAL.EmailId = dt.Rows[0]["EmailId"].ToString();
             UserDAL.LoginName = dt.Rows[0]["LoginName"].ToString();
             UserDAL.Password = dt.Rows[0]["Password"].ToString();
@@ -188,7 +244,11 @@ namespace BMMSDAL
             return UserDAL;
         }
         #endregion
-
+        private static int ToInt(object value)
+        {
+            int result;
+            return (value != null && int.TryParse(value.ToString(), out result)) ? result : 0;
+        }
         #region GetUserDataTableByUserId
         public static DataTable GetUserDataTableByUserId(int UserId)
         {
@@ -218,7 +278,7 @@ namespace BMMSDAL
         #endregion
 
         #region AddEditUser
-        public static int AddEditUser(UserDAL UserDAL)
+        public static DataTable AddEditUser(UserDAL UserDAL)
         {
             SqlParameter[] parameter = new SqlParameter[14];
             parameter[0] = new SqlParameter("@Code", UserDAL.Code);
@@ -226,7 +286,8 @@ namespace BMMSDAL
             parameter[2] = new SqlParameter("@UserName", UserDAL.UserName);
             parameter[3] = new SqlParameter("@DepartmentId", UserDAL.DepartmentId);
             parameter[4] = new SqlParameter("@DesignationId", UserDAL.DesignationId);
-            parameter[5] = new SqlParameter("@ManagerId", UserDAL.ManagerId);
+            // No manager is stored as NULL. DBNull.Value, not null: a null value means "parameter not supplied".
+            parameter[5] = new SqlParameter("@ManagerId", UserDAL.ManagerId <= 0 ? (object)DBNull.Value : UserDAL.ManagerId);
             parameter[6] = new SqlParameter("@RoleId", UserDAL.RoleId);
             parameter[7] = new SqlParameter("@EmailId", UserDAL.EmailId);
             parameter[8] = new SqlParameter("@LoginName", UserDAL.LoginName);
@@ -236,17 +297,20 @@ namespace BMMSDAL
             parameter[12] = new SqlParameter("@UpdatedOn", UserDAL.UpdatedOn);
             parameter[13] = new SqlParameter("@UpdatedBy", UserDAL.UpdatedBy);
 
-            return CommonDB.ExecuteProcedure("spr_AddEditUser", parameter);
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-UserProtection-Stage1.sql)
+            return CommonDB.GetDataTable("spr_AddEditUser", parameter);
         }
         #endregion
 
         #region DeleteUserByUserId
-        public static int DeleteUserByUserId(int UserId)
+        public static DataTable DeleteUserByUserId(int UserId, int ActingUserId)
         {
-            SqlParameter[] parameter = new SqlParameter[1];
+            SqlParameter[] parameter = new SqlParameter[2];
             parameter[0] = new SqlParameter("@UserId", UserId);
+            parameter[1] = new SqlParameter("@ActingUserId", ActingUserId);
 
-            return CommonDB.ExecuteProcedure("spr_DeleteUserByUserId", parameter); ;
+            // One row: Result, Reason, ReasonDetail
+            return CommonDB.GetDataTable("spr_DeleteUserByUserId", parameter);
         }
         #endregion
 
@@ -258,11 +322,44 @@ namespace BMMSDAL
             parameter[1] = new SqlParameter("@Password", Password);
             parameter[2] = new SqlParameter("@UpdatedBy", UpdatedBy);
 
-            return CommonDB.ExecuteProcedure("spr_ResetPasswordByUserId", parameter); ;
+            DataTable dtResult = CommonDB.GetDataTable("spr_ResetPasswordByUserId", parameter);
+
+            // No row: the procedure from before BMMS-Fix-UserProtection-Stage1.sql, which has
+            // already updated the password. Keeps login and Change Password working until it is run.
+            if (dtResult.Rows.Count == 0)
+                return 1;
+
+            return Convert.ToInt16(dtResult.Rows[0]["Result"].ToString());
+        }
+        #endregion
+
+        #region CheckUserChange
+        public static DataTable CheckUserChange(int ActingUserId, int TargetUserId, string Action, int NewRoleId)
+        {
+            SqlParameter[] parameter = new SqlParameter[4];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = new SqlParameter("@TargetUserId", TargetUserId);
+            parameter[2] = new SqlParameter("@Action", Action);
+            parameter[3] = new SqlParameter("@NewRoleId", NewRoleId <= 0 ? (object)DBNull.Value : NewRoleId);
+
+            // One row: Result, Reason, ReasonDetail
+            return CommonDB.GetDataTable("spr_CheckUserChange", parameter);
+        }
+        #endregion
+
+        #region GetUserListForUserPage
+        public static DataTable GetUserListForUserPage(int ActingUserId)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+
+            return CommonDB.GetDataTable("spr_GetUserListForUserPage", parameter);
         }
         #endregion
 
         #region LockUserByUserId
+        // Retired: spr_LockUserByUserId raises error 50002 (BMMS-Fix-UserStatus-Stage2a.sql).
+        // Use SetUserStatusByUserId, which applies the user protection rules.
         public static int LockUserByUserId(int UserId)
         {
             SqlParameter[] parameter = new SqlParameter[1];
