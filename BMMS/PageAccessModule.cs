@@ -247,7 +247,9 @@ namespace BMMS.Security
             return path;
         }
 
-        // The user column of the log (step UN2): "Name (login)"; only the name when the session has no login ID
+        // The user column of the log (step UN2): "Name (login)"; only the name when the session has no login ID,
+        // only the login when the name is blank. The format is the shared one (Common.UserDisplayName, step UN3);
+        // a logged-in user is active (an inactive one is sent to the login page), so no " (inactive)".
         private static string LogUser(HttpContext ctx)
         {
             if (ctx.Session == null)
@@ -255,7 +257,7 @@ namespace BMMS.Security
 
             string name = Convert.ToString(ctx.Session["UserName"]);
             string login = Convert.ToString(ctx.Session["LoginName"]);
-            return string.IsNullOrEmpty(login) ? name : name + " (" + login + ")";
+            return BMMSBAL.Common.UserDisplayName(name, login, true);
         }
 
         // Written to App_Data, which IIS/ASP.NET never serves to browsers.

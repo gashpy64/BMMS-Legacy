@@ -2095,8 +2095,58 @@ Browser checks on `BMMS_Test`, in Chrome and in Edge (deploy the build first; ke
 10. BMMS/bin/BMMS.dll, Properties, Details: File version 1.1.0.0, Product version 1.1.0.
 11. Error log: no entry from these checks.
 
+## Step UN3: "Name (login)" where a specific account is chosen or recorded (code only, no database script)
+
+Where a user is picked from a list or an action is recorded for audit, the account is shown as "Name (login)", for example "MohanKumar (mgruser)", with " (inactive)" added for an inactive account. Names are not unique; the login is. Everywhere else the name alone stays (grids, captions, mails: steps UN4 to UN6).
+
+- One format (BMMSBAL/Common.cs, `Common.UserDisplayName(name, login, isActive)`): "Name (login)"; a name equal to the login in full ("admin (admin)"); a blank name gives the login alone, a blank login the name alone; " (inactive)" added. Plain text: a grid label encodes it with HttpUtility.HtmlEncode; a drop-down list encodes its item texts itself (encoding them again would show `&amp;amp;`).
+- Pick lists (BMMSBAL/UserMgr.cs, `UserMgr.WithUserDisplayName`): the column UserDisplayName, sorted by name, then login (case ignored; a blank name sorts by its login). Two users with the same name stand next to each other, told apart by the login. The value of every list stays UserId, and no page logic reads the text: User.aspx.cs saves `ddlManager.SelectedValue` and reloads with `ddlManager.Text = ManagerId`; ResetPassword.aspx.cs reads `ddlLoginUser.SelectedValue` (and `.Text == "0"`, the selected value); AuditTrail.aspx.cs passes `ddlUsers.SelectedValue` to spr_GetAuditTrailMasterByUserId, which filters `WHERE Update_By = @UserId`.
+- User Master, Reporting Person: the active Managers and Controllers of the department, plus the edited user's current manager even if inactive, as "Name (login)". The procedure's ManagerText column (login only) is no longer shown; the procedure is unchanged.
+- Reset Password: label "User :" (was "Login Name :"); every user except the protected system account, inactive ones marked.
+- Audit Trail: label "User :" (was "User Name :"); "- All -" first, then every user (inactive ones and the system account included). The column "Update By" shows "Name (login)" by Update_By, and "(unknown user)" when the user no longer exists (the same text as the Entered by column). The procedure's Update_By_Name (login only) is no longer shown.
+- Audit Trail, header sort (finding F-2): a click on a column header sorted the rows and then read them again from the database, so the order was lost; the rows are now read only on opening the page and on Submit, and a header click sorts the rows already shown.
+- Audit Trail (finding F-1): the list of users is no longer kept in ViewState. It was never read back, and View_Users carries the password hash, so every user's hash went to the browser. User Master still keeps its user list (spr_GetUserListForUserPage, with the hash) in ViewState; see Known items.
+- Backup Database list: the column "Backup By" (was "User Name", the name alone) shows "Name (login)" by User_Id, inactive ones marked. A backup by a user that no longer exists is still not listed (the procedure joins Users).
+- App_Data/PageAccessLog.txt: the user column uses the same format (`PageAccessModule.LogUser`); no visible change, except that a blank name gives "mgruser" and not " (mgruser)".
+- Layout (BMMS/CSS/bmms-workbench.css): the user lists of Reset Password and Audit Trail (`select.wb-user-select`, was 150 px wide) take their column up to 360 px; the Reporting Person list already does (`.wb-page select`). A long text is cut in the closed list and never widens the page; the open list shows it whole. The grid cells (`td.wb-user-cell`) break a long name without a space inside the word.
+- No stored procedure, table or view is changed: every list and grid already returns the user's id, and the names come from spr_GetUser. The build before step UN3 keeps working.
+
+Who opens what: User Master, Reset Password and Backup Database: Admin and Controller. Audit Trail: Controller. Manager and User: "Access denied" on all four (unchanged).
+
+Browser checks on `BMMS_Test`, in Chrome and in Edge (deploy the build first; keep the error log of the day and App_Data/PageAccessLog.txt open). Test data, set by SQL before the checks and restored after them:
+
+```sql
+-- before: note the values
+SELECT UserId, LoginName, UserName, ManagerId, AccountStatus FROM Users WHERE LoginName IN ('inactiveuser','depuser','ituser','mgruser');
+UPDATE Users SET UserName = 'MohanKumar' WHERE LoginName = 'inactiveuser';             -- the same name as mgruser
+UPDATE Users SET ManagerId = 105 WHERE LoginName = 'depuser';                          -- an inactive current manager
+UPDATE Users SET UserName = 'A&B <i>x</i> O''Neil "Q"' WHERE LoginName = 'ituser';    -- special characters
+-- after the checks
+UPDATE Users SET UserName = 'Shravankumar' WHERE LoginName = 'inactiveuser';
+UPDATE Users SET ManagerId = 12 WHERE LoginName = 'depuser';
+UPDATE Users SET UserName = 'Gopinath' WHERE LoginName = 'ituser';
+```
+
+1. Admin, User Master, edit depuser, open Reporting Person: "- Select -", "MohanKumar (inactiveuser) (inactive)" (selected), "MohanKumar (mgruser)".
+2. The same user: choose "MohanKumar (mgruser)", Save, edit depuser again: "MohanKumar (mgruser)" is selected; `SELECT ManagerId FROM Users WHERE LoginName = 'depuser'` gives 12.
+3. Edit s20user (department 2): "RameshKumar (secuser)" and the other Managers and Controllers of department 2, sorted by name.
+4. Controller: checks 1 and 2 again (set ManagerId = 105 again first): the same.
+5. Reset Password (Admin, then Controller): label "User :"; sorted by name, then login; "MohanKumar (inactiveuser) (inactive)" before "MohanKumar (mgruser)"; "admin (admin)" and "sect (sect)" in full; the system account not listed; ituser reads `A&B <i>x</i> O'Neil "Q" (ituser)` as text, nothing in italics; View Source shows `A&amp;B &lt;i&gt;x&lt;/i&gt; O&#39;Neil &quot;Q&quot; (ituser)` in the option (encoded once). Choosing ituser fills the details box; a password reset of ituser works.
+6. Audit Trail (Controller): label "User :"; "- All -" first, then the same sorted list with inactive users and the system account.
+7. As Admin edit any department (save without change is enough if it writes a row; otherwise change and restore a name); as Controller, Audit Trail, today, user "admin (admin)", Submit: only Admin's rows; `SELECT COUNT(*) FROM Audit_Trail_Master WHERE Update_By = 5 AND Update_On >= CAST(GETDATE() AS DATE)` equals the number of rows; "Update By" reads "admin (admin)".
+8. "- All -", a wider date range: each row shows its user as "Name (login)". Click "Update By" twice: ascending, then descending, and the rows stay the same rows (finding F-2); the other headers sort as well.
+9. The same name: "MohanKumar (mgruser)", Submit: only rows with `Update_By = 12`; none of inactiveuser.
+10. Unknown user, if the database has such rows: `SELECT TOP 5 a.Update_By, a.Update_On FROM Audit_Trail_Master a LEFT JOIN Users u ON u.UserId = a.Update_By WHERE u.UserId IS NULL ORDER BY a.Update_On DESC`; a row of that date reads "(unknown user)".
+11. View Source of Audit Trail: the __VIEWSTATE is shorter than before (no user list in it).
+12. Backup Database: Controller makes a backup: the new top row shows "Venkat (Controller)" under "Backup By"; a click on the header sorts by it.
+13. Layout: set ituser's name to 50 characters without a space by SQL (for example `UPDATE Users SET UserName = REPLICATE('W', 50) WHERE LoginName = 'ituser';`, then restore 'Gopinath'). Reset Password and Audit Trail (and an Audit Trail row of ituser) at 390 px (device toolbar), 1105 px and 1366 px: the closed list may cut the text at 390 px, the open list shows it whole; the grid cell breaks inside the word; the page never scrolls sideways (Console: `document.documentElement.scrollWidth <= window.innerWidth` is true).
+14. Manager (mgruser) and User (depuser): User Master, Reset Password, Backup Database and Audit Trail opened directly: "Access denied" each time.
+15. PageAccessLog.txt: the line of check 14 reads "MohanKumar (mgruser)" as before.
+16. Error log: no entry from these checks.
+
 ## Known items for later steps
 
+- User Master keeps its user list in ViewState (`ViewState["dtUser"]`, User.aspx.cs; spr_GetUserListForUserPage returns `v.*` of View_Users, the password hash included), so every user's password hash goes to the browser inside the ViewState (MAC-protected, not encrypted). Found in step UN3 (F-1); its own step, when asked.
 - The login ID in the header is a tooltip only, which a touch screen cannot open (accepted for phones, step UN2 (names)).
 - Access log, as before step UN2 (names): a second login of the same user closes the first row without a logout time, and a logout or session end in one window closes the user's open rows of every window (spr_AddEditAuditTrialLogin closes by User_Id); a wrong password or an unknown login writes nothing.
 

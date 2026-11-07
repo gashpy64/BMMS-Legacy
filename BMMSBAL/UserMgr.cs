@@ -232,6 +232,84 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region UserDisplayName columns (step UN3)
+        /// <summary>Column with "Name (login)" (Common.UserDisplayName); plain text, encoded by the page.</summary>
+        public const string UserDisplayNameColumn = "UserDisplayName";
+
+        /// <summary>Sort key of the pick lists: the name, or the login when the name is blank.</summary>
+        public const string UserSortNameColumn = "UserSortName";
+
+        /// <summary>Text of an audit row whose user no longer exists (the same as the Entered by column, step 33).</summary>
+        public const string UnknownUserText = "(unknown user)";
+
+        /// <summary>
+        /// Step UN3: a pick list of users (rows with UserName, LoginName and AccountStatus, as spr_GetUser and
+        /// spr_GetMgrControllerByDeptId return them). Returns a copy with the columns UserDisplayName and
+        /// UserSortName, sorted by name, then login (case ignored). The value of the list stays UserId.
+        /// </summary>
+        public static DataTable WithUserDisplayName(DataTable Users)
+        {
+            DataTable dt = Users.Copy();
+
+            if (!dt.Columns.Contains(UserDisplayNameColumn))
+                dt.Columns.Add(UserDisplayNameColumn, typeof(string));
+            if (!dt.Columns.Contains(UserSortNameColumn))
+                dt.Columns.Add(UserSortNameColumn, typeof(string));
+
+            foreach (DataRow row in dt.Rows)
+            {
+                string name = Convert.ToString(row["UserName"]).Trim();
+                string login = Convert.ToString(row["LoginName"]).Trim();
+
+                row[UserDisplayNameColumn] = Common.UserDisplayName(name, login, IsActiveRow(row));
+                row[UserSortNameColumn] = name.Length > 0 ? name : login;
+            }
+
+            DataView view = new DataView(dt);
+            view.Sort = UserSortNameColumn + " ASC, LoginName ASC";
+            return view.ToTable();
+        }
+
+        /// <summary>
+        /// Step UN3: adds the column UserDisplayName to rows that carry only a user's id (an audit table:
+        /// Audit_Trail_Master.Update_By, Audit_Trail_SqlBackup.User_Id). The names come from spr_GetUser,
+        /// read once; a row whose user does not exist (or has no id) gets "(unknown user)".
+        /// </summary>
+        public static void AddUserDisplayColumn(DataTable Rows, string UserIdColumn)
+        {
+            Dictionary<int, string> displayById = new Dictionary<int, string>();
+            foreach (DataRow user in GetUserList().Rows)
+            {
+                int userId;
+                if (int.TryParse(Convert.ToString(user["UserId"]), out userId))
+                    displayById[userId] = Common.UserDisplayName(Convert.ToString(user["UserName"]),
+                        Convert.ToString(user["LoginName"]), IsActiveRow(user));
+            }
+
+            if (!Rows.Columns.Contains(UserDisplayNameColumn))
+                Rows.Columns.Add(UserDisplayNameColumn, typeof(string));
+
+            foreach (DataRow row in Rows.Rows)
+            {
+                int userId;
+                string display;
+                if (int.TryParse(Convert.ToString(row[UserIdColumn]), out userId) && displayById.TryGetValue(userId, out display))
+                    row[UserDisplayNameColumn] = display;
+                else
+                    row[UserDisplayNameColumn] = UnknownUserText;
+            }
+        }
+
+        // AccountStatus 1 = active (UserStatus-Stage2a); a row without the column counts as active
+        private static bool IsActiveRow(DataRow Row)
+        {
+            if (!Row.Table.Columns.Contains("AccountStatus") || Row["AccountStatus"] == DBNull.Value)
+                return true;
+
+            return Convert.ToInt32(Row["AccountStatus"]) == 1;
+        }
+        #endregion
+
         #region GetActiveUserList
         public static DataTable GetActiveUserList()
         {

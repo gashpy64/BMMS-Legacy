@@ -1,5 +1,5 @@
 <%@ Page Language="C#" MasterPageFile="~/MasterPage/Main.Master" AutoEventWireup="true"
-    Codebehind="AuditTrail.aspx.cs" Inherits="BMMS.Report.AuditTrail" Title="Audit Trai" %>
+    Codebehind="AuditTrail.aspx.cs" Inherits="BMMS.Report.AuditTrail" Title="Audit Trail" %>
 
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="cc1" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -9,7 +9,7 @@
                 <div class="formContent">
                 <div class="formPanel">
                     <div class="divHeader">
-                    :: Audit Trai Report</div>
+                    :: Audit Trail Report</div>
                     <div class="divRowFixed">
                     </div>
                     <div class="divRow">
@@ -43,10 +43,11 @@
                         </div>
                         <div class="divRow">
                             <div class="divRowLeft">
-                                User Name :
+                                User :
                             </div>
                             <div class="divRowRight">
-                                <asp:DropDownList ID="ddlUsers" runat="server" Width="150px" DataTextField="LoginName"
+                                <%-- "Name (login)", value UserId (step UN3) --%>
+                                <asp:DropDownList ID="ddlUsers" runat="server" CssClass="wb-user-select" DataTextField="UserDisplayName"
                                     DataValueField="UserId">
                                 </asp:DropDownList>
                                 <br />
@@ -109,15 +110,16 @@
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Left" />
                                 </asp:TemplateField>
-                                <asp:TemplateField SortExpression="Update_By_Name">
+                                <%-- "Name (login)" by Update_By, "(unknown user)" for a user that no longer exists (step UN3) --%>
+                                <asp:TemplateField SortExpression="UserDisplayName">
                                     <HeaderTemplate>
                                         <asp:LinkButton runat="server" Text="Update By" CommandName="Sort" Style="color: White"
-                                            CommandArgument="Update_By_Name"></asp:LinkButton>
+                                            CommandArgument="UserDisplayName"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblUpdate_By_Name" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("Update_By_Name")) %>'></asp:Label>
+                                        <asp:Label ID="lblUpdate_By_Name" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("UserDisplayName")) %>'></asp:Label>
                                     </ItemTemplate>
-                                    <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Left" />
+                                    <ItemStyle CssClass="contentTabletd wb-user-cell" VerticalAlign="Middle" HorizontalAlign="Left" />
                                 </asp:TemplateField>
                                 <asp:TemplateField SortExpression="Update_On">
                                     <HeaderTemplate>

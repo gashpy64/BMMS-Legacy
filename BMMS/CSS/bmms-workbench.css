@@ -500,6 +500,20 @@ body.wb .ddsubmenustyle li a:focus
 	font-family: inherit;
 	font-size: 14px;
 }
+/* Step UN3: a user pick list ("Name (login)") on the older pages (Reset Password, Audit Trail): the width of its
+   column up to 360 px, so a long text is cut in the closed list and never widens the page; the open list shows it whole */
+body.wb select.wb-user-select
+{
+	width: 100%;
+	max-width: 360px;
+	box-sizing: border-box;
+}
+/* Step UN3: a grid cell with "Name (login)": a long name without a space breaks inside the word */
+body.wb td.wb-user-cell
+{
+	overflow-wrap: anywhere;
+	word-wrap: break-word;
+}
 .wb-page input[type="text"]:hover,
 .wb-page input[type="password"]:hover,
 .wb-page select:hover,

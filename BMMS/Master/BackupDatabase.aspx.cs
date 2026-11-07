@@ -55,6 +55,10 @@ namespace BMMS.Master
 
                 dtSqlBackup = AuditTrail_Mgr.GetAuditTrailSqlBackup();
 
+                // "Backup By": "Name (login)" by User_Id, " (inactive)" added (step UN3); the procedure returns
+                // UserName and LoginName but not AccountStatus
+                UserMgr.AddUserDisplayColumn(dtSqlBackup, "User_Id");
+
                 // Kept for the header sort (step A1b-1)
                 ViewState["DataTable"] = dtSqlBackup;
                 BindGridView();

@@ -460,6 +460,29 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region UserDisplayName
+        // Step UN3: the one format for a specific account, where it is chosen from a list or recorded for audit:
+        // "Name (login)", for example "MohanKumar (mgruser)"; a name equal to the login is shown in full
+        // ("admin (admin)"). A blank name gives the login alone, a blank login the name alone. " (inactive)" is
+        // added for an inactive account. Plain text: the page encodes it (a Label with HttpUtility.HtmlEncode;
+        // a DropDownList encodes its item texts itself, so they are not encoded again).
+        public static string UserDisplayName(string UserName, string LoginName, bool IsActive)
+        {
+            string name = (UserName ?? string.Empty).Trim();
+            string login = (LoginName ?? string.Empty).Trim();
+
+            string text;
+            if (name.Length == 0)
+                text = login;
+            else if (login.Length == 0)
+                text = name;
+            else
+                text = name + " (" + login + ")";
+
+            return IsActive ? text : text + " (inactive)";
+        }
+        #endregion
+
         #region IsLoggedIn
         // Step UN2: a user is logged in when the session holds a UserId (set at login, Default.aspx). Until step UN2
         // the pages tested Session["UserName"], the person's name, which is display text and not an identity.

@@ -514,11 +514,13 @@ namespace BMMS.Master
         #region LoadMgrController
         private void LoadMgrController(int DepartmentId)
         {
-            // Active Managers / Controllers, plus the edited user's current manager ("login (inactive)")
+            // Active Managers / Controllers, plus the edited user's current manager even if inactive.
+            // Step UN3: the text is "Name (login)" (" (inactive)" added), sorted by name, then login; the value
+            // stays UserId. The procedure's own ManagerText column (login only) is no longer shown.
             int currentManagerId = ViewState["CurrentManagerId"] == null ? 0 : (int)ViewState["CurrentManagerId"];
-            DataTable dtMgrController = UserMgr.GetMgrControllerByDeptId(DepartmentId, currentManagerId);
+            DataTable dtMgrController = UserMgr.WithUserDisplayName(UserMgr.GetMgrControllerByDeptId(DepartmentId, currentManagerId));
 
-            Common.LoadDropdownlist(ddlManager, dtMgrController, "ManagerText", "UserId", true);
+            Common.LoadDropdownlist(ddlManager, dtMgrController, UserMgr.UserDisplayNameColumn, "UserId", true);
         }
         #endregion
         

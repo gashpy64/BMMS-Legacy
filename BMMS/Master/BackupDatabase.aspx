@@ -40,15 +40,16 @@
                         </ItemTemplate>
                         <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
                     </asp:TemplateField>
-                    <asp:TemplateField SortExpression="UserName">
+                    <%-- "Name (login)" by User_Id, " (inactive)" added (step UN3) --%>
+                    <asp:TemplateField SortExpression="UserDisplayName">
                         <HeaderTemplate>
-                            <asp:LinkButton ID="lnk2" runat="server" Text="User Name" CommandName="Sort" Style="color: White"
-                                CommandArgument="UserName"></asp:LinkButton>
+                            <asp:LinkButton ID="lnk2" runat="server" Text="Backup By" CommandName="Sort" Style="color: White"
+                                CommandArgument="UserDisplayName"></asp:LinkButton>
                         </HeaderTemplate>
                         <ItemTemplate>
-                            <asp:Label ID="lblUserName" SkinID="lblSkinGen" Text='<%# HttpUtility.HtmlEncode(Eval("UserName")) %>' runat="server" />
+                            <asp:Label ID="lblUserName" SkinID="lblSkinGen" Text='<%# HttpUtility.HtmlEncode(Eval("UserDisplayName")) %>' runat="server" />
                         </ItemTemplate>
-                        <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
+                        <ItemStyle CssClass="contentTabletd wb-user-cell" VerticalAlign="Middle" HorizontalAlign="Center" />
                     </asp:TemplateField>
                     <asp:TemplateField SortExpression="Backup_Date_Time">
                         <HeaderTemplate>

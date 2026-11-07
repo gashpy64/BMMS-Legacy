@@ -44,7 +44,8 @@ namespace BMMS.Master
                     if (Common.IsSystemAccountRow(dtUser.Rows[i]))
                         dtUser.Rows.RemoveAt(i);
 
-                Common.LoadDropdownlist(ddlLoginUser, dtUser, "LoginName", "UserId", true);
+                // Step UN3: "Name (login)" (" (inactive)" added), sorted by name, then login; the value stays UserId
+                Common.LoadDropdownlist(ddlLoginUser, UserMgr.WithUserDisplayName(dtUser), UserMgr.UserDisplayNameColumn, "UserId", true);
             }
             catch (Exception ex)
             {
