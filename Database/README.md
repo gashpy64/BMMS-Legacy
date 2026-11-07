@@ -2144,8 +2144,29 @@ UPDATE Users SET UserName = 'Gopinath' WHERE LoginName = 'ituser';
 15. PageAccessLog.txt: the line of check 14 reads "MohanKumar (mgruser)" as before.
 16. Error log: no entry from these checks.
 
+## Step G1: the User Master grid stays inside its card (CSS only, no database script)
+
+The User Master grid was about 26 px wider than its card at every window width from about 1232 px up, so the Delete column was cut off and the grid scrolled sideways. The window width does not matter: `#contentArea` is at most 1200 px wide (`--wb-content-width`), so the grid box is 1166 px at 1366 px and at 1900 px alike. With one-line headings (`white-space: nowrap` on every grid heading) the 11 columns need at least 1191 px.
+
+- BMMS/CSS/bmms-workbench.css, after `.wb-page table.wb-table-wide`: the headings of the User Master grid only (`#ctl00_ContentPlaceHolder1_grvUser > tbody > tr > th { white-space: normal; }`) may take two lines. Measured at 1366 px and 1900 px with the BMMS_Test rows: 26 px over before, fits after (Edit 55, Deactivate 99, Delete 72 px wide, all inside the card); the heading row grows from 41 to 61 px; Department Name, Designation Name and Login / User ID take two lines; the data rows are unchanged (49 to 62 px, as before).
+- Why only User Master: the other grids with `wb-table-wide` (Agenda Entry, Committee Member, Meeting, Member, Update Minutes) fit today. With the rule on all of them, their headings would wrap as well, because many date and number columns are as narrow as their data (`wb-col-action`, width 1%) and a heading that may wrap no longer holds them wider: Meeting's "Agenda Submission Date" would take three lines and its heading row 81 px; Committee Member and Update Minutes would get a heading row 20 px taller for no gain. Measured on the same copies, these five grids are unchanged by step G1.
+- The selector is the grid's rendered client ID (`clientIDMode="AutoID"` in Web.config: the master page `ctl00`, `ContentPlaceHolder1`, `grvUser`). If grvUser, the content placeholder or the master page is renamed, check the ID in View Source and change the selector.
+- Sort arrows (all grids): the arrow after a sorted heading is now added after a no-break space (`"\00A0\25B2"`, `"\00A0\25BC"`; was a normal space), so on a heading that wraps it stays on the line of the last word and never stands alone on a line. On one-line headings nothing changes (the same width).
+- How it was measured: copies of the six grids with the real stylesheets, the Public Sans font and the BMMS_Test rows of their procedures (View_Users; spr_GetAgendaByMeetingId meeting 516; spr_GetCommitteeMemberByCommitteeId committee 97; spr_GetMeetingByCommitteeId committee 116; spr_GetMember; spr_GetMinutesByMeetingId meeting 514), in headless Edge at 1366 px and 1900 px. Copies, not the live pages, and few rows: longer data can change the widths.
+- No .aspx, .cs or database change.
+
+Browser checks on `BMMS_Test`, in Chrome and in Edge (deploy the CSS first and reload with Ctrl+F5):
+
+1. User Master at 1366 px: the Delete column is wholly inside the card and there is no sideways scroll bar under the grid; Department Name, Designation Name and Login / User ID take two lines.
+2. User Master at 1900 px: the same as check 1 (the card is 1200 px wide at both widths).
+3. A wrapped heading sorts: on User Master click "Designation Name": the rows sort A to Z and ▲ stands after "Name" on the second line, not alone; click again: Z to A and ▼ in the same place.
+4. One-line headings: click "Status", then "Email Id": the arrow stays on the heading's line, as before.
+5. The other five grids look exactly as before, at 1366 px and at 1900 px: Agenda Entry (a meeting with items), Committee Member (a committee with members), Meeting (a committee with meetings), Member, and Update Minutes (a meeting with minutes). Each heading on one line, the heading row as high as before, no new sideways scroll bar; click a heading to sort and the arrow shows after it as before; Edit and Delete work.
+6. A narrower window (about 1100 px): every grid still scrolls inside its own card, as before step G1.
+
 ## Known items for later steps
 
+- Agenda Entry, sorted by "Subject Type Name": the sort arrow makes the grid about 3 px wider than its card, so it scrolls sideways a little (measured with the BMMS_Test rows of meeting 516; the same before and after step G1, so not caused by it). Not changed in step G1.
 - User Master keeps its user list in ViewState (`ViewState["dtUser"]`, User.aspx.cs; spr_GetUserListForUserPage returns `v.*` of View_Users, the password hash included), so every user's password hash goes to the browser inside the ViewState (MAC-protected, not encrypted). Found in step UN3 (F-1); its own step, when asked.
 - The login ID in the header is a tooltip only, which a touch screen cannot open (accepted for phones, step UN2 (names)).
 - Access log, as before step UN2 (names): a second login of the same user closes the first row without a logout time, and a logout or session end in one window closes the user's open rows of every window (spr_AddEditAuditTrialLogin closes by User_Id); a wrong password or an unknown login writes nothing.

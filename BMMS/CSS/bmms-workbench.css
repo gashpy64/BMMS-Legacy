@@ -760,6 +760,16 @@ body.wb td.wb-user-cell
 {
 	min-width: 900px;
 }
+/* Step G1: the User Master grid needs about 1191 px and its card gives 1166 px (#contentArea is at most 1200 px),
+   so with one-line headings the Delete column was cut off and the grid scrolled sideways. Its headings may take
+   two lines, so the grid fits. Only this grid: the other wb-table-wide grids (Agenda, Committee Member, Meeting,
+   Member, Minutes Update) fit today, and with this rule their headings would wrap too (Agenda Submission Date on
+   three lines). The ID is the rendered client ID (clientIDMode="AutoID" in Web.config: master page ctl00,
+   ContentPlaceHolder1, grvUser); check it if grvUser, the placeholder or the master page is renamed. */
+#ctl00_ContentPlaceHolder1_grvUser > tbody > tr > th
+{
+	white-space: normal;
+}
 .wb-table > tbody > tr > th,
 .wb-table > tbody > tr > td
 {
@@ -791,15 +801,16 @@ body.wb td.wb-user-cell
 {
 	background: var(--bmms-table-row-hover);
 }
-/* "ascending" / "descending" are set on the sorted column by Utilities.GridViewDataTableSorting */
+/* "ascending" / "descending" are set on the sorted column by Utilities.GridViewDataTableSorting. A no-break space
+   before the arrow keeps it on the line of the heading's last word when a heading wraps (step G1) */
 .wb-table > tbody > tr > th.ascending a::after
 {
-	content: " \25B2";
+	content: "\00A0\25B2";
 	font-size: 10px;
 }
 .wb-table > tbody > tr > th.descending a::after
 {
-	content: " \25BC";
+	content: "\00A0\25BC";
 	font-size: 10px;
 }
 .wb-table > tbody > tr > td.wb-col-action
