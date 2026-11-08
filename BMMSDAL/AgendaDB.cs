@@ -266,6 +266,58 @@ namespace BMMSDAL
         }
         #endregion
 
+        #region SaveAgendaRow
+        // Step ML1 (BMMS-Fix-UpdateMail-Step37.sql): an Update also asks the procedure for @ChangedFields, the
+        // fields it changed. The returned row gets a column ChangedFields: the list ("" when nothing changed), or
+        // DBNull for a new item (Save) and when step 37 is not installed (the procedure has no such parameter;
+        // the Update is then saved as before and the page reports that the mail could not be sent).
+        private static DataTable SaveAgendaRow(string ProcedureName, SqlParameter[] Parameters, string Code)
+        {
+            SqlParameter changedFields = null;
+            if (Code == "Update" && HasChangedFieldsParameter(ProcedureName))
+            {
+                changedFields = new SqlParameter("@ChangedFields", SqlDbType.VarChar, 400);
+                changedFields.Direction = ParameterDirection.Output;
+
+                SqlParameter[] withOutput = new SqlParameter[Parameters.Length + 1];
+                Parameters.CopyTo(withOutput, 0);
+                withOutput[Parameters.Length] = changedFields;
+                Parameters = withOutput;
+            }
+
+            DataTable dt = CommonDB.GetDataTable(ProcedureName, Parameters);
+
+            dt.Columns.Add("ChangedFields", typeof(string));
+            if (dt.Rows.Count > 0)
+                dt.Rows[0]["ChangedFields"] = changedFields == null || changedFields.Value == null || changedFields.Value == DBNull.Value
+                    ? (object)DBNull.Value : changedFields.Value.ToString();
+
+            return dt;
+        }
+
+        // Step ML1: true when the procedure has the step 37 parameter @ChangedFields (ProcedureName is one of the
+        // three fixed agenda procedure names, never user input)
+        private static bool HasChangedFieldsParameter(string ProcedureName)
+        {
+            DataTable dt = CommonDB.GetDataTableFromQuery(
+                "SELECT COUNT(*) AS n FROM sys.parameters WHERE object_id = OBJECT_ID('dbo." + ProcedureName + "') AND name = '@ChangedFields'");
+            return dt.Rows.Count > 0 && Convert.ToInt32(dt.Rows[0]["n"]) > 0;
+        }
+        #endregion
+
+        #region GetAgendaUpdateMailId
+        // Step ML1: the addresses of the update mail (spr_GetAgendaUpdateMailId, step 37): the users the
+        // refreshed alert is shown to, except the acting user; one column EmailId
+        public static DataTable GetAgendaUpdateMailId(int AgendaId, int ActingUserId)
+        {
+            SqlParameter[] parameter = new SqlParameter[2];
+            parameter[0] = new SqlParameter("@AgendaId", AgendaId);
+            parameter[1] = new SqlParameter("@ActingUserId", ActingUserId);
+
+            return CommonDB.GetDataTable("spr_GetAgendaUpdateMailId", parameter);
+        }
+        #endregion
+
         #region AddEditAgenda
         public static DataTable AddEditAgenda(AgendaDAL AgendaDAL, int ActingUserId)
         {
@@ -296,7 +348,8 @@ namespace BMMSDAL
             parameter[21] = new SqlParameter("@ActingUserId", ActingUserId);
 
             // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks-Step16.sql)
-            return CommonDB.GetDataTable("spr_AddEditAgenda", parameter);
+            // Step ML1: plus ChangedFields on an Update (SaveAgendaRow)
+            return SaveAgendaRow("spr_AddEditAgenda", parameter, AgendaDAL.Code);
         }
         #endregion
 
@@ -330,7 +383,8 @@ namespace BMMSDAL
             parameter[21] = new SqlParameter("@ActingUserId", ActingUserId);
 
             // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks-Step16.sql)
-            return CommonDB.GetDataTable("spr_AddEditAgendaByController", parameter);
+            // Step ML1: plus ChangedFields on an Update (SaveAgendaRow)
+            return SaveAgendaRow("spr_AddEditAgendaByController", parameter, AgendaDAL.Code);
         }
         #endregion
 
@@ -364,7 +418,8 @@ namespace BMMSDAL
             parameter[21] = new SqlParameter("@ActingUserId", ActingUserId);
 
             // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks-Step16.sql)
-            return CommonDB.GetDataTable("spr_AddEditAgendaByManager", parameter);
+            // Step ML1: plus ChangedFields on an Update (SaveAgendaRow)
+            return SaveAgendaRow("spr_AddEditAgendaByManager", parameter, AgendaDAL.Code);
         }
         #endregion
 

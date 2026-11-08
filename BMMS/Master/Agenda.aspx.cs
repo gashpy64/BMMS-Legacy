@@ -32,6 +32,9 @@ namespace BMMS.Master
 
         private const string MailNotSentMessage ="The agenda item was saved, but the mail could not be sent. The error is in the error log.";
 
+        // Step ML1: the update mail failed (or step 37 is not installed); the Update itself is saved
+        private const string UpdateMailNotSentMessage = "The agenda item was updated, but the mail could not be sent. The error is in the error log.";
+
         // Step C2: Edit and Update by the rule of the list (BMMS-Fix-ManagerDepartment-Step33.sql); Delete for the
         // Controller only. Nothing is opened, saved or deleted on a refusal.
         private const string ItemNotOwnMessage = "You can open only the agenda items you entered.";
@@ -808,6 +811,12 @@ namespace BMMS.Master
                             mailFailed = true;
                             sMsg = MailNotSentMessage + submissionNotice;
                         }
+                        else if (btnSave.Text == "Update" && GenerateUpdateMail(myAgenda.AgendaId, ActingUserId, result.ChangedFields) != "Success")
+                        {
+                            // Step ML1: the Update is saved; the page says the mail did not go out
+                            mailFailed = true;
+                            sMsg = UpdateMailNotSentMessage;
+                        }
                         else
                             sMsg = submissionNotice == string.Empty ? "Successfully Saved" : "Successfully Saved." + submissionNotice;
                     }
@@ -1125,6 +1134,158 @@ namespace BMMS.Master
                 Utilities.WriteErrorLog(className, "GenerateMail", ex.ToString());
                 return "Error";
             }
+        }
+        #endregion
+
+        #region GenerateUpdateMail
+        // Step ML1: the mail after an Update the database accepted. ChangedFields comes from the procedure
+        // (BMMS-Fix-UpdateMail-Step37.sql): "" = nothing changed, no mail; null = step 37 is not installed (logged;
+        // the page says the mail was not sent). It goes to the users the refreshed alert is shown to (Bcc;
+        // spr_GetAgendaUpdateMailId), To the person who saved; nobody in Bcc with an address = no mail.
+        // The body has the details of the "has been Created" mail as saved now, then one line per changed field,
+        // never the text of a field (Agenda Text and Proposed Resolution can be rich text or files).
+        // Returns "Success" or an error.
+        private string GenerateUpdateMail(int AgendaId, int ActingUserId, string ChangedFields)
+        {
+            try
+            {
+                if (ChangedFields == null)
+                {
+                    Utilities.WriteErrorLog(className, "GenerateUpdateMail", "The procedure returned no list of changed fields: step 37 (BMMS-Fix-UpdateMail-Step37.sql) is not installed. Agenda " + AgendaId + " was saved; no mail was sent.");
+                    return "Error";
+                }
+                if (ChangedFields == string.Empty)
+                    return "Success";
+
+                string Bcc = AgendaMgr.GetAgendaUpdateMailId(AgendaId, ActingUserId);
+                if (Bcc == string.Empty)
+                    return "Success";
+
+                DataTable dtItem = AgendaMgr.GetAgendaByAgendaId(AgendaId);
+                if (dtItem.Rows.Count == 0)
+                {
+                    Utilities.WriteErrorLog(className, "GenerateUpdateMail", "Agenda " + AgendaId + " could not be read; no mail was sent.");
+                    return "Error";
+                }
+                DataRow item = dtItem.Rows[0];
+
+                // To: the person who saved, as in the "has been Created" and the approve / reject mails
+                UserBAL actingUser = UserMgr.GetUserByUserId(ActingUserId);
+                string ToMailId = actingUser.EmailId == null ? string.Empty : actingUser.EmailId.Trim();
+
+                string Subject = "Agenda (" + item["AgendaNo"].ToString().Trim() + ") has been Updated";
+                string BodyText = string.Empty;
+                BodyText += "<table>";
+
+                BodyText += "<tr>";
+                BodyText += "<td style='text-align:left; font-weight:bold; width:150px;'>";
+                BodyText += "Agenda No <br /><br />";
+                BodyText += "Committee Name <br /><br />";
+                BodyText += "Meeting No <br /><br />";
+                BodyText += "Meeting Date <br /><br />";
+                BodyText += "Department <br /><br />";
+                BodyText += "Subject Type <br /><br />";
+                BodyText += "</td>";
+
+                BodyText += "<td style='text-align:left; font-weight:normal;'>";
+                BodyText += ": " + HttpUtility.HtmlEncode(item["AgendaNo"].ToString().Trim()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(item["CommitteeName"].ToString().Trim()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(item["MeetingNo"].ToString().Trim()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(FormatDate(item["MeetingDate"])) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(item["DepartmentName"].ToString().Trim()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(item["SubjectTypeName"].ToString().Trim()) + "<br /><br />";
+                BodyText += "</td>";
+
+                BodyText += "</tr>";
+
+                BodyText += "<tr>";
+                BodyText += "<td style='text-align:left; font-weight:bold; width:150px;'>";
+                BodyText += "Short Text <br /><br />";
+                BodyText += "</td>";
+
+                BodyText += "<td style='text-align:left; font-weight:normal;'>";
+                BodyText += ": " + HttpUtility.HtmlEncode(item["ShortText"].ToString().Trim()) + "<br /><br />";
+                BodyText += "</td>";
+
+                BodyText += "</tr>";
+
+                BodyText += "<tr>";
+                BodyText += "<td style='text-align:left; font-weight:bold; width:150px; vertical-align:top;'>";
+                BodyText += "Changes";
+                BodyText += "</td>";
+
+                BodyText += "<td style='text-align:left; font-weight:normal;'>";
+                foreach (string code in ChangedFields.Split(','))
+                {
+                    if (code.Trim() != string.Empty)
+                        BodyText += ": " + HttpUtility.HtmlEncode(ChangeLine(code.Trim(), item)) + "<br />";
+                }
+                BodyText += "</td>";
+
+                BodyText += "</tr>";
+
+                BodyText += "</table>";
+
+                return Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, Bcc);
+            }
+            catch (Exception ex)
+            {
+                // The Update is already saved: log, and let the page say the mail was not sent
+                Utilities.WriteErrorLog(className, "GenerateUpdateMail", ex.ToString());
+                return "Error";
+            }
+        }
+
+        // Step ML1: one line of the update mail for a code of @ChangedFields, from the item as saved now; plain text
+        // (the caller encodes it); no text of a field, no file name
+        private static string ChangeLine(string Code, DataRow Item)
+        {
+            switch (Code)
+            {
+                case "SubjectType":
+                    return "Subject Type - Updated";
+                case "ShortText":
+                    return "Short Text - Updated";
+                case "AgendaType":
+                    return "Agenda Type - Updated";
+                case "AgendaText":
+                    return "Agenda Text - Updated";
+                case "AgendaTextFile:Attached":
+                    return "Agenda Text file - Attached";
+                case "AgendaTextFile:Removed":
+                    return "Agenda Text file - Removed";
+                case "AgendaTextFile:Replaced":
+                    return "Agenda Text file - Replaced";
+                case "ProposedResolution":
+                    return "Proposed Resolution - Updated";
+                case "Attachments":
+                    int files = 0;
+                    foreach (string name in Item["FilePath"].ToString().Split(','))
+                    {
+                        if (name.Trim() != string.Empty)
+                            files++;
+                    }
+                    return files == 0 ? "Attachments - Removed" : "Attachments - Updated (" + files + (files == 1 ? " file now)" : " files now)");
+                case "MgrComments":
+                    return CommentLine("Manager's Comments", Item["MgrComments"], Item["MgrApprovedBy"], Item["MgrApprovedDate"]);
+                case "ControllerComments":
+                    return CommentLine("Controller's Comments", Item["ControllerComments"], Item["ControllerApprovedBy"], Item["ControllerApprovedDate"]);
+                case "Department":
+                    return "Department - Updated";
+                case "SubjectNo":
+                    string subjectNo = Item["SubjectNo"].ToString().Trim();
+                    return subjectNo == string.Empty ? "Subject No - Removed" : "Subject No - " + subjectNo;
+                default:
+                    return Code + " - Updated";
+            }
+        }
+
+        // Step ML1: "Manager's Comments - Updated (Venkat, 11-Oct-2026 16:49)": who and when of step 35, never the text
+        private static string CommentLine(string Label, object Comment, object ById, object On)
+        {
+            string author = AgendaMgr.CommentAuthor(ById, On);
+            string line = Label + (Comment == DBNull.Value || Comment.ToString().Trim() == string.Empty ? " - Removed" : " - Updated");
+            return author == string.Empty ? line : line + " (" + author + ")";
         }
         #endregion
 

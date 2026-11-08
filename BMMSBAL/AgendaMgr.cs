@@ -384,6 +384,23 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region GetAgendaUpdateMailId
+        // Step ML1: the addresses of the update mail, separated by ", " (empty when nobody has an address)
+        public static string GetAgendaUpdateMailId(int AgendaId, int ActingUserId)
+        {
+            DataTable dt = AgendaDB.GetAgendaUpdateMailId(AgendaId, ActingUserId);
+
+            string mailIds = string.Empty;
+            foreach (DataRow row in dt.Rows)
+            {
+                string emailId = row["EmailId"].ToString().Trim();
+                if (emailId != string.Empty)
+                    mailIds += (mailIds == string.Empty ? "" : ", ") + emailId;
+            }
+            return mailIds;
+        }
+        #endregion
+
         #region DeleteAgendaByAgendaId
         public static MeetingChangeResult DeleteAgendaByAgendaId(int AgendaId, int ActingUserId)
         {

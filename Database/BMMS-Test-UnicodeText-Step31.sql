@@ -157,8 +157,10 @@ INSERT INTO @T SELECT 'The 31 text parameters of the 7 procedures are NVARCHAR(M
                              OBJECT_ID('dbo.spr_UpdateActionItem'))
        AND p.name IN ('@ShortText', '@AgendaText', '@AgendaTextPath', '@ProposedResolution', '@FilePath', '@MgrComments', '@ControllerComments',
                       '@Directions', '@ActualResolution', '@ActionText');
-INSERT INTO @T SELECT 'Parameter counts unchanged; no output parameter',
-       'spr_AddEditAgenda 22; spr_AddEditAgendaByController 22; spr_AddEditAgendaByManager 22; spr_UpdateActionItem 6; spr_UpdateAgendaByAgendaId 8; spr_UpdateAgendaShortText 3; spr_UpdateMinutes 8; outputs 0',
+INSERT INTO @T SELECT 'Parameter counts unchanged; no output parameter (since step 37: @ChangedFields, 23 and 3 outputs)',
+       CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_AddEditAgenda')), '') LIKE '%UpdateMail-Step37%'
+            THEN 'spr_AddEditAgenda 23; spr_AddEditAgendaByController 23; spr_AddEditAgendaByManager 23; spr_UpdateActionItem 6; spr_UpdateAgendaByAgendaId 8; spr_UpdateAgendaShortText 3; spr_UpdateMinutes 8; outputs 3'
+            ELSE 'spr_AddEditAgenda 22; spr_AddEditAgendaByController 22; spr_AddEditAgendaByManager 22; spr_UpdateActionItem 6; spr_UpdateAgendaByAgendaId 8; spr_UpdateAgendaShortText 3; spr_UpdateMinutes 8; outputs 0' END,
        ISNULL(STUFF((SELECT '; ' + OBJECT_NAME(p.object_id) + ' ' + CAST(COUNT(*) AS VARCHAR(4))
                      FROM sys.parameters p
                      WHERE p.object_id IN (OBJECT_ID('dbo.spr_AddEditAgenda'), OBJECT_ID('dbo.spr_UpdateAgendaByAgendaId'), OBJECT_ID('dbo.spr_AddEditAgendaByManager'),
@@ -169,7 +171,8 @@ INSERT INTO @T SELECT 'Parameter counts unchanged; no output parameter',
      + '; outputs ' + CAST((SELECT COUNT(*) FROM sys.parameters WHERE is_output = 1 AND object_id IN (OBJECT_ID('dbo.spr_AddEditAgenda'), OBJECT_ID('dbo.spr_UpdateAgendaByAgendaId'),
              OBJECT_ID('dbo.spr_AddEditAgendaByManager'), OBJECT_ID('dbo.spr_AddEditAgendaByController'), OBJECT_ID('dbo.spr_UpdateAgendaShortText'),
              OBJECT_ID('dbo.spr_UpdateMinutes'), OBJECT_ID('dbo.spr_UpdateActionItem'))) AS VARCHAR(4));
-INSERT INTO @T SELECT 'spr_AddEditAgenda parameter names in order', '@Code,@AgendaId,@AgendaNo,@CommitteeId,@MeetingId,@DepartmentId,@SubjectTypeId,@ShortText,@AgendaType,@AgendaText,@AgendaTextPath,@ProposedResolution,@FilePath,@MgrComments,@ControllerComments,@CurrentStatus,@CreatedOn,@CreatedBy,@UpdatedOn,@UpdatedBy,@SubjectNo,@ActingUserId',
+INSERT INTO @T SELECT 'spr_AddEditAgenda parameter names in order (since step 37 plus @ChangedFields)', '@Code,@AgendaId,@AgendaNo,@CommitteeId,@MeetingId,@DepartmentId,@SubjectTypeId,@ShortText,@AgendaType,@AgendaText,@AgendaTextPath,@ProposedResolution,@FilePath,@MgrComments,@ControllerComments,@CurrentStatus,@CreatedOn,@CreatedBy,@UpdatedOn,@UpdatedBy,@SubjectNo,@ActingUserId'
+       + CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_AddEditAgenda')), '') LIKE '%UpdateMail-Step37%' THEN ',@ChangedFields' ELSE '' END,
        ISNULL(STUFF((SELECT ',' + name FROM sys.parameters WHERE object_id = OBJECT_ID('dbo.spr_AddEditAgenda') ORDER BY parameter_id
                      FOR XML PATH(''), TYPE).value('.', 'VARCHAR(400)'), 1, 1, ''), 'none');
 INSERT INTO @T SELECT 'spr_AddEditAgendaByManager and ByController: the same names in the same order', 'same same',

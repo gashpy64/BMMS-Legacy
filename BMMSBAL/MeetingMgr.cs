@@ -20,6 +20,10 @@ namespace BMMSBAL
         public int Reason;
         public string ReasonDetail = string.Empty;
 
+        // Step ML1: the fields an agenda Update changed (BMMS-Fix-UpdateMail-Step37.sql), a comma list; "" when
+        // nothing changed; null when not asked (a new item, other procedures) or when step 37 is not installed
+        public string ChangedFields;
+
         public static MeetingChangeResult FromTable(DataTable dt)
         {
             if (dt == null || dt.Rows.Count == 0 || !dt.Columns.Contains("Reason"))
@@ -29,6 +33,8 @@ namespace BMMSBAL
             r.Result = Convert.ToInt32(dt.Rows[0]["Result"]);
             r.Reason = Convert.ToInt32(dt.Rows[0]["Reason"]);
             r.ReasonDetail = dt.Rows[0]["ReasonDetail"].ToString();
+            if (dt.Columns.Contains("ChangedFields") && dt.Rows[0]["ChangedFields"] != DBNull.Value)
+                r.ChangedFields = dt.Rows[0]["ChangedFields"].ToString();
             return r;
         }
 

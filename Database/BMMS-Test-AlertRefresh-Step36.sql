@@ -112,8 +112,9 @@ INSERT INTO @T SELECT 'spr_AddEditAgenda keeps the text of step 20 and has no ma
      + CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_AddEditAgenda')), '') LIKE '%CommentAuthor-Step35%' THEN 'marker' ELSE 'no marker' END;
 INSERT INTO @T SELECT 'spr_UpdateAgendaByAgendaId (Approve / Reject) is not changed by step 36', 'no marker',
        CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateAgendaByAgendaId')), '') LIKE '%AlertRefresh-Step36%' THEN 'marker' ELSE 'no marker' END;
-INSERT INTO @T SELECT 'Parameter names in order: spr_AddEditAgenda; ByManager and ByController the same as spr_AddEditAgenda',
-       '@Code,@AgendaId,@AgendaNo,@CommitteeId,@MeetingId,@DepartmentId,@SubjectTypeId,@ShortText,@AgendaType,@AgendaText,@AgendaTextPath,@ProposedResolution,@FilePath,@MgrComments,@ControllerComments,@CurrentStatus,@CreatedOn,@CreatedBy,@UpdatedOn,@UpdatedBy,@SubjectNo,@ActingUserId; same same',
+INSERT INTO @T SELECT 'Parameter names in order: spr_AddEditAgenda (since step 37 plus @ChangedFields); ByManager and ByController the same as spr_AddEditAgenda',
+       '@Code,@AgendaId,@AgendaNo,@CommitteeId,@MeetingId,@DepartmentId,@SubjectTypeId,@ShortText,@AgendaType,@AgendaText,@AgendaTextPath,@ProposedResolution,@FilePath,@MgrComments,@ControllerComments,@CurrentStatus,@CreatedOn,@CreatedBy,@UpdatedOn,@UpdatedBy,@SubjectNo,@ActingUserId'
+       + CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_AddEditAgenda')), '') LIKE '%UpdateMail-Step37%' THEN ',@ChangedFields' ELSE '' END + '; same same',
        ISNULL(STUFF((SELECT ',' + name FROM sys.parameters WHERE object_id = OBJECT_ID('dbo.spr_AddEditAgenda') ORDER BY parameter_id
                      FOR XML PATH(''), TYPE).value('.', 'VARCHAR(400)'), 1, 1, ''), 'none') + '; '
      + CASE WHEN ISNULL(STUFF((SELECT ',' + name FROM sys.parameters WHERE object_id = OBJECT_ID('dbo.spr_AddEditAgendaByManager') ORDER BY parameter_id

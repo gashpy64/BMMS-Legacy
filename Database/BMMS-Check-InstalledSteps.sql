@@ -1,5 +1,5 @@
 /* ============================================================================
-   BMMS - Which numbered steps (README run order 1 to 24, 29, 30, 31, 33, 34, 35 and 36; step 23 is installed after step 28, steps 29, 30 and 31 last, step 33 after step D1, step 34 after step 33, step 35 after step 34, step 36 after step 35) and step D1 are installed
+   BMMS - Which numbered steps (README run order 1 to 24, 29, 30, 31, 33, 34, 35 and 36; step 23 is installed after step 28, steps 29, 30 and 31 last, step 33 after step D1, step 34 after step 33, step 35 after step 34, step 36 after step 35, step 37 after step 36) and step D1 are installed
    ----------------------------------------------------------------------------
    READ ONLY. It reads object definitions and constraint names; it creates,
    changes and deletes nothing, and it can run on BMMS as well as on a copy.
@@ -77,8 +77,20 @@
    before step 36 (the step 36 script stops otherwise). Re-running step 31
    or step 35 after step 36 removes step 36 (step 31 replaces all three
    procedures: Missing; step 35 replaces two of them: Partly), and so does a
-   re-run of step 16, 17, 18 or 20: run step 36 again. After
-   BMMS-Rollback-AlertRefresh-Step36.sql it reads Missing.
+   re-run of step 16, 17, 18 or 20: run step 36 again, then step 37. After
+   BMMS-Rollback-AlertRefresh-Step36.sql it reads Missing (roll back step 37
+   first).
+   Step 37 replaces the same three procedures (text of step 36, plus the
+   parameter @ChangedFields), adds spr_GetAgendaUpdateMailId and the
+   App_Setting row MailSenderUserId, and keeps the texts of steps 16, 17, 18,
+   20, 31, 35 and 36. The steps are installed in order: step 36 before
+   step 37 (the step 37 script stops otherwise). Re-running step 16, 17, 18,
+   20, 31, 35 or 36 after step 37 removes step 37 from one or more of the
+   three procedures (Partly): run step 37 again. After
+   BMMS-Rollback-UpdateMail-Step37.sql it reads Missing. The last grid shows
+   whether MailSenderUserId names an active Controller-role user and whether
+   the From Mail Id of SMTP Configuration is that user's address (step ML1;
+   the addresses are not shown).
    Step 32 is reserved and not built; it has no row.
    Step D1 (shown as step 100) replaces spr_DeleteMeetingByMeetingId, which
    no numbered script contains: it reads Missing only on a database restored
@@ -330,6 +342,15 @@ INSERT INTO @M
 SELECT 36, o.Name + ' (AlertRefresh-Step36)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%AlertRefresh-Step36%' THEN 1 ELSE 0 END
 FROM (VALUES ('spr_AddEditAgenda'), ('spr_AddEditAgendaByManager'), ('spr_AddEditAgendaByController')) o(Name);
 
+-- 37. BMMS-Fix-UpdateMail-Step37.sql, installed after step 36 (re-running step 16, 17, 18, 20, 31, 35 or 36 replaces one of its procedures)
+INSERT INTO @M
+SELECT 37, o.Name + ' (UpdateMail-Step37)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%UpdateMail-Step37%' THEN 1 ELSE 0 END
+FROM (VALUES ('spr_AddEditAgenda'), ('spr_AddEditAgendaByManager'), ('spr_AddEditAgendaByController'), ('spr_GetAgendaUpdateMailId')) o(Name);
+DECLARE @SenderRow INT = 0;
+IF (OBJECT_ID('dbo.App_Setting', 'U') IS NOT NULL)
+    EXEC sp_executesql N'SELECT @n = COUNT(*) FROM dbo.App_Setting WHERE SettingCode = ''MailSenderUserId''', N'@n INT OUTPUT', @n = @SenderRow OUTPUT;
+INSERT INTO @M VALUES (37, 'App_Setting MailSenderUserId', CASE WHEN @SenderRow > 0 THEN 1 ELSE 0 END);
+
 -- D1 (shown as step 100). BMMS-Fix-MeetingDelete-D1.sql; no numbered script contains spr_DeleteMeetingByMeetingId
 INSERT INTO @M VALUES
 (100, 'spr_DeleteMeetingByMeetingId (MeetingDelete-D1)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_DeleteMeetingByMeetingId')), '') LIKE '%MeetingDelete-D1%' THEN 1 ELSE 0 END);
@@ -362,11 +383,12 @@ INSERT INTO @Steps VALUES
 (24, 'BMMS-Fix-MeetingDates-Step24.sql', 'Missing after a re-run of step 16, 17 or 18: run step 24 again'),
 (29, 'BMMS-Fix-ResetDatabase-Step29.sql', 'the first text of step 29 (old default password seeds): run step 30 (it contains step 29), as the last step'),
 (30, 'BMMS-Fix-SmtpDefault-Step30.sql', 'step 3, 18, 21 or 29 was re-run: run step 30 again, as the last step (it restores the step 29 text too)'),
-(31, 'BMMS-Fix-UnicodeText-Step31.sql', 'step 6, 15, 16, 17, 18, 20 or 23 was re-run, or the original spr_UpdateActionItem came back: run step 31 again, as the last step, then steps 35 and 36'),
+(31, 'BMMS-Fix-UnicodeText-Step31.sql', 'step 6, 15, 16, 17, 18, 20 or 23 was re-run, or the original spr_UpdateActionItem came back: run step 31 again, as the last step, then steps 35, 36 and 37'),
 (33, 'BMMS-Fix-ManagerDepartment-Step33.sql', 'one of its two procedures was replaced: run step 33 again'),
 (34, 'BMMS-Fix-LoginName-Step34.sql', 'step 1 was re-run, or step 34 was rolled back (the column stays): run step 34 again'),
-(35, 'BMMS-Fix-CommentAuthor-Step35.sql', 'step 16, 17, 18, 20 or 31 was re-run: run step 35 again, then step 36'),
-(36, 'BMMS-Fix-AlertRefresh-Step36.sql', 'step 16, 17, 18, 20, 31 or 35 was re-run after step 36: run step 36 again (steps in order: 35 before 36)'),
+(35, 'BMMS-Fix-CommentAuthor-Step35.sql', 'step 16, 17, 18, 20 or 31 was re-run: run step 35 again, then steps 36 and 37'),
+(36, 'BMMS-Fix-AlertRefresh-Step36.sql', 'step 16, 17, 18, 20, 31 or 35 was re-run after step 36: run step 36 again, then step 37 (steps in order: 35 before 36)'),
+(37, 'BMMS-Fix-UpdateMail-Step37.sql', 'step 16, 17, 18, 20, 31, 35 or 36 was re-run after step 37: run step 37 again (steps in order: 36 before 37)'),
 (100, 'BMMS-Fix-MeetingDelete-D1.sql (step D1)', '');
 
 SELECT s.Step, s.Script,
@@ -386,6 +408,23 @@ SELECT m.Step, m.Marker AS MissingMarker
 FROM @M m
 WHERE m.Present = 0
 ORDER BY m.Step, m.Marker;
+
+-- Step ML1: the mail sender (read only; the addresses are not shown)
+DECLARE @SenderText VARCHAR(200) = 'step 37 not installed (no MailSenderUserId row)';
+IF (@SenderRow > 0 AND OBJECT_ID('dbo.SMTP_Master', 'U') IS NOT NULL AND OBJECT_ID('dbo.Roles', 'U') IS NOT NULL
+    AND COL_LENGTH('dbo.Users', 'IsSystem') IS NOT NULL AND COL_LENGTH('dbo.Users', 'AccountStatus') IS NOT NULL)
+    EXEC sp_executesql N'
+        DECLARE @v VARCHAR(250) = (SELECT SettingValue FROM dbo.App_Setting WHERE SettingCode = ''MailSenderUserId'');
+        DECLARE @mail VARCHAR(250);
+        IF (@v NOT LIKE ''%[^0-9]%'' AND LEN(@v) BETWEEN 1 AND 9)
+            SET @mail = (SELECT u.EmailId FROM dbo.Users u JOIN dbo.Roles r ON r.RoleId = u.RoleId
+                         WHERE u.UserId = CAST(@v AS INT) AND r.RoleCode = ''controller'' AND u.AccountStatus = 1 AND u.IsSystem = 0);
+        SET @t = CASE WHEN @mail IS NULL THEN ''MailSenderUserId "'' + ISNULL(@v, '''') + ''" is not an active Controller-role user: set it (README step ML1)''
+                      WHEN EXISTS (SELECT 1 FROM dbo.SMTP_Master WHERE LTRIM(RTRIM(ISNULL(FromMailId, ''''))) = LTRIM(RTRIM(@mail)))
+                           THEN ''user '' + @v + '': the From Mail Id of SMTP Configuration is this user''''s address''
+                      ELSE ''user '' + @v + '': the From Mail Id of SMTP Configuration is NOT this user''''s address (README step ML1)'' END;',
+        N'@t VARCHAR(200) OUTPUT', @t = @SenderText OUTPUT;
+SELECT @SenderText AS MailSender;
 
 SELECT DB_NAME() AS CurrentDatabase;
 GO
