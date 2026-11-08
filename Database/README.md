@@ -2566,9 +2566,31 @@ Browser checks on `BMMS_Test` (smtp4dev running):
 6. Check 1 as mgruser at AMA (To mgruser; Bcc the Controllers and the creator) and as the Controller at ACA (To the Controller; Bcc the Manager and the creator).
 7. Error log: no entry from these checks.
 
+## Step ML2a: the configured Bcc on every mail, no address twice (code only, no database script)
+
+Code:
+
+- BMMSBAL/Mail_Mgr.cs, SendWebEmail. The Bcc of SMTP Configuration is now added to every mail. Before, a caller that passed no Bcc (Reset Password, Notice, Send Mail) lost the configured copy, because the code then set the Bcc list to nothing. The Bcc list then drops an address that is already in it and an address that is also a To address, comparing without case (AddMailAddresses with the To list; a new ContainsAddress). The To list itself is unchanged. From, the login and the SMTP settings are unchanged.
+
+What each mail gets now:
+
+| Mail | To | Bcc |
+|---|---|---|
+| Agenda Created, Updated; Dashboard approve / reject; Agenda Finalisation reject | the person who acted | the configured Bcc and the recipients, each address once, none equal to the To |
+| Meeting Created / Updated | the person who saved | the configured Bcc and the other active users, each address once (accounts that share a mailbox get one copy) |
+| Reset Password | the user | the configured Bcc (new) |
+| Notice | each member, one mail each | the configured Bcc (new): the Bcc address gets one copy per member mail |
+| Send Mail | the typed addresses | the configured Bcc (new) |
+
+Browser checks on `BMMS_Test` (smtp4dev on port 25 of the web server; on SMTP Configuration set Bcc `copy@example.invalid`, and set it back afterwards):
+
+1. Reset Password for a user: the mail arrives, and copy@example.invalid is in its Bcc. Send Mail to test1@example.invalid: copy@example.invalid in the Bcc. Notice to a meeting with two members who have an address: two mails, each with copy@example.invalid in the Bcc.
+2. Addresses once: save a Meeting (all active users in the Bcc; several share gashpysoft@gmail.com): smtp4dev shows each address once in the Bcc, and the To address of the saver not again in the Bcc. A Controller approve (ACA), where the list includes the Controller who acted: the Controller's address is the To only. Set the configured Bcc to an address that is also a recipient: it appears once.
+3. Error log: no other entry from these checks.
+
 ## Known items for later steps
 
-- Since step ML1 an Update on Agenda Entry that changes something sends a mail (step 37). Followup and Followup Action Taken still only log a failed send (the page says nothing); Agenda Entry, Dashboard Approve and Reject, Agenda Finalisation, Meeting Master and Reset Password already show it.
+- Since step ML1 an Update on Agenda Entry that changes something sends a mail (step 37).
 - The mail goes out From the From Mail Id of SMTP Configuration; MailSenderUserId only records which account that should be (step ML1). Mail_Mgr does not use TLS (EnableSsl is not set), so only a server that accepts plain SMTP works (a local relay); Office 365 or Gmail on port 587 would need a code change.
 
 - Agenda Entry comment changes are not in the Audit Trail (spr_AddEditAgenda, spr_AddEditAgendaByManager and spr_AddEditAgendaByController audit no MgrComments or ControllerComments change; Approve and Reject do). On the backlog (Consultant, step UN4); step 35 records only who last saved the comment and when, not the old text.
@@ -2648,6 +2670,7 @@ Browser checks on `BMMS_Test` (smtp4dev running):
 - Agenda Entry Edit of an item deleted meanwhile (baseline): the Edit branch reads the first row of an empty table and the safe error page shows (only through a list older than the delete).
 - Agenda Finalisation Reject (step C1 left it): every item not yet approved gets Controller Comments "Agenda rejected by Controller on agenda finalized.", which replaces a comment the Controller wrote earlier; Manager Comments is not touched.
 - Report/Followup and Report/FollowupActionTaken have Send Mail code (btnSendMail_Click) that no button reaches: Followup.aspx has no Send Mail button and the one in FollowupActionTaken.aspx is commented out. If a button is restored: the Followup report attaches `~/Files/PDF/Followup.pdf`, which that page never writes (another meeting's file written by Followup Action Taken, or none), both pages always say "Mail was sent to all members." whatever the mail result, and the file name is shared by every user (steps M2 and M3 left them unchanged).
+- The Followup and Followup Action Taken mail handlers (btnSendMail_Click) are dead code, because no Send Mail button is rendered on either page (commented out in FollowupActionTaken.aspx:115-116, absent from Followup.aspx), so the mail inventory should not list those two as live (step ML2a).
 - Sitting Fees can still crash on a missing GetTotAmtByMemberId row, a deleted member, an empty From/To date, and a damaged logo file.
 - A damaged logo file makes the Notice, Agenda Approval and Sitting Fees PDFs throw (PDFUtilities.AddCompanyLogo).
 - Notice page shows no confirmation (fixed in step 28).

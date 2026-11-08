@@ -49,10 +49,10 @@ namespace BMMSBAL
 
                 pTo = ToMailId;
 
-                if (Bcc != null)
-                    pBcc += ", " + Bcc;
-                else
-                    pBcc = Bcc;
+                // Step ML2a: the Bcc of SMTP Configuration is always kept; the caller's Bcc is added when there is
+                // one (before, a caller without a Bcc - Reset Password, Notice, Send Mail - lost the configured copy)
+                if (!string.IsNullOrEmpty(Bcc))
+                    pBcc = pBcc.Trim() == string.Empty ? Bcc : pBcc + ", " + Bcc;
 
                 string pBody = BodyText;
 
@@ -67,9 +67,10 @@ namespace BMMSBAL
                     eMail.From = new MailAddress(pFromMailId);
                     AddMailAddresses(eMail.To, pTo);
 
+                    // Step ML2a: no address twice in the Bcc, and none that is already a To address (ignoring case)
                     if (pBcc != null)
                         if (pBcc.Trim() != string.Empty)
-                            AddMailAddresses(eMail.Bcc, pBcc);
+                            AddMailAddresses(eMail.Bcc, pBcc, eMail.To);
 
                     // UTF-8 for the subject, the body and the headers (step U1b): the rupee sign and Tamil
                     // and Hindi letters arrive as typed in every mail program
@@ -128,11 +129,34 @@ namespace BMMSBAL
         // Accepts addresses separated by comma or semicolon and skips blanks.
         private static void AddMailAddresses(MailAddressCollection addresses, string mailIds)
         {
+            AddMailAddresses(addresses, mailIds, null);
+        }
+
+        // Step ML2a: with Exclude (the To list of the mail), an address already in Addresses or in Exclude is
+        // skipped, compared ignoring case. Without Exclude every address is added, as before.
+        private static void AddMailAddresses(MailAddressCollection addresses, string mailIds, MailAddressCollection exclude)
+        {
             foreach (string mailId in mailIds.Split(new char[] { ',', ';' }))
             {
-                if (mailId.Trim() != string.Empty)
-                    addresses.Add(new MailAddress(mailId.Trim()));
+                if (mailId.Trim() == string.Empty)
+                    continue;
+
+                MailAddress address = new MailAddress(mailId.Trim());
+                if (exclude != null && (ContainsAddress(addresses, address) || ContainsAddress(exclude, address)))
+                    continue;
+
+                addresses.Add(address);
             }
+        }
+
+        private static bool ContainsAddress(MailAddressCollection addresses, MailAddress address)
+        {
+            foreach (MailAddress existing in addresses)
+            {
+                if (string.Equals(existing.Address, address.Address, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
         }
         #endregion
 
