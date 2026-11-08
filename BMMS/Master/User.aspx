@@ -178,9 +178,9 @@
                         <label class="wb-label" for="ctl00_ContentPlaceHolder1_txtEmailId">
                             Email Id <span class="wb-req">*</span></label>
                         <div class="wb-field">
-                            <asp:TextBox ID="txtEmailId" runat="server"></asp:TextBox>
+                            <asp:TextBox ID="txtEmailId" runat="server" MaxLength="50"></asp:TextBox>
                             <cc1:FilteredTextBoxExtender ID="FilteredTextBoxExtender1" runat="server" TargetControlID="txtEmailId"
-                                FilterMode="ValidChars" FilterType="Custom" ValidChars="abcdefghijklmnopqrstuvwxyz.@_">
+                                FilterMode="ValidChars" FilterType="Custom" ValidChars="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.@_-">
                             </cc1:FilteredTextBoxExtender>
                         </div>
                     </div>

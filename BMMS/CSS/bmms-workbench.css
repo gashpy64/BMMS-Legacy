@@ -788,6 +788,15 @@ body.wb .bmms-comment-by-line
 {
 	white-space: normal;
 }
+/* Step UM2: 8 px instead of 12 px left and right in the User Master grid, so Edit, Deactivate / Activate and Delete
+   stay inside the card (measured: the grid needs at least 1014 px with this padding, 1102 px without, for the
+   BMMS_Test users). No word is broken; a narrower window still scrolls in .wb-table-scroll. Only this grid. */
+#ctl00_ContentPlaceHolder1_grvUser > tbody > tr > th,
+#ctl00_ContentPlaceHolder1_grvUser > tbody > tr > td
+{
+	padding-left: 8px;
+	padding-right: 8px;
+}
 .wb-table > tbody > tr > th,
 .wb-table > tbody > tr > td
 {

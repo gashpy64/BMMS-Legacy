@@ -2609,6 +2609,45 @@ Browser checks on `BMMS_Test` (smtp4dev on port 25 of the web server; keep the e
 7. Created and Updated mails (the ML1 checks): the same layout as before; a Subject No line only for an item that has one.
 8. Error log: no entry from these checks.
 
+## Step UM1: User Master, Email Id accepts digits and capitals; at most 50 characters (markup only, no database script)
+
+Before, the Email Id box of User Master (Master/User.aspx) had a character filter (AjaxControlToolkit FilteredTextBoxExtender) that let only lowercase letters, `.`, `@` and `_` in: a digit, a capital or `-` was dropped while typing and removed from pasted text, so `user1@example.com` could not be entered. The filter now lets in a-z, A-Z, 0-9, `.`, `@`, `_` and `-`. `+` is not supported: it is still dropped, and the shared check emailValidation (JScript/Validation.js, unchanged) would refuse it. The browser check on Save is unchanged ("Invalid E-Mail Id", "EmailId is required field").
+
+The box now stops at 50 characters (MaxLength 50), the size of Users.EmailId and of the @EmailId parameter of spr_AddEditUser (varchar(50)); before, a longer address was cut to 50 by the database without a message. No address stored today is longer than 22 characters.
+
+Not changed: Member Master and SMTP Configuration (no character filter; the same emailValidation), System Settings (Organisation e-mail, step 19). There is no duplicate check on the e-mail (users may share a mailbox), and the duplicate Login ID check on Save is not case-sensitive, as before.
+
+Browser checks on `BMMS_Test` (Chrome and Edge):
+
+1. Add a user with `user1@example.com`: the 1 stays; Save; then edit and change it to `user22@test-mail.com`: saved as typed.
+2. Paste `First.Last99@Example.com`: nothing is removed; it saves.
+3. Paste an address of 51 characters: the box keeps 50.
+4. Type `+tag@example.com`: the + is dropped.
+5. `user1example.com` and `user1@@example.com`: "Invalid E-Mail Id"; an empty box: "EmailId is required field"; nothing is saved.
+6. Edit an existing user and Save: the address is unchanged.
+7. Error log: no entry from these checks.
+
+## Step UM2: User Master, Edit / Deactivate / Delete stay inside the card (CSS only, no database script)
+
+Cause: the User Master grid (11 columns) sits in a box that scrolls sideways (.wb-table-scroll) inside its card, which is at most 1166 px wide (#contentArea is at most 1200 px). Step G1 let its headings wrap, but an Email Id or Login ID has no space to wrap at, so with the BMMS_Test users the grid needs at least 1102 px. When the browser shows fewer than about 1140 px (a window that is not maximised, browser zoom, or Windows display scaling above 100%), the grid is wider than its card and the Delete column is cut off at the right edge until the box is scrolled.
+
+Change: BMMS/CSS/bmms-workbench.css, one rule after the G1 heading rule, for this grid only (#ctl00_ContentPlaceHolder1_grvUser): 8 px instead of 12 px left and right padding in the headings and cells. The grid then needs at least 1014 px, and no word is broken. Other grids and pages are unchanged.
+
+Why this option (measured with headless Edge on a copy of the grid with the live CSS, the 14 BMMS_Test users, at windows of 1366 and 1280 px and narrower): letting the cells break inside a word (overflow-wrap: anywhere), alone or together with the smaller padding, also fits, but it splits ordinary addresses such as gashpysoft@gmail.com and names in the middle even when the grid would fit, so it was not used. With the smaller padding the grid fits down to a content width of about 1060 px (also a 1366 px screen at 125% scaling), and nothing is split.
+
+Known limit: with a 35-character address without spaces (for example firstname.lastname.dept@example.com) the grid needs about 1107 px; under about 1150 px of content width the Delete column is cut off again until the box is scrolled. Every column can still be reached by scrolling.
+
+After deploying, reload User Master with Ctrl+F5 so the browser does not keep the old bmms-workbench.css.
+
+Browser checks on `BMMS_Test` (Chrome and Edge, 100% zoom, window 1366 px and 1280 px wide):
+
+1. User Master: Edit, Deactivate / Activate and Delete are fully visible on every row, with no sideways scroll bar; no address or name is broken inside a word.
+2. Add a test user with the address firstname.lastname.dept@example.com and the designation Assistant Manager: at 1366 and 1280 px the three links stay visible, the address is on one line.
+3. Edit, Deactivate / Activate (with its question) and Delete (on a test user) work; sorting by Email Id still shows the arrow next to its heading.
+4. A narrower window (about 1000 px): the grid scrolls sideways inside the card and every column can be reached.
+5. Member Master, Agenda Entry and Meeting Master look as before.
+6. Error log: no entry from these checks.
+
 ## Known items for later steps
 
 - Since step ML1 an Update on Agenda Entry that changes something sends a mail (step 37).
