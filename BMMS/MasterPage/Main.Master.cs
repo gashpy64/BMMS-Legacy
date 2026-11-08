@@ -61,7 +61,9 @@ namespace BMMS.MasterPage
         #endregion
 
         #region AlertCount
-        // Number shown next to "Alerts" in the header: the same list the DashBoard shows.
+        // Number shown next to "Alerts" in the header: the unread alerts of the list the DashBoard shows
+        // (spr_GetAlertByUserId returns StatusId = 1 only; unread is ReadStatus = 0, step AL1). The Dashboard
+        // list itself still shows read and unread alerts.
         protected int AlertCount
         {
             get
@@ -76,7 +78,8 @@ namespace BMMS.MasterPage
                     if (sm != null && sm.IsInAsyncPostBack)
                         return 0;
 
-                    return AlertMgr.GetAlertByUserId(Session["RoleCode"].ToString(), int.Parse(Session["UserId"].ToString())).Rows.Count;
+                    DataTable dtAlert = AlertMgr.GetAlertByUserId(Session["RoleCode"].ToString(), int.Parse(Session["UserId"].ToString()));
+                    return dtAlert.Select("ReadStatus = 0").Length;
                 }
                 catch (Exception ex)
                 {

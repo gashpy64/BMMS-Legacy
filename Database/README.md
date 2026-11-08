@@ -73,6 +73,10 @@ Step 35 is installed after step 34:
 
 35. BMMS-Fix-CommentAuthor-Step35.sql      (agenda comments, step UN4: spr_UpdateAgendaByAgendaId (Approve / Reject), spr_AddEditAgendaByManager and spr_AddEditAgendaByController (Agenda Entry) write MgrApprovedBy / MgrApprovedDate and ControllerApprovedBy / ControllerApprovedDate: who last saved the comment or recorded the decision, and when; on an Agenda Entry edit only when that role's comment text changes; parameters unchanged; the existing rows stay NULL; BMMS-Rollback-CommentAuthor-Step35.sql restores the step 31 text and keeps the values written; re-run step 35 after re-running step 16, 17, 18, 20 or 31)
 
+Step 36 is installed after step 35 (the steps are installed in order; the step 36 script stops when step 35 is not installed):
+
+36. BMMS-Fix-AlertRefresh-Step36.sql       (agenda alerts, step AL1: spr_AddEditAgenda, spr_AddEditAgendaByManager and spr_AddEditAgendaByController (Agenda Entry, Update): when the Update changes a saved field, the item's alert is unread again (ReadStatus 0) and shown again (StatusId 1) for every recipient except the acting user; an Update without a change leaves it; no alert row is added, Alert_Master and the e-mails unchanged; parameters unchanged; BMMS-Rollback-AlertRefresh-Step36.sql restores the texts of steps 31 and 35 and keeps the alerts already refreshed; re-running step 31 or 35 (or 16, 17, 18, 20) after step 36 removes step 36: run step 36 again)
+
 On a new database (restored from the baseline, not `BMMS`), after step 30: `EXEC dbo.spr_sys_SetSmtpDefault @ConfirmDatabaseName = N'<the database name>';` (Result 1). The restored row would otherwise keep mailing through whatever server it names. Never on `BMMS`: it keeps its real settings.
 
 Steps 1 to 18 are installed and verified on the local `BMMS` (steps 10, 11 and 13 on 2026-10-15). Steps 1 to 12 are applied to `BMMS_bak1` (step 13 too, if it was run there as its section says). Steps 1 to 22 are installed on `BMMS_Test` and `BMMS` (tags organisation-settings-19, member-types-21, agenda-routing-20, minutes-gating-22). Step 24 is tagged meeting-dates-24; steps 25, 26 and 28 are code only (step 28 also fixed the error log). Step 23 is written and not yet installed anywhere: install it after step 28, on `BMMS_Test` first (see its section). Step 29 is installed on `BMMS_Test`, `BMMS_Quality` and `BMMS` (Consultant, 2026-10-22). Step 30 is written and not yet installed anywhere: install it after step 29 (see its section). BMMS-Check-InstalledSteps.sql shows the real state of any database.
@@ -126,10 +130,11 @@ Do NOT run BMMS-Test-ResetDatabase.sql on `BMMS`. It refuses to, by name.
 ## Test and check scripts
 
 - BMMS-Check-Orphans.sql                  (read-only check of candidate foreign keys, and of every user-id column)
-- BMMS-Check-InstalledSteps.sql           (read-only: which of steps 1 to 24, 29, 30, 31, 33, 34 and 35 and step D1 (shown as step 100) are installed in the selected database, for step 18 whether exactly one user is the system account, for step 19 whether the 12 setting rows exist, and for step 21 whether types 2, 3 and 6 are reserved; allowed on `BMMS`)
+- BMMS-Check-InstalledSteps.sql           (read-only: which of steps 1 to 24, 29, 30, 31, 33, 34, 35 and 36 and step D1 (shown as step 100) are installed in the selected database, for step 18 whether exactly one user is the system account, for step 19 whether the 12 setting rows exist, and for step 21 whether types 2, 3 and 6 are reserved; allowed on `BMMS`)
 - BMMS-Check-UserNames.sql                (read-only, step UN-data: every user with LoginName, UserName, role, department, active flag and the problems of the name: blank name, name equals login, name is a role word (every RoleName and RoleCode in Roles; the words are listed), duplicate name, duplicate login; then the counts per problem; allowed on `BMMS`)
 - BMMS-Test-LoginName-Step34.sql          (tests for step 34: the column, the marker, the unchanged parameters, a login of mgruser writes its login ID and closes the earlier rows, an id with no user row writes NULL, and nothing is left; 7 checks; BMMS_Test only; inside a transaction that is rolled back, only the identity counter moves on)
 - BMMS-Test-CommentAuthor-Step35.sql     (tests for step 35: the marker on the 3 procedures and the texts of steps 16, 17, 18, 20 and 31 kept, the parameters unchanged; a User's save writes no who and when; Approve and Reject of the Manager and the Controller (also with an empty comment, and the reject of Agenda Finalization) write the acting user and the time of their own role only; a refused call writes nothing; a new item of a Manager / the Controller writes that role's who and when; an edit only when that role's comment changes (case and a trailing space count, NULL and empty are the same), never for the other role's comment; View_Agenda returns them; rows outside the test unchanged; 28 checks; BMMS_Test only; inside a transaction that is rolled back, only the identity counters move on)
+- BMMS-Test-AlertRefresh-Step36.sql      (tests for step 36: the marker on the 3 procedures, the texts of steps 16, 17, 18, 20, 31 and 35 kept, the parameters unchanged; an Update on Agenda Entry by a User (at AC, and on an item sent straight to the Controllers), a Manager (at AMA, the reported case, and at AMR) and the Controller (at AMA, ACA and ACR) marks the alert unread for every other recipient; no change refreshes nothing; NULL to a value and back, a trailing space, a change of case, of Subject No and of department count; NULL and empty are the same; the acting user's own row unchanged; a removed alert comes back; spr_GetAlertByUserId lists it unread; Alert_Master unchanged; a refused Update refreshes nothing; rows outside the test unchanged; 37 checks; BMMS_Test only; inside a transaction that is rolled back, only the identity counters move on)
 - BMMS-Test-Delete-Procedures.sql         (delete-procedure tests for the master tables; deletes real unreferenced rows, inside a transaction that is rolled back. With step 21 installed the member type part passes an active Admin, also tries a reserved type (expect Reason 7) and deletes a free type, adding one inside the transaction when none is unreferenced)
 - BMMS-Test-FK-Procedures.sql             (tests for steps 6 to 9; rolled back)
 - BMMS-Test-UserDelete.sql                (tests for steps 10 and 11, with step 13 installed: user delete rules, one test per protected column, one per key; rolled back)
@@ -2392,7 +2397,105 @@ UPDATE Users SET UserName = 'Gopinath' WHERE LoginName = 'ituser';
 12. Last, optional (it finalizes the agenda of the test meeting and sends the rejection mails): depuser adds a third item, mgruser approves it; Controller, Agenda Finalization, the test meeting, Finalize. The third item is rejected with "Agenda rejected by Controller on agenda finalized."; on Agenda Entry: `Controller's comment: Venkat, <now>`.
 13. Error log: no entry from these checks.
 
+## Step AL1: a changed agenda item alerts the next approver again; "Alerts (n)" counts unread alerts (database script step 36 and code; test script for BMMS_Test)
+
+Before step 36 an Update on Agenda Entry never touched the alerts. A Manager who changed the comment of an item they had already approved (AMA) left the Controller's alert as read: on 2026-11-08 on BMMS_Test, item C02-00003-003 had MgrApprovedDate 18:24:58 (the comment change) while the Controller who had opened the alert still had it read. A User's edit of an item waiting for the Manager (AC) left the Manager's alert as read too. Approve and Reject on the Dashboard (spr_UpdateAgendaByAgendaId) already mark the alert unread for everyone except the person who acted.
+
+How the alerts work (unchanged): every agenda item has one Alert_Master row (SourceType 'Agenda', SourceTypeId the AgendaId) whose AlertTypeCode follows the item (AC, AMA, AMR, ACA, ACR), and one Alert_User_Map row per recipient with ReadStatus (0 unread, 1 read) and StatusId (1 shown, 0 removed with the Dashboard's delete button). Opening an alert on the Dashboard sets ReadStatus 1 (spr_UpdateAlertByUserId). spr_GetAlertByUserId lists a user's rows with StatusId 1; the Controller does not see ACA and ACR alerts, a Manager not AMA and AMR.
+
+Database, step 36 (BMMS-Fix-AlertRefresh-Step36.sql, marker AlertRefresh-Step36), the Update of the three Agenda Entry procedures:
+
+- Compared: the saved values before the Update with the values of the Update: SubjectTypeId, SubjectNo, ShortText, AgendaType, AgendaText, AgendaTextPath, ProposedResolution, FilePath, MgrComments, ControllerComments, and DepartmentId for the Controller (spr_AddEditAgendaByController is the only one that writes it). CurrentStatus is not compared (Agenda Entry always sends 'New'). Text is compared exactly, as in step 35: case and trailing spaces count; NULL and empty text are the same. For a number, NULL to a value and a value to NULL count as a change.
+- Something changed: every Alert_User_Map row of the item's alert except the acting user's own row gets ReadStatus 0 and StatusId 1, so it is unread again and shown again also for someone who had removed it. The acting user's row is not touched.
+- Nothing changed: the alert is left as it is.
+- Not changed: no alert row is added, so somebody who never had a row for the item (for example a Controller made active after the item reached AMA) still gets none; Alert_Master (CreatedOn, AlertTypeCode) is not changed, so the alert keeps its place in the list (sorted by CreatedOn); no e-mail is sent on Update; Save, Approve, Reject and a refused call behave as before. Parameters and result sets are unchanged.
+
+Who gets the refreshed alert (the role filters of spr_GetAlertByUserId decide who sees it):
+
+| Update by | Status | Unread again for |
+|---|---|---|
+| User | AC (waiting for the Manager) | the Manager, Admin |
+| User | AMA, sent straight to the Controllers (no manager, step 20) | the Controllers |
+| Manager, comment or text changed | AMA | the Controllers, the creator, Admin (the reported case) |
+| Manager | AMR | the creator, Admin |
+| Controller | ACA or ACR | the creator, the Manager, the other Controllers, Admin |
+| Controller | AC or AMA (comment without deciding) | the other Controllers, the Manager, Admin |
+
+A User cannot edit an item once the Manager has approved or rejected it, and a User or a Manager cannot once the Controller has decided (Agenda.aspx.cs, unchanged): a rejected item is not resubmitted from Agenda Entry, so step 36 has no rule for it.
+
+- Only lines are added to the three procedures: spr_AddEditAgenda keeps the text of step 31 (with steps 16, 17, 18 and 20), spr_AddEditAgendaByManager and spr_AddEditAgendaByController the text of step 35 (with steps 16, 17, 18 and 31); BMMS-Check-InstalledSteps.sql still reads those steps Installed. The step 36 procedures were built from the definitions installed on BMMS_Test on 2026-11-08, which are the step 31 and step 35 script texts exactly.
+- The steps are installed in order: step 35 before step 36; the step 36 script stops, changing nothing, when step 35 is not installed. Re-running step 31 or step 35 after step 36 removes step 36 (step 31 replaces all three procedures: step 36 reads Missing; step 35 replaces two: Partly, 1 of 3), and so does a re-run of step 16, 17, 18 or 20: run step 36 again. The rows of steps 31 and 35 in BMMS-Check-InstalledSteps.sql say so.
+- BMMS-Rollback-AlertRefresh-Step36.sql restores the step 31 text of spr_AddEditAgenda and the step 35 text of the other two, and keeps the alerts already refreshed (they become read when opened). Roll back step 36 before step 35.
+- BMMS-Test-AlertRefresh-Step36.sql: 37 checks, in a transaction that is rolled back (see the test list above). Desk-checked (batches, compatibility level 100); not yet run: record the results here after step 3 below.
+
+Rich text and "no change": an untouched editor posts back exactly the text it was given (RichTextEditor: HtmlCleaner output), and ReplaceRichTextFont, applied to the Proposed Resolution on every save, only renames style words (font-family:, color: ...) that HtmlCleaner has already removed, so it changes nothing in cleaned text. Checked on 2026-11-08 by running the page's save path (HtmlCleaner.Clean on load, on render and on post, Trim, ReplaceRichTextFont) over every stored row, read-only: a second untouched Update of any row changes nothing, every comment is already stable, and text with bold, italic, a bulleted and a numbered list and an alignment comes back the same. Only rows saved before step A1a would change once, on their first Update: on BMMS_Test 5 Agenda Text and 2 Proposed Resolution of 44 (items 2, 3, 384, 460 and 674), on BMMS 3 and 1 of 9 (items 2, 3 and 4). All of them are on a finalized agenda (AgendaStatus Close), where an Update is refused, so none can refresh an alert without a change.
+
+Code: BMMS/MasterPage/Main.Master.cs (AlertCount). "Alerts (n)" in the header now counts the unread alerts (ReadStatus 0) of the list the Dashboard shows (StatusId 1); before it counted read and unread. The label is unchanged ("Alerts (n)"), and the Dashboard list still shows read and unread alerts (bold is unread), so a user whose alerts are all read sees "Alerts (0)" above a list. Main.Master is not changed.
+
+What to run where (the Consultant runs the scripts):
+
+1. `BMMS_Test`: BMMS-Check-InstalledSteps.sql (step 35 Installed, step 36 Missing).
+2. `BMMS_Test`: BMMS-Fix-AlertRefresh-Step36.sql. It prints "Step 36 installed: ..." (a second run prints the same).
+3. `BMMS_Test`: BMMS-Test-AlertRefresh-Step36.sql (37 checks, all PASS; the last grid 0, 0, 0, 0). Then the tests of steps 35, 31 and 20 with step 36 installed (they still pass: step 36 only adds lines).
+4. BMMS-Check-InstalledSteps.sql again: step 36 reads Installed; steps 16, 17, 18, 20, 31 and 35 still Installed.
+5. Rebuild and deploy the build of step AL1 (Main.Master.cs).
+6. The browser checks below.
+7. `BMMS`, after the backup: steps 1, 2 and 4 (no test script on `BMMS`), then deploy the build.
+8. If step 36 must be undone: BMMS-Rollback-AlertRefresh-Step36.sql (it prints "Step 36 rolled back"), then BMMS-Check-InstalledSteps.sql (step 36 reads Missing, step 35 Installed).
+
+Browser checks on `BMMS_Test`, in Chrome and in Edge (keep the error log of the day open), with depuser (a User of mgruser), mgruser (Manager) and the Controller, on an open meeting dated from today on (add one as Controller if there is none, as in step UN4). Before each Update, open the alert as the person who will get it, so it is read (not bold); note the "Alerts (n)" number. Find the rows of the item with:
+
+```sql
+DECLARE @AgendaNo VARCHAR(50) = '<AgendaNo of the test item>';
+SELECT u.LoginName, r.RoleCode, m.ReadStatus, m.StatusId, am.AlertTypeCode, am.CreatedOn
+FROM Agenda a
+JOIN Alert_Master am ON am.SourceType = 'Agenda' AND am.SourceTypeId = a.AgendaId
+JOIN Alert_User_Map m ON m.AlertId = am.AlertId
+JOIN Users u ON u.UserId = m.UserId JOIN Roles r ON r.RoleId = u.RoleId
+WHERE a.AgendaNo = @AgendaNo
+ORDER BY r.RoleCode, u.LoginName;
+```
+
+1. depuser, Agenda Entry: a new item with a Proposed Resolution that has formatting: a bold word, a bulleted list of two lines and a numbered list of two lines. Save.
+2. mgruser opens the alert on the Dashboard (read). depuser, Agenda Entry, opens the item and clicks Update without changing anything: mgruser's alert stays read (not bold), "Alerts (n)" of mgruser unchanged; the query shows mgruser ReadStatus 1.
+3. depuser changes the Short Text and clicks Update: mgruser's alert is bold again and "Alerts (n)" one higher; the query shows ReadStatus 0 for mgruser (and Admin), AlertTypeCode and CreatedOn unchanged.
+4. mgruser approves on the Dashboard (AMA). The Controller opens the alert (read).
+5. mgruser, Agenda Entry, opens the item and clicks Update without changing anything (the formatted Proposed Resolution is in the box): the Controller's alert stays read. Then mgruser changes only the Manager's comment and clicks Update: the Controller's alert is bold again, "Alerts (n)" of the Controller one higher; mgruser's own row unchanged.
+6. The Controller opens the alert (read), approves on the Dashboard (ACA). depuser and mgruser open their alerts (read).
+7. The Controller, Agenda Entry, opens the item and clicks Update without changing anything: nobody's alert changes. Then the Controller changes only the Controller's comment and clicks Update: depuser's and mgruser's alerts are bold again; the Controller's own row unchanged.
+8. Removed alert: depuser removes the alert from the Dashboard (delete button); the Controller changes the comment again and clicks Update: the alert is back in depuser's list, bold.
+9. Header count: for a user with only read alerts the header shows "Alerts (0)" while the Dashboard still lists them; opening a bold alert lowers the number by one on the next page.
+10. Error log: no entry from these checks.
+
+If an Update without a change refreshes an alert (steps 2, 5 or 7): stop, do not install step 36 on `BMMS`, and find the field that changed. In SSMS, in one query window, before the Update:
+
+```sql
+DECLARE @AgendaNo VARCHAR(50) = '<AgendaNo of the test item>';
+IF OBJECT_ID('tempdb..#Before') IS NOT NULL DROP TABLE #Before;
+SELECT AgendaId, SubjectTypeId, SubjectNo, DepartmentId, ShortText, AgendaType, AgendaText, AgendaTextPath, ProposedResolution, FilePath, MgrComments, ControllerComments
+INTO #Before FROM Agenda WHERE AgendaNo = @AgendaNo;
+```
+
+then click Update without a change, and in the same window:
+
+```sql
+SELECT CASE WHEN ISNULL(b.ShortText, N'') COLLATE Latin1_General_BIN2 <> ISNULL(a.ShortText, N'') COLLATE Latin1_General_BIN2 OR DATALENGTH(ISNULL(b.ShortText, N'')) <> DATALENGTH(ISNULL(a.ShortText, N'')) THEN 'changed' ELSE '' END AS ShortText,
+       CASE WHEN ISNULL(b.AgendaText, N'') COLLATE Latin1_General_BIN2 <> ISNULL(a.AgendaText, N'') COLLATE Latin1_General_BIN2 OR DATALENGTH(ISNULL(b.AgendaText, N'')) <> DATALENGTH(ISNULL(a.AgendaText, N'')) THEN 'changed' ELSE '' END AS AgendaText,
+       CASE WHEN ISNULL(b.ProposedResolution, N'') COLLATE Latin1_General_BIN2 <> ISNULL(a.ProposedResolution, N'') COLLATE Latin1_General_BIN2 OR DATALENGTH(ISNULL(b.ProposedResolution, N'')) <> DATALENGTH(ISNULL(a.ProposedResolution, N'')) THEN 'changed' ELSE '' END AS ProposedResolution,
+       CASE WHEN ISNULL(b.MgrComments, N'') COLLATE Latin1_General_BIN2 <> ISNULL(a.MgrComments, N'') COLLATE Latin1_General_BIN2 OR DATALENGTH(ISNULL(b.MgrComments, N'')) <> DATALENGTH(ISNULL(a.MgrComments, N'')) THEN 'changed' ELSE '' END AS MgrComments,
+       CASE WHEN ISNULL(b.ControllerComments, N'') COLLATE Latin1_General_BIN2 <> ISNULL(a.ControllerComments, N'') COLLATE Latin1_General_BIN2 OR DATALENGTH(ISNULL(b.ControllerComments, N'')) <> DATALENGTH(ISNULL(a.ControllerComments, N'')) THEN 'changed' ELSE '' END AS ControllerComments,
+       CASE WHEN ISNULL(b.FilePath, N'') COLLATE Latin1_General_BIN2 <> ISNULL(a.FilePath, N'') COLLATE Latin1_General_BIN2 OR ISNULL(b.AgendaTextPath, N'') COLLATE Latin1_General_BIN2 <> ISNULL(a.AgendaTextPath, N'') COLLATE Latin1_General_BIN2 THEN 'changed' ELSE '' END AS Files,
+       CASE WHEN ISNULL(b.SubjectNo, -1) <> ISNULL(a.SubjectNo, -1) OR ISNULL(b.SubjectTypeId, -1) <> ISNULL(a.SubjectTypeId, -1) OR ISNULL(b.DepartmentId, -1) <> ISNULL(a.DepartmentId, -1) OR ISNULL(b.AgendaType, '') <> ISNULL(a.AgendaType, '') THEN 'changed' ELSE '' END AS Numbers,
+       b.ProposedResolution AS ProposedBefore, a.ProposedResolution AS ProposedAfter
+FROM #Before b JOIN Agenda a ON a.AgendaId = b.AgendaId;
+DROP TABLE #Before;
+```
+
+Send the result (and, for a text column, the two values) to the Consultant. The page is then fixed so that an untouched value is written back exactly; step 36 itself stays as it is. Until then the step can be rolled back on `BMMS_Test` (step 8 above) if the extra alerts disturb other tests.
+
 ## Known items for later steps
+
+- An Update on Agenda Entry sends no e-mail; only the alert is refreshed (step AL1, Consultant's decision). Approve, Reject and Save send their mails as before.
 
 - Agenda Entry comment changes are not in the Audit Trail (spr_AddEditAgenda, spr_AddEditAgendaByManager and spr_AddEditAgendaByController audit no MgrComments or ControllerComments change; Approve and Reject do). On the backlog (Consultant, step UN4); step 35 records only who last saved the comment and when, not the old text.
 - Agenda.MgrApprovedBy / MgrApprovedDate and ControllerApprovedBy / ControllerApprovedDate keep their names but, from step 35, hold whoever last saved the comment or recorded the decision (step UN4). A rename would touch View_Agenda and every reader; not planned.
