@@ -720,7 +720,9 @@ namespace BMMS.Master
                     myAgenda.AgendaText = strAgendaText;
 
                     // Step N2: the file names the server set, never the posted hidden fields
-                    myAgenda.AgendaTextPath = ViewState[AgendaTextPathKey] == null ? string.Empty : ViewState[AgendaTextPathKey].ToString();
+                    // Step ML1b: an Entry item keeps no agenda text file name (the file stays on disk, as for a replaced file)
+                    myAgenda.AgendaTextPath = rdoAgendaType.SelectedValue == "Entry" || ViewState[AgendaTextPathKey] == null
+                        ? string.Empty : ViewState[AgendaTextPathKey].ToString();
 
                     myAgenda.ProposedResolution = HTML_Report.ReplaceRichTextFont(ftxtProposedResolution.Text.Trim());
 

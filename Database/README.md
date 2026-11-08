@@ -2550,6 +2550,22 @@ Browser checks on `BMMS_Test` (smtp4dev running; keep the error log of the day o
 6. Stop smtp4dev; the Controller changes the comment, Update: the page shows "The agenda item was updated, but the mail could not be sent. ..." as a warning, the item shows the new comment (saved), and the error log has the entry. Start smtp4dev again.
 7. Error log: no other entry from these checks.
 
+## Step ML1b: an Entry item keeps no agenda text file name (code only, no database script)
+
+Before, Agenda Entry saved the stored agenda text file name (AgendaTextPath) whatever the Agenda Type: an item saved as Upload with a PDF, then switched to Entry and updated, kept the old file name, so the Updated mail (step ML1) said only "Agenda Type - Updated". The same happened on a new item when a PDF was uploaded and the type switched to Entry before Save.
+
+Code: BMMS/Master/Agenda.aspx.cs, btnSave_Click. Save and Update send an empty AgendaTextPath when the Agenda Type is Entry, for the User, the Manager and the Controller alike; Upload sends the file name as before. It is decided at Save, not when the type is switched, so switching to Entry and back to Upload before saving keeps the uploaded file. No procedure changes: steps 36 and 37 already treat a file name changed to empty as a change, so the alert is refreshed and the mail lists "Agenda Text file - Removed"; the old audit code writes one Audit Trail row AgendaTextPath (old name to empty). The PDF stays in Files/AgendaText/, as for a replaced file or an unticked attachment (Agenda Entry deletes no files). Every page that reads AgendaTextPath (Dashboard, Agenda Approval print, the Agenda Details report, Agenda Entry Edit) looks at the Agenda Type first, so nothing else changes for an Entry item. The typed Agenda Text of an Upload item is still kept, as before.
+
+Browser checks on `BMMS_Test` (smtp4dev running):
+
+1. An Upload item with a PDF: switch to Entry, type text, Update: the mail lists Agenda Type - Updated, Agenda Text - Updated and Agenda Text file - Removed; in SSMS AgendaTextPath is empty; the PDF is still in Files/AgendaText/; the Audit Trail has one AgendaTextPath row.
+2. The same item back to Upload, attach a PDF, Update: Agenda Type - Updated and Agenda Text file - Attached; the View link opens the new PDF.
+3. Update without a change (an Entry and an Upload item): no mail.
+4. A plain Entry item, Short Text changed: no file line in the mail.
+5. New item: upload a PDF, switch to Entry, Save: AgendaTextPath is empty; the Created mail as before.
+6. Check 1 as mgruser at AMA (To mgruser; Bcc the Controllers and the creator) and as the Controller at ACA (To the Controller; Bcc the Manager and the creator).
+7. Error log: no entry from these checks.
+
 ## Known items for later steps
 
 - Since step ML1 an Update on Agenda Entry that changes something sends a mail (step 37). Followup and Followup Action Taken still only log a failed send (the page says nothing); Agenda Entry, Dashboard Approve and Reject, Agenda Finalisation, Meeting Master and Reset Password already show it.
