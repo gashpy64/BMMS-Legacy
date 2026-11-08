@@ -514,6 +514,24 @@ body.wb td.wb-user-cell
 	overflow-wrap: anywhere;
 	word-wrap: break-word;
 }
+/* Step UN4: who wrote an agenda comment and when, after its caption (Agenda Entry: ": Venkat, 11-Oct-2026 16:49");
+   muted and not bold. A long name without a space breaks inside the word instead of widening the column */
+body.wb .bmms-comment-by
+{
+	color: var(--wb-text-muted);
+	font-size: 13px;
+	font-weight: 400;
+	overflow-wrap: anywhere;
+	word-wrap: break-word;
+}
+/* Step UN4, Dashboard: on its own line under the label of the narrow label column, smaller */
+body.wb .bmms-comment-by-line
+{
+	display: block;
+	margin-top: 2px;
+	font-size: 12px;
+	line-height: 16px;
+}
 .wb-page input[type="text"]:hover,
 .wb-page input[type="password"]:hover,
 .wb-page select:hover,

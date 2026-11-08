@@ -488,6 +488,15 @@ namespace BMMS.DashBoard {
         protected global::System.Web.UI.WebControls.GridView grvAttachedFiles;
         
         /// <summary>
+        /// lblManagerCommentBy control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblManagerCommentBy;
+        
+        /// <summary>
         /// ftxtManagerComments control.
         /// </summary>
         /// <remarks>
@@ -495,6 +504,15 @@ namespace BMMS.DashBoard {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::BMMS.Controls.RichTextEditor ftxtManagerComments;
+        
+        /// <summary>
+        /// lblControllerCommentBy control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblControllerCommentBy;
         
         /// <summary>
         /// ftxtControllerComments control.

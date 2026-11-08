@@ -335,6 +335,15 @@ namespace BMMS.Master {
         protected global::System.Web.UI.WebControls.Panel pnlManagerComments;
         
         /// <summary>
+        /// lblManagerCommentBy control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblManagerCommentBy;
+        
+        /// <summary>
         /// ftxtManagerComments control.
         /// </summary>
         /// <remarks>
@@ -351,6 +360,15 @@ namespace BMMS.Master {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Panel pnlControllerComments;
+        
+        /// <summary>
+        /// lblControllerCommentBy control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblControllerCommentBy;
         
         /// <summary>
         /// ftxtControllerComments control.

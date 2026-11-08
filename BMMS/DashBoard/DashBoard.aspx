@@ -474,19 +474,22 @@
                                         </div>
                                     </div>
                                     <div class="divRow">
+                                        <%-- Step UN4: who wrote the comment and when, on its own line under the label (set and encoded in the code) --%>
                                         <div class="divRowLeft" style="width: 165px;">
-                                            Manager Comments :
+                                            Manager's comment :
+                                            <asp:Label ID="lblManagerCommentBy" runat="server" CssClass="bmms-comment-by bmms-comment-by-line" />
                                         </div>
                                         <div class="divRowRight" style="width: 550px;">
-                                            <bmms:RichTextEditor ID="ftxtManagerComments" runat="server" Width="550px" Height="100px" Label="Manager Comments" />
+                                            <bmms:RichTextEditor ID="ftxtManagerComments" runat="server" Width="550px" Height="100px" Label="Manager's comment" />
                                         </div>
                                     </div>
                                     <div class="divRow">
                                         <div class="divRowLeft" style="width: 165px;">
-                                            Controller Comments :
+                                            Controller's comment :
+                                            <asp:Label ID="lblControllerCommentBy" runat="server" CssClass="bmms-comment-by bmms-comment-by-line" />
                                         </div>
                                         <div class="divRowRight" style="width: 550px;">
-                                            <bmms:RichTextEditor ID="ftxtControllerComments" runat="server" Width="550px" Height="100px" Label="Controller Comments" />
+                                            <bmms:RichTextEditor ID="ftxtControllerComments" runat="server" Width="550px" Height="100px" Label="Controller's comment" />
                                         </div>
                                     </div>
                                 </div>

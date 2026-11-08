@@ -69,6 +69,10 @@ Step 34 is installed after step 33:
 
 34. BMMS-Fix-LoginName-Step34.sql          (access log, step UN2 (names): adds Audit_Trial_Login.Login_Name, VARCHAR(50) NULL; spr_RecordLoginByUserId of step 1 also writes the login ID (Users.LoginName, read by @UserId) into the new row of a successful login, parameters unchanged; the existing rows stay NULL; BMMS-Rollback-LoginName-Step34.sql restores the step 1 procedure and keeps the column; either order with the build of step UN2 (names): see its section)
 
+Step 35 is installed after step 34:
+
+35. BMMS-Fix-CommentAuthor-Step35.sql      (agenda comments, step UN4: spr_UpdateAgendaByAgendaId (Approve / Reject), spr_AddEditAgendaByManager and spr_AddEditAgendaByController (Agenda Entry) write MgrApprovedBy / MgrApprovedDate and ControllerApprovedBy / ControllerApprovedDate: who last saved the comment or recorded the decision, and when; on an Agenda Entry edit only when that role's comment text changes; parameters unchanged; the existing rows stay NULL; BMMS-Rollback-CommentAuthor-Step35.sql restores the step 31 text and keeps the values written; re-run step 35 after re-running step 16, 17, 18, 20 or 31)
+
 On a new database (restored from the baseline, not `BMMS`), after step 30: `EXEC dbo.spr_sys_SetSmtpDefault @ConfirmDatabaseName = N'<the database name>';` (Result 1). The restored row would otherwise keep mailing through whatever server it names. Never on `BMMS`: it keeps its real settings.
 
 Steps 1 to 18 are installed and verified on the local `BMMS` (steps 10, 11 and 13 on 2026-10-15). Steps 1 to 12 are applied to `BMMS_bak1` (step 13 too, if it was run there as its section says). Steps 1 to 22 are installed on `BMMS_Test` and `BMMS` (tags organisation-settings-19, member-types-21, agenda-routing-20, minutes-gating-22). Step 24 is tagged meeting-dates-24; steps 25, 26 and 28 are code only (step 28 also fixed the error log). Step 23 is written and not yet installed anywhere: install it after step 28, on `BMMS_Test` first (see its section). Step 29 is installed on `BMMS_Test`, `BMMS_Quality` and `BMMS` (Consultant, 2026-10-22). Step 30 is written and not yet installed anywhere: install it after step 29 (see its section). BMMS-Check-InstalledSteps.sql shows the real state of any database.
@@ -122,9 +126,10 @@ Do NOT run BMMS-Test-ResetDatabase.sql on `BMMS`. It refuses to, by name.
 ## Test and check scripts
 
 - BMMS-Check-Orphans.sql                  (read-only check of candidate foreign keys, and of every user-id column)
-- BMMS-Check-InstalledSteps.sql           (read-only: which of steps 1 to 24, 29, 30, 31, 33 and 34 and step D1 (shown as step 100) are installed in the selected database, for step 18 whether exactly one user is the system account, for step 19 whether the 12 setting rows exist, and for step 21 whether types 2, 3 and 6 are reserved; allowed on `BMMS`)
+- BMMS-Check-InstalledSteps.sql           (read-only: which of steps 1 to 24, 29, 30, 31, 33, 34 and 35 and step D1 (shown as step 100) are installed in the selected database, for step 18 whether exactly one user is the system account, for step 19 whether the 12 setting rows exist, and for step 21 whether types 2, 3 and 6 are reserved; allowed on `BMMS`)
 - BMMS-Check-UserNames.sql                (read-only, step UN-data: every user with LoginName, UserName, role, department, active flag and the problems of the name: blank name, name equals login, name is a role word (every RoleName and RoleCode in Roles; the words are listed), duplicate name, duplicate login; then the counts per problem; allowed on `BMMS`)
 - BMMS-Test-LoginName-Step34.sql          (tests for step 34: the column, the marker, the unchanged parameters, a login of mgruser writes its login ID and closes the earlier rows, an id with no user row writes NULL, and nothing is left; 7 checks; BMMS_Test only; inside a transaction that is rolled back, only the identity counter moves on)
+- BMMS-Test-CommentAuthor-Step35.sql     (tests for step 35: the marker on the 3 procedures and the texts of steps 16, 17, 18, 20 and 31 kept, the parameters unchanged; a User's save writes no who and when; Approve and Reject of the Manager and the Controller (also with an empty comment, and the reject of Agenda Finalization) write the acting user and the time of their own role only; a refused call writes nothing; a new item of a Manager / the Controller writes that role's who and when; an edit only when that role's comment changes (case and a trailing space count, NULL and empty are the same), never for the other role's comment; View_Agenda returns them; rows outside the test unchanged; 28 checks; BMMS_Test only; inside a transaction that is rolled back, only the identity counters move on)
 - BMMS-Test-Delete-Procedures.sql         (delete-procedure tests for the master tables; deletes real unreferenced rows, inside a transaction that is rolled back. With step 21 installed the member type part passes an active Admin, also tries a reserved type (expect Reason 7) and deletes a free type, adding one inside the transaction when none is unreferenced)
 - BMMS-Test-FK-Procedures.sql             (tests for steps 6 to 9; rolled back)
 - BMMS-Test-UserDelete.sql                (tests for steps 10 and 11, with step 13 installed: user delete rules, one test per protected column, one per key; rolled back)
@@ -2279,8 +2284,118 @@ Regression checks on `BMMS_Test` (the page must behave as before):
 10. Unchanged: login, Change Password (the old password is checked) and Reset Password (the details box) work as before.
 11. Error log: no entry from these checks.
 
+## Step UN4: comment captions show who wrote the comment and when (database script step 35 and code; test script for BMMS_Test)
+
+The only comments in the application are the Manager's comment and the Controller's comment of an agenda item (Agenda.MgrComments, Agenda.ControllerComments). They are shown on Agenda Entry (an item opened for editing) and on the Dashboard (the agenda panel of an alert). No other page, print or PDF shows them: Minutes Update, Confirmation and Finalization have the Proposed and Actual Resolution, which are not comments, and the approval print and PDF (AP1) print the Short Text and the Proposed Resolution only. Mails (step UN5) and the alerts and Pending lists (step UN6) are not changed in step UN4.
+
+- Caption, Agenda Entry (one line): `Manager's comment: MohanKumar, 11-Oct-2026 16:49` and `Controller's comment: Venkat, 11-Oct-2026 16:49`. The label stays bold; the name and the time follow it, muted and not bold.
+- Caption, Dashboard: the label `Manager's comment :` / `Controller's comment :` in the label column as before, and the name and the time on their own line under it, smaller and muted (12 px). A long name without a space breaks inside the word, so the label column keeps its width.
+- The name alone (Common.UserCaptionName): the person's name (Users.UserName), the login ID only when the name is blank, " (inactive)" added for an inactive account: `Shravankumar (inactive), 02-Nov-2026 10:15`. A user id with no user row shows `(unknown user)` (UserMgr.UnknownUserText); spr_DeleteUserByUserId already refuses to delete a user named in these columns, so this needs a change by hand in the database.
+- The date and time: `dd-MMM-yyyy HH:mm`, as System Settings shows "Last changed by ... on ...", in English month names whatever the server culture. The time is the database server's clock (GETDATE()).
+- A comment saved before step 35 has no who and when: the caption is the label alone (`Controller's comment`, and on the Dashboard nothing under the label). They are not filled in from the Audit Trail: comments saved on Agenda Entry and the comments of a Manager's or the Controller's own new item were never audited, and a match by agenda number and text would be partial (on 2026-11-07, BMMS_Test: 9 of 11 Manager and 12 of 16 Controller comments; BMMS: 2 of 2 and 2 of 7).
+- The name is HTML-encoded by the page (HttpUtility.HtmlEncode in Agenda.aspx.cs and DashBoard.aspx.cs, ShowCommentCaptions), so a name such as `A&B <i>x</i> O'Neil "Q"` shows as plain text. The editor's accessible name (its aria-label) is the whole caption on one line.
+- An approval or a rejection with an empty comment still shows the name and the time: they record the decision.
+
+Database, step 35 (BMMS-Fix-CommentAuthor-Step35.sql, marker CommentAuthor-Step35). The columns MgrApprovedBy, MgrApprovedDate, ControllerApprovedBy and ControllerApprovedDate exist in Agenda and View_Agenda (so spr_GetAgendaByAgendaId returns them), but no procedure wrote them: on 2026-11-07 they were NULL in every row of BMMS_Test (38 items) and BMMS (9). From step 35 they hold whoever last saved the comment or recorded the decision, not only an approver (the column names stay):
+
+- spr_UpdateAgendaByAgendaId (Dashboard Approve / Reject, and the reject of Agenda Finalization): the Manager's decision sets MgrApprovedBy = @UpdatedBy and MgrApprovedDate = GETDATE() (the same time as UpdatedOn); the Controller's decision sets the Controller's two columns. Always, also with an empty comment.
+- spr_AddEditAgendaByManager / spr_AddEditAgendaByController, Save (a new item of a Manager, of the Controller): the item is saved as approved by that role, so that role's two columns are set (@ActingUserId, GETDATE()), also with an empty comment.
+- The same two procedures, Update (Agenda Entry): only when the text of that role's own comment changes. The comparison is exact (case and trailing spaces count; NULL and empty text are the same). The other role's comment, which the page writes back unchanged (step C1), never sets anything. A save without a change keeps the who and when.
+- spr_AddEditAgenda (a User, the Admin and the other roles on Agenda Entry): unchanged; it writes both comments back as saved.
+- Parameters and result sets are unchanged, so the build before step UN4 works with step 35, and the build of step UN4 works without it (the captions then show the label alone).
+- Only lines are added to the three procedures: the texts of steps 16, 17, 18, 20 and 31 are kept, and BMMS-Check-InstalledSteps.sql still reads those steps Installed. Re-running step 16, 17, 18, 20 or 31 afterwards brings back an older text: step 35 then reads Partly or Missing; run step 35 again (the step 31 row now says so).
+- An untouched comment is saved back exactly: an editor that was not changed posts the text it was given (HtmlCleaner output), and every stored comment on BMMS_Test (27) and BMMS (9) is already unchanged by HtmlCleaner, so a save without a change does not count as a change.
+- Consequence: spr_DeleteUserByUserId refuses to delete a user named in MgrApprovedBy or ControllerApprovedBy (as before step 35, when nobody was). From step 35 every Manager and Controller who decides or comments is named there, so they can be deactivated but not deleted.
+- BMMS-Rollback-CommentAuthor-Step35.sql restores the step 31 text of the three procedures (the definitions installed on BMMS_Test and BMMS before step 35 are the step 31 text exactly) and keeps the who and when already written; later saves leave them as they are, so a caption may then show an older name and time than the last change of a comment. To clear them too (they were NULL in every row before step 35): `UPDATE Agenda SET MgrApprovedBy = NULL, MgrApprovedDate = NULL, ControllerApprovedBy = NULL, ControllerApprovedDate = NULL;`
+- BMMS-Test-CommentAuthor-Step35.sql: 28 checks, in a transaction that is rolled back. On a restored copy of BMMS_Test (2026-11-07): Fix twice, Test 28 PASS; the tests of steps 31 (41), 20 (56) and 16 (100) PASS with step 35 installed; Rollback twice gives the live definitions exactly; Fix again, Test 28 PASS. The message "Null value is eliminated by an aggregate" comes from the procedures (the step 31 test prints it too) and is harmless.
+
+Code: BMMSBAL/Common.cs (UserCaptionName), BMMSBAL/AgendaMgr.cs (CommentAuthor, CommentCaption and the two labels), BMMS/Master/Agenda.aspx (.cs, .designer.cs), BMMS/DashBoard/DashBoard.aspx (.cs, .designer.cs), BMMS/CSS/bmms-workbench.css (.bmms-comment-by, .bmms-comment-by-line).
+
+What to run where (the Consultant runs the scripts):
+
+1. `BMMS_Test`: BMMS-Check-InstalledSteps.sql (step 35 reads Missing).
+2. `BMMS_Test`: BMMS-Fix-CommentAuthor-Step35.sql. It prints "Step 35 installed: ..." (a second run prints the same).
+3. `BMMS_Test`: BMMS-Test-CommentAuthor-Step35.sql (28 checks, all PASS; the last grid 0, 0, 0, 0).
+4. BMMS-Check-InstalledSteps.sql again: step 35 reads Installed; steps 16, 17, 18, 20 and 31 still Installed.
+5. Rebuild and deploy the build of step UN4.
+6. The browser checks below.
+7. `BMMS`, after the backup: steps 1, 2 and 4 (no test script on `BMMS`), then deploy the build.
+8. If step 35 must be undone: BMMS-Rollback-CommentAuthor-Step35.sql (it prints "Step 35 rolled back"), then BMMS-Check-InstalledSteps.sql (step 35 reads Missing).
+
+Browser checks on `BMMS_Test`, in Chrome and in Edge (keep the error log of the day open). Setup: on 2026-11-07 no open meeting of BMMS_Test had a date from today on. As Controller, on Meeting, add one for the checks (date about a week ahead, agenda submission date after today). Then:
+
+1. depuser, Agenda Entry: a new item on that meeting, Save. The Comments card is not shown (as before). Find the item:
+
+```sql
+SELECT TOP 1 AgendaId, AgendaNo, AgendaStatusCode, MgrApprovedBy, MgrApprovedDate, ControllerApprovedBy, ControllerApprovedDate
+FROM Agenda WHERE CreatedBy = (SELECT UserId FROM Users WHERE LoginName = 'depuser') ORDER BY AgendaId DESC;
+```
+
+2. mgruser, Dashboard: open the alert of the item. "Manager's comment :" and "Controller's comment :" with nothing under them. Leave the Manager's comment EMPTY and Approve.
+3. mgruser, Agenda Entry, open the item: `Manager's comment: MohanKumar, <today> <the time of step 2>`; the name and time muted, not bold. The query of step 1: MgrApprovedBy 12, MgrApprovedDate the same time.
+4. Controller (Venkat), Dashboard, the same item: under "Manager's comment :" the line `MohanKumar, <time of step 2>`, small and grey; nothing under "Controller's comment :". Type a comment and Approve.
+5. Controller, Agenda Entry, the same item: `Manager's comment: MohanKumar, ...` and `Controller's comment: Venkat, <time of step 4>`.
+6. Controller, Agenda Entry, the same item: Update without changing anything; open it again: both times unchanged. Change the Controller's comment, Update, open again: the Controller's time is now; the Manager's line unchanged.
+7. depuser, Dashboard: open the alert of the item (Controller approved): both lines under the labels, read-only editors, as in step 4.
+8. A comment from before step 35: list them, then open one as Controller on Agenda Entry: `Controller's comment` alone (no colon, no name).
+
+```sql
+SELECT a.AgendaNo, m.MeetingNo, c.CommitteeName, a.AgendaStatusCode,
+       CASE WHEN CAST(a.MgrComments AS NVARCHAR(10)) <> N'' AND a.MgrApprovedBy IS NULL THEN 'Manager' ELSE '' END AS OldMgrComment,
+       CASE WHEN CAST(a.ControllerComments AS NVARCHAR(10)) <> N'' AND a.ControllerApprovedBy IS NULL THEN 'Controller' ELSE '' END AS OldControllerComment
+FROM Agenda a JOIN Meeting m ON m.MeetingId = a.MeetingId JOIN Committee c ON c.CommitteeId = a.CommitteeId
+WHERE (CAST(a.MgrComments AS NVARCHAR(10)) <> N'' AND a.MgrApprovedBy IS NULL)
+   OR (CAST(a.ControllerComments AS NVARCHAR(10)) <> N'' AND a.ControllerApprovedBy IS NULL)
+ORDER BY a.AgendaId DESC;
+```
+
+9. Inactive, unknown, special characters and long names: set by SQL on the test item (put its AgendaNo in the first line of each block), open it as Controller on Agenda Entry and as depuser on the Dashboard after each block:
+
+```sql
+-- a) inactive: "Manager's comment: Shravankumar (inactive), <time of step 2>"
+DECLARE @AgendaNo VARCHAR(50) = '<AgendaNo of the test item>';
+UPDATE Agenda SET MgrApprovedBy = 105 WHERE AgendaNo = @AgendaNo;
+```
+
+```sql
+-- b) a user id with no user row: "Manager's comment: (unknown user), <time of step 2>"
+DECLARE @AgendaNo VARCHAR(50) = '<AgendaNo of the test item>';
+UPDATE Agenda SET MgrApprovedBy = 999999 WHERE AgendaNo = @AgendaNo;
+```
+
+```sql
+-- c) special characters: the caption shows A&B <i>x</i> O'Neil "Q" as plain text, nothing in italics;
+--    View Source shows A&amp;B &lt;i&gt;x&lt;/i&gt; O&#39;Neil &quot;Q&quot; in the span and in the aria-label
+DECLARE @AgendaNo VARCHAR(50) = '<AgendaNo of the test item>';
+UPDATE Users SET UserName = 'A&B <i>x</i> O''Neil "Q"' WHERE LoginName = 'ituser';
+UPDATE Agenda SET MgrApprovedBy = (SELECT UserId FROM Users WHERE LoginName = 'ituser') WHERE AgendaNo = @AgendaNo;
+```
+
+```sql
+-- d) long names (Users.UserName is VARCHAR(50)): 50 letters without a space, then 50 characters with spaces.
+--    Dashboard: the line breaks inside the label column (165 px), the editor stays beside it; Agenda Entry: the
+--    caption wraps inside the card. No sideways scroll at 1366 px and at 1105 px.
+UPDATE Users SET UserName = REPLICATE('W', 50) WHERE LoginName = 'ituser';
+-- then:
+UPDATE Users SET UserName = 'Venkataramana Subramanian Charles Vijayaraghavan K' WHERE LoginName = 'ituser';
+```
+
+```sql
+-- after the checks of step 9
+DECLARE @AgendaNo VARCHAR(50) = '<AgendaNo of the test item>';
+UPDATE Agenda SET MgrApprovedBy = 12 WHERE AgendaNo = @AgendaNo;
+UPDATE Users SET UserName = 'Gopinath' WHERE LoginName = 'ituser';
+```
+
+10. Manager reject: depuser adds a second item on the test meeting; mgruser rejects it on the Dashboard with a comment: as depuser on the Dashboard (the rejection alert) `MohanKumar, <now>` under "Manager's comment :".
+11. Admin, User Master: deleting mgruser is refused with the reason, as before.
+12. Last, optional (it finalizes the agenda of the test meeting and sends the rejection mails): depuser adds a third item, mgruser approves it; Controller, Agenda Finalization, the test meeting, Finalize. The third item is rejected with "Agenda rejected by Controller on agenda finalized."; on Agenda Entry: `Controller's comment: Venkat, <now>`.
+13. Error log: no entry from these checks.
+
 ## Known items for later steps
 
+- Agenda Entry comment changes are not in the Audit Trail (spr_AddEditAgenda, spr_AddEditAgendaByManager and spr_AddEditAgendaByController audit no MgrComments or ControllerComments change; Approve and Reject do). On the backlog (Consultant, step UN4); step 35 records only who last saved the comment and when, not the old text.
+- Agenda.MgrApprovedBy / MgrApprovedDate and ControllerApprovedBy / ControllerApprovedDate keep their names but, from step 35, hold whoever last saved the comment or recorded the decision (step UN4). A rename would touch View_Agenda and every reader; not planned.
 - The four user-list procedures (spr_GetUser, spr_GetActiveUserList, spr_GetMgrControllerByDeptId, spr_GetUserListForUserPage) still return the Password column (`v.*` of View_Users), though no caller of theirs needs it; the hashes stay on the server (step PW1). Leaving it out of them is a database step of its own, and the test scripts of steps 13, 14 and 18 that fill a table from spr_GetUserListForUserPage would need the same column change. View_Users itself keeps Password: the login and the password change read it through spr_GetUserByLoginName and spr_GetUserByUserId.
 - Optional: ViewState encryption on the six pages whose ViewState is still readable. A page's ViewState is encrypted only when a control on it asks for it (a GridView, DetailsView, FormView or DataList with data keys; `viewStateEncryptionMode` is the default "Auto"), and by their markup six pages that keep tables in ViewState have none: DashBoard, Attendance, Minutes Confirmation, Minutes Finalization, Attendance Details and Notice. Their ViewState is signed but can be read after base64 decoding. None of them carries a password (step PW1 checked every procedure that returns a Password column). `viewStateEncryptionMode="Always"` on `<pages>` in Web.config would encrypt the ViewState of every page; a step of its own, to test on every page.
 - Agenda Entry, sorted by "Subject Type Name": the sort arrow makes the grid about 3 px wider than its card, so it scrolls sideways a little (measured with the BMMS_Test rows of meeting 516; the same before and after step G1, so not caused by it). Not changed in step G1.

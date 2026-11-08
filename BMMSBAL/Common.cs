@@ -483,6 +483,20 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region UserCaptionName
+        // Step UN4: a person in a caption or a grid: the name alone, for example "MohanKumar"; the login only when
+        // the name is blank. " (inactive)" is added for an inactive account. "Name (login)" (UserDisplayName) stays
+        // for the pickers and the Audit Trail. Plain text: the page encodes it (HttpUtility.HtmlEncode).
+        public static string UserCaptionName(string UserName, string LoginName, bool IsActive)
+        {
+            string name = (UserName ?? string.Empty).Trim();
+            if (name.Length == 0)
+                name = (LoginName ?? string.Empty).Trim();
+
+            return IsActive ? name : name + " (inactive)";
+        }
+        #endregion
+
         #region IsLoggedIn
         // Step UN2: a user is logged in when the session holds a UserId (set at login, Default.aspx). Until step UN2
         // the pages tested Session["UserName"], the person's name, which is display text and not an identity.

@@ -426,6 +426,7 @@ namespace BMMS.Master
                             }
 
                             ApplyCommentRoles();   // step C1
+                            ShowCommentCaptions(dtAgendaEdit.Rows[0]);   // step UN4
 
 
 
@@ -555,8 +556,8 @@ namespace BMMS.Master
                     txtSubjectNo.Text = string.Empty;
                     txtCommittee.Text = ddlCommittee.SelectedItem.Text.ToString();
                     hdnCommitteeId.Value = ddlCommittee.SelectedValue;
-                    txtMeetingNo.Text = ddlMeeting.SelectedValue.ToString();
-                    hdnMeetingId.Value = ddlMeeting.SelectedItem.Text.ToString();
+                    txtMeetingNo.Text  = ddlMeeting.SelectedItem.Text;
+                    hdnMeetingId.Value = ddlMeeting.SelectedValue;
                     txtDateOfMeeting.Text = FormatDate(dtMeeting.Rows[0]["MeetingDate"]);   // a meeting with no date is open (step M4)
 
                     UserBAL userBal = new UserBAL();
@@ -602,6 +603,7 @@ namespace BMMS.Master
                     ftxtControllerComments.Text = string.Empty;
                     ftxtManagerComments.Text = string.Empty;
                     ApplyCommentRoles();   // step C1
+                    ShowCommentCaptions(null);   // step UN4: a new item has no who and when
 
                     ViewState["dtAttFiles"] = null;
 
@@ -1160,6 +1162,25 @@ namespace BMMS.Master
             string roleCode = Session["RoleCode"].ToString();
             ftxtManagerComments.ReadOnly = roleCode != "manager";
             ftxtControllerComments.ReadOnly = roleCode != "controller";
+        }
+        #endregion
+
+        #region ShowCommentCaptions
+        // Step UN4: who wrote each comment and when, after its caption ("Manager's comment: MohanKumar, 11-Oct-2026 16:49";
+        // the label alone for a new item and for a comment saved before step 35). The name is HTML-encoded here.
+        // The editor's accessible name is the same text. Item = the saved row, or null for a new item.
+        private void ShowCommentCaptions(DataRow Item)
+        {
+            string mgrBy = Item == null ? string.Empty : AgendaMgr.CommentAuthor(Item["MgrApprovedBy"], Item["MgrApprovedDate"]);
+            string ctlBy = Item == null ? string.Empty : AgendaMgr.CommentAuthor(Item["ControllerApprovedBy"], Item["ControllerApprovedDate"]);
+
+            lblManagerCommentBy.Text = mgrBy.Length == 0 ? string.Empty : ": " + HttpUtility.HtmlEncode(mgrBy);
+            lblManagerCommentBy.Visible = mgrBy.Length > 0;
+            ftxtManagerComments.Label = AgendaMgr.CommentCaption(AgendaMgr.ManagerCommentLabel, mgrBy);
+
+            lblControllerCommentBy.Text = ctlBy.Length == 0 ? string.Empty : ": " + HttpUtility.HtmlEncode(ctlBy);
+            lblControllerCommentBy.Visible = ctlBy.Length > 0;
+            ftxtControllerComments.Label = AgendaMgr.CommentCaption(AgendaMgr.ControllerCommentLabel, ctlBy);
         }
         #endregion
 

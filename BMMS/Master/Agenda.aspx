@@ -341,13 +341,14 @@
                 <h2 class="wb-card-header">
                     Comments</h2>
                 <div class="wb-card-body bmms-grid-2">
+                    <%-- Step UN4: who wrote the comment and when, after the caption on one line (set and encoded in the code) --%>
                     <asp:Panel ID="pnlManagerComments" runat="server" CssClass="bmms-field">
-                        <span class="bmms-caption">Manager Comments</span>
-                        <bmms:RichTextEditor ID="ftxtManagerComments" runat="server" Height="100px" Label="Manager Comments" />
+                        <span class="bmms-caption">Manager's comment<asp:Label ID="lblManagerCommentBy" runat="server" CssClass="bmms-comment-by" /></span>
+                        <bmms:RichTextEditor ID="ftxtManagerComments" runat="server" Height="100px" Label="Manager's comment" />
                     </asp:Panel>
                     <asp:Panel ID="pnlControllerComments" runat="server" CssClass="bmms-field">
-                        <span class="bmms-caption">Controller Comments</span>
-                        <bmms:RichTextEditor ID="ftxtControllerComments" runat="server" Height="100px" Label="Controller Comments" />
+                        <span class="bmms-caption">Controller's comment<asp:Label ID="lblControllerCommentBy" runat="server" CssClass="bmms-comment-by" /></span>
+                        <bmms:RichTextEditor ID="ftxtControllerComments" runat="server" Height="100px" Label="Controller's comment" />
                     </asp:Panel>
                 </div>
             </div>

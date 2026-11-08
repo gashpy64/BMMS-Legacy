@@ -503,6 +503,7 @@ namespace BMMS.DashBoard
 
             ftxtManagerComments.Text = HtmlCleaner.Clean(dtAgendaEdit.Rows[0]["MgrComments"].ToString());
             ftxtControllerComments.Text = HtmlCleaner.Clean(dtAgendaEdit.Rows[0]["ControllerComments"].ToString());
+            ShowCommentCaptions(dtAgendaEdit.Rows[0]);   // step UN4
 
             DataTable dtAgenda = new DataTable();
             dtAgenda = AgendaMgr.CheckAgendaFinalizeByMeetingId(MeetingId);
@@ -984,6 +985,26 @@ namespace BMMS.DashBoard
             ftxtProposedResolution.Text = string.Empty;
             ftxtManagerComments.Text = string.Empty;
             ftxtControllerComments.Text = string.Empty;
+            ShowCommentCaptions(null);   // step UN4
+        }
+        #endregion
+
+        #region ShowCommentCaptions
+        // Step UN4: who wrote each comment and when, on its own line under the label ("MohanKumar, 11-Oct-2026 16:49";
+        // nothing for a comment saved before step 35). The name is HTML-encoded here. The editor's accessible name is
+        // the whole caption. Item = the saved row, or null when the panel is cleared.
+        private void ShowCommentCaptions(DataRow Item)
+        {
+            string mgrBy = Item == null ? string.Empty : AgendaMgr.CommentAuthor(Item["MgrApprovedBy"], Item["MgrApprovedDate"]);
+            string ctlBy = Item == null ? string.Empty : AgendaMgr.CommentAuthor(Item["ControllerApprovedBy"], Item["ControllerApprovedDate"]);
+
+            lblManagerCommentBy.Text = HttpUtility.HtmlEncode(mgrBy);
+            lblManagerCommentBy.Visible = mgrBy.Length > 0;
+            ftxtManagerComments.Label = AgendaMgr.CommentCaption(AgendaMgr.ManagerCommentLabel, mgrBy);
+
+            lblControllerCommentBy.Text = HttpUtility.HtmlEncode(ctlBy);
+            lblControllerCommentBy.Visible = ctlBy.Length > 0;
+            ftxtControllerComments.Label = AgendaMgr.CommentCaption(AgendaMgr.ControllerCommentLabel, ctlBy);
         }
         #endregion
 

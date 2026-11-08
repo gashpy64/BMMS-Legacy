@@ -1,5 +1,5 @@
 /* ============================================================================
-   BMMS - Which numbered steps (README run order 1 to 24, 29, 30, 31, 33 and 34; step 23 is installed after step 28, steps 29, 30 and 31 last, step 33 after step D1, step 34 after step 33) and step D1 are installed
+   BMMS - Which numbered steps (README run order 1 to 24, 29, 30, 31, 33, 34 and 35; step 23 is installed after step 28, steps 29, 30 and 31 last, step 33 after step D1, step 34 after step 33, step 35 after step 34) and step D1 are installed
    ----------------------------------------------------------------------------
    READ ONLY. It reads object definitions and constraint names; it creates,
    changes and deletes nothing, and it can run on BMMS as well as on a copy.
@@ -64,6 +64,12 @@
    of step 1; if step 1 is re-run afterwards, step 34 reads Partly (the column
    stays): run step 34 again. After BMMS-Rollback-LoginName-Step34.sql, which
    keeps the column, it reads Partly too.
+   Step 35 replaces spr_UpdateAgendaByAgendaId, spr_AddEditAgendaByManager and
+   spr_AddEditAgendaByController of step 31 and keeps the texts of steps 16,
+   17, 18, 20 and 31 in them, so those still read Installed; if step 16, 17,
+   18, 20 or 31 is re-run afterwards, step 35 reads Partly or Missing: run
+   step 35 again. After BMMS-Rollback-CommentAuthor-Step35.sql it reads
+   Missing.
    Step 32 is reserved and not built; it has no row.
    Step D1 (shown as step 100) replaces spr_DeleteMeetingByMeetingId, which
    no numbered script contains: it reads Missing only on a database restored
@@ -305,6 +311,11 @@ INSERT INTO @M VALUES
 (34, 'Audit_Trial_Login.Login_Name', CASE WHEN COL_LENGTH('dbo.Audit_Trial_Login', 'Login_Name') IS NOT NULL THEN 1 ELSE 0 END),
 (34, 'spr_RecordLoginByUserId (LoginName-Step34)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_RecordLoginByUserId')), '') LIKE '%LoginName-Step34%' THEN 1 ELSE 0 END);
 
+-- 35. BMMS-Fix-CommentAuthor-Step35.sql, installed after step 34 (re-running step 16, 17, 18, 20 or 31 replaces one of its procedures)
+INSERT INTO @M
+SELECT 35, o.Name + ' (CommentAuthor-Step35)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%CommentAuthor-Step35%' THEN 1 ELSE 0 END
+FROM (VALUES ('spr_UpdateAgendaByAgendaId'), ('spr_AddEditAgendaByManager'), ('spr_AddEditAgendaByController')) o(Name);
+
 -- D1 (shown as step 100). BMMS-Fix-MeetingDelete-D1.sql; no numbered script contains spr_DeleteMeetingByMeetingId
 INSERT INTO @M VALUES
 (100, 'spr_DeleteMeetingByMeetingId (MeetingDelete-D1)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_DeleteMeetingByMeetingId')), '') LIKE '%MeetingDelete-D1%' THEN 1 ELSE 0 END);
@@ -337,9 +348,10 @@ INSERT INTO @Steps VALUES
 (24, 'BMMS-Fix-MeetingDates-Step24.sql', 'Missing after a re-run of step 16, 17 or 18: run step 24 again'),
 (29, 'BMMS-Fix-ResetDatabase-Step29.sql', 'the first text of step 29 (old default password seeds): run step 30 (it contains step 29), as the last step'),
 (30, 'BMMS-Fix-SmtpDefault-Step30.sql', 'step 3, 18, 21 or 29 was re-run: run step 30 again, as the last step (it restores the step 29 text too)'),
-(31, 'BMMS-Fix-UnicodeText-Step31.sql', 'step 6, 15, 16, 17, 18, 20 or 23 was re-run, or the original spr_UpdateActionItem came back: run step 31 again, as the last step'),
+(31, 'BMMS-Fix-UnicodeText-Step31.sql', 'step 6, 15, 16, 17, 18, 20 or 23 was re-run, or the original spr_UpdateActionItem came back: run step 31 again, as the last step, then step 35'),
 (33, 'BMMS-Fix-ManagerDepartment-Step33.sql', 'one of its two procedures was replaced: run step 33 again'),
 (34, 'BMMS-Fix-LoginName-Step34.sql', 'step 1 was re-run, or step 34 was rolled back (the column stays): run step 34 again'),
+(35, 'BMMS-Fix-CommentAuthor-Step35.sql', 'step 16, 17, 18, 20 or 31 was re-run: run step 35 again'),
 (100, 'BMMS-Fix-MeetingDelete-D1.sql (step D1)', '');
 
 SELECT s.Step, s.Script,

@@ -236,6 +236,61 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region Comment captions (step UN4)
+        /// <summary>Caption of the Manager's comment (Agenda Entry, Dashboard).</summary>
+        public const string ManagerCommentLabel = "Manager's comment";
+
+        /// <summary>Caption of the Controller's comment (Agenda Entry, Dashboard).</summary>
+        public const string ControllerCommentLabel = "Controller's comment";
+
+        /// <summary>Date and time of a comment, as System Settings shows "Last changed by ... on ...".</summary>
+        public const string CommentDateFormat = "dd-MMM-yyyy HH:mm";
+
+        /// <summary>
+        /// Step UN4: who wrote an agenda comment and when, for its caption, for example "Venkat, 11-Oct-2026 16:49".
+        /// The values are Agenda.MgrApprovedBy / MgrApprovedDate or ControllerApprovedBy / ControllerApprovedDate:
+        /// whoever last saved the comment or recorded the decision (step 35). The name alone (Common.UserCaptionName),
+        /// " (inactive)" for an inactive account, "(unknown user)" for an id with no user row. Empty for a comment
+        /// saved before step 35 (no who and no when): the caption then shows its label alone. Plain text: the page
+        /// encodes it.
+        /// </summary>
+        public static string CommentAuthor(object ById, object On)
+        {
+            string who = string.Empty;
+            int userId;
+            if (ById != null && ById != DBNull.Value && int.TryParse(Convert.ToString(ById), out userId) && userId > 0)
+            {
+                DataTable dtUser = UserMgr.GetUserDataTableByUserId(userId);
+                if (dtUser.Rows.Count > 0)
+                {
+                    DataRow user = dtUser.Rows[0];
+                    // AccountStatus 1 = active (UserStatus-Stage2a); a row without the value counts as active
+                    bool isActive = !dtUser.Columns.Contains("AccountStatus") || user["AccountStatus"] == DBNull.Value
+                        || Convert.ToInt32(user["AccountStatus"]) == 1;
+                    who = Common.UserCaptionName(Convert.ToString(user["UserName"]), Convert.ToString(user["LoginName"]), isActive);
+                }
+
+                if (who.Trim().Length == 0)
+                    who = UserMgr.UnknownUserText;
+            }
+
+            string when = string.Empty;
+            if (On != null && On != DBNull.Value)
+                when = Convert.ToDateTime(On).ToString(CommentDateFormat, System.Globalization.CultureInfo.InvariantCulture);
+
+            if (who.Length > 0 && when.Length > 0)
+                return who + ", " + when;
+
+            return who + when;
+        }
+
+        /// <summary>Step UN4: the whole caption on one line, "Manager's comment: Venkat, 11-Oct-2026 16:49", or the label alone.</summary>
+        public static string CommentCaption(string Label, string Author)
+        {
+            return string.IsNullOrEmpty(Author) ? Label : Label + ": " + Author;
+        }
+        #endregion
+
         #region AddEditAgenda
         // acting user = the logged-in user; the procedure reads the role from the database
         public MeetingChangeResult AddEditAgenda(AgendaBAL agendaBAL, int ActingUserId)
