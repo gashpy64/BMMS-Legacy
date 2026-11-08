@@ -273,12 +273,17 @@ namespace BMMS.Master
             if (AgendaMgr.UpdateAgendaByAgendaId(agendaBal).Result != 1)
                 return "NotRejected";
 
-            return GenerateMail("rejected by Controller on agenda finalized", "ACR", dtAgenda, CurrentRow);
+            // Step ML2b: dtItem (read before the save) gives the comment row its earlier who and when if unchanged
+            return GenerateMail("rejected by Controller on agenda finalized", "ACR", dtAgenda, CurrentRow, dtItem.Rows[0]);
         }
         #endregion
 
         #region GenerateMail
-        private string GenerateMail(string AgendaStatus, string MailCode, DataTable dtAgenda, int CurrentRow)
+        // Step ML2b: the item is read again after the rejection for the details (Meeting Date dd-MMM-yyyy, Subject No
+        // only when it has a value) and the Controller's comment row (AgendaMail.DecisionCommentRow, with Before,
+        // the item read before the save). If that read fails, the mail still goes out from the page's list row,
+        // without the comment row, and the error is logged; the rejection is saved either way.
+        private string GenerateMail(string AgendaStatus, string MailCode, DataTable dtAgenda, int CurrentRow, DataRow Before)
         {
             try
             {
@@ -292,53 +297,38 @@ namespace BMMS.Master
 
                 Bcc = AlertMgr.GetAlertMailId(MailCode, UserId, AgendaId);
 
-                string Subject = "Agenda (" + dtAgenda.Rows[CurrentRow]["AgendaNo"].ToString() + ") has been " + AgendaStatus.ToString();
+                DataRow itemAfter = null;
+                try
+                {
+                    DataTable dtAfter = AgendaMgr.GetAgendaByAgendaId(AgendaId);
+                    if (dtAfter.Rows.Count > 0)
+                        itemAfter = dtAfter.Rows[0];
+                    else
+                        Utilities.WriteErrorLog(className, "GenerateMail", "Agenda " + AgendaId + " could not be read after the rejection; the mail is sent without the comment row.");
+                }
+                catch (Exception readEx)
+                {
+                    Utilities.WriteErrorLog(className, "GenerateMail", "Agenda " + AgendaId + " could not be read after the rejection; the mail is sent without the comment row. " + readEx.ToString());
+                }
+
+                DataRow listRow = dtAgenda.Rows[CurrentRow];
+
+                string Subject = "Agenda (" + listRow["AgendaNo"].ToString() + ") has been " + AgendaStatus.ToString();
                 string BodyText = string.Empty;
                 BodyText += "<table>";
-
-                BodyText += "<tr>";
-                BodyText += "<td style='text-align:left; font-weight:bold; width:150px;'>";
-                BodyText += "Agenda No <br /><br />";
-                BodyText += "Committee Name <br /><br />";
-                BodyText += "Meeting No <br /><br />";
-                BodyText += "Meeting Date <br /><br />";
-                BodyText += "Department <br /><br />";
-                BodyText += "Subject Type <br /><br />";
-                //BodyText += " <br /><br />";
-                BodyText += "</td>";
-
-                BodyText += "<td style='text-align:left; font-weight:normal;'>";
-                BodyText += ": " + HttpUtility.HtmlEncode(dtAgenda.Rows[CurrentRow]["AgendaNo"].ToString()) + "<br /><br />";
-                BodyText += ": " + HttpUtility.HtmlEncode(dtAgenda.Rows[CurrentRow]["CommitteeName"].ToString()) + "<br /><br />";
-                BodyText += ": " + HttpUtility.HtmlEncode(dtAgenda.Rows[CurrentRow]["MeetingNo"].ToString()) + "<br /><br />";
-                BodyText += ": " + HttpUtility.HtmlEncode(dtAgenda.Rows[CurrentRow]["MeetingDate"].ToString()) + "<br /><br />";
-                BodyText += ": " + HttpUtility.HtmlEncode(dtAgenda.Rows[CurrentRow]["DepartmentName"].ToString()) + "<br /><br />";
-                BodyText += ": " + HttpUtility.HtmlEncode(dtAgenda.Rows[CurrentRow]["SubjectTypeName"].ToString()) + "<br /><br />";
-                //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
-                BodyText += "</td>";
-
-                BodyText += "</tr>";
-
-                BodyText += "<tr>";
-                BodyText += "<td style='text-align:left; font-weight:bold; width:150px;'>";
-                BodyText += "Short Text <br /><br />";
-                //BodyText += " <br /><br />";
-                BodyText += "</td>";
-
-                BodyText += "<td style='text-align:left; font-weight:normal;'>";
-                BodyText += ": " + HttpUtility.HtmlEncode(dtAgenda.Rows[CurrentRow]["ShortText"].ToString()) + "<br /><br />";
-                //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
-                BodyText += "</td>";
-
-                BodyText += "</tr>";
-
+                if (itemAfter != null)
+                {
+                    BodyText += AgendaMail.DetailRows(itemAfter);
+                    BodyText += AgendaMail.DecisionCommentRow("controller", Before, itemAfter);
+                }
+                else
+                    BodyText += AgendaMail.DetailRows(listRow["AgendaNo"].ToString(),
+                        listRow.Table.Columns.Contains("SubjectNo") ? listRow["SubjectNo"].ToString() : string.Empty,
+                        listRow["CommitteeName"].ToString(), listRow["MeetingNo"].ToString(), listRow["MeetingDate"],
+                        listRow["DepartmentName"].ToString(), listRow["SubjectTypeName"].ToString(), listRow["ShortText"].ToString());
                 BodyText += "</table>";
 
-                string result = Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, Bcc);
-
-
-
-                return result;
+                return Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, Bcc);
             }
             catch (Exception ex)
             {

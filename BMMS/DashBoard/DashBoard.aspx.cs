@@ -657,7 +657,8 @@ namespace BMMS.DashBoard
             int AgendaId;
             int MeetingId;
             object MeetingDate;
-            if (!TryGetAgenda(out AgendaId, out MeetingId, out MeetingDate))
+            DataRow itemBefore;   // step ML2b: the item before the save, for the comment row of the mail
+            if (!TryGetAgenda(out AgendaId, out MeetingId, out MeetingDate, out itemBefore))
             {
                 ShowItemGone();
                 LoadAlertGRV();
@@ -711,9 +712,9 @@ namespace BMMS.DashBoard
 
                 string mailResult = "Success";
                 if (agendaBal.MgrApprovedStatus == "Approved")
-                    mailResult = GenerateMail("approved by Manager", "AMA");
+                    mailResult = GenerateMail("approved by Manager", "AMA", RoleCode, itemBefore);
                 if (agendaBal.ControllerApprovedStatus == "Approved")
-                    mailResult = GenerateMail("approved by Controller", "ACA");
+                    mailResult = GenerateMail("approved by Controller", "ACA", RoleCode, itemBefore);
 
                 // Nothing is shown on success, as before; the mail error itself is in the error log
                 if (mailResult != "Success")
@@ -748,7 +749,8 @@ namespace BMMS.DashBoard
             int AgendaId;
             int MeetingId;
             object MeetingDate;
-            if (!TryGetAgenda(out AgendaId, out MeetingId, out MeetingDate))
+            DataRow itemBefore;   // step ML2b: the item before the save, for the comment row of the mail
+            if (!TryGetAgenda(out AgendaId, out MeetingId, out MeetingDate, out itemBefore))
             {
                 ShowItemGone();
                 LoadAlertGRV();
@@ -799,9 +801,9 @@ namespace BMMS.DashBoard
             {
                 string mailResult = "Success";
                 if (agendaBal.MgrApprovedStatus == "Rejected")
-                    mailResult = GenerateMail("rejected by Manager", "AMR");
+                    mailResult = GenerateMail("rejected by Manager", "AMR", RoleCode, itemBefore);
                 if (agendaBal.ControllerApprovedStatus == "Rejected")
-                    mailResult = GenerateMail("rejected by Controller", "ACR");
+                    mailResult = GenerateMail("rejected by Controller", "ACR", RoleCode, itemBefore);
 
                 // Nothing is shown on success, as before; the mail error itself is in the error log (step M3)
                 if (mailResult != "Success")
@@ -822,11 +824,12 @@ namespace BMMS.DashBoard
         #region TryGetAgenda
         // Step F2: the agenda item behind Approve / Reject must still exist; its MeetingId is read from the item
         // itself, not from the hidden field. False sends no mail and changes nothing. MeetingDate is the item's
-        // own saved meeting date (step M6a).
-        private bool TryGetAgenda(out int AgendaId, out int MeetingId, out object MeetingDate)
+        // own saved meeting date (step M6a). Before is the item as read here, before the save (step ML2b).
+        private bool TryGetAgenda(out int AgendaId, out int MeetingId, out object MeetingDate, out DataRow Before)
         {
             MeetingId = 0;
             MeetingDate = null;
+            Before = null;
 
             if (!int.TryParse(hdnAgendaId.Value.Trim(), out AgendaId))
                 return false;
@@ -836,6 +839,7 @@ namespace BMMS.DashBoard
                 return false;
 
             MeetingDate = dtAgenda.Rows[0]["MeetingDate"];
+            Before = dtAgenda.Rows[0];
             return int.TryParse(dtAgenda.Rows[0]["MeetingId"].ToString(), out MeetingId);
         }
         #endregion
@@ -849,7 +853,11 @@ namespace BMMS.DashBoard
         #endregion
 
         #region GenerateMail
-        private string GenerateMail(string AgendaStatus, string MailCode)
+        // Step ML2b: after the saved decision. The item is read again for the Subject No (given on approval) and the
+        // comment row of the acting role (AgendaMail.DecisionCommentRow, with Before, the item read before the save).
+        // If that read fails, the mail still goes out without the comment row (the Subject No as shown on the page)
+        // and the error is logged; the decision is saved either way.
+        private string GenerateMail(string AgendaStatus, string MailCode, string RoleCode, DataRow Before)
         {
             try
             {
@@ -863,53 +871,32 @@ namespace BMMS.DashBoard
 
                 Bcc = AlertMgr.GetAlertMailId(MailCode, UserId, AgendaId);
 
+                DataRow itemAfter = null;
+                try
+                {
+                    DataTable dtAfter = AgendaMgr.GetAgendaByAgendaId(AgendaId);
+                    if (dtAfter.Rows.Count > 0)
+                        itemAfter = dtAfter.Rows[0];
+                    else
+                        Utilities.WriteErrorLog(className, "GenerateMail", "Agenda " + AgendaId + " could not be read after the decision; the mail is sent without the comment row.");
+                }
+                catch (Exception readEx)
+                {
+                    Utilities.WriteErrorLog(className, "GenerateMail", "Agenda " + AgendaId + " could not be read after the decision; the mail is sent without the comment row. " + readEx.ToString());
+                }
+
+                string subjectNo = itemAfter != null ? itemAfter["SubjectNo"].ToString() : txtSubjectNo.Text;
+
                 string Subject = "Agenda (" + txtAgendaNo.Text.Trim() + ") has been " + AgendaStatus.ToString();
                 string BodyText = string.Empty;
                 BodyText += "<table>";
-
-                BodyText += "<tr>";
-                BodyText += "<td style='text-align:left; font-weight:bold; width:150px;'>";
-                BodyText += "Agenda No <br /><br />";
-                BodyText += "Committee Name <br /><br />";
-                BodyText += "Meeting No <br /><br />";
-                BodyText += "Meeting Date <br /><br />";
-                BodyText += "Department <br /><br />";
-                BodyText += "Subject Type <br /><br />";
-                //BodyText += " <br /><br />";
-                BodyText += "</td>";
-
-                BodyText += "<td style='text-align:left; font-weight:normal;'>";
-                BodyText += ": " + HttpUtility.HtmlEncode(txtAgendaNo.Text.Trim()) + "<br /><br />";
-                BodyText += ": " + HttpUtility.HtmlEncode(txtAgendaCommittee.Text.Trim()) + "<br /><br />";
-                BodyText += ": " + HttpUtility.HtmlEncode(txtAgendaMeeting.Text.Trim()) + "<br /><br />";
-                BodyText += ": " + HttpUtility.HtmlEncode(txtDateOfMeeting.Text.Trim()) + "<br /><br />";
-                BodyText += ": " + HttpUtility.HtmlEncode(txtAgendaDepartment.Text.Trim()) + "<br /><br />";
-                BodyText += ": " + HttpUtility.HtmlEncode(txtSubjectType.Text.Trim()) + "<br /><br />";
-                //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
-                BodyText += "</td>";
-
-                BodyText += "</tr>";
-
-                BodyText += "<tr>";
-                BodyText += "<td style='text-align:left; font-weight:bold; width:150px;'>";
-                BodyText += "Short Text <br /><br />";
-                //BodyText += " <br /><br />";
-                BodyText += "</td>";
-
-                BodyText += "<td style='text-align:left; font-weight:normal;'>";
-                BodyText += ": " + HttpUtility.HtmlEncode(txtShortText.Text.Trim()) + "<br /><br />";
-                //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
-                BodyText += "</td>";
-
-                BodyText += "</tr>";
-
+                BodyText += AgendaMail.DetailRows(txtAgendaNo.Text, subjectNo, txtAgendaCommittee.Text, txtAgendaMeeting.Text,
+                    txtDateOfMeeting.Text, txtAgendaDepartment.Text, txtSubjectType.Text, txtShortText.Text);
+                if (itemAfter != null)
+                    BodyText += AgendaMail.DecisionCommentRow(RoleCode, Before, itemAfter);
                 BodyText += "</table>";
 
-                string result = Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, Bcc);
-
-
-
-                return result;
+                return Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, Bcc);
             }
             catch (Exception ex)
             {

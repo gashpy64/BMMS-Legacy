@@ -1080,48 +1080,12 @@ namespace BMMS.Master
                 }
 
                 string Subject = "Agenda (" + txtAgendaNo.Text.Trim() + ") has been Created";
+                // Step ML2b: the detail rows shared by every agenda mail (Subject No only when it has a value)
                 string BodyText = string.Empty;
                 BodyText += "<table>";
-
-                BodyText += "<tr>";
-                BodyText += "<td style='text-align:left; font-weight:bold; width:150px;'>";
-                BodyText += "Agenda No <br /><br />";
-                BodyText += "Committee Name <br /><br />";
-                BodyText += "Meeting No <br /><br />";
-                BodyText += "Meeting Date <br /><br />";
-                BodyText += "Department <br /><br />";
-                BodyText += "Subject Type <br /><br />";
-                //BodyText += " <br /><br />";
-                BodyText += "</td>";
-
-                BodyText += "<td style='text-align:left; font-weight:normal;'>";
-                BodyText += ": " + HttpUtility.HtmlEncode(txtAgendaNo.Text.Trim()) + "<br /><br />";
-                BodyText += ": " + HttpUtility.HtmlEncode(txtCommittee.Text.Trim()) + "<br /><br />";
-                BodyText += ": " + HttpUtility.HtmlEncode(txtMeetingNo.Text.Trim()) + "<br /><br />";
-                BodyText += ": " + HttpUtility.HtmlEncode(txtDateOfMeeting.Text.Trim()) + "<br /><br />";
-                if (Session["RoleCode"].ToString() == "controller")
-                    BodyText += ": " + HttpUtility.HtmlEncode(ddlDepartment.SelectedItem.Text.ToString().Trim()) + "<br /><br />";
-                else
-                    BodyText += ": " + HttpUtility.HtmlEncode(txtDepartment.Text.Trim()) + "<br /><br />";
-                BodyText += ": " + HttpUtility.HtmlEncode(ddlSubjectType.SelectedItem.Text.Trim()) + "<br /><br />";
-                //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
-                BodyText += "</td>";
-
-                BodyText += "</tr>";
-
-                BodyText += "<tr>";
-                BodyText += "<td style='text-align:left; font-weight:bold; width:150px;'>";
-                BodyText += "Short Text <br /><br />";
-                //BodyText += " <br /><br />";
-                BodyText += "</td>";
-
-                BodyText += "<td style='text-align:left; font-weight:normal;'>";
-                BodyText += ": " + HttpUtility.HtmlEncode(txtShortText.Text.Trim()) + "<br /><br />";
-                //BodyText += ": " + txt.Text.Trim() + "<br /><br />";
-                BodyText += "</td>";
-
-                BodyText += "</tr>";
-
+                BodyText += AgendaMail.DetailRows(txtAgendaNo.Text, txtSubjectNo.Text, txtCommittee.Text, txtMeetingNo.Text,
+                    txtDateOfMeeting.Text, Session["RoleCode"].ToString() == "controller" ? ddlDepartment.SelectedItem.Text.ToString() : txtDepartment.Text,
+                    ddlSubjectType.SelectedItem.Text, txtShortText.Text);
                 BodyText += "</table>";
 
                 string result = Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, Bcc);
@@ -1176,40 +1140,10 @@ namespace BMMS.Master
                 string ToMailId = actingUser.EmailId == null ? string.Empty : actingUser.EmailId.Trim();
 
                 string Subject = "Agenda (" + item["AgendaNo"].ToString().Trim() + ") has been Updated";
+                // Step ML2b: the detail rows shared by every agenda mail (Subject No only when it has a value)
                 string BodyText = string.Empty;
                 BodyText += "<table>";
-
-                BodyText += "<tr>";
-                BodyText += "<td style='text-align:left; font-weight:bold; width:150px;'>";
-                BodyText += "Agenda No <br /><br />";
-                BodyText += "Committee Name <br /><br />";
-                BodyText += "Meeting No <br /><br />";
-                BodyText += "Meeting Date <br /><br />";
-                BodyText += "Department <br /><br />";
-                BodyText += "Subject Type <br /><br />";
-                BodyText += "</td>";
-
-                BodyText += "<td style='text-align:left; font-weight:normal;'>";
-                BodyText += ": " + HttpUtility.HtmlEncode(item["AgendaNo"].ToString().Trim()) + "<br /><br />";
-                BodyText += ": " + HttpUtility.HtmlEncode(item["CommitteeName"].ToString().Trim()) + "<br /><br />";
-                BodyText += ": " + HttpUtility.HtmlEncode(item["MeetingNo"].ToString().Trim()) + "<br /><br />";
-                BodyText += ": " + HttpUtility.HtmlEncode(FormatDate(item["MeetingDate"])) + "<br /><br />";
-                BodyText += ": " + HttpUtility.HtmlEncode(item["DepartmentName"].ToString().Trim()) + "<br /><br />";
-                BodyText += ": " + HttpUtility.HtmlEncode(item["SubjectTypeName"].ToString().Trim()) + "<br /><br />";
-                BodyText += "</td>";
-
-                BodyText += "</tr>";
-
-                BodyText += "<tr>";
-                BodyText += "<td style='text-align:left; font-weight:bold; width:150px;'>";
-                BodyText += "Short Text <br /><br />";
-                BodyText += "</td>";
-
-                BodyText += "<td style='text-align:left; font-weight:normal;'>";
-                BodyText += ": " + HttpUtility.HtmlEncode(item["ShortText"].ToString().Trim()) + "<br /><br />";
-                BodyText += "</td>";
-
-                BodyText += "</tr>";
+                BodyText += AgendaMail.DetailRows(item);
 
                 BodyText += "<tr>";
                 BodyText += "<td style='text-align:left; font-weight:bold; width:150px; vertical-align:top;'>";

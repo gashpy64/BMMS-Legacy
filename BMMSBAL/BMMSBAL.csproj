@@ -82,6 +82,7 @@
     <Compile Include="Common.cs" />
     <Compile Include="CommitteeMgr.cs" />
     <Compile Include="CommitteeMemberMgr.cs" />
+    <Compile Include="AgendaMail.cs" />
     <Compile Include="AgendaMgr.cs" />
     <Compile Include="AlertMgr.cs" />
     <Compile Include="AttendanceMgr.cs" />

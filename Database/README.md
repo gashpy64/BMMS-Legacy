@@ -2588,6 +2588,27 @@ Browser checks on `BMMS_Test` (smtp4dev on port 25 of the web server; on SMTP Co
 2. Addresses once: save a Meeting (all active users in the Bcc; several share gashpysoft@gmail.com): smtp4dev shows each address once in the Bcc, and the To address of the saver not again in the Bcc. A Controller approve (ACA), where the list includes the Controller who acted: the Controller's address is the To only. Set the configured Bcc to an address that is also a recipient: it appears once.
 3. Error log: no other entry from these checks.
 
+## Step ML2b: the comment in the approve and reject mails; Subject No and one date format in every agenda mail (code only, no database script)
+
+Code:
+
+- BMMSBAL/AgendaMail.cs (new; BMMSBAL.csproj): the parts every agenda mail shares, instead of a copy on each page. DetailRows builds the detail rows (Agenda No, Subject No only when it has a value, Committee Name, Meeting No, Meeting Date as dd-MMM-yyyy, Department, Subject Type, Short Text; every value HTML-encoded) in the layout the pages built before. CommentRow builds one comment row in the layout of the detail rows: the label "Manager's comment" or "Controller's comment" in bold in the label cell (aligned to the top); in the value cell, after ": ", a smaller grey line with who and when, "Name, dd-MMM-yyyy HH:mm" (AgendaMgr.CommentAuthor, names by Common.UserCaptionName, HTML-encoded; no line when there is no who and when), then the comment cleaned by HtmlCleaner.Clean, the cleaning of Send Mail (allow-listed tags only: no script, no event handlers, no style), with leading and trailing spaces and &nbsp; removed, so a long comment uses the full width of the value cell; a comment with no text (HtmlCleaner.IsBlank) adds no row. DecisionCommentRow picks the comment of the role that acted: a comment the decision changed, or a new one, shows who decided and when (step 35 writes them with the decision); a comment the decision did not change shows the who and when it had before the save, or the label alone when it had none. Compared exactly, as in steps 35 and 36 (case and trailing spaces count; NULL and empty are the same).
+- BMMS/DashBoard/DashBoard.aspx.cs (Approve and Reject by the Manager and the Controller): TryGetAgenda keeps the item it reads before the save; after the saved decision GenerateMail reads the item again for the Subject No (given on approval) and the comment row. The other details come from the page, as before.
+- BMMS/Master/AgendaFinalization.aspx.cs (Reject on agenda finalized): the details and the comment row come from the item read again after the rejection, so the Meeting Date is dd-MMM-yyyy (before, it showed the date with a time). The comment is the fixed text "Agenda rejected by Controller on agenda finalized.".
+- BMMS/Master/Agenda.aspx.cs (Created and Updated mails): the detail block through DetailRows. The layout is unchanged except Subject No (only when it has a value; Created: the Subject No saved with the item). The Changes block of the Updated mail is unchanged.
+- If the item cannot be read again after the save, the mail still goes out without the comment row (Dashboard: the Subject No as shown on the page; Finalisation: the details from the page's list), and the error log has the entry. A failed read or a failed mail never changes the saved decision. No procedure, view or setting changes.
+
+Browser checks on `BMMS_Test` (smtp4dev on port 25 of the web server; keep the error log of the day open), with depuser (a User of mgruser), mgruser (Manager) and the Controller, on an open meeting:
+
+1. mgruser approves an item with the comment "ok" (AMA): the mail "approved by Manager" has the detail block with Meeting Date dd-MMM-yyyy, Subject No (the number given on approval), and the row "Manager's comment" (label cell) with, in the value cell, the grey line "<name>, <date> <time>" and below it "ok"; the name and time are those of the caption on Agenda Entry.
+2. mgruser rejects another item with an empty comment (AMR): no comment row.
+3. The Controller approves (ACA) with a comment with a bold word and a bulleted list: the mail shows them as bold and a list, with no style attributes.
+4. The Controller writes a comment on Agenda Entry (Update, at AMA), then later approves on the Dashboard without changing it: the comment row shows the time of the Agenda Entry save, not of the approval. On an item whose stored comment has no who and when (saved before step 35), the row has no grey line, only the label and the text. A comment typed with a leading space (" Controller note unchanged") arrives without it.
+5. The Controller rejects (ACR) with the comment `<script>alert(1)</script> text` typed in: in smtp4dev the comment shows "text", the source has no script element, and nothing runs.
+6. Agenda Finalisation with an item not yet approved: the "rejected by Controller on agenda finalized" mail has Meeting Date dd-MMM-yyyy (no time), Subject No if the item has one, and the row "Controller's comment" with the grey line "<name>, <date> <time>" and the fixed text below it.
+7. Created and Updated mails (the ML1 checks): the same layout as before; a Subject No line only for an item that has one.
+8. Error log: no entry from these checks.
+
 ## Known items for later steps
 
 - Since step ML1 an Update on Agenda Entry that changes something sends a mail (step 37).
