@@ -12,12 +12,19 @@
 
    Objects
      spr_UpdateMinutes   REPLACED (text of step 31). New last parameter
-                           @DueDate DATETIME = NULL
+                           @DueDate DATETIME = '99991231'
+                         (the default means "not passed"; step UN6a1).
                          Code 'All' (Save minutes):
-                           - a Followup (DecisionTypeId 1) stores @DueDate
-                             without its time; any other decision stores
-                             NULL;
-                           - a Followup date before the meeting date is
+                           - any decision other than Followup
+                             (DecisionTypeId 1) stores NULL;
+                           - a Followup stores a passed date without its
+                             time, and NULL for an explicit NULL (the Clear
+                             button); @DueDate not passed keeps the stored
+                             date, so a caller that does not know the
+                             parameter (an older build, the older tests)
+                             never clears it. An explicit 9999-12-31 counts
+                             as not passed;
+                           - a Followup date passed before the meeting date is
                              refused: Result 0, Reason 22, ReasonDetail the
                              meeting date (dd-Mon-yyyy); nothing is saved.
                              A meeting without a date has no limit;
@@ -33,10 +40,10 @@
                          meeting created after step 23 before the agenda is
                          finalized (17) and the attendance entered (18);
                          finalized minutes (F) can still be updated.
-                         A caller that saves Code 'All' without @DueDate
-                         clears the due date (only Update Minutes calls it;
-                         see the README warning about the build).
-   Marker MinutesDueDate-Step38. Only lines are added: the texts of steps 6
+   Markers MinutesDueDate-Step38 and DueDateKeep-Step38 (the second since
+   step UN6a1: a database with the first step 38 text has only the first
+   marker and reads Partly, 1 of 2: run this script again). Only lines are
+   added: the texts of steps 6
    (FK #5), 16, 17, 18, 23 and 31 are kept, so those steps still read
    Installed in BMMS-Check-InstalledSteps.sql.
 
@@ -45,7 +52,7 @@
    brings back an older spr_UpdateMinutes and removes step 38: run step 38
    again.
 
-   Changes no data. Safe to re-run.
+   Changes no data. Safe to re-run, also over the first step 38 text.
    BMMS-Rollback-MinutesDueDate-Step38.sql restores the step 31 text and
    keeps the due dates already stored.
 
@@ -92,10 +99,12 @@ GO
 -- Recipients are active users other than the protected system account (SystemAccount3-Step18)
 -- WorkflowOrder-Step23: a meeting created after step 23 needs the agenda finalized (17) and attendance entered (18).
 -- UnicodeText-Step31: @Directions, @ActualResolution and @ShortText are NVARCHAR(MAX) (were TEXT)
--- MinutesDueDate-Step38: @DueDate (optional, last). Code 'All': a Followup (DecisionTypeId 1) stores the date without its time,
--- any other decision stores NULL; a Followup date before the meeting date is refused (Reason 22, ReasonDetail the
--- meeting date dd-Mon-yyyy) and nothing is saved; a change of the stored due date writes one Audit_Trail_Master
--- row (Minutes, DueDate). Codes 'Directions' and 'ActualResolution' leave the due date as it is
+-- MinutesDueDate-Step38: @DueDate (optional, last). Code 'All': any decision other than Followup (DecisionTypeId 1) stores NULL;
+-- a Followup stores a passed date without its time, clears the date for an explicit NULL, and refuses a date before
+-- the meeting date (Reason 22, ReasonDetail the meeting date dd-Mon-yyyy; nothing is saved); a change of the stored
+-- due date writes one Audit_Trail_Master row (Minutes, DueDate). Codes 'Directions' and 'ActualResolution' leave it
+-- DueDateKeep-Step38: @DueDate not passed (the default 9999-12-31) keeps the stored date of a Followup, so a caller that does not
+-- know the parameter (an older build, the older tests) never clears it; an explicit 9999-12-31 counts as not passed
 CREATE OR ALTER PROCEDURE [dbo].[spr_UpdateMinutes]
 @Code VARCHAR(50),
 @MinutesId INT,
@@ -105,7 +114,7 @@ CREATE OR ALTER PROCEDURE [dbo].[spr_UpdateMinutes]
 @ShortText NVARCHAR(MAX),
 @CreatedBy INT,
 @UpdatedBy INT,
-@DueDate DATETIME = NULL   -- MinutesDueDate-Step38
+@DueDate DATETIME = '99991231'   -- MinutesDueDate-Step38; DueDateKeep-Step38: the default means not passed
 AS
 	DECLARE @ActionItemId INT;
 	DECLARE @CountActionItemId INT;
@@ -124,6 +133,7 @@ AS
 	DECLARE @WfUpdated INT;
 	DECLARE @DdNew DATETIME;   -- MinutesDueDate-Step38: the due date to store
 	DECLARE @DdOld DATETIME;
+	DECLARE @DdGiven INT;
 	DECLARE @DdMeetingDate DATETIME;
 	DECLARE @DdAgendaNo VARCHAR(50);
 BEGIN
@@ -158,9 +168,13 @@ BEGIN
 		       @WfTotal = MinutesTotal, @WfUpdated = MinutesUpdated
 		FROM dbo.fn_WorkflowState(@LockMeetingId);
 
-		-- MinutesDueDate-Step38: the due date to store (Code 'All' only): a Followup keeps the date without its time
-		SET @DdNew = CASE WHEN @Code = 'All' AND @DecisionTypeId = 1 AND @DueDate IS NOT NULL
-		                  THEN DATEADD(DAY, DATEDIFF(DAY, 0, @DueDate), 0) ELSE NULL END;
+		-- MinutesDueDate-Step38: the due date to store (Code 'All' only); DueDateKeep-Step38: not passed keeps the stored date of a Followup
+		SET @DdGiven = CASE WHEN @DueDate IS NULL OR @DueDate <> '99991231' THEN 1 ELSE 0 END;
+		SET @DdOld = (SELECT DueDate FROM Minutes WHERE MinutesId = @MinutesId);
+		SET @DdNew = CASE WHEN @Code <> 'All' OR ISNULL(@DecisionTypeId, 0) <> 1 THEN NULL
+		                  WHEN @DdGiven = 0 THEN @DdOld
+		                  WHEN @DueDate IS NULL THEN NULL
+		                  ELSE DATEADD(DAY, DATEDIFF(DAY, 0, @DueDate), 0) END;
 		SET @DdMeetingDate = (SELECT DATEADD(DAY, DATEDIFF(DAY, 0, MeetingDate), 0) FROM Meeting WHERE MeetingId = @LockMeetingId);
 
 		IF (@MinutesStatus IS NULL)
@@ -173,8 +187,8 @@ BEGIN
 			SET @Reason = 17;
 		ELSE IF (ISNULL(@WfNew, 0) = 1 AND ISNULL(@WfAttendance, 0) = 0)
 			SET @Reason = 18;
-		-- MinutesDueDate-Step38: a Followup due date before the meeting date (a meeting without a date has no limit)
-		ELSE IF (@DdNew IS NOT NULL AND @DdMeetingDate IS NOT NULL AND @DdNew < @DdMeetingDate)
+		-- MinutesDueDate-Step38: a Followup due date passed before the meeting date (a kept date and a meeting without a date: no check)
+		ELSE IF (@Code = 'All' AND @DdGiven = 1 AND @DdNew IS NOT NULL AND @DdMeetingDate IS NOT NULL AND @DdNew < @DdMeetingDate)
 		BEGIN
 			SET @Reason = 22;
 			SET @Detail = REPLACE(CONVERT(VARCHAR(11), @DdMeetingDate, 106), ' ', '-');
@@ -184,7 +198,6 @@ BEGIN
 			IF (@Code = 'All')
 			BEGIN
 				-- MinutesDueDate-Step38: the due date (NULL for a decision other than Followup); one audit row when it changes
-				SET @DdOld = (SELECT DueDate FROM Minutes WHERE MinutesId = @MinutesId);
 				UPDATE Minutes SET DueDate = @DdNew WHERE MinutesId = @MinutesId;
 				IF (@DdOld <> @DdNew OR (@DdOld IS NULL AND @DdNew IS NOT NULL) OR (@DdOld IS NOT NULL AND @DdNew IS NULL))
 				BEGIN
@@ -304,10 +317,11 @@ BEGIN
 END
 GO
 
-IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')), '') LIKE '%MinutesDueDate-Step38%')
-    PRINT 'Step 38 installed: spr_UpdateMinutes (MinutesDueDate-Step38). No data was changed.';
+IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')), '') LIKE '%MinutesDueDate-Step38%'
+    AND ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')), '') LIKE '%DueDateKeep-Step38%')
+    PRINT 'Step 38 installed: spr_UpdateMinutes (MinutesDueDate-Step38, DueDateKeep-Step38). No data was changed.';
 ELSE
-    RAISERROR('Step 38 is not complete: spr_UpdateMinutes does not carry the marker MinutesDueDate-Step38. Read the messages above and run the script again.', 16, 1);
+    RAISERROR('Step 38 is not complete: spr_UpdateMinutes does not carry the markers MinutesDueDate-Step38 and DueDateKeep-Step38. Read the messages above and run the script again.', 16, 1);
 GO
 
 SET NOEXEC OFF;

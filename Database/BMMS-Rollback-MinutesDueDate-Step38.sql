@@ -8,9 +8,9 @@
    38: no @DueDate parameter. The due dates already stored and their audit
    rows are KEPT.
 
-   Roll back the build first (or at the same time): the step UN6a build
-   passes @DueDate and its saves fail with "too many arguments" against the
-   step 31 procedure.
+   The build may stay: since step UN6a1 it sends @DueDate only when the
+   procedure has it, so Update Minutes keeps working after this rollback
+   (the due date boxes are then disabled).
 
    Changes no data. Safe to re-run, also where step 38 was never installed.
 

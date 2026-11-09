@@ -19,7 +19,8 @@
        (Reason 22, ReasonDetail the meeting date) and nothing is saved
      * a meeting without a date accepts any date
      * Codes 'Directions' and 'ActualResolution' leave the date as it is
-     * a call without @DueDate clears it (the known effect, see the README)
+     * a call without @DueDate keeps the stored date of a Followup (step UN6a1),
+       and a caller without it that changes the decision stores NULL
      * finalized minutes (F) can still be updated; confirmed minutes (C) are
        refused (Reason 7) and the date is unchanged
      * the audit row: Minutes, AgendaNo, DueDate, old and new as dd-Mon-yyyy
@@ -47,9 +48,10 @@ BEGIN
     RAISERROR('Current database is "%s". Select the BMMS database (or its test copy) and run again. Nothing was changed.', 16, 1, @CurrentDatabase);
     SET NOEXEC ON;
 END
-ELSE IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')), '') NOT LIKE '%MinutesDueDate-Step38%')
+ELSE IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')), '') NOT LIKE '%MinutesDueDate-Step38%'
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')), '') NOT LIKE '%DueDateKeep-Step38%')
 BEGIN
-    RAISERROR('Step 38 (due date on Update Minutes) is not installed in "%s". Run BMMS-Fix-MinutesDueDate-Step38.sql first, then this script. Nothing was changed.', 16, 1, @CurrentDatabase);
+    RAISERROR('Step 38 (due date on Update Minutes) is not installed in "%s", or it is the first step 38 text (no marker DueDateKeep-Step38). Run BMMS-Fix-MinutesDueDate-Step38.sql first, then this script. Nothing was changed.', 16, 1, @CurrentDatabase);
     SET NOEXEC ON;
 END
 GO
@@ -80,8 +82,9 @@ END
 ---------------------------------------------------------------------------
 -- 1. Installation
 ---------------------------------------------------------------------------
-INSERT INTO @T SELECT 'Marker MinutesDueDate-Step38 on spr_UpdateMinutes', 'yes',
-       CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')), '') LIKE '%MinutesDueDate-Step38%' THEN 'yes' ELSE 'no' END;
+INSERT INTO @T SELECT 'Markers MinutesDueDate-Step38 and DueDateKeep-Step38 on spr_UpdateMinutes', 'yes yes',
+       CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')), '') LIKE '%MinutesDueDate-Step38%' THEN 'yes' ELSE 'no' END + ' '
+     + CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')), '') LIKE '%DueDateKeep-Step38%' THEN 'yes' ELSE 'no' END;
 INSERT INTO @T SELECT 'spr_UpdateMinutes keeps the texts of steps 6 (FK #5), 16, 17, 18, 23 and 31', 'yes',
        CASE WHEN OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')) LIKE '%FK #5%'
              AND OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')) LIKE '%MeetingLocks-Step16%'
@@ -89,12 +92,12 @@ INSERT INTO @T SELECT 'spr_UpdateMinutes keeps the texts of steps 6 (FK #5), 16,
              AND OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')) LIKE '%SystemAccount3-Step18%'
              AND OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')) LIKE '%WorkflowOrder-Step23%'
              AND OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')) LIKE '%UnicodeText-Step31%' THEN 'yes' ELSE 'no' END;
-INSERT INTO @T SELECT 'Parameter names in order (step 31 list plus @DueDate); @DueDate datetime with a default',
+INSERT INTO @T SELECT 'Parameter names in order (step 31 list plus @DueDate); @DueDate datetime, default 99991231 (not passed)',
        '@Code,@MinutesId,@DecisionTypeId,@Directions,@ActualResolution,@ShortText,@CreatedBy,@UpdatedBy,@DueDate; datetime default',
        ISNULL(STUFF((SELECT ',' + name FROM sys.parameters WHERE object_id = OBJECT_ID('dbo.spr_UpdateMinutes') ORDER BY parameter_id
                      FOR XML PATH(''), TYPE).value('.', 'VARCHAR(400)'), 1, 1, ''), 'none') + '; '
      + ISNULL((SELECT TYPE_NAME(user_type_id) FROM sys.parameters WHERE object_id = OBJECT_ID('dbo.spr_UpdateMinutes') AND name = '@DueDate'), 'none')
-     + CASE WHEN OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')) LIKE '%@DueDate DATETIME = NULL%' THEN ' default' ELSE ' no default' END;
+     + CASE WHEN OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')) LIKE '%@DueDate DATETIME = ''99991231''%' THEN ' default' ELSE ' no default' END;
 
 -- Rows outside the test, before the test
 SELECT @MinBefore = CAST(COUNT(*) AS VARCHAR(12)) + ' ' + CAST(ISNULL(CHECKSUM_AGG(BINARY_CHECKSUM(MinutesId, DecisionTypeId, DueDate, StatusId, UpdatedOn)), 0) AS VARCHAR(12)) FROM Minutes;
@@ -226,11 +229,23 @@ BEGIN TRY
     SET @DueArg = DATEADD(DAY, 2, @MDate);
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_UpdateMinutes @Code = 'All', @MinutesId = @Mi, @DecisionTypeId = @Followup,
          @Directions = N'ZZ38 directions', @ActualResolution = N'ZZ38 actual', @ShortText = N'ZZ38 short', @CreatedBy = @Actor, @UpdatedBy = @Actor, @DueDate = @DueArg;
+    SET @Dd = ISNULL((SELECT CONVERT(VARCHAR(16), DueDate, 120) FROM Minutes WHERE MinutesId = @Mi), 'NULL');
+    SELECT @Aud = COUNT(*) FROM Audit_Trail_Master WHERE Audit_Table = 'Minutes' AND Field_Name = 'DueDate' AND Key_Value = 'ZZ38-001';
+    INSERT INTO @T SELECT 'Followup with a date again: stored; one audit row',
+           'Result 1, Reason 0; due ' + CONVERT(VARCHAR(10), DATEADD(DAY, 2, @MDate), 120) + ' 00:00' + '; audit rows 6',
+           ISNULL((SELECT TOP 1 Txt FROM @R), 'none') + '; due ' + @Dd + '; audit rows ' + CAST(@Aud AS VARCHAR(12));
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_UpdateMinutes @Code = 'All', @MinutesId = @Mi, @DecisionTypeId = @Followup,
          @Directions = N'ZZ38 directions', @ActualResolution = N'ZZ38 actual', @ShortText = N'ZZ38 short', @CreatedBy = @Actor, @UpdatedBy = @Actor;
     SET @Dd = ISNULL((SELECT CONVERT(VARCHAR(16), DueDate, 120) FROM Minutes WHERE MinutesId = @Mi), 'NULL');
     SELECT @Aud = COUNT(*) FROM Audit_Trail_Master WHERE Audit_Table = 'Minutes' AND Field_Name = 'DueDate' AND Key_Value = 'ZZ38-001';
-    INSERT INTO @T SELECT 'A caller without @DueDate (Code ''All'', Followup): the date is cleared (known effect; set, then cleared: two audit rows)',
+    INSERT INTO @T SELECT 'A caller without @DueDate (Code ''All'', Followup): the stored date is kept; no audit row',
+           'Result 1, Reason 0; due ' + CONVERT(VARCHAR(10), DATEADD(DAY, 2, @MDate), 120) + ' 00:00' + '; audit rows 6',
+           ISNULL((SELECT TOP 1 Txt FROM @R), 'none') + '; due ' + @Dd + '; audit rows ' + CAST(@Aud AS VARCHAR(12));
+    DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_UpdateMinutes @Code = 'All', @MinutesId = @Mi, @DecisionTypeId = @Other,
+         @Directions = N'ZZ38 directions', @ActualResolution = N'ZZ38 actual', @ShortText = N'ZZ38 short', @CreatedBy = @Actor, @UpdatedBy = @Actor;
+    SET @Dd = ISNULL((SELECT CONVERT(VARCHAR(16), DueDate, 120) FROM Minutes WHERE MinutesId = @Mi), 'NULL');
+    SELECT @Aud = COUNT(*) FROM Audit_Trail_Master WHERE Audit_Table = 'Minutes' AND Field_Name = 'DueDate' AND Key_Value = 'ZZ38-001';
+    INSERT INTO @T SELECT 'An older caller without @DueDate that changes Followup to another decision: NULL; one audit row',
            'Result 1, Reason 0; due ' + 'NULL' + '; audit rows 7',
            ISNULL((SELECT TOP 1 Txt FROM @R), 'none') + '; due ' + @Dd + '; audit rows ' + CAST(@Aud AS VARCHAR(12));
 

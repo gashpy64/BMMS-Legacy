@@ -129,9 +129,10 @@ namespace BMMSBAL
         /// MeetingDate is the date as text (dd-MMM-yyyy); empty when it is not known.</summary>
         public static string DueDateBeforeMeetingDateMessage(string MeetingDate)
         {
+            // Step UN6a1: no "Nothing was saved" here: Update Minutes says which rows were saved before the refusal
             return string.IsNullOrEmpty(MeetingDate)
-                ? "The due date cannot be before the meeting date. Nothing was saved."
-                : "The due date cannot be before the meeting date (" + System.Web.HttpUtility.HtmlEncode(MeetingDate) + "). Nothing was saved.";
+                ? "The due date cannot be before the meeting date."
+                : "The due date cannot be before the meeting date (" + System.Web.HttpUtility.HtmlEncode(MeetingDate) + ").";
         }
 
         /// <summary>Meeting Master Edit and Delete after the meeting date (step M1; the procedure since step D1).</summary>

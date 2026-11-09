@@ -413,11 +413,34 @@ namespace BMMS.Master
             if (!IsFollowup)
                 txtDueDate.Text = string.Empty;
 
-            txtDueDate.Enabled = IsFollowup;
-            imgCalendar.Enabled = IsFollowup;
-            calDueDate.Enabled = IsFollowup;
-            btnClearDueDate.Disabled = !IsFollowup;
+            // Step UN6a1: without step 38 the due dates cannot be saved: the boxes stay disabled (a stored date is shown)
+            bool enabled = IsFollowup && DueDateSupported;
+
+            txtDueDate.Enabled = enabled;
+            imgCalendar.Enabled = enabled;
+            calDueDate.Enabled = enabled;
+            btnClearDueDate.Disabled = !enabled;
             btnClearDueDate.Attributes["onclick"] = "document.getElementById('" + txtDueDate.ClientID + "').value = ''; return false;";
+
+            if (!DueDateSupported)
+            {
+                txtDueDate.ToolTip = DueDateNeedsStep38;
+                imgCalendar.ToolTip = DueDateNeedsStep38;
+                btnClearDueDate.Attributes["title"] = DueDateNeedsStep38;
+            }
+        }
+
+        // Step UN6a1: whether the database has step 38 (spr_UpdateMinutes takes @DueDate), asked once per request
+        private const string DueDateNeedsStep38 = "Due dates need database step 38 (BMMS-Fix-MinutesDueDate-Step38.sql)";
+        private bool? dueDateSupported;
+        private bool DueDateSupported
+        {
+            get
+            {
+                if (!dueDateSupported.HasValue)
+                    dueDateSupported = MinutesMgr.HasDueDateParameter();
+                return dueDateSupported.Value;
+            }
         }
         #endregion
 
@@ -525,15 +548,24 @@ namespace BMMS.Master
             string strMsg = string.Empty;
 
             // Step UN6a, first pass: every Followup due date must be a date and not before the meeting date; on the
-            // first wrong row nothing is saved (the procedure checks the meeting date again, Reason 22)
+            // first wrong row nothing is saved (the procedure checks the meeting date again, Reason 22).
+            // Step UN6a1: only when the database has step 38 (one check per Save); without it the minutes are saved
+            // without @DueDate and the stored due dates stay as they are
+            bool sendDueDate = DueDateSupported;
             System.Collections.Generic.Dictionary<int, DateTime?> dueDates = new System.Collections.Generic.Dictionary<int, DateTime?>();
-            string dueDateError = CheckDueDates(dueDates);
-            if (dueDateError != null)
+            if (sendDueDate)
             {
-                MsgDisplay(dueDateError);
-                ScriptManager.RegisterStartupScript(this, this.GetType(), "scroll", "window.scrollTo(0,0);", true);
-                return;
+                string dueDateError = CheckDueDates(dueDates);
+                if (dueDateError != null)
+                {
+                    MsgDisplay(dueDateError);
+                    ScriptManager.RegisterStartupScript(this, this.GetType(), "scroll", "window.scrollTo(0,0);", true);
+                    return;
+                }
             }
+
+            // Step UN6a1: the agenda numbers saved so far, for the message of a refusal later in the loop
+            System.Collections.Generic.List<string> savedAgendaNos = new System.Collections.Generic.List<string>();
 
             foreach (GridViewRow gr in grvMinutes.Rows)
             {
@@ -552,6 +584,7 @@ namespace BMMS.Master
 
                     // Step UN6a: the date checked above (null: no due date, and always null for another decision)
                     myMinutesBAL.DueDate = dueDates.ContainsKey(gr.RowIndex) ? dueDates[gr.RowIndex] : null;
+                    myMinutesBAL.SendDueDate = sendDueDate;
 
                     myMinutesBAL.ShortText = ShortText.Trim();
                     myMinutesBAL.Directions = "";
@@ -560,12 +593,17 @@ namespace BMMS.Master
 
                     MeetingChangeResult result = MinutesMgr.UpdateMinutes(myMinutesBAL);
 
+                    string agendaNo = ((Label)gr.FindControl("lblAgendaNo")).Text.Trim();
+
                     if (result.Result != 1)
                     {
-                        // Confirmed in another tab: every row is refused the same way
-                        strMsg = result.RefusalMessage();
+                        // Confirmed in another tab (Reason 7), a due date before the meeting date (Reason 22) or any
+                        // other refusal: each row is saved on its own, so say which rows were already saved (step UN6a1)
+                        strMsg = result.RefusalMessage() + " " + SavedRowsText(savedAgendaNos, agendaNo);
                         break;
                     }
+
+                    savedAgendaNos.Add(agendaNo);
 
                     int MeetingId = Convert.ToInt16(ddlMeeting.SelectedValue.ToString());
                     AlertMgr.UpdateAlertByMeetingId(MeetingId);
@@ -576,6 +614,22 @@ namespace BMMS.Master
             MsgDisplay(strMsg, strMsg == "Successfully Saved" ? MessageKind.Success : MessageKind.Warning);
             ScriptManager.RegisterStartupScript(this, this.GetType(), "scroll", "window.scrollTo(0,0);", true);
             ScriptManager.GetCurrent(this).SetFocus(ddlCommittee.ClientID);
+        }
+        #endregion
+
+        #region SavedRowsText
+        // Step UN6a1: after a refusal on the row of RefusedAgendaNo: "Nothing was saved." on the first row, otherwise
+        // "Saved: agenda A, B. Not saved: agenda C and the rows after it." (HTML-encoded)
+        private static string SavedRowsText(System.Collections.Generic.List<string> SavedAgendaNos, string RefusedAgendaNo)
+        {
+            if (SavedAgendaNos.Count == 0)
+                return "Nothing was saved.";
+
+            string saved = string.Empty;
+            foreach (string agendaNo in SavedAgendaNos)
+                saved += (saved == string.Empty ? "" : ", ") + HttpUtility.HtmlEncode(agendaNo);
+
+            return "Saved: agenda " + saved + ". Not saved: agenda " + HttpUtility.HtmlEncode(RefusedAgendaNo) + " and the rows after it.";
         }
         #endregion
 

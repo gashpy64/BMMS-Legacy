@@ -43,6 +43,8 @@ namespace BMMSBAL
             get { return _DueDate; }
             set { _DueDate = value; }
         }
+        // Step UN6a1: send @DueDate with the save (Save minutes, when MinutesMgr.HasDueDateParameter() is true)
+        public bool SendDueDate { get; set; }
         public string Directions
         {
             get { return _Directions; }
@@ -136,6 +138,7 @@ namespace BMMSBAL
             myMinutesDAL.MinutesId = myMinutesBAL.MinutesId;
             myMinutesDAL.DecisionTypeId = myMinutesBAL.DecisionTypeId;
             myMinutesDAL.DueDate = myMinutesBAL.DueDate;   // step UN6a
+            myMinutesDAL.SendDueDate = myMinutesBAL.SendDueDate;   // step UN6a1
             myMinutesDAL.Directions = HtmlCleaner.Clean(myMinutesBAL.Directions);   // step A1a
             myMinutesDAL.ActualResolution = HtmlCleaner.Clean(myMinutesBAL.ActualResolution);   // step A1a
             myMinutesDAL.ShortText = myMinutesBAL.ShortText;
@@ -143,6 +146,13 @@ namespace BMMSBAL
             myMinutesDAL.UpdatedBy = myMinutesBAL.UpdatedBy;
 
             return MeetingChangeResult.FromTable(MinutesDB.UpdateMinutes(myMinutesDAL));
+        }
+
+        // Step UN6a1: true when the database has step 38 (spr_UpdateMinutes takes @DueDate); the page then sends the
+        // due dates, otherwise it disables the due date boxes and saves the minutes without them
+        public static bool HasDueDateParameter()
+        {
+            return MinutesDB.HasDueDateParameter();
         }
         #endregion
 

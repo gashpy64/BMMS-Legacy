@@ -97,7 +97,9 @@
    before step 38 (the step 38 script stops otherwise). Re-running step 6,
    16, 17, 18, 23 or 31 after step 38 brings back an older spr_UpdateMinutes:
    step 38 reads Missing; run step 38 again. After
-   BMMS-Rollback-MinutesDueDate-Step38.sql it reads Missing.
+   BMMS-Rollback-MinutesDueDate-Step38.sql it reads Missing. Since step
+   UN6a1 step 38 has two markers: the first step 38 text (a missing
+   @DueDate cleared the date) reads Partly, 1 of 2: run step 38 again.
    Step 32 is reserved and not built; it has no row.
    Step D1 (shown as step 100) replaces spr_DeleteMeetingByMeetingId, which
    no numbered script contains: it reads Missing only on a database restored
@@ -360,7 +362,8 @@ INSERT INTO @M VALUES (37, 'App_Setting MailSenderUserId', CASE WHEN @SenderRow 
 
 -- 38. BMMS-Fix-MinutesDueDate-Step38.sql, installed after step 31 (re-running step 6, 16, 17, 18, 23 or 31 replaces spr_UpdateMinutes)
 INSERT INTO @M VALUES
-(38, 'spr_UpdateMinutes (MinutesDueDate-Step38)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')), '') LIKE '%MinutesDueDate-Step38%' THEN 1 ELSE 0 END);
+(38, 'spr_UpdateMinutes (MinutesDueDate-Step38)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')), '') LIKE '%MinutesDueDate-Step38%' THEN 1 ELSE 0 END),
+(38, 'spr_UpdateMinutes (DueDateKeep-Step38, step UN6a1)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')), '') LIKE '%DueDateKeep-Step38%' THEN 1 ELSE 0 END);
 
 -- D1 (shown as step 100). BMMS-Fix-MeetingDelete-D1.sql; no numbered script contains spr_DeleteMeetingByMeetingId
 INSERT INTO @M VALUES
@@ -400,7 +403,7 @@ INSERT INTO @Steps VALUES
 (35, 'BMMS-Fix-CommentAuthor-Step35.sql', 'step 16, 17, 18, 20 or 31 was re-run: run step 35 again, then steps 36 and 37'),
 (36, 'BMMS-Fix-AlertRefresh-Step36.sql', 'step 16, 17, 18, 20, 31 or 35 was re-run after step 36: run step 36 again, then step 37 (steps in order: 35 before 36)'),
 (37, 'BMMS-Fix-UpdateMail-Step37.sql', 'step 16, 17, 18, 20, 31, 35 or 36 was re-run after step 37: run step 37 again (steps in order: 36 before 37)'),
-(38, 'BMMS-Fix-MinutesDueDate-Step38.sql', 'step 6, 16, 17, 18, 23 or 31 was re-run after step 38: run step 38 again (steps in order: 31 before 38)'),
+(38, 'BMMS-Fix-MinutesDueDate-Step38.sql', 'the first step 38 text (1 of 2), or step 6, 16, 17, 18, 23 or 31 was re-run after step 38: run step 38 again'),
 (100, 'BMMS-Fix-MeetingDelete-D1.sql (step D1)', '');
 
 SELECT s.Step, s.Script,

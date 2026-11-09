@@ -44,6 +44,8 @@ namespace BMMSDAL
             get { return _DueDate; }
             set { _DueDate = value; }
         }
+        // Step UN6a1: send @DueDate (only Save minutes does, and only when step 38 is installed)
+        public bool SendDueDate { get; set; }
         public string Directions
         {
             get { return _Directions; }
@@ -181,7 +183,9 @@ namespace BMMSDAL
         #region UpdateMinutes
         public static DataTable UpdateMinutes(MinutesDAL myMinutesDAL)
         {
-            SqlParameter[] parameter = new SqlParameter[9];
+            // Step UN6a1: @DueDate only when the caller asks for it and the procedure has it (HasDueDateParameter);
+            // without it the procedure keeps the stored due date, and without step 38 the call still works
+            SqlParameter[] parameter = new SqlParameter[myMinutesDAL.SendDueDate ? 9 : 8];
             parameter[0] = new SqlParameter("@Code", myMinutesDAL.Code);
             parameter[1] = new SqlParameter("@MinutesId", myMinutesDAL.MinutesId);
             parameter[2] = new SqlParameter("@DecisionTypeId", myMinutesDAL.DecisionTypeId);
@@ -193,11 +197,24 @@ namespace BMMSDAL
 
             // Step UN6a (BMMS-Fix-MinutesDueDate-Step38.sql): the due date as datetime, NULL for none; the procedure
             // keeps it only for Code 'All' and a Followup decision, and refuses a date before the meeting date (Reason 22)
-            parameter[8] = new SqlParameter("@DueDate", SqlDbType.DateTime);
-            parameter[8].Value = myMinutesDAL.DueDate.HasValue ? (object)myMinutesDAL.DueDate.Value.Date : DBNull.Value;
+            if (myMinutesDAL.SendDueDate)
+            {
+                parameter[8] = new SqlParameter("@DueDate", SqlDbType.DateTime);
+                parameter[8].Value = myMinutesDAL.DueDate.HasValue ? (object)myMinutesDAL.DueDate.Value.Date : DBNull.Value;
+            }
 
             // One row: Result, Reason, ReasonDetail; refused once the minutes are confirmed (BMMS-Fix-MeetingLocks-Step16.sql)
             return CommonDB.GetDataTable("spr_UpdateMinutes", parameter);
+        }
+        #endregion
+
+        #region HasDueDateParameter
+        // Step UN6a1: true when spr_UpdateMinutes has the step 38 parameter @DueDate (BMMS-Fix-MinutesDueDate-Step38.sql)
+        public static bool HasDueDateParameter()
+        {
+            DataTable dt = CommonDB.GetDataTableFromQuery(
+                "SELECT COUNT(*) AS n FROM sys.parameters WHERE object_id = OBJECT_ID('dbo.spr_UpdateMinutes') AND name = '@DueDate'");
+            return dt.Rows.Count > 0 && Convert.ToInt32(dt.Rows[0]["n"]) > 0;
         }
         #endregion
     }
