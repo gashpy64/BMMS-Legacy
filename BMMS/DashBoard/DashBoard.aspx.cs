@@ -871,19 +871,8 @@ namespace BMMS.DashBoard
 
                 Bcc = AlertMgr.GetAlertMailId(MailCode, UserId, AgendaId);
 
-                DataRow itemAfter = null;
-                try
-                {
-                    DataTable dtAfter = AgendaMgr.GetAgendaByAgendaId(AgendaId);
-                    if (dtAfter.Rows.Count > 0)
-                        itemAfter = dtAfter.Rows[0];
-                    else
-                        Utilities.WriteErrorLog(className, "GenerateMail", "Agenda " + AgendaId + " could not be read after the decision; the mail is sent without the comment row.");
-                }
-                catch (Exception readEx)
-                {
-                    Utilities.WriteErrorLog(className, "GenerateMail", "Agenda " + AgendaId + " could not be read after the decision; the mail is sent without the comment row. " + readEx.ToString());
-                }
+                // Step ML2c: the item as saved now, or null (logged as before; the mail then goes without the comment row)
+                DataRow itemAfter = AgendaMail.ReadItemAfterSave(AgendaId, className, "the decision");
 
                 string subjectNo = itemAfter != null ? itemAfter["SubjectNo"].ToString() : txtSubjectNo.Text;
 

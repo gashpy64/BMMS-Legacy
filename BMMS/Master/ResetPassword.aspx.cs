@@ -120,7 +120,8 @@ namespace BMMS.Master
             }
             else
             {
-                result = Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, null);
+                // Step ML2c: ToRequired: the mail is for this user; without a valid To address it fails (no Bcc-only mail)
+                result = Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, null, true);
 
                 if (result == "Success")
                     errMsg = "New passward was sent through mail.";

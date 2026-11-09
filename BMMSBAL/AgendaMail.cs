@@ -217,6 +217,33 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region ReadItemAfterSave
+        /// <summary>
+        /// Step ML2c: the item read again after a saved decision (spr_GetAgendaByAgendaId, a View_Agenda row), for the
+        /// comment row and the Subject No of the mail; null when it cannot be read, after writing the error log entry
+        /// "Agenda <id> could not be read after <AfterWhat>; the mail is sent without the comment row." (with the
+        /// exception when there is one). ClassName is the page's class name in the log, as before; AfterWhat is
+        /// "the decision" (Dashboard) or "the rejection" (Agenda Finalisation). Never throws.
+        /// </summary>
+        public static DataRow ReadItemAfterSave(int AgendaId, string ClassName, string AfterWhat)
+        {
+            string text = "Agenda " + AgendaId + " could not be read after " + AfterWhat + "; the mail is sent without the comment row.";
+            try
+            {
+                DataTable dtAfter = AgendaMgr.GetAgendaByAgendaId(AgendaId);
+                if (dtAfter.Rows.Count > 0)
+                    return dtAfter.Rows[0];
+
+                Utilities.WriteErrorLog(ClassName, "GenerateMail", text);
+            }
+            catch (Exception readEx)
+            {
+                Utilities.WriteErrorLog(ClassName, "GenerateMail", text + " " + readEx.ToString());
+            }
+            return null;
+        }
+        #endregion
+
         #region helpers
         private static bool SameText(object A, object B)
         {

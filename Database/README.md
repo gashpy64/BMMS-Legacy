@@ -2699,6 +2699,31 @@ Browser checks on `BMMS_Test` (Chrome and Edge; keep the error log of the day op
 11. Step UN6a1, without step 38: BMMS-Rollback-MinutesDueDate-Step38.sql; reload Update Minutes: the due date boxes, calendar and Clear are disabled (tooltip "Due dates need database step 38 ..."), a stored date is still shown; Save minutes, Directions and Actual Resolution save without an error (no "too many arguments"); the stored dates are unchanged in SSMS. Run BMMS-Fix-MinutesDueDate-Step38.sql again: the boxes are enabled again.
 12. Error log: no entry from these checks.
 
+## Step ML2c: a bad Bcc address no longer stops a mail; one helper for the mail's item read (code only, no database script)
+
+Found by the review of steps ML1 to UN6a. Since step ML2a the Bcc of SMTP Configuration goes on every mail, and the update mail (step ML1) puts every recipient's stored e-mail in one Bcc. Neither the SMTP Configuration Bcc nor Users.EmailId is checked on the server, and one address that could not be read (for example `john@`, or two addresses separated only by a space) threw an error and stopped the whole mail: no Reset Password mail, no Notice to any member, no approve / reject or update mail.
+
+Code:
+
+- BMMSBAL/Mail_Mgr.cs, AddRecipients and AddMailAddresses: an address in To or Bcc that is not valid is skipped, and the error log gets one entry per mail and address: "To address skipped, not a valid address: <address>" or "Bcc address skipped, not a valid address: <address>" (Mail_Mgr, AddMailAddresses). The To of the agenda, approve / reject, update and meeting mails is the stored address of the person who saved or decided, so a bad address there stopped the mail for every recipient before. The mail now fails (the error of the first bad To address, as before) only when no valid address is left in To and Bcc together. The page message is unchanged: the mail went out, the log names the skipped address, and that person gets no copy.
+- SendWebEmail has a new optional ToRequired (default false). Reset Password and Notice set it: their mail is for the one user or member in To, so without a valid To address it fails as before, also when a Bcc is configured (no Bcc-only copy), and the page reports the failure as before (Reset Password: "... but the mail could not be sent ..."; Notice: counted in "sent N of M"). Send Mail keeps its own check of the typed addresses, so a bad To is refused before sending.
+- BMMSBAL/AgendaMail.cs, new ReadItemAfterSave: the item read again after a saved decision, or null after the error log entry "Agenda <id> could not be read after the decision (the rejection); the mail is sent without the comment row." It replaces the same block in BMMS/DashBoard/DashBoard.aspx.cs and BMMS/Master/AgendaFinalization.aspx.cs; the log text, the page names in the log and the mails are unchanged.
+- Not changed: no server check is added on SMTP Configuration Bcc or User Master Email Id (a later step may add one); no SQL.
+
+Browser checks on `BMMS_Test` (smtp4dev on port 25 of the web server; keep the error log of the day open; made-up addresses only; note every value before changing it):
+
+1. Bad SMTP Bcc: in SSMS `UPDATE SMTP_Master SET Bcc = 'copy@example.invalid, bad address'`. Report, Send Mail to `test1@example.invalid`: the mail arrives, copy@example.invalid in its Bcc; the error log has one line "Bcc address skipped, not a valid address: bad address". Notice to a meeting with two members: two mails, each with copy@example.invalid; two "skipped" lines. Set the Bcc back.
+2. depuser with a bad address: `UPDATE Users SET EmailId = 'john@' WHERE LoginName = 'depuser'`.
+   a. depuser saves a new agenda item: "Successfully Saved"; smtp4dev has the "has been Created" mail with mgruser in Bcc and no To; the log has "To address skipped, not a valid address: john@".
+   b. depuser changes the Short Text and clicks Update: the "has been Updated" mail reaches mgruser; the log names john@ (To).
+   c. mgruser approves the item (AMA): the mail is To mgruser with the Controllers in Bcc; the log has "Bcc address skipped, not a valid address: john@" (depuser is the creator).
+   d. Reset Password for depuser, SMTP Configuration Bcc empty: the page says "The password was reset to the default password, but the mail could not be sent. ..."; nothing in smtp4dev; the log has the To skip line and the error.
+   e. The same with SMTP Configuration Bcc `copy@example.invalid`: the same page message, nothing in smtp4dev (no Bcc-only copy, ToRequired); set the Bcc back.
+   Set depuser's address back.
+3. Bad To on Send Mail: to `john@`: refused by the page ("This mail address is not valid: john@ ..."), as before; nothing is sent.
+4. Approve and reject mails: Dashboard, Manager approves (AMA) and rejects (AMR), Controller approves (ACA) and rejects (ACR); Agenda Finalisation with an item not yet approved (the "rejected by Controller on agenda finalized" mail). Each mail as in step ML2b: the detail block, Subject No when there is one, Meeting Date dd-MMM-yyyy, the comment row with its grey name and time line.
+5. Error log: only the expected "skipped" lines and the two Reset Password errors (2d, 2e); no "could not be read after" line.
+
 ## Known items for later steps
 
 - Since step ML1 an Update on Agenda Entry that changes something sends a mail (step 37).

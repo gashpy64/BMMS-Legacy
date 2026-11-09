@@ -14,13 +14,16 @@ namespace BMMSBAL
     {      
 
         #region SendWebEmail
-        public static string SendWebEmail(string ToMailId, string Subject, string BodyText, string AttachFileName, string Bcc)
+        // Step ML2c: ToRequired (Reset Password, Notice): the mail fails when no valid To address is left, even with a
+        // Bcc. Without it (every other mail) a To or Bcc address that is not valid is skipped and logged, and the mail
+        // fails only when To and Bcc are both empty (AddRecipients).
+        public static string SendWebEmail(string ToMailId, string Subject, string BodyText, string AttachFileName, string Bcc, bool ToRequired = false)
         {
-            return SendWebEmail(ToMailId, Subject, BodyText, AttachFileName, null, Bcc);
+            return SendWebEmail(ToMailId, Subject, BodyText, AttachFileName, null, Bcc, ToRequired);
         }
 
         // AttachName: the file name the mail attachment shows; null keeps the name of the file on disk (step SM1)
-        public static string SendWebEmail(string ToMailId, string Subject, string BodyText, string AttachFileName, string AttachName, string Bcc)
+        public static string SendWebEmail(string ToMailId, string Subject, string BodyText, string AttachFileName, string AttachName, string Bcc, bool ToRequired = false)
         {
 
             string pSMTPServer = string.Empty;
@@ -65,12 +68,9 @@ namespace BMMSBAL
                 using (MailMessage eMail = new MailMessage())
                 {
                     eMail.From = new MailAddress(pFromMailId);
-                    AddMailAddresses(eMail.To, pTo);
 
-                    // Step ML2a: no address twice in the Bcc, and none that is already a To address (ignoring case)
-                    if (pBcc != null)
-                        if (pBcc.Trim() != string.Empty)
-                            AddMailAddresses(eMail.Bcc, pBcc, eMail.To);
+                    // Step ML2c: To and Bcc, an address that is not valid skipped and logged (AddRecipients)
+                    AddRecipients(eMail, pTo, pBcc, ToRequired);
 
                     // UTF-8 for the subject, the body and the headers (step U1b): the rupee sign and Tamil
                     // and Hindi letters arrive as typed in every mail program
@@ -125,28 +125,73 @@ namespace BMMSBAL
         #endregion
 
 
-        #region AddMailAddresses
-        // Accepts addresses separated by comma or semicolon and skips blanks.
-        private static void AddMailAddresses(MailAddressCollection addresses, string mailIds)
+        #region AddRecipients
+        // Step ML2c: fills To and Bcc. An address that is not valid is skipped and logged once ("To address skipped" /
+        // "Bcc address skipped, not a valid address: <address>"), so one bad stored address (the person who saved,
+        // a recipient, the SMTP Configuration Bcc) no longer stops the whole mail. The Bcc drops an address already in
+        // it or in To (step ML2a). The mail fails (the first FormatException of To is thrown, as before) only when:
+        //   - ToRequired (Reset Password, Notice) and no valid To address is left, even with a Bcc; or
+        //   - no valid address is left in To and Bcc together.
+        // With no To address at all (none given) and no ToRequired, nothing is thrown here (as before).
+        private static void AddRecipients(MailMessage eMail, string To, string Bcc, bool ToRequired)
         {
-            AddMailAddresses(addresses, mailIds, null);
-        }
+            FormatException firstBadTo = AddMailAddresses(eMail.To, To, null, "To");
 
+            if (Bcc != null && Bcc.Trim() != string.Empty)
+                AddMailAddresses(eMail.Bcc, Bcc, eMail.To, "Bcc");
+
+            if (eMail.To.Count == 0 && (ToRequired || eMail.Bcc.Count == 0))
+            {
+                if (firstBadTo != null)
+                    throw firstBadTo;
+                if (ToRequired)
+                    throw new InvalidOperationException("The mail has no To address.");
+            }
+        }
+        #endregion
+
+        #region AddMailAddresses
+        // Accepts addresses separated by comma or semicolon and skips blanks. An address that is not valid is skipped
+        // and logged once (ListName "To" or "Bcc", step ML2c); returns the first such FormatException, or null.
         // Step ML2a: with Exclude (the To list of the mail), an address already in Addresses or in Exclude is
-        // skipped, compared ignoring case. Without Exclude every address is added, as before.
-        private static void AddMailAddresses(MailAddressCollection addresses, string mailIds, MailAddressCollection exclude)
+        // skipped, compared ignoring case. Without Exclude every valid address is added, as before.
+        private static FormatException AddMailAddresses(MailAddressCollection addresses, string mailIds, MailAddressCollection exclude, string ListName)
         {
+            FormatException first = null;
+            System.Collections.Generic.List<string> skipped = new System.Collections.Generic.List<string>();
+
+            if (mailIds == null)
+                return null;
+
             foreach (string mailId in mailIds.Split(new char[] { ',', ';' }))
             {
                 if (mailId.Trim() == string.Empty)
                     continue;
 
-                MailAddress address = new MailAddress(mailId.Trim());
+                MailAddress address;
+                try
+                {
+                    address = new MailAddress(mailId.Trim());
+                }
+                catch (FormatException ex)
+                {
+                    if (first == null)
+                        first = ex;
+                    if (!skipped.Contains(mailId.Trim()))
+                    {
+                        skipped.Add(mailId.Trim());
+                        Utilities.WriteErrorLog("Mail_Mgr", "AddMailAddresses", ListName + " address skipped, not a valid address: " + mailId.Trim());
+                    }
+                    continue;
+                }
+
                 if (exclude != null && (ContainsAddress(addresses, address) || ContainsAddress(exclude, address)))
                     continue;
 
                 addresses.Add(address);
             }
+
+            return first;
         }
 
         private static bool ContainsAddress(MailAddressCollection addresses, MailAddress address)

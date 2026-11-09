@@ -190,7 +190,8 @@ namespace BMMS.Report
                             string Subject = "Notice of Next Meeting of the " + dtMeeting.Rows[0]["CommitteeName"].ToString();
 
                             // "Success", or "Error: ..." already written to the error log by Mail_Mgr
-                            if (Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, null) == "Success")
+                            // Step ML2c: ToRequired: one mail per member; without a valid To address it fails and is counted
+                            if (Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, null, true) == "Success")
                                 sent += 1;
                             else
                                 failed += 1;
