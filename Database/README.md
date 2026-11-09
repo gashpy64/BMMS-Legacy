@@ -2809,6 +2809,8 @@ Browser checks on `BMMS_Test` (Chrome and Edge at 100 percent; keep the error lo
 - Step UD1a review (Low): after a change of home department the old one stays ticked on purpose; no note says so.
 - Step UD1a review (Low): the vertical Departments managed list (.wb-radio-list) has no row spacing; small click targets with many departments.
 - Step UD1a review (Low): the .wb-dept-list rule is tied to the client ID of grvUser (as the G1 and UM2 rules); a department name with spaces now wraps at 10em, so rows grow; the action buttons' vertical alignment in a 3-line row is not verified.
+- Step WF2a review (Low, unverified): an entity code without its closing semicolon inside a Mermaid label of a user manual is not caught by Check-UserManuals.ps1 (Mermaid runs with strict security and no HTML labels, so it is expected to show the text as typed).
+- Step WF2a review (Low): the Glossary does not say that the Management role's Reports menu is empty; it is listed under To confirm in the Glossary's register entry (Documents/README.md) for WF2d1.
 - Since step ML1 an Update on Agenda Entry that changes something sends a mail (step 37).
 - The mail goes out From the From Mail Id of SMTP Configuration; MailSenderUserId only records which account that should be (step ML1). Mail_Mgr does not use TLS (EnableSsl is not set), so only a server that accepts plain SMTP works (a local relay); Office 365 or Gmail on port 587 would need a code change.
 

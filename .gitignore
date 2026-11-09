@@ -62,3 +62,7 @@ BMMS/Files/SqlBackup/
 Thumbs.db
 /Backup/
 UpgradeLog*.htm
+
+# Document exports are made per release (Documents/_build/Export-Documents.ps1) and not committed.
+Documents/Export/*
+!Documents/Export/README.md
