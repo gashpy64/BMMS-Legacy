@@ -91,6 +91,8 @@ namespace BMMSBAL
                     return MeetingChangeReason.MeetingDatePassedMessage;
                 case MeetingChangeReason.MeetingInUse:
                     return Common.GetAppSetting("delete_reference");
+                case MeetingChangeReason.DueDateBeforeMeetingDate:
+                    return MeetingChangeReason.DueDateBeforeMeetingDateMessage(ReasonDetail);
                 default:
                     return "Record Not Saved";
             }
@@ -121,6 +123,16 @@ namespace BMMSBAL
         public const int MinutesNotUpdated = 19;       // step 23: finalize with a minute never updated; ReasonDetail 'not updated/total'
         public const int MeetingDatePassed = 20;       // step D1: meeting delete after the meeting date (database server date)
         public const int MeetingInUse = 21;            // step D1: meeting delete while it has members, agenda items or attendance; ReasonDetail names them
+        public const int DueDateBeforeMeetingDate = 22; // step 38 (UN6a): a Followup due date before the meeting date; ReasonDetail the meeting date
+
+        /// <summary>Step UN6a: Update Minutes, a Followup due date before the meeting date (BMMS-Fix-MinutesDueDate-Step38.sql).
+        /// MeetingDate is the date as text (dd-MMM-yyyy); empty when it is not known.</summary>
+        public static string DueDateBeforeMeetingDateMessage(string MeetingDate)
+        {
+            return string.IsNullOrEmpty(MeetingDate)
+                ? "The due date cannot be before the meeting date. Nothing was saved."
+                : "The due date cannot be before the meeting date (" + System.Web.HttpUtility.HtmlEncode(MeetingDate) + "). Nothing was saved.";
+        }
 
         /// <summary>Meeting Master Edit and Delete after the meeting date (step M1; the procedure since step D1).</summary>
         public const string MeetingDatePassedMessage =

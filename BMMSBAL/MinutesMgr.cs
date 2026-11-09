@@ -14,7 +14,7 @@ namespace BMMSBAL
         private string _Code;
         private int _MinutesId;
         private int _DecisionTypeId;
-        private DateTime _DueDate = System.DateTime.Now;
+        private DateTime? _DueDate;   // step UN6a: null = no due date (Followup only; BMMS-Fix-MinutesDueDate-Step38.sql)
         private string _Directions;
         private string _ActualResolution;
         private string _ShortText = string.Empty;
@@ -38,7 +38,7 @@ namespace BMMSBAL
             get { return _DecisionTypeId; }
             set { _DecisionTypeId = value; }
         }
-        public DateTime DueDate
+        public DateTime? DueDate
         {
             get { return _DueDate; }
             set { _DueDate = value; }
@@ -135,7 +135,7 @@ namespace BMMSBAL
             myMinutesDAL.Code = myMinutesBAL.Code;
             myMinutesDAL.MinutesId = myMinutesBAL.MinutesId;
             myMinutesDAL.DecisionTypeId = myMinutesBAL.DecisionTypeId;
-            //myMinutesDAL.DueDate = myMinutesBAL.DueDate;
+            myMinutesDAL.DueDate = myMinutesBAL.DueDate;   // step UN6a
             myMinutesDAL.Directions = HtmlCleaner.Clean(myMinutesBAL.Directions);   // step A1a
             myMinutesDAL.ActualResolution = HtmlCleaner.Clean(myMinutesBAL.ActualResolution);   // step A1a
             myMinutesDAL.ShortText = myMinutesBAL.ShortText;

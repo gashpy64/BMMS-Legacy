@@ -15,7 +15,7 @@ namespace BMMSDAL
         private string _Code;
         private int _MinutesId;
         private int _DecisionTypeId;
-        private DateTime _DueDate = System.DateTime.Now;
+        private DateTime? _DueDate;   // step UN6a: null = no due date (sent as DBNull)
         private string _Directions;
         private string _ActualResolution;
         private string _ShortText;
@@ -39,7 +39,7 @@ namespace BMMSDAL
             get { return _DecisionTypeId; }
             set { _DecisionTypeId = value; }
         }
-        public DateTime DueDate
+        public DateTime? DueDate
         {
             get { return _DueDate; }
             set { _DueDate = value; }
@@ -181,16 +181,20 @@ namespace BMMSDAL
         #region UpdateMinutes
         public static DataTable UpdateMinutes(MinutesDAL myMinutesDAL)
         {
-            SqlParameter[] parameter = new SqlParameter[8];
+            SqlParameter[] parameter = new SqlParameter[9];
             parameter[0] = new SqlParameter("@Code", myMinutesDAL.Code);
             parameter[1] = new SqlParameter("@MinutesId", myMinutesDAL.MinutesId);
             parameter[2] = new SqlParameter("@DecisionTypeId", myMinutesDAL.DecisionTypeId);
-            //parameter[3] = new SqlParameter("@DueDate", myMinutesDAL.DueDate);
             parameter[3] = new SqlParameter("@Directions", myMinutesDAL.Directions);
             parameter[4] = new SqlParameter("@ActualResolution", myMinutesDAL.ActualResolution);
             parameter[5] = new SqlParameter("@ShortText", myMinutesDAL.ShortText);
             parameter[6] = new SqlParameter("@CreatedBy", myMinutesDAL.CreatedBy);
             parameter[7] = new SqlParameter("@UpdatedBy", myMinutesDAL.UpdatedBy);
+
+            // Step UN6a (BMMS-Fix-MinutesDueDate-Step38.sql): the due date as datetime, NULL for none; the procedure
+            // keeps it only for Code 'All' and a Followup decision, and refuses a date before the meeting date (Reason 22)
+            parameter[8] = new SqlParameter("@DueDate", SqlDbType.DateTime);
+            parameter[8].Value = myMinutesDAL.DueDate.HasValue ? (object)myMinutesDAL.DueDate.Value.Date : DBNull.Value;
 
             // One row: Result, Reason, ReasonDetail; refused once the minutes are confirmed (BMMS-Fix-MeetingLocks-Step16.sql)
             return CommonDB.GetDataTable("spr_UpdateMinutes", parameter);

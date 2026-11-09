@@ -157,10 +157,11 @@ INSERT INTO @T SELECT 'The 31 text parameters of the 7 procedures are NVARCHAR(M
                              OBJECT_ID('dbo.spr_UpdateActionItem'))
        AND p.name IN ('@ShortText', '@AgendaText', '@AgendaTextPath', '@ProposedResolution', '@FilePath', '@MgrComments', '@ControllerComments',
                       '@Directions', '@ActualResolution', '@ActionText');
-INSERT INTO @T SELECT 'Parameter counts unchanged; no output parameter (since step 37: @ChangedFields, 23 and 3 outputs)',
-       CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_AddEditAgenda')), '') LIKE '%UpdateMail-Step37%'
+INSERT INTO @T SELECT 'Parameter counts unchanged; no output parameter (since step 37: @ChangedFields, 23 and 3 outputs; since step 38: spr_UpdateMinutes 9)',
+       REPLACE(CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_AddEditAgenda')), '') LIKE '%UpdateMail-Step37%'
             THEN 'spr_AddEditAgenda 23; spr_AddEditAgendaByController 23; spr_AddEditAgendaByManager 23; spr_UpdateActionItem 6; spr_UpdateAgendaByAgendaId 8; spr_UpdateAgendaShortText 3; spr_UpdateMinutes 8; outputs 3'
             ELSE 'spr_AddEditAgenda 22; spr_AddEditAgendaByController 22; spr_AddEditAgendaByManager 22; spr_UpdateActionItem 6; spr_UpdateAgendaByAgendaId 8; spr_UpdateAgendaShortText 3; spr_UpdateMinutes 8; outputs 0' END,
+               'spr_UpdateMinutes 8', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')), '') LIKE '%MinutesDueDate-Step38%' THEN 'spr_UpdateMinutes 9' ELSE 'spr_UpdateMinutes 8' END),
        ISNULL(STUFF((SELECT '; ' + OBJECT_NAME(p.object_id) + ' ' + CAST(COUNT(*) AS VARCHAR(4))
                      FROM sys.parameters p
                      WHERE p.object_id IN (OBJECT_ID('dbo.spr_AddEditAgenda'), OBJECT_ID('dbo.spr_UpdateAgendaByAgendaId'), OBJECT_ID('dbo.spr_AddEditAgendaByManager'),
@@ -184,8 +185,10 @@ INSERT INTO @T SELECT 'spr_AddEditAgendaByManager and ByController: the same nam
                      FOR XML PATH(''), TYPE).value('.', 'VARCHAR(400)'), 1, 1, ''), 'x')
                = ISNULL(STUFF((SELECT ',' + name FROM sys.parameters WHERE object_id = OBJECT_ID('dbo.spr_AddEditAgenda') ORDER BY parameter_id
                      FOR XML PATH(''), TYPE).value('.', 'VARCHAR(400)'), 1, 1, ''), 'y') THEN 'same' ELSE 'different' END;
-INSERT INTO @T SELECT 'spr_UpdateAgendaByAgendaId, spr_UpdateAgendaShortText, spr_UpdateMinutes, spr_UpdateActionItem parameter names in order',
-       '@AgendaId,@ShortText,@ProposedResolution,@MgrComments,@ControllerComments,@ControllerApprovedStatus,@MgrApprovedStatus,@UpdatedBy | @AgendaId,@ShortText,@UpdatedBy | @Code,@MinutesId,@DecisionTypeId,@Directions,@ActualResolution,@ShortText,@CreatedBy,@UpdatedBy | @Code,@ActionItemId,@ActualResolution,@ActionText,@IsComplied,@IsConfirmed',
+INSERT INTO @T SELECT 'spr_UpdateAgendaByAgendaId, spr_UpdateAgendaShortText, spr_UpdateMinutes, spr_UpdateActionItem parameter names in order (since step 38 spr_UpdateMinutes ends with @DueDate)',
+       REPLACE('@AgendaId,@ShortText,@ProposedResolution,@MgrComments,@ControllerComments,@ControllerApprovedStatus,@MgrApprovedStatus,@UpdatedBy | @AgendaId,@ShortText,@UpdatedBy | @Code,@MinutesId,@DecisionTypeId,@Directions,@ActualResolution,@ShortText,@CreatedBy,@UpdatedBy | @Code,@ActionItemId,@ActualResolution,@ActionText,@IsComplied,@IsConfirmed',
+               '@CreatedBy,@UpdatedBy | @Code,@ActionItemId', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')), '') LIKE '%MinutesDueDate-Step38%'
+                                   THEN '@CreatedBy,@UpdatedBy,@DueDate | @Code,@ActionItemId' ELSE '@CreatedBy,@UpdatedBy | @Code,@ActionItemId' END),
        ISNULL(STUFF((SELECT ',' + name FROM sys.parameters WHERE object_id = OBJECT_ID('dbo.spr_UpdateAgendaByAgendaId') ORDER BY parameter_id
                      FOR XML PATH(''), TYPE).value('.', 'VARCHAR(400)'), 1, 1, ''), 'none') + ' | '
      + ISNULL(STUFF((SELECT ',' + name FROM sys.parameters WHERE object_id = OBJECT_ID('dbo.spr_UpdateAgendaShortText') ORDER BY parameter_id

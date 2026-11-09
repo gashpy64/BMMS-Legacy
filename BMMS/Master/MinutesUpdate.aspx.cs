@@ -269,28 +269,26 @@ namespace BMMS.Master
 
                     DropDownList ddlDecisionType = (DropDownList)e.Row.FindControl("ddlDecisionType");
                     Label lblDecisionTypeId = (Label)e.Row.FindControl("lblDecisionTypeId");
-                    //Label lblDueDate = (Label)e.Row.FindControl("lblDueDate");
-                    //TextBox txtDueDate = (TextBox)e.Row.FindControl("txtDueDate");
-                    //ImageButton imgCalendar = (ImageButton)e.Row.FindControl("imgCalendar");
                     Button btnDirections = (Button)e.Row.FindControl("btnDirections");
 
                     ddlDecisionType.Text = lblDecisionTypeId.Text.Trim();
                     if (lblDecisionTypeId.Text == "1")
                     {
-                        //txtDueDate.Enabled = true;
-                        //txtDueDate.Text = Convert.ToDateTime(lblDueDate.Text).ToString("dd-MMM-yyyy");
-                        //imgCalendar.Enabled = true;
                         btnDirections.Enabled = true;
                         btnDirections.Visible = true;
                     }
                     else
                     {
-                        //txtDueDate.Enabled = false;
-                        //txtDueDate.Text = string.Empty;
-                        //imgCalendar.Enabled = false;
                         btnDirections.Enabled = false;
                         btnDirections.Visible = false;
                     }
+
+                    // Step UN6a: the stored due date (dd-MMM-yyyy), and the box only for a Followup decision
+                    TextBox txtDueDate = (TextBox)e.Row.FindControl("txtDueDate");
+                    DataRowView drv = e.Row.DataItem as DataRowView;
+                    object dueDate = drv == null || !drv.Row.Table.Columns.Contains("DueDate") ? null : drv["DueDate"];
+                    txtDueDate.Text = dueDate == null || dueDate == DBNull.Value ? string.Empty : Convert.ToDateTime(dueDate).ToString("dd-MMM-yyyy");
+                    SetDueDateBox(e.Row, lblDecisionTypeId.Text.Trim() == FollowupDecisionTypeId);
 
                 }
             }
@@ -383,25 +381,43 @@ namespace BMMS.Master
 
             GridViewRow gv = (GridViewRow)(ddl.Parent.Parent);
 
-            //TextBox txtDueDate = (TextBox)gv.Cells[5].FindControl("txtDueDate");
-            //ImageButton imgCalendar = (ImageButton)gv.Cells[5].FindControl("imgCalendar");
-            Button btnDirections = (Button)gv.Cells[6].FindControl("btnDirections");
+            Button btnDirections = (Button)gv.FindControl("btnDirections");
 
             if (ddl.SelectedItem.Text.Equals("Followup"))
             {
-                //txtDueDate.Enabled = true;
-                //imgCalendar.Enabled = true;
                 btnDirections.Enabled = true;
                 btnDirections.Visible = true;
             }
             else
             {
-                //txtDueDate.Enabled = false;
-                //txtDueDate.Text = string.Empty;
-                //imgCalendar.Enabled = false;
                 btnDirections.Enabled = false;
                 btnDirections.Visible = false;
             }
+
+            // Step UN6a: the due date box follows the decision (by its id: Followup = 1); another decision empties it
+            SetDueDateBox(gv, ddl.SelectedValue == FollowupDecisionTypeId);
+        }
+
+        // Step UN6a: the decision id of Followup (Decision_Type, DT001); only it can have a due date
+        private const string FollowupDecisionTypeId = "1";
+
+        // Step UN6a: enables the due date box, its calendar and its Clear button for a Followup row; for any other
+        // decision they are disabled and the box is emptied (the procedure stores NULL for it anyway)
+        private void SetDueDateBox(GridViewRow Row, bool IsFollowup)
+        {
+            TextBox txtDueDate = (TextBox)Row.FindControl("txtDueDate");
+            ImageButton imgCalendar = (ImageButton)Row.FindControl("imgCalendar");
+            AjaxControlToolkit.CalendarExtender calDueDate = (AjaxControlToolkit.CalendarExtender)Row.FindControl("CalendarExtender1");
+            System.Web.UI.HtmlControls.HtmlInputButton btnClearDueDate = (System.Web.UI.HtmlControls.HtmlInputButton)Row.FindControl("btnClearDueDate");
+
+            if (!IsFollowup)
+                txtDueDate.Text = string.Empty;
+
+            txtDueDate.Enabled = IsFollowup;
+            imgCalendar.Enabled = IsFollowup;
+            calDueDate.Enabled = IsFollowup;
+            btnClearDueDate.Disabled = !IsFollowup;
+            btnClearDueDate.Attributes["onclick"] = "document.getElementById('" + txtDueDate.ClientID + "').value = ''; return false;";
         }
         #endregion
 
@@ -508,6 +524,17 @@ namespace BMMS.Master
             MsgHide();
             string strMsg = string.Empty;
 
+            // Step UN6a, first pass: every Followup due date must be a date and not before the meeting date; on the
+            // first wrong row nothing is saved (the procedure checks the meeting date again, Reason 22)
+            System.Collections.Generic.Dictionary<int, DateTime?> dueDates = new System.Collections.Generic.Dictionary<int, DateTime?>();
+            string dueDateError = CheckDueDates(dueDates);
+            if (dueDateError != null)
+            {
+                MsgDisplay(dueDateError);
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "scroll", "window.scrollTo(0,0);", true);
+                return;
+            }
+
             foreach (GridViewRow gr in grvMinutes.Rows)
             {
                 if (gr.RowType == DataControlRowType.DataRow)
@@ -518,16 +545,13 @@ namespace BMMS.Master
                     int AgendaId = int.Parse(((Label)gr.FindControl("lblAgendaId")).Text);
                     string ShortText = ((TextBox)gr.FindControl("txtShortText")).Text;
                     int DecisionTypeId = int.Parse(((DropDownList)gr.FindControl("ddlDecisionType")).SelectedValue);
-                    //string txtDueDate = ((TextBox)gr.FindControl("txtDueDate")).Text.Trim();
 
                     myMinutesBAL.Code = "All";
                     myMinutesBAL.MinutesId = MinutesId;
                     myMinutesBAL.DecisionTypeId = DecisionTypeId;
 
-                    //if (txtDueDate != string.Empty)
-                    //    myMinutesBAL.DueDate = Convert.ToDateTime(txtDueDate);
-                    //else
-                    //    myMinutesBAL.DueDate = System.DateTime.Now;
+                    // Step UN6a: the date checked above (null: no due date, and always null for another decision)
+                    myMinutesBAL.DueDate = dueDates.ContainsKey(gr.RowIndex) ? dueDates[gr.RowIndex] : null;
 
                     myMinutesBAL.ShortText = ShortText.Trim();
                     myMinutesBAL.Directions = "";
@@ -555,7 +579,53 @@ namespace BMMS.Master
         }
         #endregion
 
+        #region CheckDueDates
+        // Step UN6a: reads the due date of every row. A Followup row with a date gets it in DueDates (by row index),
+        // without its time; an empty box and any other decision get null. Returns null when all are right, or the
+        // message for the first wrong row: not a date, or before the meeting date (no limit for a meeting without
+        // a date). The page checks first; the procedure checks the meeting date again (Reason 22).
+        private string CheckDueDates(System.Collections.Generic.Dictionary<int, DateTime?> DueDates)
+        {
+            int meetingId;
+            DateTime? meetingDate = null;
+            if (int.TryParse(ddlMeeting.SelectedValue, out meetingId))
+            {
+                DataTable dtMeeting = MeetingMgr.GetMeetingByMeetingId(meetingId);
+                DateTime md;
+                if (dtMeeting.Rows.Count > 0 && dtMeeting.Rows[0]["MeetingDate"] != DBNull.Value
+                    && DateTime.TryParse(dtMeeting.Rows[0]["MeetingDate"].ToString(), out md))
+                    meetingDate = md.Date;
+            }
 
+            foreach (GridViewRow gr in grvMinutes.Rows)
+            {
+                if (gr.RowType != DataControlRowType.DataRow)
+                    continue;
+
+                string agendaNo = ((Label)gr.FindControl("lblAgendaNo")).Text.Trim();
+                bool isFollowup = ((DropDownList)gr.FindControl("ddlDecisionType")).SelectedValue == FollowupDecisionTypeId;
+                string text = ((TextBox)gr.FindControl("txtDueDate")).Text.Trim();
+
+                if (!isFollowup || text == string.Empty)
+                {
+                    DueDates[gr.RowIndex] = null;
+                    continue;
+                }
+
+                DateTime dueDate;
+                if (!DateTime.TryParse(text, out dueDate))
+                    return "Agenda " + HttpUtility.HtmlEncode(agendaNo) + ": the due date is not a valid date (dd-MMM-yyyy). Nothing was saved.";
+
+                if (meetingDate.HasValue && dueDate.Date < meetingDate.Value)
+                    return "Agenda " + HttpUtility.HtmlEncode(agendaNo) + ": the due date cannot be before the meeting date ("
+                         + meetingDate.Value.ToString("dd-MMM-yyyy") + "). Nothing was saved.";
+
+                DueDates[gr.RowIndex] = dueDate.Date;
+            }
+
+            return null;
+        }
+        #endregion
 
         #region MsgDisplay
         private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)

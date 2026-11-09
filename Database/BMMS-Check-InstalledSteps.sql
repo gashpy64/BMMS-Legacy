@@ -1,5 +1,5 @@
 /* ============================================================================
-   BMMS - Which numbered steps (README run order 1 to 24, 29, 30, 31, 33, 34, 35 and 36; step 23 is installed after step 28, steps 29, 30 and 31 last, step 33 after step D1, step 34 after step 33, step 35 after step 34, step 36 after step 35, step 37 after step 36) and step D1 are installed
+   BMMS - Which numbered steps (README run order 1 to 24, 29, 30, 31, 33, 34, 35 and 36; step 23 is installed after step 28, steps 29, 30 and 31 last, step 33 after step D1, step 34 after step 33, step 35 after step 34, step 36 after step 35, step 37 after step 36, step 38 after step 31) and step D1 are installed
    ----------------------------------------------------------------------------
    READ ONLY. It reads object definitions and constraint names; it creates,
    changes and deletes nothing, and it can run on BMMS as well as on a copy.
@@ -91,6 +91,13 @@
    whether MailSenderUserId names an active Controller-role user and whether
    the From Mail Id of SMTP Configuration is that user's address (step ML1;
    the addresses are not shown).
+   Step 38 replaces spr_UpdateMinutes (text of step 31, plus the parameter
+   @DueDate) and keeps the texts of steps 6 (FK #5), 16, 17, 18, 23 and 31,
+   so those still read Installed. The steps are installed in order: step 31
+   before step 38 (the step 38 script stops otherwise). Re-running step 6,
+   16, 17, 18, 23 or 31 after step 38 brings back an older spr_UpdateMinutes:
+   step 38 reads Missing; run step 38 again. After
+   BMMS-Rollback-MinutesDueDate-Step38.sql it reads Missing.
    Step 32 is reserved and not built; it has no row.
    Step D1 (shown as step 100) replaces spr_DeleteMeetingByMeetingId, which
    no numbered script contains: it reads Missing only on a database restored
@@ -351,6 +358,10 @@ IF (OBJECT_ID('dbo.App_Setting', 'U') IS NOT NULL)
     EXEC sp_executesql N'SELECT @n = COUNT(*) FROM dbo.App_Setting WHERE SettingCode = ''MailSenderUserId''', N'@n INT OUTPUT', @n = @SenderRow OUTPUT;
 INSERT INTO @M VALUES (37, 'App_Setting MailSenderUserId', CASE WHEN @SenderRow > 0 THEN 1 ELSE 0 END);
 
+-- 38. BMMS-Fix-MinutesDueDate-Step38.sql, installed after step 31 (re-running step 6, 16, 17, 18, 23 or 31 replaces spr_UpdateMinutes)
+INSERT INTO @M VALUES
+(38, 'spr_UpdateMinutes (MinutesDueDate-Step38)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')), '') LIKE '%MinutesDueDate-Step38%' THEN 1 ELSE 0 END);
+
 -- D1 (shown as step 100). BMMS-Fix-MeetingDelete-D1.sql; no numbered script contains spr_DeleteMeetingByMeetingId
 INSERT INTO @M VALUES
 (100, 'spr_DeleteMeetingByMeetingId (MeetingDelete-D1)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_DeleteMeetingByMeetingId')), '') LIKE '%MeetingDelete-D1%' THEN 1 ELSE 0 END);
@@ -379,16 +390,17 @@ INSERT INTO @Steps VALUES
 (20, 'BMMS-Fix-AgendaRouting-Step20.sql', 'step 16, 17 or 18 was re-run: run step 20 again (the re-route moves nothing a second time)'),
 (21, 'BMMS-Fix-MemberTypes-Step21.sql', 'step 2, 3, 15 or 18 was re-run, or a reserved type was changed by hand: run step 21 again, then 30'),
 (22, 'BMMS-Fix-MinutesGating-Step22.sql', 'a procedure is missing: run step 22 again'),
-(23, 'BMMS-Fix-WorkflowOrder-Step23.sql', 'installed after step 28; step 6, 8, 12, 15, 16, 17 or 18 was re-run: run step 23 again'),
+(23, 'BMMS-Fix-WorkflowOrder-Step23.sql', 'installed after step 28; step 6, 8, 12, 15, 16, 17 or 18 was re-run: run step 23 again (then 31 and 38)'),
 (24, 'BMMS-Fix-MeetingDates-Step24.sql', 'Missing after a re-run of step 16, 17 or 18: run step 24 again'),
 (29, 'BMMS-Fix-ResetDatabase-Step29.sql', 'the first text of step 29 (old default password seeds): run step 30 (it contains step 29), as the last step'),
 (30, 'BMMS-Fix-SmtpDefault-Step30.sql', 'step 3, 18, 21 or 29 was re-run: run step 30 again, as the last step (it restores the step 29 text too)'),
-(31, 'BMMS-Fix-UnicodeText-Step31.sql', 'step 6, 15, 16, 17, 18, 20 or 23 was re-run, or the original spr_UpdateActionItem came back: run step 31 again, as the last step, then steps 35, 36 and 37'),
+(31, 'BMMS-Fix-UnicodeText-Step31.sql', 'step 6, 15, 16, 17, 18, 20 or 23 was re-run, or the original spr_UpdateActionItem came back: run step 31 again, as the last step, then steps 35, 36, 37 and 38'),
 (33, 'BMMS-Fix-ManagerDepartment-Step33.sql', 'one of its two procedures was replaced: run step 33 again'),
 (34, 'BMMS-Fix-LoginName-Step34.sql', 'step 1 was re-run, or step 34 was rolled back (the column stays): run step 34 again'),
 (35, 'BMMS-Fix-CommentAuthor-Step35.sql', 'step 16, 17, 18, 20 or 31 was re-run: run step 35 again, then steps 36 and 37'),
 (36, 'BMMS-Fix-AlertRefresh-Step36.sql', 'step 16, 17, 18, 20, 31 or 35 was re-run after step 36: run step 36 again, then step 37 (steps in order: 35 before 36)'),
 (37, 'BMMS-Fix-UpdateMail-Step37.sql', 'step 16, 17, 18, 20, 31, 35 or 36 was re-run after step 37: run step 37 again (steps in order: 36 before 37)'),
+(38, 'BMMS-Fix-MinutesDueDate-Step38.sql', 'step 6, 16, 17, 18, 23 or 31 was re-run after step 38: run step 38 again (steps in order: 31 before 38)'),
 (100, 'BMMS-Fix-MeetingDelete-D1.sql (step D1)', '');
 
 SELECT s.Step, s.Script,

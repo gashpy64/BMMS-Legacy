@@ -80,19 +80,22 @@
                                                 Visible="false"></asp:Label>
                                         </ItemTemplate>
                                     </asp:TemplateField>
-                                    <%--<asp:TemplateField HeaderText="Due Date">
-                                    <ItemTemplate>
-                                        <asp:Label ID="lblDueDate" runat="server" Text='<%#Eval("DueDate") %>' Visible="false"></asp:Label>
-                                        <asp:TextBox ID="txtDueDate" runat="server" Width="100px" onfocus="this.blur();"
-                                            TabIndex="-1"></asp:TextBox>
-                                        <asp:ImageButton ID="imgCalendar" runat="server" ImageUrl="~/Images/Common/calendar.png"
-                                            Width="20px" Height="20px" />
-                                        <cc1:CalendarExtender CssClass="cal_Theme1" ID="CalendarExtender1" runat="server"
-                                            PopupButtonID="imgCalendar" TargetControlID="txtDueDate" Format="dd-MMM-yyyy">
-                                        </cc1:CalendarExtender>
-                                    </ItemTemplate>
-                                    <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
-                                </asp:TemplateField>--%>
+                                    <%-- Step UN6a: optional due date, only for a Followup decision (BMMS-Fix-MinutesDueDate-Step38.sql);
+                                         enabled, filled and cleared in grvMinutes_RowDataBound and ddlDecision_SelectedIndexChanged --%>
+                                    <asp:TemplateField HeaderText="Due Date">
+                                        <ItemTemplate>
+                                            <asp:TextBox ID="txtDueDate" runat="server" Width="110px" onfocus="this.blur();" TabIndex="-1"
+                                                aria-label='<%# "Due date, agenda " + Eval("AgendaNo") %>'></asp:TextBox>
+                                            <asp:ImageButton ID="imgCalendar" runat="server" ImageUrl="~/Images/Common/calendar.png"
+                                                Width="18px" AlternateText="Choose the due date" />
+                                            <cc1:CalendarExtender CssClass="cal_Theme1" ID="CalendarExtender1" runat="server"
+                                                PopupButtonID="imgCalendar" TargetControlID="txtDueDate" Format="dd-MMM-yyyy" PopupPosition="BottomRight">
+                                            </cc1:CalendarExtender>
+                                            <input type="button" id="btnClearDueDate" runat="server" class="wb-link-btn" value="Clear"
+                                                title="Clear the due date" />
+                                        </ItemTemplate>
+                                        <ItemStyle CssClass="wb-col-action" />
+                                    </asp:TemplateField>
                                     <asp:TemplateField HeaderText="Directions" Visible="false">
                                         <ItemTemplate>
                                             <asp:Button ID="btnDirections" CssClass="button" Text="Add" CommandArgument='<%#Eval("MinutesId")%>'
