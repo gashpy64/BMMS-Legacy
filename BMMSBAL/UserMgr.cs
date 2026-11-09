@@ -60,12 +60,55 @@ namespace BMMSBAL
                 case UserChangeReason.ActingUserMissing:
                     // missing or inactive acting user (BMMS-Fix-UserStatus-Stage2a.sql)
                     return "Your session is no longer valid. Please log in again.";
+                case UserChangeReason.DepartmentsNotValid:
+                    // BMMS-Fix-UserHistory-Step39.sql (step UD1a)
+                    return DepartmentsMessage(ReasonDetail);
+                case UserChangeReason.LastManager:
+                    // BMMS-Fix-UserHistory-Step39.sql (step UD1a, rule 12)
+                    return "Not saved: this Manager is still needed: " + System.Web.HttpUtility.HtmlEncode(ReasonDetail) + ". "
+                         + "Approve or reject those items first, or give the department another active Manager. Nothing was changed.";
                 case UserChangeReason.Other:
                     Utilities.WriteErrorLog(ClassName, "UserChange", "Refused by the database: " + ReasonDetail);
                     return "This user cannot be deleted because other data still refers to them. The details were written to the error log.";
                 default:
                     return Common.GetAppSetting("delete_reference");
             }
+        }
+
+        // Reason 23 (step UD1a): ReasonDetail is a code, for an inactive home department followed by its name
+        private static string DepartmentsMessage(string Detail)
+        {
+            const string homeInactive = "HomeDepartmentInactive:";
+
+            if (Detail != null && Detail.StartsWith(homeInactive, StringComparison.Ordinal))
+                return "Not activated: " + System.Web.HttpUtility.HtmlEncode(Detail.Substring(homeInactive.Length))
+                     + " is inactive. Reactivate it or change the user's department first.";
+
+            switch (Detail)
+            {
+                case "HomeNotTicked":
+                    return "Not saved: the home department must be one of the departments managed. Nothing was changed.";
+                case "OneDepartmentOnly":
+                    return "Not saved: only a Manager can have more than one department. Nothing was changed.";
+                case "DepartmentInactive":
+                    return "Not saved: a department you ticked is no longer active. Reload the page and try again. Nothing was changed.";
+                case "DepartmentNotFound":
+                    return "Not saved: a department you ticked no longer exists. Reload the page and try again. Nothing was changed.";
+                default:
+                    return "Not saved: the departments sent were not valid. Reload the page and try again. Nothing was changed.";
+            }
+        }
+
+        /// <summary>
+        /// Step UD1a: the text after Prefix in ReasonDetail of a successful save ("MappingsClosed:" after a role change
+        /// away from Manager, "NotRestored:" after an activation); empty when it is not there. Plain text: encode it.
+        /// </summary>
+        public string SuccessDetail(string Prefix)
+        {
+            if (Result == 1 && ReasonDetail != null && ReasonDetail.StartsWith(Prefix, StringComparison.Ordinal))
+                return ReasonDetail.Substring(Prefix.Length);
+
+            return string.Empty;
         }
     }
 
@@ -81,6 +124,11 @@ namespace BMMSBAL
         public const int SystemAccount = 7;       // the protected system account (stage 3)
         public const int ActingUserMissing = 8;   // missing or inactive (stage 2a)
         public const int Other = 9;
+        public const int DepartmentsNotValid = 23; // the departments, or an inactive home department on Activate (step 39)
+        public const int LastManager = 24;         // last active Manager / items routed to him (step 39, rule 12)
+
+        public const string MappingsClosedPrefix = "MappingsClosed:";
+        public const string NotRestoredPrefix = "NotRestored:";
 
         public const string SystemAccountMessage =
             "This is the protected system account. It cannot be edited, deactivated, deleted, or have its role or Login ID changed, "
@@ -190,6 +238,9 @@ namespace BMMSBAL
             get { return _UpdatedBy; }
             set { _UpdatedBy = value; }
         }
+
+        // Step UD1a: the departments as a comma list of ids (home department included); null = not passed
+        public string DepartmentIds { get; set; }
 
         #endregion
     }
@@ -397,8 +448,23 @@ namespace BMMSBAL
             UserDAL.CreatedBy = UserBAL.CreatedBy;
             UserDAL.UpdatedOn = UserBAL.UpdatedOn;
             UserDAL.UpdatedBy = UserBAL.UpdatedBy;
+            UserDAL.DepartmentIds = UserBAL.DepartmentIds;
 
             return UserChangeResult.FromTable(UserDB.AddEditUser(UserDAL));
+        }
+        #endregion
+
+        #region Departments of a user (step UD1a, BMMS-Fix-UserHistory-Step39.sql)
+        /// <summary>True when step 39 is installed; without it User Master keeps one department per user, as before.</summary>
+        public static bool HasUserHistory()
+        {
+            return UserDB.HasUserHistory();
+        }
+
+        /// <summary>The open mappings (UserId, DepartmentId, DepartmentName, IsHome, DepartmentActive); UserId 0 = every user.</summary>
+        public static DataTable GetUserDepartmentMap(int UserId)
+        {
+            return UserDB.GetUserDepartmentMap(UserId);
         }
         #endregion
 

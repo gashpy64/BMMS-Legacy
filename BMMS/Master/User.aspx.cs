@@ -2,6 +2,7 @@ using System;
 using System.Data;
 using System.Configuration;
 using System.Collections;
+using System.Collections.Generic;
 using System.Web;
 using System.Web.Security;
 using System.Web.UI;
@@ -73,6 +74,31 @@ namespace BMMS.Master
                 Common.LoadDropdownlist(ddlDesignation, dtDesignation, "DesignationName", "DesignationId", true);
                 //Common.LoadDropdownlist(ddlManager, dtMgrController, "UserName", "UserId", true);
                 Common.LoadDropdownlist(ddlRole, dtRole, "RoleName", "RoleId", true);
+
+                // Step UD1a: the Manager role (by RoleCode; RoleName when the list has no RoleCode) and the active
+                // departments for "Departments managed". CheckBoxList does not encode its item text: encoded here.
+                int managerRoleId = 0;
+                foreach (DataRow row in dtRole.Rows)
+                {
+                    string code = dtRole.Columns.Contains("RoleCode") ? Convert.ToString(row["RoleCode"]).Trim() : string.Empty;
+                    bool isManager = code.Length > 0
+                        ? string.Equals(code, "manager", StringComparison.OrdinalIgnoreCase)
+                        : string.Equals(Convert.ToString(row["RoleName"]).Trim(), "manager", StringComparison.OrdinalIgnoreCase);
+                    if (isManager)
+                    {
+                        managerRoleId = Convert.ToInt32(row["RoleId"]);
+                        break;
+                    }
+                }
+                ViewState["ManagerRoleId"] = managerRoleId;
+
+                cblDepartments.Items.Clear();
+                if (HasUserHistory())
+                {
+                    foreach (DataRow row in dtDept.Rows)
+                        cblDepartments.Items.Add(new ListItem(HttpUtility.HtmlEncode(Convert.ToString(row["DepartmentName"])),
+                                                              Convert.ToString(row["DepartmentId"])));
+                }
             }
             catch (Exception ex)
             {
@@ -96,6 +122,7 @@ namespace BMMS.Master
                 DataTable dtUser = new DataTable();
                 // Same rows as GetUserList, plus CanEdit / CanChangeRole / CanDelete for the logged-in user
                 dtUser = UserMgr.GetUserListForUserPage(ActingUserId());
+                AddDepartmentText(dtUser);
 
                 ViewState["dtUser"] = dtUser;
                 BindGridView();
@@ -107,6 +134,160 @@ namespace BMMS.Master
             finally
             {
 
+            }
+        }
+        #endregion
+
+        #region Departments (step UD1a, BMMS-Fix-UserHistory-Step39.sql)
+        // True when step 39 is installed; read once per page visit. Without it the page keeps one department per user.
+        private bool HasUserHistory()
+        {
+            if (ViewState["HasUserHistory"] == null)
+                ViewState["HasUserHistory"] = UserMgr.HasUserHistory();
+
+            return (bool)ViewState["HasUserHistory"];
+        }
+
+        private bool ManagerRoleSelected()
+        {
+            int managerRoleId = ViewState["ManagerRoleId"] == null ? 0 : (int)ViewState["ManagerRoleId"];
+            return HasUserHistory() && managerRoleId > 0 && ddlRole.SelectedValue == managerRoleId.ToString();
+        }
+
+        private bool EditedUserInactive()
+        {
+            return ViewState["EditedUserInactive"] != null && (bool)ViewState["EditedUserInactive"];
+        }
+
+        // Grid column DepartmentText: the department, or for a user with several "HRD (primary), Credit, Admin"
+        private void AddDepartmentText(DataTable dtUser)
+        {
+            if (!dtUser.Columns.Contains("DepartmentText"))
+                dtUser.Columns.Add("DepartmentText", typeof(string));
+
+            Dictionary<int, List<string>> others = new Dictionary<int, List<string>>();
+            Dictionary<int, string> homes = new Dictionary<int, string>();
+
+            if (HasUserHistory())
+            {
+                foreach (DataRow map in UserMgr.GetUserDepartmentMap(0).Rows)
+                {
+                    int userId = Convert.ToInt32(map["UserId"]);
+                    string name = Convert.ToString(map["DepartmentName"]);
+
+                    if (Convert.ToInt32(map["IsHome"]) == 1)
+                        homes[userId] = name;
+                    else
+                    {
+                        if (!others.ContainsKey(userId))
+                            others[userId] = new List<string>();
+                        others[userId].Add(name);
+                    }
+                }
+            }
+
+            foreach (DataRow row in dtUser.Rows)
+            {
+                int userId = Convert.ToInt32(row["UserId"]);
+                string home = homes.ContainsKey(userId) ? homes[userId] : Convert.ToString(row["DepartmentName"]);
+
+                row["DepartmentText"] = others.ContainsKey(userId)
+                    ? home + " (primary), " + string.Join(", ", others[userId].ToArray())
+                    : Convert.ToString(row["DepartmentName"]);
+            }
+        }
+
+        // Ticks the user's open mappings; a mapped department that is inactive now is added as "(inactive)"
+        private void LoadUserDepartments(int UserId)
+        {
+            if (!HasUserHistory())
+                return;
+
+            foreach (DataRow map in UserMgr.GetUserDepartmentMap(UserId).Rows)
+            {
+                string id = Convert.ToString(map["DepartmentId"]);
+                ListItem item = cblDepartments.Items.FindByValue(id);
+
+                if (item == null)
+                {
+                    item = new ListItem(HttpUtility.HtmlEncode(Convert.ToString(map["DepartmentName"])) + " (inactive)", id);
+                    cblDepartments.Items.Add(item);
+                }
+
+                item.Selected = true;
+            }
+        }
+
+        // Shown for the Manager role only. The home department is ticked and cannot be unticked here (the procedure
+        // refuses a list without it, Reason 23). An inactive user's departments are shown but not changed.
+        private void ShowDepartments()
+        {
+            bool manager = ManagerRoleSelected();
+
+            pnlDepartments.Visible = manager;
+            litDepartmentLabel.Text = manager ? "Home department" : "Department";
+
+            if (!manager)
+                return;
+
+            bool editable = !EditedUserInactive();
+            string home = ddlDepartment.SelectedValue;
+
+            foreach (ListItem item in cblDepartments.Items)
+            {
+                if (item.Value == home)
+                {
+                    item.Selected = true;
+                    item.Enabled = false;
+                    item.Attributes["title"] = "Home department: change it above to untick";
+                }
+                else
+                {
+                    item.Enabled = editable;
+                    item.Attributes.Remove("title");
+                }
+            }
+
+            litDepartmentsNote.Text = editable
+                ? "The home department is always one of them and is the primary one."
+                : "This user is inactive: the departments managed can be changed after Activate.";
+        }
+
+        // @DepartmentIds: built on the server from the list items (the browser posts only which are ticked) with the
+        // home department first; null when step 39 is not installed or the user is inactive (the procedure keeps the rows)
+        private string DepartmentIdsToSave()
+        {
+            if (!HasUserHistory() || EditedUserInactive())
+                return null;
+
+            int home;
+            if (!int.TryParse(ddlDepartment.SelectedValue, out home) || home <= 0)
+                return null;
+
+            List<string> ids = new List<string>();
+            ids.Add(home.ToString());
+
+            if (ManagerRoleSelected())
+            {
+                foreach (ListItem item in cblDepartments.Items)
+                {
+                    int id;
+                    if (item.Selected && int.TryParse(item.Value, out id) && id > 0 && !ids.Contains(id.ToString()))
+                        ids.Add(id.ToString());
+                }
+            }
+
+            return string.Join(",", ids.ToArray());
+        }
+
+        protected override void OnPreRender(EventArgs e)
+        {
+            base.OnPreRender(e);
+
+            if (pnlEditUser.Visible)
+            {
+                ShowDepartments();
+                ViewState["HomeDepartment"] = ddlDepartment.SelectedValue;
             }
         }
         #endregion
@@ -247,6 +428,7 @@ namespace BMMS.Master
             ddlRole.Enabled = true;
             hdnUserId.Value = "0";
             ViewState["CurrentManagerId"] = 0;
+            ViewState["EditedUserInactive"] = false;
             pnlViewUser.Visible = false;
             pnlEditUser.Visible = true;
             pnlPwd.Visible = true;
@@ -284,6 +466,9 @@ namespace BMMS.Master
 
                     myUser.Password = (btnSave.Text == "Save") ? Common.HashPassword(txtPassword.Text) : string.Empty;
 
+                    // Step UD1a: the departments (home first); null keeps the stored mappings
+                    myUser.DepartmentIds = DepartmentIdsToSave();
+
 
                     // Acting user: the server-side session only
                     myUser.CreatedOn = System.DateTime.Now;
@@ -293,7 +478,11 @@ namespace BMMS.Master
 
                     UserChangeResult result = myUserMgr.AddEditUser(myUser);
 
-                    if (result.Result == 1)
+                    string closed = result.SuccessDetail(UserChangeReason.MappingsClosedPrefix);
+
+                    if (result.Result == 1 && closed.Length > 0)
+                        sMsg = "Saved. Their department mappings were closed today: " + HttpUtility.HtmlEncode(closed) + ".";
+                    else if (result.Result == 1)
                         sMsg = "Successfully Saved";
                     else if (result.Reason != UserChangeReason.None)
                         sMsg = result.RefusalMessage(myUser.Code == "Save" ? "create a user with this role" : "make this change to this user", className);
@@ -310,7 +499,8 @@ namespace BMMS.Master
                     myUser = null;
                 }
 
-                MsgDisplay(sMsg, sMsg == "Successfully Saved" ? MessageKind.Success : sMsg == "Record Not Saved" ? MessageKind.Error : MessageKind.Warning);
+                MsgDisplay(sMsg, sMsg == "Successfully Saved" || sMsg.StartsWith("Saved.") ? MessageKind.Success
+                               : sMsg == "Record Not Saved" ? MessageKind.Error : MessageKind.Warning);
 
                 pnlViewUser.Visible = true;
                 pnlEditUser.Visible = false;
@@ -394,6 +584,11 @@ namespace BMMS.Master
                     hdnUserId.Value = myUser.UserId.ToString();
                     txtUserName.Text = myUser.UserName;
                     ddlDepartment.Text = myUser.DepartmentId.ToString();
+
+                    // Step UD1a: the departments managed; an inactive user's are shown but not changed
+                    DataRow[] listed = ((DataTable)ViewState["dtUser"]).Select("UserId = " + UserId.ToString());
+                    ViewState["EditedUserInactive"] = listed.Length > 0 && Convert.ToInt32(listed[0]["AccountStatus"]) != 1;
+                    LoadUserDepartments(UserId);
                     // keep the current manager in the list even if inactive (stage 2a)
                     ViewState["CurrentManagerId"] = myUser.ManagerId;
                     LoadMgrController(myUser.DepartmentId);
@@ -442,7 +637,12 @@ namespace BMMS.Master
                     // spr_SetUserStatusByUserId checks the rules again under its lock
                     UserChangeResult result = UserMgr.SetUserStatusByUserId(UserId, activate ? 1 : 0, ActingUserId());
 
-                    if (result.Result == 1)
+                    string notRestored = result.SuccessDetail(UserChangeReason.NotRestoredPrefix);
+
+                    if (result.Result == 1 && activate && notRestored.Length > 0)
+                        // Activated, but not completely: a warning, so the department left out is noticed
+                        MsgDisplay("Activated. Not restored (department inactive): " + HttpUtility.HtmlEncode(notRestored), MessageKind.Warning);
+                    else if (result.Result == 1)
                         MsgDisplay(activate ? "User activated" : "User deactivated", MessageKind.Success);
                     else
                         MsgDisplay(result.RefusalMessage(activate ? "activate this user" : "deactivate this user", className));
@@ -507,6 +707,12 @@ namespace BMMS.Master
             int DepartmentId = int.Parse(ddlDepartment.SelectedValue.ToString());
 
             LoadMgrController(DepartmentId);
+
+            // Step UD1a: the previous home department stays ticked (it is still managed until it is unticked)
+            string previousHome = ViewState["HomeDepartment"] as string;
+            ListItem previous = previousHome == null ? null : cblDepartments.Items.FindByValue(previousHome);
+            if (previous != null && ManagerRoleSelected() && !EditedUserInactive())
+                previous.Selected = true;
         }
         #endregion
 

@@ -113,6 +113,19 @@ namespace BMMSDAL
         }
         #endregion
 
+        #region SetDepartmentManagerRule
+        // Step UD1a (BMMS-Fix-UserHistory-Step39.sql): the setting DeptNoManagerAction, 'refuse' or 'controller'.
+        // One row: Result, Reason, ReasonDetail; only an active Admin; a change is written to Audit_Trail_Master
+        public static DataTable SetDepartmentManagerRule(string SettingValue, int ActingUserId)
+        {
+            SqlParameter[] parameter = new SqlParameter[2];
+            parameter[0] = new SqlParameter("@SettingValue", SettingValue);
+            parameter[1] = new SqlParameter("@ActingUserId", ActingUserId);
+
+            return CommonDB.GetDataTable("spr_SetDepartmentManagerRule", parameter);
+        }
+        #endregion
+
         #region GetOrganisationSettings
         // Seq, SettingCode, SettingValue, LastChangedOn, LastChangedBy; always the 12 rows in a fixed
         // order, '' for a setting that is not stored (BMMS-Fix-OrganisationSettings-Step19.sql)

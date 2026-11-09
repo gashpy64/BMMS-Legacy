@@ -322,6 +322,15 @@ namespace BMMSBAL
         {
             return MeetingChangeResult.FromTable(UtilitiesDB.SetAppSetting(SettingCode, SettingValue, ActingUserId));
         }
+
+        // Step UD1a (BMMS-Fix-UserHistory-Step39.sql): rule 6, what a later step does when a department has no
+        // active Manager. Stored only in UD1a.
+        public const string DeptNoManagerAction = "DeptNoManagerAction";
+
+        public static MeetingChangeResult SetDepartmentManagerRule(string SettingValue, int ActingUserId)
+        {
+            return MeetingChangeResult.FromTable(UtilitiesDB.SetDepartmentManagerRule(SettingValue, ActingUserId));
+        }
         #endregion
 
         #region GetLocalIPAddress

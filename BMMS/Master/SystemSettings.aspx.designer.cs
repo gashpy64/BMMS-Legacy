@@ -43,6 +43,26 @@ namespace BMMS.Master {
         protected global::System.Web.UI.WebControls.Button btnSave;
 
         /// <summary>
+        /// pnlDeptRule control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Panel pnlDeptRule;
+
+        /// <summary>
+        /// rblDeptNoManagerAction control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.RadioButtonList rblDeptNoManagerAction;
+
+        /// <summary>
+        /// litDeptRuleLastChanged control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Literal litDeptRuleLastChanged;
+
+        /// <summary>
+        /// btnSaveDeptRule control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Button btnSaveDeptRule;
+
+        /// <summary>
         /// btnCancel control.
         /// </summary>
         protected global::System.Web.UI.WebControls.Button btnCancel;

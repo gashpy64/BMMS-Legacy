@@ -797,6 +797,16 @@ body.wb .bmms-comment-by-line
 	padding-left: 8px;
 	padding-right: 8px;
 }
+/* Step UD1a: a Manager's departments ("HRD (primary), Credit, Admin") wrap inside the Department column instead of
+   widening the User Master grid (step UM2: it needs at least 1014 px of the 1166 px card). 10em is wider than the
+   longest single department name on BMMS_Test ("Secretarial"); a longer unbroken name breaks inside the word. */
+#ctl00_ContentPlaceHolder1_grvUser .wb-dept-list
+{
+	display: inline-block;
+	max-width: 10em;
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
 .wb-table > tbody > tr > th,
 .wb-table > tbody > tr > td
 {

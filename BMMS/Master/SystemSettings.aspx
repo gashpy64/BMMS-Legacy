@@ -36,6 +36,31 @@
                 </div>
             </div>
         </div>
+        <%-- Step UD1a (BMMS-Fix-UserHistory-Step39.sql): rule 6, stored only; hidden until step 39 is installed --%>
+        <asp:Panel ID="pnlDeptRule" runat="server" CssClass="wb-card" Visible="false">
+            <div class="wb-card-header">
+                Department without an active Manager</div>
+            <div class="wb-card-body">
+                <div class="wb-row">
+                    <div class="wb-label" id="lblDeptNoManagerAction">
+                        A new agenda item is</div>
+                    <div class="wb-field">
+                        <asp:RadioButtonList ID="rblDeptNoManagerAction" runat="server" CssClass="wb-radio-list"
+                            RepeatDirection="Vertical" role="radiogroup" aria-labelledby="lblDeptNoManagerAction">
+                            <asp:ListItem Text="Refused (default)" Value="refuse"></asp:ListItem>
+                            <asp:ListItem Text="Sent to the Controller" Value="controller"></asp:ListItem>
+                        </asp:RadioButtonList>
+                    </div>
+                </div>
+                <p class="wb-help">
+                    Stored now, used from a later step: today agenda items are routed as before. A change is
+                    written to the audit trail.
+                    <asp:Literal ID="litDeptRuleLastChanged" runat="server"></asp:Literal></p>
+                <div class="wb-actions">
+                    <asp:Button ID="btnSaveDeptRule" runat="server" CssClass="wb-btn" Text="Save" OnClick="btnSaveDeptRule_Click" />
+                </div>
+            </div>
+        </asp:Panel>
         <div class="wb-card">
             <div class="wb-card-header">
                 Organisation details (printed on notices, minutes, reports and certificates)</div>

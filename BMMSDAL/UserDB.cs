@@ -110,6 +110,10 @@ namespace BMMSDAL
             set { _UpdatedBy = value; }
         }
 
+        // Step UD1a (BMMS-Fix-UserHistory-Step39.sql): the user's departments as a comma list of ids;
+        // null = not passed (the procedure keeps the mappings, or gives a new user the home department)
+        public string DepartmentIds { get; set; }
+
         #endregion
     }
     #endregion
@@ -280,7 +284,8 @@ namespace BMMSDAL
         #region AddEditUser
         public static DataTable AddEditUser(UserDAL UserDAL)
         {
-            SqlParameter[] parameter = new SqlParameter[14];
+            // Step UD1a: @DepartmentIds only when the caller gives a list (UserMgr does so only when step 39 is installed)
+            SqlParameter[] parameter = new SqlParameter[UserDAL.DepartmentIds != null ? 15 : 14];
             parameter[0] = new SqlParameter("@Code", UserDAL.Code);
             parameter[1] = new SqlParameter("@UserId", UserDAL.UserId);
             parameter[2] = new SqlParameter("@UserName", UserDAL.UserName);
@@ -297,8 +302,39 @@ namespace BMMSDAL
             parameter[12] = new SqlParameter("@UpdatedOn", UserDAL.UpdatedOn);
             parameter[13] = new SqlParameter("@UpdatedBy", UserDAL.UpdatedBy);
 
+            if (UserDAL.DepartmentIds != null)
+            {
+                parameter[14] = new SqlParameter("@DepartmentIds", SqlDbType.VarChar, -1);
+                parameter[14].Value = UserDAL.DepartmentIds;
+            }
+
             // One row: Result, Reason, ReasonDetail (BMMS-Fix-UserProtection-Stage1.sql)
             return CommonDB.GetDataTable("spr_AddEditUser", parameter);
+        }
+        #endregion
+
+        #region HasUserHistory
+        // Step UD1a: true when step 39 is installed (BMMS-Fix-UserHistory-Step39.sql): spr_AddEditUser has
+        // @DepartmentIds and spr_GetUserDepartmentMap exists. Without it the page works as before.
+        public static bool HasUserHistory()
+        {
+            DataTable dt = CommonDB.GetDataTableFromQuery(
+                "SELECT CASE WHEN OBJECT_ID('dbo.spr_GetUserDepartmentMap', 'P') IS NOT NULL"
+              + " AND EXISTS (SELECT 1 FROM sys.parameters WHERE object_id = OBJECT_ID('dbo.spr_AddEditUser') AND name = '@DepartmentIds')"
+              + " THEN 1 ELSE 0 END AS n");
+            return dt.Rows.Count > 0 && Convert.ToInt32(dt.Rows[0]["n"]) == 1;
+        }
+        #endregion
+
+        #region GetUserDepartmentMap
+        // Step UD1a: the open department mappings (UserId, DepartmentId, DepartmentName, IsHome, DepartmentActive),
+        // home department first; UserId 0 = every user
+        public static DataTable GetUserDepartmentMap(int UserId)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@UserId", UserId <= 0 ? (object)DBNull.Value : UserId);
+
+            return CommonDB.GetDataTable("spr_GetUserDepartmentMap", parameter);
         }
         #endregion
 

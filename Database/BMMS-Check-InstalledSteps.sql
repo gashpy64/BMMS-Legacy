@@ -1,5 +1,5 @@
 /* ============================================================================
-   BMMS - Which numbered steps (README run order 1 to 24, 29, 30, 31, 33, 34, 35 and 36; step 23 is installed after step 28, steps 29, 30 and 31 last, step 33 after step D1, step 34 after step 33, step 35 after step 34, step 36 after step 35, step 37 after step 36, step 38 after step 31) and step D1 are installed
+   BMMS - Which numbered steps (README run order 1 to 24, 29, 30, 31, 33, 34, 35 and 36; step 23 is installed after step 28, steps 29, 30 and 31 last, step 33 after step D1, step 34 after step 33, step 35 after step 34, step 36 after step 35, step 37 after step 36, step 38 after step 31, step 39 after step 38) and step D1 are installed
    ----------------------------------------------------------------------------
    READ ONLY. It reads object definitions and constraint names; it creates,
    changes and deletes nothing, and it can run on BMMS as well as on a copy.
@@ -100,6 +100,19 @@
    BMMS-Rollback-MinutesDueDate-Step38.sql it reads Missing. Since step
    UN6a1 step 38 has two markers: the first step 38 text (a missing
    @DueDate cleared the date) reads Partly, 1 of 2: run step 38 again.
+   Step 39 (step UD1a) adds the tables User_Role and User_Department, the
+   App_Setting row DeptNoManagerAction, three new objects
+   (fn_ManagerReleaseRefusal, spr_GetUserDepartmentMap,
+   spr_SetDepartmentManagerRule) and replaces spr_AddEditUser,
+   spr_SetUserStatusByUserId and spr_DeleteUserByUserId (text of step 13),
+   spr_DeleteDepartmentByDeptId (step 2) and spr_sys_ResetDatabase (step 30),
+   keeping the texts of steps 3, 10, 13, 18, 21, 29 and 30, so those still
+   read Installed: 11 markers. Re-running step 2, 3, 6, 10, 13, 18, 21, 29 or
+   30 after step 39 brings back an older procedure: step 39 reads Partly; run
+   step 39 again, as the last step. After
+   BMMS-Rollback-UserHistory-Step39.sql, which keeps the tables and the
+   setting row, it reads Partly, 3 of 11. The last grid shows whether the
+   history rows agree with Users (read only).
    Step 32 is reserved and not built; it has no row.
    Step D1 (shown as step 100) replaces spr_DeleteMeetingByMeetingId, which
    no numbered script contains: it reads Missing only on a database restored
@@ -365,6 +378,19 @@ INSERT INTO @M VALUES
 (38, 'spr_UpdateMinutes (MinutesDueDate-Step38)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')), '') LIKE '%MinutesDueDate-Step38%' THEN 1 ELSE 0 END),
 (38, 'spr_UpdateMinutes (DueDateKeep-Step38, step UN6a1)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateMinutes')), '') LIKE '%DueDateKeep-Step38%' THEN 1 ELSE 0 END);
 
+-- 39. BMMS-Fix-UserHistory-Step39.sql, installed after step 38 (re-running step 2, 3, 6, 10, 13, 18, 21, 29 or 30 replaces one of its procedures)
+INSERT INTO @M
+SELECT 39, o.Name + ' (UserHistory-Step39)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%UserHistory-Step39%' THEN 1 ELSE 0 END
+FROM (VALUES ('fn_ManagerReleaseRefusal'), ('spr_AddEditUser'), ('spr_SetUserStatusByUserId'), ('spr_DeleteUserByUserId'),
+             ('spr_DeleteDepartmentByDeptId'), ('spr_sys_ResetDatabase'), ('spr_GetUserDepartmentMap'), ('spr_SetDepartmentManagerRule')) o(Name);
+DECLARE @DeptRuleRow INT = 0;
+IF (OBJECT_ID('dbo.App_Setting', 'U') IS NOT NULL)
+    EXEC sp_executesql N'SELECT @n = COUNT(*) FROM dbo.App_Setting WHERE SettingCode = ''DeptNoManagerAction''', N'@n INT OUTPUT', @n = @DeptRuleRow OUTPUT;
+INSERT INTO @M VALUES
+(39, 'User_Role table', CASE WHEN OBJECT_ID('dbo.User_Role', 'U') IS NOT NULL THEN 1 ELSE 0 END),
+(39, 'User_Department table', CASE WHEN OBJECT_ID('dbo.User_Department', 'U') IS NOT NULL THEN 1 ELSE 0 END),
+(39, 'App_Setting DeptNoManagerAction', CASE WHEN @DeptRuleRow > 0 THEN 1 ELSE 0 END);
+
 -- D1 (shown as step 100). BMMS-Fix-MeetingDelete-D1.sql; no numbered script contains spr_DeleteMeetingByMeetingId
 INSERT INTO @M VALUES
 (100, 'spr_DeleteMeetingByMeetingId (MeetingDelete-D1)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_DeleteMeetingByMeetingId')), '') LIKE '%MeetingDelete-D1%' THEN 1 ELSE 0 END);
@@ -383,7 +409,7 @@ INSERT INTO @Steps VALUES
 (10, 'BMMS-Fix-UserDelete-Procedure.sql', 'step 10 or 13 replaced: run step 13 again, then 14'),
 (11, 'BMMS-Add-ForeignKeys-Step5.sql', 'some keys refused: run BMMS-Check-Orphans.sql, then step 11 again'),
 (12, 'BMMS-Fix-Attendance-FutureMeeting.sql', 'run step 12 again, then steps 15, 16, 17, 18, 20, 21, 24, 23 and 30'),
-(13, 'BMMS-Fix-UserProtection-Stage1.sql', 'step 2, 6 or 10 was re-run: run step 13 again, then 14, 18, 20, 21, 24 and 30'),
+(13, 'BMMS-Fix-UserProtection-Stage1.sql', 'step 2, 6 or 10 was re-run: run step 13 again, then 14, 18, 20, 21, 24, 30 and 39'),
 (14, 'BMMS-Fix-UserStatus-Stage2a.sql', 'step 13 was re-run: run step 14 again, then 18, 24 and 30'),
 (15, 'BMMS-Fix-MeetingLocks.sql', 'step 6, 8 or 12 was re-run: run step 15 again, then steps 16, 17, 18, 20, 21, 24, 23 and 30'),
 (16, 'BMMS-Fix-MeetingLocks-Step16.sql', 'step 6, 12 or 15 was re-run: run step 16 again, then steps 17, 18, 20, 24, 23 and 30'),
@@ -396,7 +422,7 @@ INSERT INTO @Steps VALUES
 (23, 'BMMS-Fix-WorkflowOrder-Step23.sql', 'installed after step 28; step 6, 8, 12, 15, 16, 17 or 18 was re-run: run step 23 again (then 31 and 38)'),
 (24, 'BMMS-Fix-MeetingDates-Step24.sql', 'Missing after a re-run of step 16, 17 or 18: run step 24 again'),
 (29, 'BMMS-Fix-ResetDatabase-Step29.sql', 'the first text of step 29 (old default password seeds): run step 30 (it contains step 29), as the last step'),
-(30, 'BMMS-Fix-SmtpDefault-Step30.sql', 'step 3, 18, 21 or 29 was re-run: run step 30 again, as the last step (it restores the step 29 text too)'),
+(30, 'BMMS-Fix-SmtpDefault-Step30.sql', 'step 3, 18, 21 or 29 was re-run: run step 30 again (it restores the step 29 text too), then step 39'),
 (31, 'BMMS-Fix-UnicodeText-Step31.sql', 'step 6, 15, 16, 17, 18, 20 or 23 was re-run, or the original spr_UpdateActionItem came back: run step 31 again, as the last step, then steps 35, 36, 37 and 38'),
 (33, 'BMMS-Fix-ManagerDepartment-Step33.sql', 'one of its two procedures was replaced: run step 33 again'),
 (34, 'BMMS-Fix-LoginName-Step34.sql', 'step 1 was re-run, or step 34 was rolled back (the column stays): run step 34 again'),
@@ -404,6 +430,7 @@ INSERT INTO @Steps VALUES
 (36, 'BMMS-Fix-AlertRefresh-Step36.sql', 'step 16, 17, 18, 20, 31 or 35 was re-run after step 36: run step 36 again, then step 37 (steps in order: 35 before 36)'),
 (37, 'BMMS-Fix-UpdateMail-Step37.sql', 'step 16, 17, 18, 20, 31, 35 or 36 was re-run after step 37: run step 37 again (steps in order: 36 before 37)'),
 (38, 'BMMS-Fix-MinutesDueDate-Step38.sql', 'the first step 38 text (1 of 2), or step 6, 16, 17, 18, 23 or 31 was re-run after step 38: run step 38 again'),
+(39, 'BMMS-Fix-UserHistory-Step39.sql', 'step 2, 3, 6, 10, 13, 18, 21, 29 or 30 was re-run after step 39, or step 39 was rolled back (3 of 11: the tables and the setting stay): run step 39 again, as the last step'),
 (100, 'BMMS-Fix-MeetingDelete-D1.sql (step D1)', '');
 
 SELECT s.Step, s.Script,
@@ -440,6 +467,29 @@ IF (@SenderRow > 0 AND OBJECT_ID('dbo.SMTP_Master', 'U') IS NOT NULL AND OBJECT_
                       ELSE ''user '' + @v + '': the From Mail Id of SMTP Configuration is NOT this user''''s address (README step ML1)'' END;',
         N'@t VARCHAR(200) OUTPUT', @t = @SenderText OUTPUT;
 SELECT @SenderText AS MailSender;
+
+-- Step UD1a (step 39): do the history rows agree with Users? Read only; counts only, no names
+DECLARE @HistoryText VARCHAR(300) = 'step 39 not installed (no User_Role / User_Department table)';
+IF (OBJECT_ID('dbo.User_Role', 'U') IS NOT NULL AND OBJECT_ID('dbo.User_Department', 'U') IS NOT NULL
+    AND COL_LENGTH('dbo.User_Department', 'IsHome') IS NOT NULL AND COL_LENGTH('dbo.Users', 'AccountStatus') IS NOT NULL)
+    EXEC sp_executesql N'
+        DECLARE @mr INT = (SELECT COUNT(*) FROM dbo.Users u WHERE u.AccountStatus = 1
+                           AND (SELECT COUNT(*) FROM dbo.User_Role r WHERE r.UserId = u.UserId AND r.EffectiveTo IS NULL AND r.RoleId = u.RoleId) <> 1);
+        DECLARE @mh INT = (SELECT COUNT(*) FROM dbo.Users u WHERE u.AccountStatus = 1
+                           AND (SELECT COUNT(*) FROM dbo.User_Department d WHERE d.UserId = u.UserId AND d.EffectiveTo IS NULL AND d.IsHome = 1
+                                AND d.DepartmentId = u.DepartmentId) <> 1);
+        DECLARE @mi INT = (SELECT COUNT(*) FROM dbo.Users u WHERE u.AccountStatus <> 1
+                           AND (EXISTS (SELECT 1 FROM dbo.User_Role r WHERE r.UserId = u.UserId AND r.EffectiveTo IS NULL)
+                             OR EXISTS (SELECT 1 FROM dbo.User_Department d WHERE d.UserId = u.UserId AND d.EffectiveTo IS NULL)));
+        DECLARE @mm INT = (SELECT COUNT(*) FROM dbo.Users u
+                           WHERE u.RoleId NOT IN (SELECT RoleId FROM dbo.Roles WHERE RoleCode = ''manager'')
+                             AND (SELECT COUNT(*) FROM dbo.User_Department d WHERE d.UserId = u.UserId AND d.EffectiveTo IS NULL) > 1);
+        SET @t = CASE WHEN @mr + @mh + @mi + @mm = 0 THEN ''history rows agree with Users''
+                      ELSE ''history rows do NOT agree with Users: '' + CAST(@mr AS VARCHAR(12)) + '' role, '' + CAST(@mh AS VARCHAR(12))
+                           + '' home department, '' + CAST(@mi AS VARCHAR(12)) + '' inactive with an open row, '' + CAST(@mm AS VARCHAR(12))
+                           + '' non-Managers with several departments; run step 39 again (it re-syncs)'' END;',
+        N'@t VARCHAR(300) OUTPUT', @t = @HistoryText OUTPUT;
+SELECT @HistoryText AS UserHistory;
 
 SELECT DB_NAME() AS CurrentDatabase;
 GO

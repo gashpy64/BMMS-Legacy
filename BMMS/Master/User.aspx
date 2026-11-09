@@ -45,7 +45,8 @@
                                         CommandArgument="DepartmentName"></asp:LinkButton>
                                 </HeaderTemplate>
                                 <ItemTemplate>
-                                    <asp:Label ID="lblDepartmentName" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("DepartmentName")) %>'></asp:Label>
+                                    <%-- Step UD1a: a Manager's departments, "HRD (primary), Credit"; wraps inside the column --%>
+                                    <asp:Label ID="lblDepartmentName" runat="server" SkinID="lblskingen" CssClass="wb-dept-list" Text='<%# HttpUtility.HtmlEncode(Eval("DepartmentText")) %>'></asp:Label>
                                 </ItemTemplate>
                             </asp:TemplateField>
                             <asp:TemplateField SortExpression="DesignationName">
@@ -144,12 +145,25 @@
                     </div>
                     <div class="wb-row">
                         <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlDepartment">
-                            Department <span class="wb-req">*</span></label>
+                            <asp:Literal ID="litDepartmentLabel" runat="server" Text="Department"></asp:Literal> <span class="wb-req">*</span></label>
                         <div class="wb-field">
                             <asp:DropDownList ID="ddlDepartment" runat="server" AutoPostBack="True" OnSelectedIndexChanged="ddlDepartment_SelectedIndexChanged">
                             </asp:DropDownList>
                         </div>
                     </div>
+                    <%-- Step UD1a (BMMS-Fix-UserHistory-Step39.sql): only a Manager has several departments; shown for the
+                         Manager role once step 39 is installed. The home department stays ticked (it cannot be unticked). --%>
+                    <asp:Panel ID="pnlDepartments" runat="server" CssClass="wb-row" Visible="false">
+                        <div class="wb-label" id="lblDepartmentsManaged">
+                            Departments managed</div>
+                        <div class="wb-field">
+                            <asp:CheckBoxList ID="cblDepartments" runat="server" CssClass="wb-radio-list" RepeatDirection="Vertical"
+                                role="group" aria-labelledby="lblDepartmentsManaged">
+                            </asp:CheckBoxList>
+                            <span class="wb-unit">
+                                <asp:Literal ID="litDepartmentsNote" runat="server" Text="The home department is always one of them and is the primary one."></asp:Literal></span>
+                        </div>
+                    </asp:Panel>
                     <div class="wb-row">
                         <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlRole">
                             Role <span class="wb-req">*</span></label>

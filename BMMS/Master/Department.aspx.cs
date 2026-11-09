@@ -285,12 +285,13 @@ namespace BMMS.Master
 
                     try
                     {
-                        int Result = DepartmentMgr.DeleteDepartmentByDeptId(DeptId);
+                        // Step UD1a: a department mapped to users, or in their history, gets its own message
+                        string refusal = DepartmentMgr.DeleteDepartment(DeptId);
 
-                        if (Result == 1)
+                        if (refusal == null)
                             MsgDisplay("Record Deleted Successfully", MessageKind.Success);
                         else
-                            MsgDisplay(Common.GetAppSetting("delete_reference"));
+                            MsgDisplay(refusal);
                     }
                     catch (Exception ex)
                     {

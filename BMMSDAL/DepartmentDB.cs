@@ -168,6 +168,17 @@ namespace BMMSDAL
             return Convert.ToInt16(dtResult.Rows[0]["Result"].ToString());
         }
         #endregion
+
+        #region DeleteDepartment
+        // Step UD1a: the whole row, Result plus (with BMMS-Fix-UserHistory-Step39.sql) Reason and ReasonDetail
+        public static DataTable DeleteDepartment(int DeptId)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@DeptId", DeptId);
+
+            return CommonDB.GetDataTable("spr_DeleteDepartmentByDeptId", parameter);
+        }
+        #endregion
     }
     #endregion
     

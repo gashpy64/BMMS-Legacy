@@ -25,6 +25,7 @@ namespace BMMS.Master
                 {
                     MsgHide();
                     LoadSettings();
+                    LoadDeptRule();
                     LoadOrganisation();
                     LoadLogo();
                 }
@@ -49,6 +50,61 @@ namespace BMMS.Master
             {
                 litLastChanged.Text = "Last changed by " + HttpUtility.HtmlEncode(dt.Rows[0]["LastChangedBy"].ToString())
                     + " on " + Convert.ToDateTime(dt.Rows[0]["LastChangedOn"]).ToString("dd-MMM-yyyy HH:mm") + ".";
+            }
+        }
+        #endregion
+
+        #region LoadDeptRule
+        // Step UD1a (BMMS-Fix-UserHistory-Step39.sql): rule 6, stored only. The card is shown only when step 39
+        // has added the setting row; a value other than "controller" shows as the default "refuse".
+        private void LoadDeptRule()
+        {
+            DataTable dt = Utilities.GetAppSetting(Utilities.DeptNoManagerAction);
+
+            pnlDeptRule.Visible = dt.Rows.Count > 0;
+            if (dt.Rows.Count == 0)
+                return;
+
+            rblDeptNoManagerAction.SelectedValue = dt.Rows[0]["SettingValue"].ToString() == "controller" ? "controller" : "refuse";
+
+            litDeptRuleLastChanged.Text = string.Empty;
+            if (dt.Rows[0]["LastChangedOn"] != DBNull.Value)
+            {
+                litDeptRuleLastChanged.Text = "Last changed by " + HttpUtility.HtmlEncode(dt.Rows[0]["LastChangedBy"].ToString())
+                    + " on " + Convert.ToDateTime(dt.Rows[0]["LastChangedOn"]).ToString("dd-MMM-yyyy HH:mm") + ".";
+            }
+        }
+        #endregion
+
+        #region btnSaveDeptRule_Click
+        protected void btnSaveDeptRule_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                int ActingUserId = int.Parse(Session["UserId"].ToString());
+
+                // Only the two values are sent; the procedure refuses anything else (Reason 3)
+                string value = rblDeptNoManagerAction.SelectedValue == "controller" ? "controller" : "refuse";
+
+                MeetingChangeResult result = Utilities.SetDepartmentManagerRule(value, ActingUserId);
+
+                if (result.Result == 1)
+                    MsgDisplay(value == "controller"
+                        ? "Saved: when a department has no active Manager, a new agenda item will be sent to the Controller. This is stored now and used from a later step."
+                        : "Saved: when a department has no active Manager, a new agenda item will be refused. This is stored now and used from a later step.",
+                        MessageKind.Success);
+                else if (result.Reason == MeetingChangeReason.ActingUserInvalid)
+                    MsgDisplay(result.RefusalMessage());
+                else if (result.Reason == MeetingChangeReason.NotFound)
+                    MsgDisplay("Not saved: only an Admin can change system settings.");
+                else
+                    MsgDisplay("Not saved: the value is not valid.");
+
+                LoadDeptRule();
+            }
+            catch (Exception ex)
+            {
+                Utilities.GoToErrPage(className, "btnSaveDeptRule_Click", ex);
             }
         }
         #endregion

@@ -429,7 +429,8 @@ BEGIN TRY
     INSERT INTO @T VALUES ('After reset: rows pointing at an unknown user (keyed columns)', '0', CAST(@Orphans AS VARCHAR(12)));
 
     INSERT INTO @T
-    SELECT 'Keys to Users still present and trusted', '23',
+    SELECT 'Keys to Users still present and trusted' + CASE WHEN OBJECT_ID('dbo.User_Role', 'U') IS NOT NULL THEN ' [step 39: +6]' ELSE '' END,
+           CASE WHEN OBJECT_ID('dbo.User_Role', 'U') IS NOT NULL THEN '29' ELSE '23' END,
            CAST(SUM(CASE WHEN fk.is_not_trusted = 0 AND fk.is_disabled = 0 THEN 1 ELSE 0 END) AS VARCHAR(12))
     FROM sys.foreign_keys fk WHERE fk.referenced_object_id = OBJECT_ID('dbo.Users');
 
