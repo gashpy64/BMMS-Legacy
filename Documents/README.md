@@ -4,7 +4,7 @@
 - Audience: Gashpy Software (owner, developers, doc-writer)
 - Shipped: No
 - Applies to: user-ud1a
-- Last updated by: WF2a, based on 021e946
+- Last updated by: WF2b1, based on 3dd0eec
 - Status: Draft
 - Verified against: CLAUDE.md, .claude/agents/doc-writer.md, Documents/_build/*.ps1
 - To confirm:
@@ -36,8 +36,9 @@ Everything else here is internal.
 | Export/ | Word and PDF exports, made per release; ignored by git except Export/README.md | No (the PDFs of the manuals are what ships) |
 | _build/ | Export and check scripts, the Gashpy Word template | No |
 
-The older folder `Documentation/` (in the repository root) is superseded by this folder; its
-useful parts move into System-Manual in step WF2b1.
+The older folder `Documentation/` was merged into System-Manual and removed in step WF2b1 (see
+System-Manual/01, "Superseded documents"); only `Documentation/Pages.xlsx` remains, until the
+owner has compared it with `BMMS/XML/PageAccess.xml`.
 
 ## Rules for every document
 

@@ -3,8 +3,8 @@
 - Title: BMMS Change Log
 - Audience: Gashpy Software (internal)
 - Shipped: No
-- Applies to: user-ud1a
-- Last updated by: WF2a, based on 021e946
+- Applies to: WF2b1
+- Last updated by: WF2b1, based on 3dd0eec
 - Status: Draft
 - Verified against: git tags and commit subjects (git for-each-ref refs/tags), Database/README.md
 - To confirm:
@@ -12,6 +12,12 @@
 One entry per step, newest first. Each entry names the step, its tag and what changed for users,
 for installers and in the database. Release entries (tags vX.Y.Z) collect the steps since the
 previous release.
+
+## WF2b1 - System manual chapters 01-05 (tag docs-wf2b1, 2026-11-09)
+
+- WF2b1: System manual chapters 01-05 from the BMMS_Test catalog export of 2026-11-09; old
+  Documentation/ folder merged into System-Manual and removed (Pages.xlsx kept).
+- For users: no change. For installers: no change. Database: no change.
 
 ## WF2a - Documents baseline and the doc-writer agent
 
