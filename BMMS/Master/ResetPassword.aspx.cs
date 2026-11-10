@@ -19,6 +19,9 @@ namespace BMMS.Master
         #region Page_Load
         protected void Page_Load(object sender, EventArgs e)
         {
+            // Step RA1a: Admin only (role read from the database; ends the request otherwise)
+            BMMS.Security.PageAccessModule.RequireRole("admin");
+
             if (!IsPostBack)
             {
                 pnlResetPassword.Visible = false;
@@ -87,6 +90,9 @@ namespace BMMS.Master
         #region btnResetPassword_Click
         protected void btnResetPassword_Click(object sender, EventArgs e)
         {
+            // Step RA1a: checked again before the action
+            BMMS.Security.PageAccessModule.RequireRole("admin");
+
             int PasswordLength = 8; // Convert.ToInt16(Common.GetAppSetting("PasswordMaxLength"));
             string NewPassword = Common.DefaultPassword; // Common.CreateRandomPassword(PasswordLength);
 

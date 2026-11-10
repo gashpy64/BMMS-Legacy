@@ -174,10 +174,13 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
 - Title: BMMS Glossary
 - Audience: Everyone who uses BMMS
 - Shipped: Yes (appended to the Overall manual's export)
-- Applies to: user-ud1a
-- Last updated by: WF2a, based on 021e946
+- Applies to: access-ra1a
+- Last updated by: RA1a (step 40), based on ea268e5
 - Status: Draft
-- Verified against: BMMS/XML/PageAccess.xml (role codes and the pages of each role),
+- Verified against: BMMS/XML/PageAccess.xml (role codes and the pages of each role; the nine
+  Admin-only pages of step RA1a), BMMS/PageAccessModule.cs (RequireRole), BMMS/UserControl/MenuUserControl.ascx
+  (Master and Admin menus by role), Database/BMMS-Fix-RoleAccess-Step40.sql (the Controller has
+  no rights on other accounts),
   BMMS/UserControl/MenuUserControl.ascx (screen names), BMMS/Default.aspx.cs (the dashboard after
   sign-in; the first sign-in goes to the password change), BMMS/DashBoard/DashBoard.aspx.cs
   (Approve and Reject shown to the Manager at AC and to the Controller at AMA; the decision is saved

@@ -16,8 +16,8 @@ you may do on each screen.
 |---|---|
 | User | Enters agenda items on Agenda Entry. |
 | Manager | Enters agenda items, approves or rejects the agenda items sent to them, and uses the Reports menu. |
-| Controller | Approves or rejects agenda items after the Manager, or items sent straight to the Controllers. Uses Agenda Entry, Agenda Finalize, Update Minutes, Finalize Minutes, Minutes Confirmation, Followup and the reports. Shares the Master menu with Admin, and has Reset Password and Backup Database in the Admin menu. |
-| Admin | Uses the Master menu (User Master and the other master lists) and the Admin menu (Reset Password, Backup Database, SMTP Configuration, System Settings, Reset Database; the last three for Admin only). Views agenda items on the dashboard but does not approve them. The menu has no Home link for Admin; the dashboard opens after sign-in. |
+| Controller | Approves or rejects agenda items after the Manager, or items sent straight to the Controllers. Uses Agenda Entry, Agenda Finalize, Update Minutes, Finalize Minutes, Minutes Confirmation, Followup and the reports. The Master menu shows Member Master, Committee Master, Committee Member Tag / UnTag, Meeting Master, Meeting - Member Tag / UnTag and Attendance. A Controller has no Admin menu, cannot open User Master, the code masters, Reset Password, Backup Database or Audit Trail, and changes only their own password. |
+| Admin | Is the only role that uses User Master, Department, Designation, Member Type, Subject Type and Decision Type (Master menu), and the Admin menu (Reset Password, Backup Database, SMTP Configuration, System Settings, Audit Trail, Reset Database). Views agenda items on the dashboard but does not approve them. The menu has no Home link for Admin; the dashboard opens after sign-in. |
 | MD Secretariat | Uses the Followup screen. Views agenda items on the dashboard but does not approve them. The menu has no Home link for MD Secretariat; the dashboard opens after sign-in. |
 | Management | Views agenda items on the dashboard but does not approve them. |
 

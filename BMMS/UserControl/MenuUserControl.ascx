@@ -27,7 +27,8 @@
         <li><a href="#" rel="ddsubmenu3">Minutes</a></li>
         <%
             } %>
-        <%if (Session["RoleCode"].ToString() == "admin" || Session["RoleCode"].ToString() == "controller")
+        <%-- Step RA1a: the Admin menu is for Admin only (Reset Password, Backup Database and Audit Trail are Admin tasks) --%>
+        <%if (Session["RoleCode"].ToString() == "admin")
           { %>
         <li><a href="#" rel="ddsubmenu2">Admin</a></li>
         <%
@@ -54,12 +55,17 @@
 <!--A good location would be the end of the page (right above "</BODY>")-->
 <!--Top Drop Down Menu 1 HTML-->
 <ul id="ddsubmenu1" class="ddsubmenustyle">
+    <%-- Step RA1a: the code and user masters are for Admin only; the Controller keeps the committee and meeting masters --%>
+    <%if (Session["RoleCode"].ToString() == "admin")
+      { %>
     <li><a href="../Master/Department.aspx">Department Master</a></li>
     <li><a href="../Master/Designation.aspx">Designation Master</a></li>
     <li><a href="../Master/MemberType.aspx">Member Type</a></li>
     <li><a href="../Master/SubjectType.aspx">Subject Type</a></li>
     <li><a href="../Master/DecisionType.aspx">Decision Type</a></li>
     <li><a href="../Master/User.aspx">User Master</a></li>
+    <%
+        } %>
     <li><a href="../Master/Member.aspx">Member Master</a></li>
     <li><a href="../Master/Committee.aspx">Committee Master</a></li>
     <li><a href="../Master/CommitteeMember.aspx">Committee Member Tag / UnTag</a></li>
@@ -75,13 +81,8 @@
     <li><a href="../Master/BackupDatabase.aspx">Backup Database</a></li>
     <li><a href="../Master/SMTPServerConfig.aspx">SMTP Configuration</a></li>
     <li><a href="../Master/SystemSettings.aspx">System Settings</a></li>
+    <li><a href="../Report/AuditTrail.aspx">Audit Trail</a></li>
     <li><a href="../Master/ResetDatabase.aspx">Reset Database</a></li>
-    <%
-        } %>
-    <%if (Session["RoleCode"].ToString() == "controller")
-      { %>
-    <li><a href="../Master/ResetPassword.aspx">Reset Password</a></li>
-    <li><a href="../Master/BackupDatabase.aspx">Backup Database</a></li>
     <%
         } %>
 </ul>
@@ -104,7 +105,6 @@
     <li><a href="../Report/Reports.aspx?rc=minutes_extract">Minutes Extract</a></li>
     <li><a href="../Report/Followup.aspx?fc=followup">Followup</a></li>
     <li><a href="../Report/Followup.aspx?fc=summary">Followup Summary</a></li>
-    <li><a href="../Report/AuditTrail.aspx">Audit Trail</a></li>
     <%
         } %>
     <%if (Session["RoleCode"].ToString() == "manager")

@@ -11,7 +11,8 @@
      * an inactive (or missing) acting user gets Reason 8, also on their own
        account and through spr_SetUserStatusByUserId
      * deactivate / activate through spr_SetUserStatusByUserId: Admin on a
-       User, Controller on an Admin (Reason 4) and on a User, own account
+       User, Controller on an Admin (Reason 4) and on a User (Reason 4 since
+       step 40, RA1a), own account
        (Reason 1), a Manager acting (Reason 4), a Manager who manages users
        (allowed, users keep the manager), last active Controller (Reason 3)
      * spr_GetUserListForUserPage: Status, CanDeactivate, CanActivate,
@@ -196,11 +197,13 @@ BEGIN TRY
            'Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(2)) FROM @R;
 
     DELETE FROM @R; INSERT INTO @R EXEC spr_SetUserStatusByUserId @UserId = @U, @AccountStatus = 0, @ActingUserId = @C1;
-    INSERT INTO @T SELECT 'Controller deactivates a User', 'Result 1, Reason 0',
+    -- Step 40 (RA1a): only an Admin changes other accounts (Reason 4)
+    INSERT INTO @T SELECT 'Controller deactivates a User', 'Result 0, Reason 4',
            'Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(2)) FROM @R;
 
     DELETE FROM @R; INSERT INTO @R EXEC spr_SetUserStatusByUserId @UserId = @U, @AccountStatus = 1, @ActingUserId = @C1;
-    INSERT INTO @T SELECT 'Controller activates a User', 'Result 1, Reason 0',
+    -- Step 40 (RA1a): refused (Reason 4)
+    INSERT INTO @T SELECT 'Controller activates a User', 'Result 0, Reason 4',
            'Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(2)) FROM @R;
 
     DELETE FROM @R; INSERT INTO @R EXEC spr_SetUserStatusByUserId @UserId = @A1, @AccountStatus = 0, @ActingUserId = @A1;
@@ -246,7 +249,8 @@ BEGIN TRY
     DELETE FROM #List; INSERT INTO #List EXEC spr_GetUserListForUserPage @ActingUserId = @C1;
     INSERT INTO @T SELECT 'List (Controller): Admin row CanDeactivate', '0',
            ISNULL((SELECT CAST(CanDeactivate AS VARCHAR(1)) FROM #List WHERE UserId = @A2), 'row missing');
-    INSERT INTO @T SELECT 'List (Controller): User row CanDeactivate', '1',
+    -- Step 40 (RA1a): a Controller may deactivate no other account
+    INSERT INTO @T SELECT 'List (Controller): User row CanDeactivate', '0',
            ISNULL((SELECT CAST(CanDeactivate AS VARCHAR(1)) FROM #List WHERE UserId = @U), 'row missing');
 
     DELETE FROM #List; INSERT INTO #List EXEC spr_GetUserListForUserPage @ActingUserId = @M;

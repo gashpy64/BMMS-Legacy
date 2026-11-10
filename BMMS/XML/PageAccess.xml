@@ -32,21 +32,24 @@
     <page path="Master/SMTPServerConfig.aspx" roles="admin"/>
     <page path="Master/SystemSettings.aspx" roles="admin"/>
 
-    <!-- admin and controller: the Master and Admin menus -->
-    <page path="Master/Department.aspx" roles="admin,controller"/>
-    <page path="Master/Designation.aspx" roles="admin,controller"/>
-    <page path="Master/MemberType.aspx" roles="admin,controller"/>
-    <page path="Master/SubjectType.aspx" roles="admin,controller"/>
-    <page path="Master/DecisionType.aspx" roles="admin,controller"/>
-    <page path="Master/User.aspx" roles="admin,controller"/>
+    <!-- admin only since step RA1a: the code and user masters, Reset Password, Backup Database, Audit Trail -->
+    <page path="Master/Department.aspx" roles="admin"/>
+    <page path="Master/Designation.aspx" roles="admin"/>
+    <page path="Master/MemberType.aspx" roles="admin"/>
+    <page path="Master/SubjectType.aspx" roles="admin"/>
+    <page path="Master/DecisionType.aspx" roles="admin"/>
+    <page path="Master/User.aspx" roles="admin"/>
+    <page path="Master/ResetPassword.aspx" roles="admin"/>
+    <page path="Master/BackupDatabase.aspx" roles="admin"/>
+    <page path="Report/AuditTrail.aspx" roles="admin"/>
+
+    <!-- admin and controller: the committee and meeting masters -->
     <page path="Master/Member.aspx" roles="admin,controller"/>
     <page path="Master/Committee.aspx" roles="admin,controller"/>
     <page path="Master/CommitteeMember.aspx" roles="admin,controller"/>
     <page path="Master/Meeting.aspx" roles="admin,controller"/>
     <page path="Master/MeetingMember.aspx" roles="admin,controller"/>
     <page path="Master/Attendance.aspx" roles="admin,controller"/>
-    <page path="Master/ResetPassword.aspx" roles="admin,controller"/>
-    <page path="Master/BackupDatabase.aspx" roles="admin,controller"/>
 
     <!-- agenda entry -->
     <page path="Master/Agenda.aspx" roles="controller,manager,user"/>
@@ -67,7 +70,6 @@
     <page path="Master/MinutesConfirmation.aspx" roles="controller"/>
     <page path="Report/AgendaApproval.aspx" roles="controller"/>
     <page path="Report/AttendanceDetails.aspx" roles="controller"/>
-    <page path="Report/AuditTrail.aspx" roles="controller"/>
     <page path="Report/CommitteeMaster.aspx" roles="controller"/>
     <page path="Report/CommitteeMember.aspx" roles="controller"/>
     <page path="Report/Followup.aspx" roles="controller"/>

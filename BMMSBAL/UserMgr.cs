@@ -47,8 +47,8 @@ namespace BMMSBAL
                 case UserChangeReason.LastController:
                     return "This is the last active Controller. It cannot be deleted, deactivated or given another role.";
                 case UserChangeReason.NotAllowedForRole:
-                    return "You are not allowed to " + ActionText + ". A Controller cannot change Admin or Controller accounts, "
-                         + "or give anyone the Admin or Controller role.";
+                    // Step RA1a (step 40): only an Admin changes other users' accounts
+                    return "You are not allowed to " + ActionText + ". Only an Admin can change other users' accounts.";
                 case UserChangeReason.ReferencedByUsers:
                     return "This user cannot be deleted: these users have them as reporting person, or were created or last updated by them: "
                          + System.Web.HttpUtility.HtmlEncode(ReasonDetail) + ".";

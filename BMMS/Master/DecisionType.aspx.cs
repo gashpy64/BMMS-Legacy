@@ -18,6 +18,9 @@ namespace BMMS.Master
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            // Step RA1a: Admin only (role read from the database; ends the request otherwise)
+            BMMS.Security.PageAccessModule.RequireRole("admin");
+
             Common.InitSetup(className);
 
             if (!IsPostBack)

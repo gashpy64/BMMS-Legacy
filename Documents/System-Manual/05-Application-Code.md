@@ -3,8 +3,8 @@
 - Title: Application Code
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: WF2b1
-- Last updated by: WF2b1, based on 3dd0eec
+- Applies to: access-ra1a
+- Last updated by: RA1a (step 40), based on ea268e5
 - Status: Draft
 - Verified against: BMMS/**/*.aspx, BMMS/MasterPage/*.Master(.cs), BMMS/UserControl/*.ascx(.cs),
   BMMS/XML/PageAccess.xml, PageSettings.xml, AppSettings.xml, ReportSettings.xml,
@@ -17,7 +17,9 @@
   UtilitiesDB.cs, MinutesDB.cs, AgendaDB.cs, Grep results over BMMS, BMMSBAL and BMMSDAL (Session
   keys, GetAppSetting, GoToErrPage, WriteErrorLog, mail messages), chapters 01 and 04 of this
   manual, and, as leads only, Documentation/Architecture/BMMS-Architecture.md section 9 and the
-  "Known items for later steps" list of Database/README.md
+  "Known items for later steps" list of Database/README.md; for step RA1a: BMMS/PageAccessModule.cs
+  (RequireRole), BMMS/UserControl/MenuUserControl.ascx, BMMS/XML/PageAccess.xml and the Page_Load
+  of the nine pages (git diff against ea268e5)
 - To confirm: whether the installed site runs PageAccess.xml in Enforce mode; whether anything
   outside the repository links to Report/EventCalendar.aspx or Report/FollowupActionTaken.aspx;
   whether building needs Microsoft Word itself or only the Interop DLL in BMMS/dll (no running code
@@ -79,38 +81,40 @@ How the tables are read:
 | Agenda.aspx | Agenda Entry: Controller under "Agenda", User and Manager as top-level "Agenda Entry" | controller, manager, user | Yes |
 | AgendaFinalization.aspx | Agenda Finalize (menu "Agenda") | controller | Yes |
 | Attendance.aspx | Attendance (menu "Master") | admin, controller | Yes |
-| BackupDatabase.aspx | Backup Database (menu "Admin") | admin, controller | No call |
+| BackupDatabase.aspx | Backup Database (menu "Admin") | admin (since RA1a; page check RequireRole) | No call |
 | ChangePassword.aspx | Change Password (link in the header, not in the menu) | `*` | Yes |
 | Committee.aspx | Committee Master | admin, controller | Yes |
 | CommitteeMember.aspx | Committee Member Tag / UnTag | admin, controller | Yes |
-| DecisionType.aspx | Decision Type | admin, controller | Yes |
-| Department.aspx | Department Master | admin, controller | Yes |
-| Designation.aspx | Designation Master | admin, controller | Yes |
+| DecisionType.aspx | Decision Type | admin (since RA1a; page check RequireRole) | Yes |
+| Department.aspx | Department Master | admin (since RA1a; page check RequireRole) | Yes |
+| Designation.aspx | Designation Master | admin (since RA1a; page check RequireRole) | Yes |
 | Followup.aspx | Followup (menu "Minutes") | controller, md_sect | Yes |
 | Meeting.aspx | Meeting Master | admin, controller | Yes |
 | MeetingMember.aspx | Meeting - Member Tag / UnTag | admin, controller | Yes |
 | Member.aspx | Member Master | admin, controller | Yes |
-| MemberType.aspx | Member Type | admin, controller | Yes |
+| MemberType.aspx | Member Type | admin (since RA1a; page check RequireRole) | Yes |
 | MinutesConfirmation.aspx | Minutes Confirmation (menu "Minutes") | controller | Yes |
 | MinutesFinalization.aspx | Finalize Minutes (menu "Minutes") | controller | Yes |
 | MinutesUpdate.aspx | Update Minutes (menu "Minutes") | controller | Yes |
 | ResetDatabase.aspx | Reset Database (menu "Admin", Admin only) | admin | Yes |
-| ResetPassword.aspx | Reset Password (menu "Admin") | admin, controller | No call |
+| ResetPassword.aspx | Reset Password (menu "Admin") | admin (since RA1a; page check RequireRole, also in the Reset Password button) | No call |
 | SMTPServerConfig.aspx | SMTP Configuration (menu "Admin", Admin only) | admin | No call |
-| SubjectType.aspx | Subject Type | admin, controller | Yes |
+| SubjectType.aspx | Subject Type | admin (since RA1a; page check RequireRole) | Yes |
 | SystemSettings.aspx | System Settings (menu "Admin", Admin only) | admin | No call |
-| User.aspx | User Master | admin, controller | Yes |
+| User.aspx | User Master | admin (since RA1a; page check RequireRole) | Yes |
 
 ### Report folder (BMMS/Report, 17 pages)
 
-All entries except Reports.aspx and Followup.aspx are in the "Reports" menu of the Controller. The Manager's
-"Reports" menu holds the four Reports.aspx entries only.
+All entries except Reports.aspx, Followup.aspx and AuditTrail.aspx are in the "Reports" menu of the Controller.
+Since RA1a, Audit Trail is in the "Admin" menu (Admin only), after System Settings and before Reset Database,
+and the Controller's "Reports" menu no longer has it. The Manager's "Reports" menu holds the four Reports.aspx
+entries only.
 
 | Page | Purpose (menu entry) | Roles | InitSetup |
 |---|---|---|---|
 | AgendaApproval.aspx | Agenda Approval (PDF of approved agenda items of a meeting) | controller | Yes |
 | AttendanceDetails.aspx | Attendance Details | controller | Yes |
-| AuditTrail.aspx | Audit Trail | controller | Yes |
+| AuditTrail.aspx | Audit Trail (menu "Admin" since RA1a) | admin (since RA1a; page check RequireRole) | Yes |
 | CommitteeMaster.aspx | Committee Master report | controller | Yes |
 | CommitteeMember.aspx | Committee Member report | controller | Yes |
 | EventCalendar.aspx | Event Calendar (From Date and To Date list) | `*` | Yes |
@@ -130,7 +134,7 @@ All entries except Reports.aspx and Followup.aspx are in the "Reports" menu of t
 
 | File | Purpose | Notes |
 |---|---|---|
-| UserControl/MenuUserControl.ascx | The top menu and its drop-down lists; the links shown depend on `Session["RoleCode"]` | Hides links only; PageAccessModule is the server-side check. The code-behind is empty. The markup calls `Session["RoleCode"].ToString()`, so it needs a logged-in session; only Main.Master uses it (MainNoMenu.Master has it commented out) |
+| UserControl/MenuUserControl.ascx | The top menu and its drop-down lists; the links shown depend on `Session["RoleCode"]` | Hides links only; PageAccessModule is the server-side check. Since RA1a the Master menu shows Department Master, Designation Master, Member Type, Subject Type, Decision Type and User Master to Admin only (the Controller keeps Member Master, Committee Master, Committee Member Tag / UnTag, Meeting Master, Meeting - Member Tag / UnTag and Attendance), and the "Admin" heading and menu are for Admin only (Reset Password, Backup Database, SMTP Configuration, System Settings, Audit Trail, Reset Database, in that order). The code-behind is empty. The markup calls `Session["RoleCode"].ToString()`, so it needs a logged-in session; only Main.Master uses it (MainNoMenu.Master has it commented out) |
 | UserControl/MeetingSummary.ascx | The two meeting lists of the Dashboard: scheduled and completed (`MeetingMgr.GetScheduleMeet`) | Used by DashBoard.aspx only |
 | MasterPage/Main.Master, MainNoMenu.Master | See above | |
 
@@ -521,6 +525,18 @@ The request flow is in chapter 01 ("Request life cycle"). The points a developer
   "Name (login)", role, page, reason). App_Data is not served by IIS. A write failure never breaks the request.
   No code removes or rotates the file (a Grep for file deletion finds only the logo, the Send Mail attachment and
   the unused Word code).
+- The page check `RequireRole` (step RA1a). `PageAccessModule.RequireRole(params string[] roles)` is a second check
+  inside a page, for pages that only some roles may use. It reads the user's role and account status from the
+  database by the session's `UserId` (`UserMgr.GetUserDataTableByUserId`), not from `Session["RoleCode"]`, so it
+  also holds in `LogOnly` mode, for a session opened before a deployment and for a role changed during the
+  session. When the user is not an active user with one of the roles it writes a DENIED-PAGE line to the page
+  access log (reason "role not allowed by the page (allowed: [roles])"), answers the same "Access denied" page
+  (HTTP 403) and ends the request with `Response.End()`, so no event handler of the page runs. A database error
+  denies (fail closed) and is written to the error log. It is called outside any try/catch, as the first line of
+  `Page_Load` of nine pages: Master/User, Department, Designation, MemberType, SubjectType, DecisionType,
+  ResetPassword, BackupDatabase and Report/AuditTrail, each with `RequireRole("admin")`; and again first in the
+  Reset Password and Backup Database button handlers. Every other page follows `Session["RoleCode"]` until
+  sign-out (see chapter 08, "Page access").
 - The logged-in check by user id (step UN2) replaced a test of the person's name: before it, pages tested
   `Session["UserName"]`, which is display text and not an identity.
 - The menu and the module are two lists to keep in step: MenuUserControl.ascx shows links by role, and

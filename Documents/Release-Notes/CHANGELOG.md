@@ -3,8 +3,8 @@
 - Title: BMMS Change Log
 - Audience: Gashpy Software (internal)
 - Shipped: No
-- Applies to: WF2b1
-- Last updated by: WF2b1, based on 3dd0eec
+- Applies to: access-ra1a
+- Last updated by: RA1a (step 40), based on ea268e5
 - Status: Draft
 - Verified against: git tags and commit subjects (git for-each-ref refs/tags), Database/README.md
 - To confirm:
@@ -12,6 +12,34 @@
 One entry per step, newest first. Each entry names the step, its tag and what changed for users,
 for installers and in the database. Release entries (tags vX.Y.Z) collect the steps since the
 previous release.
+
+## RA1a - Role access: user accounts and code masters for Admin only (tag access-ra1a, 2026-11-10; database step 40)
+
+- For users: Admin only: User Master, Department, Designation, Member Type, Subject Type and Decision
+  Type (Master menu); Reset Password, Backup Database and Audit Trail (Admin menu; Audit Trail now
+  after System Settings, before Reset Database). SMTP Configuration, System Settings and Reset
+  Database stay Admin only. The Controller keeps Member Master, Committee Master, Committee Member
+  Tag / UnTag, Meeting Master, Meeting - Member Tag / UnTag and Attendance; it has no Admin menu, its
+  Reports menu has no Audit Trail, and it changes only its own password. A Controller who opens one
+  of the hidden pages by address gets the "Access denied" page. A Controller who still reaches a
+  user or member type change sees "You are not allowed to [action]. Only an Admin can change other
+  users' accounts." or "Only an Admin can change member types.". Management and MD Secretariat: no
+  change.
+- For installers: run BMMS-Fix-RoleAccess-Step40.sql after step 39 (either order with the build).
+  Re-running step 13, 14, 18 or 21 afterwards needs step 40 again. BMMS-Rollback-RoleAccess-Step40.sql
+  undoes it. BMMS-Check-InstalledSteps.sql has a row for step 40 (3 markers).
+- Database: step 40 replaces fn_UserChangeRefusal (no Controller branch: the Controller has the
+  rule of the other non-Admin roles, Reason 4 for everything on another account),
+  spr_AddEditMemberType and spr_DeleteMemberTypeByMemberTypeId (Admin only, Reason 4; RAISERROR
+  instead of THROW). Marker RoleAccess-Step40 in 3 objects. No data changes.
+- Code: PageAccess.xml (nine pages admin only); the menu; the page check
+  PageAccessModule.RequireRole("admin") in Page_Load of the nine pages (role read from the database,
+  DENIED-PAGE in the page access log) and in the Reset Password and Backup Database buttons.
+- Tests on BMMS_Test: BMMS-Test-RoleAccess-Step40.sql 43 of 43 PASS; the Controller expectations of
+  BMMS-Test-UserProtection-Stage1.sql (142), BMMS-Test-UserStatus-Stage2a.sql (50) and
+  BMMS-Test-MemberTypes-Step21.sql (100) changed for step 40, all PASS.
+- Open (security lead): only these nine pages check the role in the database; every other page
+  follows the role in the session until sign-out. A later step (RA1d) is to close this.
 
 ## WF2b1 - System manual chapters 01-05 (tag docs-wf2b1, 2026-11-09)
 

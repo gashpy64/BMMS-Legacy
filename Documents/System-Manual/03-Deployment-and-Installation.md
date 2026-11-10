@@ -3,8 +3,8 @@
 - Title: Deployment and Installation
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: WF2b1
-- Last updated by: WF2b1, based on 3dd0eec
+- Applies to: access-ra1a
+- Last updated by: RA1a (step 40), based on ea268e5
 - Status: Draft
 - Verified against: Database/README.md ("Always test on a copy first", "Run order" with its
   re-run notes, "Test and check scripts", the "what to run where" parts of steps 13, 15, 29, 30
@@ -20,7 +20,10 @@
   of the BMMS_Test catalog export of 2026-11-09 (kept outside the repository), Chapters 01 and 02
   of this manual, Documents/Data-Flow/04-Workflows/06-Release-and-Install.md (still a stub);
   the CREATE OR ALTER lines of BMMS-Fix-UserHistory-Step39.sql, git ls-files BMMS/dll, the
-  HintPaths of BMMSBAL/BMMSBAL.csproj
+  HintPaths of BMMSBAL/BMMSBAL.csproj; for step 40 (RA1a): Database/BMMS-Fix-RoleAccess-Step40.sql
+  (header, guards, messages), BMMS-Rollback-RoleAccess-Step40.sql (guards, messages),
+  BMMS-Test-RoleAccess-Step40.sql (header), BMMS-Check-InstalledSteps.sql (the step 40 rows),
+  Database/README.md (step RA1a: order, test result)
 - To confirm: where itextsharp.dll and the Interop DLL are to come from for a fresh clone; the IIS settings (site, application pool, .NET version, identity, bindings, folder
   permissions); the server prerequisites beyond what the project files show; what is installed on
   BMMS (step state, build, runtime Web.config, SMTP settings); the minimum SQL Server version; the
@@ -212,6 +215,7 @@ application.
 | 37 | BMMS-Fix-UpdateMail-Step37.sql | Mail on Update | After step 36; the sender must be set (README, "The sender") |
 | 38 | BMMS-Fix-MinutesDueDate-Step38.sql | Optional due date on a Followup decision | Needs step 31; either order with the build |
 | 39 | BMMS-Fix-UserHistory-Step39.sql | Role and department history | After step 38; needs steps 13, 14, 18 and 30; either order with the build |
+| 40 | BMMS-Fix-RoleAccess-Step40.sql | User accounts and member types for Admin only | After step 39 (stops otherwise); either order with the build; BMMS-Rollback-RoleAccess-Step40.sql |
 
 Steps 25, 26 and 28 have no database script (code only). Step 27 is not built. Step 32 is reserved
 for role permissions and not built. The lettered code steps that have a database script are D1
@@ -224,7 +228,9 @@ The out-of-number-order installs, in the order to install:
 2. Step 23, after step 28 was built (the list in the README stays in number order; step 24 was
    installed before it on the databases that followed the README order).
 3. Steps 29, 30 and 31, last of the numbered group, in that order.
-4. Step D1, then 33, 34, 35, 36, 37, 38 and 39 in number order. Step 39 is the last step.
+4. Step D1, then 33, 34, 35, 36, 37, 38, 39 and 40 in number order. Step 40 is the last step; it
+   stops unless step 39 is installed. (Re-running step 13, 14, 18 or 21 brings back an older text:
+   run step 40 again.)
 
 On a new database (restored from the baseline, not `BMMS`), after step 30, the README adds one
 call: `EXEC dbo.spr_sys_SetSmtpDefault @ConfirmDatabaseName = N'[the database name]';` (Result 1).
@@ -285,7 +291,7 @@ App_Setting row DeptNoManagerAction, 11 markers in all).
 
 What it prints (result grids):
 
-1. One row per step (1 to 24, 29, 30, 31, 33 to 39, and step D1 shown as step 100): Step,
+1. One row per step (1 to 24, 29, 30, 31, 33 to 40, and step D1 shown as step 100): Step,
    Script, Status, Detail. Status is Installed (every marker present), Partly (some present),
    Missing (none) or Not detectable (none of today's steps). Detail gives "[n] of [m] markers" and,
    for Partly, which step to run again.
@@ -379,9 +385,11 @@ rule in the README is: after re-running an older step, run the later steps that 
 procedures again, in number order, with the steps 29, 30, 31 and 39 last. Examples from the
 README:
 
-- If step 2, 3, 6, 10, 13, 18, 21, 29 or 30 is run again, run step 39 again, as the last step. Step
+- If step 2, 3, 6, 10, 13, 18, 21, 29 or 30 is run again, run step 39 again. Step
   39 is safe to run again: it keeps its tables, rows and setting value and re-syncs the rows with
   Users.
+- If step 13, 14, 18 or 21 is run again, run step 40 again, after step 39 (step 40 changes no data
+  and is safe to run again). The Check script then reads step 40 Partly or Missing until you do.
 - If step 3, 18, 21 or 29 is run again, run step 30 again, as the last step (it holds the whole
   step 29 text).
 - If step 6, 15, 16, 17, 18, 20 or 23 is run again, run step 31 again, as the last step of that
@@ -396,7 +404,7 @@ Partly row. Step 31 refuses to run once step 32 has replaced one of its procedur
 
 ## Rolling back a step
 
-Rollback scripts exist for steps 33 to 39 only (Database/ folder):
+Rollback scripts exist for steps 33 to 40 only (Database/ folder):
 
 | Step | Script | What it restores | What it keeps |
 |---|---|---|---|
@@ -407,11 +415,12 @@ Rollback scripts exist for steps 33 to 39 only (Database/ folder):
 | 37 | BMMS-Rollback-UpdateMail-Step37.sql | The step 36 texts; drops the mail-recipient procedure and deletes the MailSenderUserId setting row | The alert refresh of step 36. Roll back the build first (or at the same time): the step 37 build would show "the mail could not be sent" |
 | 38 | BMMS-Rollback-MinutesDueDate-Step38.sql | The step 31 text of the minutes update procedure | The due dates already stored |
 | 39 | BMMS-Rollback-UserHistory-Step39.sql | The older procedures (steps 2, 13 and 30); drops the three new objects | The tables User_Role and User_Department with all rows, and the setting row |
+| 40 | BMMS-Rollback-RoleAccess-Step40.sql | The step 18 text of the user rule function and the step 21 texts of the two member type procedures (THROW included) | Changes no data; the Check script then reads step 40 Missing; stops with "Nothing was changed" when no object carries the step 40 marker |
 
 Each Rollback script has the database-name guard, checks that the step it undoes (or the step
 before it) is in place and stops with "Nothing was changed" otherwise, changes no other data, and is
 safe to run again, also where the step was never installed. Roll steps back in the reverse of their
-install order (39, 38, 37, 36, 35, 34, 33). Roll back the application build of the step too, so the
+install order (40, 39, 38, 37, 36, 35, 34, 33). Roll back the application build of the step too, so the
 database is not left half way (README, step 39).
 
 For steps 1 to 31 and D1 no Rollback script is tracked in Database/. [[CONFIRM: that restoring the backup taken before the step is the intended way back for those steps; Database/README.md names no other]]
@@ -547,3 +556,46 @@ sequenceDiagram
 Drawn from: Database/BMMS-Fix-UserHistory-Step39.sql, Database/BMMS-Rollback-UserHistory-Step39.sql,
 Database/BMMS-Test-UserHistory-Step39.sql, Database/BMMS-Check-InstalledSteps.sql, Database/README.md
 (step UD1a, "what to run where").
+
+## Installing step 40 on a test database
+
+A worked example with the step 40 scripts (step RA1a: user accounts, member types and the code
+masters for Admin only). The server is `<server>` and the database is `BMMS_Test`. The step changes
+no data: it replaces one function and two procedures.
+
+1. Check the state. Select `BMMS_Test` and run BMMS-Check-InstalledSteps.sql. Step 39 should read
+   Installed and step 40 Missing.
+2. Back up the database as for any step ("Safe way to install any step").
+3. Run the Fix script (`sqlcmd -S <server> -d BMMS_Test -I -i Database/BMMS-Fix-RoleAccess-Step40.sql`).
+   It has no `USE` line; select the database first. It stops with "Nothing was changed." when the
+   database name does not start with BMMS, when fn_UserChangeRefusal does not have the step 18
+   text or the two member type procedures do not have the step 21 text (the message names the
+   steps to run first), or when step 39 is not installed ("The steps are installed in order: run
+   step 39 first, then this script.").
+4. On success it prints `Database: BMMS_Test` and then `Step 40 installed: fn_UserChangeRefusal,
+   spr_AddEditMemberType and spr_DeleteMemberTypeByMemberTypeId (RoleAccess-Step40); the markers of
+   steps 13, 14, 18 and 21 kept.` If an object lacks the marker afterwards it ends with "Step 40 is
+   not complete: [n] of 3 objects carry the marker RoleAccess-Step40, [n] of 5 older markers kept.
+   Read the messages above and run the script again." A second run prints the same success line.
+5. Run BMMS-Check-InstalledSteps.sql again. Step 40 should read Installed, 3 of 3 markers; steps 13,
+   14, 18, 21 and 39 should still read Installed.
+6. Run the Test script on `BMMS_Test` only: `Database/BMMS-Test-RoleAccess-Step40.sql`. It refuses a
+   database named exactly `BMMS` and any name that does not start with BMMS, and stops if step 40 is
+   not installed. Part 1 only reads; part 2 works inside one transaction that is rolled back, with
+   made-up users, a department and a member type (names beginning ZZ40), and puts every identity
+   counter back. The result is one grid with a Status per check: 43 of 43 PASS on BMMS_Test (owner's
+   run for step RA1a). Then run the older user and member type Test scripts (chapter 10).
+7. Deploy the build when you are ready; either order with the SQL is safe. The build alone keeps
+   the Controller out of the pages; the SQL alone makes the database refuse the same changes (an
+   older build then shows a Controller the Reason 4 message).
+8. To undo: run `Database/BMMS-Rollback-RoleAccess-Step40.sql` on the same database, and the
+   previous build. It stops with "Step 40 is not installed in [name] (no object carries the marker
+   RoleAccess-Step40): nothing to roll back. Nothing was changed." when none of the three objects
+   carries the marker. On success it prints `Step 40 rolled back: fn_UserChangeRefusal of step 18
+   and the member type procedures of step 21 are back.` If an object still carries the marker it
+   ends with "Step 40 is not fully rolled back: [n] objects still carry RoleAccess-Step40. Read the
+   messages above and run the script again." The Check script then reads step 40 Missing.
+
+Drawn from: Database/BMMS-Fix-RoleAccess-Step40.sql, Database/BMMS-Rollback-RoleAccess-Step40.sql,
+Database/BMMS-Test-RoleAccess-Step40.sql, Database/BMMS-Check-InstalledSteps.sql, Database/README.md
+(step RA1a, "what to run where").

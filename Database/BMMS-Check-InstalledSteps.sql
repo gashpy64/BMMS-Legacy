@@ -1,5 +1,5 @@
 /* ============================================================================
-   BMMS - Which numbered steps (README run order 1 to 24, 29, 30, 31, 33, 34, 35 and 36; step 23 is installed after step 28, steps 29, 30 and 31 last, step 33 after step D1, step 34 after step 33, step 35 after step 34, step 36 after step 35, step 37 after step 36, step 38 after step 31, step 39 after step 38) and step D1 are installed
+   BMMS - Which numbered steps (README run order 1 to 24, 29, 30, 31, 33, 34, 35 and 36; step 23 is installed after step 28, steps 29, 30 and 31 last, step 33 after step D1, step 34 after step 33, step 35 after step 34, step 36 after step 35, step 37 after step 36, step 38 after step 31, step 39 after step 38, step 40 after step 39) and step D1 are installed
    ----------------------------------------------------------------------------
    READ ONLY. It reads object definitions and constraint names; it creates,
    changes and deletes nothing, and it can run on BMMS as well as on a copy.
@@ -113,6 +113,12 @@
    BMMS-Rollback-UserHistory-Step39.sql, which keeps the tables and the
    setting row, it reads Partly, 3 of 11. The last grid shows whether the
    history rows agree with Users (read only).
+   Step 40 (step RA1a) replaces fn_UserChangeRefusal (text of step 18) and
+   spr_AddEditMemberType and spr_DeleteMemberTypeByMemberTypeId (step 21),
+   keeping the markers of steps 13, 14, 18 and 21, so those still read
+   Installed: 3 markers. Re-running step 13, 14, 18 or 21 after step 40
+   brings back an older text: step 40 reads Partly or Missing; run step 40
+   again. After BMMS-Rollback-RoleAccess-Step40.sql it reads Missing.
    Step 32 is reserved and not built; it has no row.
    Step D1 (shown as step 100) replaces spr_DeleteMeetingByMeetingId, which
    no numbered script contains: it reads Missing only on a database restored
@@ -391,6 +397,11 @@ INSERT INTO @M VALUES
 (39, 'User_Department table', CASE WHEN OBJECT_ID('dbo.User_Department', 'U') IS NOT NULL THEN 1 ELSE 0 END),
 (39, 'App_Setting DeptNoManagerAction', CASE WHEN @DeptRuleRow > 0 THEN 1 ELSE 0 END);
 
+-- 40. BMMS-Fix-RoleAccess-Step40.sql, installed after step 39 (re-running step 13, 14, 18 or 21 replaces one of its objects)
+INSERT INTO @M
+SELECT 40, o.Name + ' (RoleAccess-Step40)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%RoleAccess-Step40%' THEN 1 ELSE 0 END
+FROM (VALUES ('fn_UserChangeRefusal'), ('spr_AddEditMemberType'), ('spr_DeleteMemberTypeByMemberTypeId')) o(Name);
+
 -- D1 (shown as step 100). BMMS-Fix-MeetingDelete-D1.sql; no numbered script contains spr_DeleteMeetingByMeetingId
 INSERT INTO @M VALUES
 (100, 'spr_DeleteMeetingByMeetingId (MeetingDelete-D1)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_DeleteMeetingByMeetingId')), '') LIKE '%MeetingDelete-D1%' THEN 1 ELSE 0 END);
@@ -431,6 +442,7 @@ INSERT INTO @Steps VALUES
 (37, 'BMMS-Fix-UpdateMail-Step37.sql', 'step 16, 17, 18, 20, 31, 35 or 36 was re-run after step 37: run step 37 again (steps in order: 36 before 37)'),
 (38, 'BMMS-Fix-MinutesDueDate-Step38.sql', 'the first step 38 text (1 of 2), or step 6, 16, 17, 18, 23 or 31 was re-run after step 38: run step 38 again'),
 (39, 'BMMS-Fix-UserHistory-Step39.sql', 'step 2, 3, 6, 10, 13, 18, 21, 29 or 30 was re-run after step 39, or step 39 was rolled back (3 of 11: the tables and the setting stay): run step 39 again, as the last step'),
+(40, 'BMMS-Fix-RoleAccess-Step40.sql', 'step 13, 14, 18 or 21 was re-run after step 40: run step 40 again (after step 39)'),
 (100, 'BMMS-Fix-MeetingDelete-D1.sql (step D1)', '');
 
 SELECT s.Step, s.Script,

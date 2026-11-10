@@ -3,8 +3,8 @@
 - Title: Database
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: WF2b1
-- Last updated by: WF2b1, based on 3dd0eec
+- Applies to: access-ra1a
+- Last updated by: RA1a (step 40), based on ea268e5
 - Status: Draft
 - Verified against: the BMMS_Test catalog export of 2026-11-09 (kept outside the repository): README.txt,
   02-tables-columns.txt, 03-keys.txt, 04-indexes.txt, 05-constraints.txt, 07-database.txt, and
@@ -55,6 +55,10 @@
   Documentation/Architecture/BMMS-Architecture.md sections 7 and 9 (leads only);
   Documents/Data-Flow/00-Notation.md (UD1a lines); for the open known items added in the third
   fix run: BMMS-Rollback-UserHistory-Step39.sql and BMMS-Check-InstalledSteps.sql (headers).
+  For step 40 (RA1a): Database/BMMS-Fix-RoleAccess-Step40.sql (header, fn_UserChangeRefusal text),
+  BMMS-Rollback-RoleAccess-Step40.sql and BMMS-Test-RoleAccess-Step40.sql (headers),
+  BMMSBAL/UserMgr.cs and MemberTypeMgr.cs (the Reason 4 texts); the catalog text of these three
+  objects was not re-exported, so their rows state the step 40 script.
 - To confirm: the catalog is BMMS_Test, so what the installed BMMS database holds is not confirmed (see "Source of
   this chapter"); the meaning of Attendance.MemberOf values other than 'C' and of the numeric Status
   columns is not stated here because no source read for this chapter defines it; whether the seven
@@ -69,7 +73,8 @@
   script texts; the pages were searched for Reason handling with a Grep of .cs files only, so a mapping
   in an .aspx file or in a user control is not covered; the minimum SQL Server version, because 24
   procedures use THROW against the house rule for compatibility level 100 (see "Known database
-  limitations"); the step 39 status after its rollback (Missing against Partly, 3 of 11)
+  limitations"); the step 39 status after its rollback (Missing against Partly, 3 of 11); the count of procedures with
+  THROW after step 40 (a new catalog export is needed)
 
 ## Source of this chapter (BMMS_Test catalog)
 
@@ -489,7 +494,7 @@ These decide who may change which account. They are called inside procedures, no
 
 | Function | Type | Called from (catalog text) | Writes | Returns | Step |
 |---|---|---|---|---|---|
-| fn_UserChangeRefusal(@ActingUserId, @TargetUserId, @Action, @NewRoleId) | Scalar, returns INT: 0 when the change is allowed, otherwise the refusal code | spr_AddEditUser, spr_CheckUserChange, spr_DeleteUserByUserId, spr_GetUserListForUserPage, spr_ResetPasswordByUserId, spr_SetUserStatusByUserId | none (a function cannot write) | A Reason code, not the Result columns | 18 |
+| fn_UserChangeRefusal(@ActingUserId, @TargetUserId, @Action, @NewRoleId) | Scalar, returns INT: 0 when the change is allowed, otherwise the refusal code | spr_AddEditUser, spr_CheckUserChange, spr_DeleteUserByUserId, spr_GetUserListForUserPage, spr_ResetPasswordByUserId, spr_SetUserStatusByUserId | none (a function cannot write) | A Reason code, not the Result columns. Since step 40 (RA1a) the Controller has no branch of its own: it has the rule of every role other than Admin, so it may only Edit and ResetPassword its own account, and Create or any action on another account gives code 4 (the Admin rule and codes 1, 2, 3, 7 and 8 are unchanged) | 18, 40 (text replaced; the markers of steps 13, 14 and 18 are kept) |
 | fn_ManagerReleaseRefusal(@UserId, @DepartmentId, @Personal) | Inline table function: one row per finding (Kind 'D' last active Manager of a department with items waiting at AC; Kind 'P', when @Personal is 1, items routed to the user himself), none when nothing stops it | spr_AddEditUser | none | Rows (Kind, DepartmentId, DepartmentName, Items) | 39 |
 
 Actions the first function knows (from its text): Create, Edit, Delete, Deactivate, Activate,
@@ -546,8 +551,8 @@ refusal is not reported by them.
 | spr_GetMemberTypeByMemberTypeId | MemberTypeDB.GetMemberTypeByMemberTypeId | none | No | 21 |
 | spr_GetMemberTypeForTagging | MemberTypeDB.GetMemberTypeForTagging | none | No | 21 |
 | spr_GetNextMemberTypeCode | MemberTypeDB.GetNextMemberTypeCode | none | No | baseline |
-| spr_AddEditMemberType | MemberTypeDB.AddEditMemberType | Member_Type | Full (an active Admin or Controller; a reserved type cannot be edited; the acting user and server time are stored, the CreatedOn, CreatedBy, UpdatedOn and UpdatedBy parameters are kept for the older build and not used) | 21 |
-| spr_DeleteMemberTypeByMemberTypeId | MemberTypeDB.DeleteMemberTypeByMemberTypeId | Member_Type (DELETE) | Full (an active Admin or Controller; not a reserved type, not a type in use) | 21 |
+| spr_AddEditMemberType | MemberTypeDB.AddEditMemberType | Member_Type | Full (an active Admin only since step 40, RA1a: a Controller gets Reason 4; a reserved type cannot be edited; the acting user and server time are stored, the CreatedOn, CreatedBy, UpdatedOn and UpdatedBy parameters are kept for the older build and not used; an error is re-raised with RAISERROR instead of THROW since step 40) | 21, 40 |
+| spr_DeleteMemberTypeByMemberTypeId | MemberTypeDB.DeleteMemberTypeByMemberTypeId | Member_Type (DELETE) | Full (an active Admin only since step 40: a Controller gets Reason 4; not a reserved type, not a type in use; RAISERROR instead of THROW since step 40) | 21, 40 |
 
 #### Subject type
 
@@ -1239,9 +1244,9 @@ Procedure families used in the table:
 | 3 | spr_AddEditMemberType; spr_DeleteMemberTypeByMemberTypeId | A value that is not valid, or the type is not found: ReasonDetail is Code, MemberTypeCode, MemberTypeName, MemberScope, DisplayOrder, StatusId, DuplicateCode, DuplicateName or NotFound | 21 | By ReasonDetail: "Member Type Code must be 1 to 50 characters, without line breaks, tabs or characters the database cannot store."; "Member Type Name must be 1 to 50 characters, without line breaks, tabs or characters the database cannot store."; "Choose where the member type is used: Committee or Meeting."; "Display Order must be a number from 0 to 9999."; "Choose a status."; "Another member type already has this code."; "Another member type already has this name."; "This member type no longer exists. Reload the page."; any other detail: "Record Not Saved" |
 | 3 | spr_sys_ResetDatabase; spr_sys_SetSmtpDefault | The typed database name is not the current database (ReasonDetail DatabaseName) | 29 (reset), 30 (SMTP default) | Reset Database page: "The name you typed is not the name of this database. Nothing was changed." spr_sys_SetSmtpDefault is not called from a page |
 | 4 | spr_AddEditMeeting; spr_DeleteMeetingByMeetingId; spr_AgendaFinalizeByMeetingId; spr_MinutesFinalizeByMeetingId; spr_MinutesConfirmByMeetingId; spr_UpdateMinutes; spr_UpdateAgendaShortText; spr_UpdateMeetingChairman (meeting or member); spr_AddEditMeetingMember; spr_DeleteMeetingMemberByMeetingMemberId; spr_UpdateAgendaByAgendaId; Agenda lock (meeting not found); spr_AddEditCommitteeMember (Code not Save or Update, or the row is not found) | The meeting (or member, or row) does not exist | 15 (finalize, confirm, meeting member save and delete, chairman); 16 (agenda lock, meeting, minutes update, spr_UpdateAgendaByAgendaId); 21 (committee member); D1 (meeting delete) | "The meeting or member no longer exists. Reload the page." On the Dashboard, Approve and Reject show the "item is gone" text instead |
-| 4 | User rules | The acting user's role may not do this: a Controller changing an Admin or Controller, or creating or promoting one; any other role changing another user | 13 | "You are not allowed to [action, for example delete this user]. A Controller cannot change Admin or Controller accounts, or give anyone the Admin or Controller role." |
+| 4 | User rules | The acting user's role may not do this: since step 40 (RA1a) only an Admin may create an account or change another user's account; every other role, the Controller included, may only edit and reset the password of its own account (until step 40 a Controller could act on Manager, User, Management and MD Secretariat accounts, but not on Admin or Controller accounts) | 13, 40 | "You are not allowed to [action, for example delete this user]. Only an Admin can change other users' accounts." (BMMSBAL/UserMgr.cs; the text before step 40 was "A Controller cannot change Admin or Controller accounts, or give anyone the Admin or Controller role.") |
 | 4 | Admin-only setting; spr_sys_ResetDatabase | The acting user is not an Admin | 16, 19, 29, 39 (as for Reason 3) | System Settings: "Only an Admin can change system settings." (department rule: "Not saved: only an Admin can change system settings."); Reset Database: "Only an Admin can reset the database. Nothing was changed." |
-| 4 | spr_AddEditMemberType; spr_DeleteMemberTypeByMemberTypeId | The acting user is not an Admin or a Controller | 21 | "Only an Admin or a Controller can change member types." |
+| 4 | spr_AddEditMemberType; spr_DeleteMemberTypeByMemberTypeId | The acting user is not an Admin (an Admin or a Controller until step 40, RA1a) | 21, 40 | "Only an Admin can change member types." (BMMSBAL/MemberTypeMgr.cs; the text before step 40 was "Only an Admin or a Controller can change member types.") |
 | 5 | Agenda lock; spr_UpdateAgendaByAgendaId | The agenda is finalized (ReasonDetail Finalized; BypassOff for a Controller when the option AgendaControllerBypass is off) | 16 | "The agenda for this meeting is finalized, so agenda items can no longer be added, changed or deleted." With BypassOff, the same text followed by " Controller changes after finalization are switched off in System Settings." |
 | 5 | spr_DeleteUserByUserId | Other users have this user as manager, creator or last updater (ReasonDetail the names) | 13 | "This user cannot be deleted: these users have them as reporting person, or were created or last updated by them: [names]." |
 | 5 | spr_AddEditMemberType; spr_DeleteMemberTypeByMemberTypeId | The type is in use (ReasonDetail "[n] committee, [m] meeting"); an edit that changes the scope, or a delete | 21 | Delete: "This member type is in use ([counts] member rows), so it cannot be deleted. You can make it inactive instead." Edit: "This member type is in use ([counts] member rows), so it cannot be moved to the other tagging page." |
@@ -1428,9 +1433,12 @@ cover are referred to, not repeated.
 | spr_UpdateSMTPMaster cuts addresses at 50 characters | 06-parameters.txt: @FromMailId and @Bcc are varchar(50) | Part 1, "SMTP" |
 | A second login closes the first access-log row without a logout time | spr_RecordLoginByUserId sets Login_Status C without Logout_DateTime; spr_AddEditAuditTrialLogin closes by User_Id and status O, so a logout in one window closes the rows of every window | "The audit tables" |
 | spr_DeleteDepartmentByDeptId has no acting-user check and no transaction | Its text has no `@ActingUserId`, no BEGIN TRANSACTION and no TRY (catalog lines 3856 to 3916); a mapping added at the same moment gives error 547 | Part 1, "Department" |
+| The Department, Designation, Subject Type and Decision Type procedures take no acting user and check no role (step 40 leaves them so) | Only BMMS/XML/PageAccess.xml and the page check RequireRole keep the Controller out of their pages; Database/README.md, "Known items for later steps", says to add acting-user checks in a later step (Low) | 08-Security, "Page access" |
+| The older Test scripts of steps 13, 14 and 21 expect the Controller rules of step 40 | On a database without step 40 those cases fail (BMMS-Test-UserProtection-Stage1.sql, BMMS-Test-UserStatus-Stage2a.sql, BMMS-Test-MemberTypes-Step21.sql) | 10-Testing-and-Release |
+| After a rollback of step 40 the member type procedures have THROW again | BMMS-Rollback-RoleAccess-Step40.sql restores the step 21 texts exactly; part 1 of BMMS-Test-RoleAccess-Step40.sql ("No THROW left") would then fail | 03-Deployment-and-Installation, "Installing step 40 on a test database" |
 | After a rollback of step 39 the history rows block user delete and Reset Database | The keys CreatedBy, ClosedBy and UserId of the two tables point to Users; the rollback script keeps the tables and rows | "History tables" in this chapter |
 | Status columns without a code table or a check | Meeting.AgendaStatus, MinutesStatus and SubjectStatus and Attendance.MemberOf have no check constraint (05-constraints.txt holds the 8 checks listed in "Tables and keys") | "Meetings and attendance" |
-| THROW in the procedure texts (open) | 24 procedures use THROW on BMMS_Test although the house rule for compatibility level 100 says no THROW; it runs because the server is SQL Server 17 (07-database.txt). Not fixed. The step Fix scripts (Database/BMMS-Fix-*.sql) also use CREATE OR ALTER, which needs SQL Server 2016 SP1 or later, so the minimum-version decision covers both. [[CONFIRM: owner decision on the minimum SQL Server version; with a lower version these procedures and the Fix scripts would not run]] | "Result, Reason and ReasonDetail" |
+| THROW in the procedure texts (open) | 24 procedures use THROW on BMMS_Test although the house rule for compatibility level 100 says no THROW; it runs because the server is SQL Server 17 (07-database.txt). Not fixed. Step 40 (RA1a) replaces THROW by RAISERROR in spr_AddEditMemberType and spr_DeleteMemberTypeByMemberTypeId (Fix script header and Database/README.md), so the count of 24 is for the catalog of 2026-11-09, before step 40. [[CONFIRM: the count of procedures with THROW after step 40; take a new catalog export of BMMS_Test with step 40 installed]] The step Fix scripts (Database/BMMS-Fix-*.sql) also use CREATE OR ALTER, which needs SQL Server 2016 SP1 or later, so the minimum-version decision covers both. [[CONFIRM: owner decision on the minimum SQL Server version; with a lower version these procedures and the Fix scripts would not run]] | "Result, Reason and ReasonDetail" |
 | Seven procedures named by the data layer are missing from the catalog (open) | spr_GetAgenda, spr_GetNextCommitteeMemberCode, spr_GetNextMeetingMemberCode, spr_GetNextRoleCode, spr_GetRoleByRoleId, spr_AddEditRole and spr_DeleteRoleByRoleId have no header in the catalog; no page calls the methods that name them. Not fixed | "Called by the code, not in the database" |
 | The status of step 39 after its rollback is stated two ways (open) | The Rollback script's header says the Check script then reads step 39 Missing; the Check script's header and Database/README.md say Partly, 3 of 11. Not settled; no run of the Check script after a rollback is recorded | 03-Deployment-and-Installation, "Installing step 39 on a test database" |
 

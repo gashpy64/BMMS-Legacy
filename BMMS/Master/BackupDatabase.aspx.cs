@@ -19,6 +19,9 @@ namespace BMMS.Master
         #region Page_Load
         protected void Page_Load(object sender, EventArgs e)
         {
+            // Step RA1a: Admin only (role read from the database; ends the request otherwise)
+            BMMS.Security.PageAccessModule.RequireRole("admin");
+
             if (!IsPostBack)
             {
                 BindSqlBackup();
@@ -31,6 +34,9 @@ namespace BMMS.Master
         #region btnBackupDatabase_Click
         protected void btnBackupDatabase_Click(object sender, EventArgs e)
         {
+            // Step RA1a: checked again before the action
+            BMMS.Security.PageAccessModule.RequireRole("admin");
+
             string Backup_File_Name = "SqlBakup-" + System.DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")  + ".bak";
             string destinationPath = Server.MapPath("~/Files/SqlBackup") + "\\" + Backup_File_Name;
             Sql_Backup_Mgr.BackupDatabase(destinationPath);

@@ -117,6 +117,52 @@ namespace BMMS.Security
             Deny(app, ctx);
         }
 
+        /// <summary>
+        /// Step RA1a: a second check inside a page (and before an action) that only some roles may use.
+        /// The role is read from the database by the session's UserId, not from Session["RoleCode"], so it
+        /// also holds when PageAccess.xml is in LogOnly mode, for a session opened before a deployment and
+        /// for a role changed during the session. When the user is not an active user with one of the
+        /// roles, the request gets the same "Access denied" page (HTTP 403) as the module, is written to
+        /// the log as DENIED-PAGE, and ends here (Response.End): no event handler of the page runs.
+        /// Call it outside any try/catch, as the first line of Page_Load and of the action handler.
+        /// A database error denies (fail closed) and is written to the error log.
+        /// </summary>
+        public static void RequireRole(params string[] roles)
+        {
+            HttpContext ctx = HttpContext.Current;
+            string page = (ctx.Request.AppRelativeCurrentExecutionFilePath ?? string.Empty).TrimStart('~', '/');
+            string role = string.Empty;
+            bool allowed = false;
+
+            int userId;
+            if (int.TryParse(Convert.ToString(ctx.Session["UserId"]), out userId) && userId > 0)
+            {
+                try
+                {
+                    System.Data.DataTable dt = BMMSBAL.UserMgr.GetUserDataTableByUserId(userId);
+                    if (dt != null && dt.Rows.Count > 0
+                        && dt.Columns.Contains("RoleCode") && dt.Columns.Contains("AccountStatus")
+                        && Convert.ToString(dt.Rows[0]["AccountStatus"]) == "1")
+                    {
+                        role = Convert.ToString(dt.Rows[0]["RoleCode"]).Trim();
+                        allowed = IsAllowed(roles, role);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    BMMSBAL.Utilities.WriteErrorLog("PageAccessModule", "RequireRole", ex.ToString());
+                    allowed = false;
+                }
+            }
+
+            if (allowed)
+                return;
+
+            Log(ctx, "DENIED-PAGE", page, role, "role not allowed by the page (allowed: " + string.Join(",", roles) + ")");
+            Deny(ctx.ApplicationInstance, ctx);
+            ctx.Response.End();
+        }
+
         private static bool IsAllowed(string[] allowed, string role)
         {
             foreach (string r in allowed)

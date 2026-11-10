@@ -13,7 +13,8 @@
        the constraints, the reserved rows (2, 3, 6 where they exist), scope
        against use, the check constraints and unique indexes refusing
        direct changes
-     * save by an Admin and by a Controller (trimmed), Manager (Reason 4),
+     * save by an Admin (trimmed); since step 40 (RA1a) a Controller's save,
+       edit and delete are refused (Reason 4) like a Manager's (Reason 4),
        inactive / unknown / no acting user (Reason 8), Reason 3 naming the
        field for each bad value and for duplicates, nothing saved after a
        refusal
@@ -191,7 +192,12 @@ BEGIN TRY
     DELETE FROM @R;
     INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_AddEditMemberType @Code = 'Save', @MemberTypeId = 0,
         @MemberTypeCode = N'ZZ21M', @MemberTypeName = N'ZZ21 Observer', @StatusId = 1, @MemberScope = 'M', @DisplayOrder = 40, @ActingUserId = @Ctl;
-    INSERT INTO @T SELECT 'Controller saves a meeting type', 'Result 1, Reason 0', Txt FROM @R;
+    -- Step 40 (RA1a): member types are an Admin task; the Controller's save is refused (Reason 4)
+    INSERT INTO @T SELECT 'Controller saves a meeting type', 'Result 0, Reason 4', Txt FROM @R;
+    -- Step 40 (RA1a): the Admin saves the same type, which the later checks use (setup only, no check row)
+    DELETE FROM @R;
+    INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_AddEditMemberType @Code = 'Save', @MemberTypeId = 0,
+        @MemberTypeCode = N'ZZ21M', @MemberTypeName = N'ZZ21 Observer', @StatusId = 1, @MemberScope = 'M', @DisplayOrder = 40, @ActingUserId = @Adm;
     SET @TM = (SELECT MemberTypeId FROM Member_Type WHERE MemberTypeCode = 'ZZ21M');
 
     DELETE FROM @R;
@@ -293,9 +299,14 @@ BEGIN TRY
     DELETE FROM @R;
     INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_AddEditMemberType @Code = 'Update', @MemberTypeId = @TC,
         @MemberTypeCode = N'ZZ21C', @MemberTypeName = N'ZZ21 Independent Director', @StatusId = 1, @MemberScope = 'C', @DisplayOrder = 45, @ActingUserId = @Ctl;
-    INSERT INTO @T SELECT 'Controller edits a free type (name, order)', 'Result 1, Reason 0 / ZZ21 Independent Director 45 1',
+    -- Step 40 (RA1a): the Controller's edit is refused (Reason 4); the type keeps its name and order
+    INSERT INTO @T SELECT 'Controller edits a free type (name, order)', 'Result 0, Reason 4 / ZZ21 Director 50 0',
            (SELECT Txt FROM @R) + ' / ' + ISNULL((SELECT MemberTypeName + ' ' + CAST(DisplayOrder AS VARCHAR(12)) + ' '
                    + CASE WHEN UpdatedBy = @Ctl AND CreatedBy = @Adm THEN '1' ELSE '0' END FROM Member_Type WHERE MemberTypeId = @TC), 'none');
+    -- Step 40 (RA1a): the Admin makes the same edit, so the later checks start from the same type (setup only, no check row)
+    DELETE FROM @R;
+    INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_AddEditMemberType @Code = 'Update', @MemberTypeId = @TC,
+        @MemberTypeCode = N'ZZ21C', @MemberTypeName = N'ZZ21 Independent Director', @StatusId = 1, @MemberScope = 'C', @DisplayOrder = 45, @ActingUserId = @Adm;
 
     DELETE FROM @R;
     INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_AddEditMemberType @Code = 'Update', @MemberTypeId = @TC,
@@ -334,8 +345,10 @@ BEGIN TRY
     INSERT INTO @T SELECT 'Reserved type 3: scope change refused', 'Result 0, Reason 7', Txt FROM @R;
     DELETE FROM @R;
     INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_AddEditMemberType @Code = 'Update', @MemberTypeId = @InAttendance,
-        @MemberTypeCode = @RCode, @MemberTypeName = @RName, @StatusId = 1, @MemberScope = 'M', @DisplayOrder = @ROrderNext, @ActingUserId = @Ctl;
-    INSERT INTO @T SELECT 'Reserved type 3: display order change by the Controller refused', 'Result 0, Reason 7', Txt FROM @R;
+        @MemberTypeCode = @RCode, @MemberTypeName = @RName, @StatusId = 1, @MemberScope = 'M', @DisplayOrder = @ROrderNext, @ActingUserId = @Adm;
+    -- Step 40 (RA1a): acts as the Admin, so the reserved-type rule (Reason 7) is still what this case tests;
+    -- the Controller's refusal (Reason 4) is covered by BMMS-Test-RoleAccess-Step40.sql
+    INSERT INTO @T SELECT 'Reserved type 3: display order change by an Admin refused', 'Result 0, Reason 7', Txt FROM @R;
     DELETE FROM @R;
     INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_AddEditMemberType @Code = 'Update', @MemberTypeId = @InAttendance,
         @MemberTypeCode = @RCode, @MemberTypeName = @RName, @StatusId = 1, @MemberScope = 'M', @DisplayOrder = @ROrder, @ActingUserId = @Sys;
@@ -551,7 +564,8 @@ BEGIN TRY
     INSERT INTO @T SELECT 'Admin deletes an unused free type', 'Result 1, Reason 0 / 0',
            (SELECT Txt FROM @R) + ' / ' + CAST(COUNT(*) AS VARCHAR(4)) FROM Member_Type WHERE MemberTypeId = @TOff;
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_DeleteMemberTypeByMemberTypeId @MemberTypeId = @TMOff, @ActingUserId = @Ctl;
-    INSERT INTO @T SELECT 'Controller deletes an unused free type', 'Result 1, Reason 0 / 0',
+    -- Step 40 (RA1a): the Controller's delete is refused (Reason 4); the type stays
+    INSERT INTO @T SELECT 'Controller deletes an unused free type', 'Result 0, Reason 4 / 1',
            (SELECT Txt FROM @R) + ' / ' + CAST(COUNT(*) AS VARCHAR(4)) FROM Member_Type WHERE MemberTypeId = @TMOff;
 
     ---------------------------------------------------------------------------

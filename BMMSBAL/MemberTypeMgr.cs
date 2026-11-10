@@ -234,7 +234,8 @@ namespace BMMSBAL
                             return "Record Not Saved";
                     }
                 case 4:
-                    return "Only an Admin or a Controller can change member types.";
+                    // Step RA1a (step 40): member types are an Admin task
+                    return "Only an Admin can change member types.";
                 case 5:
                     if (IsDelete)
                         return "This member type is in use (" + System.Web.HttpUtility.HtmlEncode(Result.ReasonDetail)

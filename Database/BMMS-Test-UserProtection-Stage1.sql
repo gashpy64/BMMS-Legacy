@@ -11,7 +11,8 @@
        (Reason 4), including each detail edit (email, department,
        designation, manager), and the row is unchanged
      * Controller acting on Manager / User / Management / MD Secretariat:
-       allowed; creating or promoting to Admin / Controller refused
+       allowed until step 40; since step 40 (RA1a) refused (Reason 4), as is
+       creating any account; promoting to Admin / Controller refused
      * own account: details and password allowed; role change, delete and
        deactivate refused (Reason 1)
      * other roles: only their own details and password
@@ -174,10 +175,11 @@ BEGIN TRY
                        ('RoleChange', 'changes role (to User) of', @rUser), ('ResetPassword', 'resets password of', NULL),
                        ('Delete', 'deletes', NULL), ('Deactivate', 'deactivates', NULL)) a (Act, Txt, NewRole);
 
-    -- Controller acting on Manager, User, Management, MD Secretariat: allowed
+    -- Controller acting on Manager, User, Management, MD Secretariat: allowed until step 40;
+    -- Step 40 (RA1a): only an Admin changes other accounts, so every one of these is refused (Reason 4)
     INSERT INTO @Cases (Label, Actor, Target, Act, NewRole, ExpReason)
     SELECT 'Controller ' + a.Txt + ' ' + t.Txt, 'C1', t.K, a.Act,
-           CASE WHEN a.Act = 'RoleChange' THEN CASE WHEN t.K = 'U' THEN @rMgr ELSE @rUser END END, 0
+           CASE WHEN a.Act = 'RoleChange' THEN CASE WHEN t.K = 'U' THEN @rMgr ELSE @rUser END END, 4
     FROM (VALUES ('M', 'a Manager'), ('U', 'a User'), ('G', 'a Management user'), ('S', 'an MD Secretariat user')) t (K, Txt)
     CROSS JOIN (VALUES ('EditEmail', 'edits email of'), ('EditDepartment', 'edits department of'),
                        ('EditDesignation', 'edits designation of'), ('EditManager', 'edits manager of'),
@@ -190,10 +192,11 @@ BEGIN TRY
     ('Controller promotes a Manager to Controller', 'C1', 'M', 'RoleChange', @rCtl, 4),
     ('Controller creates an Admin', 'C1', '', 'Create', @rAdmin, 4),
     ('Controller creates a Controller', 'C1', '', 'Create', @rCtl, 4),
-    ('Controller creates a Manager', 'C1', '', 'Create', @rMgr, 0),
-    ('Controller creates a User', 'C1', '', 'Create', @rUser, 0),
-    ('Controller creates a Management user', 'C1', '', 'Create', @rMgmt, 0),
-    ('Controller creates an MD Secretariat user', 'C1', '', 'Create', @rMd, 0),
+    -- Step 40 (RA1a): a Controller creates no account (Reason 4)
+    ('Controller creates a Manager', 'C1', '', 'Create', @rMgr, 4),
+    ('Controller creates a User', 'C1', '', 'Create', @rUser, 4),
+    ('Controller creates a Management user', 'C1', '', 'Create', @rMgmt, 4),
+    ('Controller creates an MD Secretariat user', 'C1', '', 'Create', @rMd, 4),
     -- Controller, own account
     ('Controller edits own email', 'C1', 'C1', 'EditEmail', NULL, 0),
     ('Controller edits own department', 'C1', 'C1', 'EditDepartment', NULL, 0),
@@ -303,7 +306,8 @@ BEGIN TRY
     DELETE FROM @R; INSERT INTO @R EXEC spr_CheckUserChange @ActingUserId = @C1, @TargetUserId = @A1, @Action = 'ResetPassword';
     INSERT INTO @T SELECT 'Check: Controller resets password of an Admin', 'Result 0, Reason 4', 'Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(2)) FROM @R;
     DELETE FROM @R; INSERT INTO @R EXEC spr_CheckUserChange @ActingUserId = @C1, @TargetUserId = @U, @Action = 'ResetPassword';
-    INSERT INTO @T SELECT 'Check: Controller resets password of a User', 'Result 1, Reason 0', 'Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(2)) FROM @R;
+    -- Step 40 (RA1a): refused (Reason 4)
+    INSERT INTO @T SELECT 'Check: Controller resets password of a User', 'Result 0, Reason 4','Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(2)) FROM @R;
     DELETE FROM @R; INSERT INTO @R EXEC spr_CheckUserChange @ActingUserId = NULL, @TargetUserId = @U, @Action = 'ResetPassword';
     INSERT INTO @T SELECT 'Check: acting user NULL', 'Result 0, Reason 8', 'Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(2)) FROM @R;
     DELETE FROM @R; INSERT INTO @R EXEC spr_CheckUserChange @ActingUserId = 0, @TargetUserId = @U, @Action = 'ResetPassword';
@@ -325,7 +329,8 @@ BEGIN TRY
     SELECT 'List for a Controller: own row (edit, role, delete)', '1 0 0',
            ISNULL((SELECT CAST(CanEdit AS VARCHAR(1)) + ' ' + CAST(CanChangeRole AS VARCHAR(1)) + ' ' + CAST(CanDelete AS VARCHAR(1)) FROM #List WHERE UserId = @C1), 'row missing');
     INSERT INTO @T
-    SELECT 'List for a Controller: MD Secretariat row (edit, role, delete)', '1 1 1',
+    -- Step 40 (RA1a): a Controller may change no other account
+    SELECT 'List for a Controller: MD Secretariat row (edit, role, delete)', '0 0 0',
            ISNULL((SELECT CAST(CanEdit AS VARCHAR(1)) + ' ' + CAST(CanChangeRole AS VARCHAR(1)) + ' ' + CAST(CanDelete AS VARCHAR(1)) FROM #List WHERE UserId = @S), 'row missing');
 
     -- Every row, for an Admin, a Controller and a Manager acting
