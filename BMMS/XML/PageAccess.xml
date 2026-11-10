@@ -59,8 +59,9 @@
     <page path="Report/FollowupActionTaken.aspx" roles="controller,manager"/>  <!-- CONFIRM: managers reach it from the dashboard action items -->
 
     <!-- reports -->
-    <page path="Report/Reports.aspx" roles="controller,manager"/>  <!-- CONFIRM: the mgmt role is shown a Reports menu with no items -->
-    <page path="Report/ViewReport.aspx" roles="controller,manager"/>  <!-- report pop-ups -->
+    <!-- Step RA1b: mgmt opens Reports.aspx for rc=minutes only and ViewReport.aspx for its own report kinds only (both checked in the page) -->
+    <page path="Report/Reports.aspx" roles="controller,manager,mgmt"/>
+    <page path="Report/ViewReport.aspx" roles="controller,manager,mgmt"/>  <!-- report pop-ups -->
     <page path="Report/ReportPrint.aspx" roles="controller,manager"/>  <!-- report pop-ups -->
 
     <!-- controller only: agenda/minutes workflow and the report menu -->
@@ -72,7 +73,7 @@
     <page path="Report/AttendanceDetails.aspx" roles="controller"/>
     <page path="Report/CommitteeMaster.aspx" roles="controller"/>
     <page path="Report/CommitteeMember.aspx" roles="controller"/>
-    <page path="Report/Followup.aspx" roles="controller"/>
+    <page path="Report/Followup.aspx" roles="controller,mgmt"/>  <!-- Step RA1b: Followup and Followup Summary for Management too -->
     <page path="Report/MeetingCalendar.aspx" roles="controller"/>
     <page path="Report/MeetingMaster.aspx" roles="controller"/>
     <page path="Report/Notice.aspx" roles="controller"/>

@@ -19,11 +19,28 @@ namespace BMMS.Report
     {
         private string reportCode = "Reports";
 
+        // Step RA1b: the Minutes report in every minutes status (Controller and Management), decided in Page_Load
+        // from the role read from the database for every request; never from the address or ViewState
+        private bool allStatus = false;
+        private int allStatusReason = 0;
+
         #region Page_Load
         protected void Page_Load(object sender, EventArgs e)
         {
-            ViewState["reportCode"] = Request.QueryString.Get("rc").ToString();
-            reportCode = Request.QueryString.Get("rc").ToString();
+            // Step RA1b: the report code decides who may open the page, checked on the server with the role read
+            // from the database: Minutes for the Controller, the Manager and Management; the other three reports for
+            // the Controller and the Manager only; any other code (or none) is refused
+            string rc = Request.QueryString["rc"];
+            if (rc != "minutes" && rc != "minutes_extract" && rc != "agenda_summary" && rc != "agenda_details")
+                BMMS.Security.PageAccessModule.RefuseRequest("unknown report code");
+            if (rc == "minutes")
+                BMMS.Security.PageAccessModule.RequireRole("controller", "manager", "mgmt");
+            else
+                BMMS.Security.PageAccessModule.RequireRole("controller", "manager");
+            allStatus = rc == "minutes" && BMMS.Security.PageAccessModule.HasRole("controller", "mgmt");
+
+            ViewState["reportCode"] = rc;
+            reportCode = rc;
 
             Common.InitSetup(reportCode);
 
@@ -135,7 +152,7 @@ namespace BMMS.Report
                         ddlMeetingNo.SelectedIndex = 0;
 
                     if (IsMinutesReport() && dtMeetingNo.Rows.Count <= 0)
-                        MsgDisplay(MeetingChangeReason.NoMinutesFinalizedMessage);
+                        MsgDisplay(EmptyMinutesListMessage());
 
                 }
                 if (rdoMeatingNoSearch.SelectedValue == "1")
@@ -156,7 +173,7 @@ namespace BMMS.Report
                     }
 
                     if (IsMinutesReport() && dtMeetingNo.Rows.Count <= 0)
-                        MsgDisplay(MeetingChangeReason.NoMinutesFinalizedMessage);
+                        MsgDisplay(EmptyMinutesListMessage());
                 }
             }
         }
@@ -174,10 +191,36 @@ namespace BMMS.Report
         // The meeting lists: finalized or confirmed meetings for the minutes reports, every meeting for the agenda reports
         private DataTable GetReportMeetings(int CommitteeId)
         {
+            // Step RA1b: the Controller's and Management's Minutes report lists every meeting that has minutes rows,
+            // in any status (BMMS-Fix-ReportAccess-Step41.sql); a refusal (Reason 8 or 4) gives an empty list
+            if (allStatus)
+                return ReportsMgr.GetMinutesReportMeetingsAllStatus(CommitteeId, int.Parse(Session["UserId"].ToString()), out allStatusReason);
+
             if (IsMinutesReport())
                 return MeetingMgr.GetMinutesReportMeetings(CommitteeId);
 
             return MeetingMgr.GetMeetingByCommitteeId(CommitteeId);
+        }
+        #endregion
+
+        #region EmptyMinutesListMessage
+        // Step RA1b: the message for an empty meeting list of the Minutes reports
+        private string EmptyMinutesListMessage()
+        {
+            if (!allStatus)
+                return MeetingChangeReason.NoMinutesFinalizedMessage;
+            if (allStatusReason != 0)
+                return ReportsMgr.ReportRefusedMessage(allStatusReason);
+            return ReportsMgr.NoMeetingsWithMinutesMessage;
+        }
+        #endregion
+
+        #region StatusMarkText
+        // Step RA1b: the Minutes status column of the grid (the every-status report only)
+        protected string StatusMarkText(object DataItem)
+        {
+            DataRowView row = DataItem as DataRowView;
+            return row == null ? string.Empty : HttpUtility.HtmlEncode(ReportsMgr.StatusMarkOf(row.Row));
         }
         #endregion
 
@@ -276,10 +319,11 @@ namespace BMMS.Report
 
                     if ((particular && ddlMeetingNo.Items.Count <= 1) || (!particular && ddlMeetingNoFrom.Items.Count <= 0))
                     {
-                        MsgDisplay(MeetingChangeReason.NoMinutesFinalizedMessage);
+                        MsgDisplay(EmptyMinutesListMessage());
                         result = false;
                     }
-                    else if (particular && int.Parse(ddlMeetingNo.SelectedValue) > 0
+                    // Step RA1b: the every-status Minutes report (Controller, Management) takes a meeting in any status
+                    else if (!allStatus && particular && int.Parse(ddlMeetingNo.SelectedValue) > 0
                              && !MeetingMgr.IsMinutesFinalized(int.Parse(ddlMeetingNo.SelectedValue)))
                     {
                         MsgDisplay(MeetingChangeReason.MinutesNotFinalizedMessage);
@@ -308,6 +352,16 @@ namespace BMMS.Report
 
                 DataTable dtReportDetails = GetReportDetails();
 
+                // Step RA1b: a refusal of the every-status procedure (Reason 8 or 4) shows its message, no grid
+                if (allStatus && allStatusReason != 0)
+                {
+                    pnlViewReport.Visible = false;
+                    MsgDisplay(ReportsMgr.ReportRefusedMessage(allStatusReason));
+                    return;
+                }
+
+                // Step RA1b: the Minutes status column (last) only in the every-status report
+                grvMinutes.Columns[grvMinutes.Columns.Count - 1].Visible = allStatus;
                 grvMinutes.DataSource = dtReportDetails;
                 grvMinutes.DataBind();
             }
@@ -372,7 +426,12 @@ namespace BMMS.Report
                     DataTable dtReportsDetails = new DataTable();
                     dtReportsDetails = GetReportDetails();
 
-                    if (dtReportsDetails.Rows.Count <= 0)
+                    if (allStatus && allStatusReason != 0)
+                    {
+                        // Step RA1b: the every-status procedure refused (Reason 8 or 4)
+                        MsgDisplay(ReportsMgr.ReportRefusedMessage(allStatusReason));
+                    }
+                    else if (dtReportsDetails.Rows.Count <= 0)
                     {
                         MsgDisplay(Session["NoRecord"].ToString());
                         ScriptManager.GetCurrent(this).SetFocus(ddlMeetingNoFrom.ClientID);
@@ -434,8 +493,13 @@ namespace BMMS.Report
             switch (reportCode)
             {
                 case "minutes":
-                    dtReportsDetails = ReportsMgr.GetMinutesReport(CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
-                        SubjectNoSearch, FromSubjectNo, ToSubjectNo);
+                    // Step RA1b: every minutes status for the Controller and Management (BMMS-Fix-ReportAccess-Step41.sql)
+                    if (allStatus)
+                        dtReportsDetails = ReportsMgr.GetMinutesReportAllStatus(CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
+                            SubjectNoSearch, FromSubjectNo, ToSubjectNo, int.Parse(Session["UserId"].ToString()), out allStatusReason);
+                    else
+                        dtReportsDetails = ReportsMgr.GetMinutesReport(CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
+                            SubjectNoSearch, FromSubjectNo, ToSubjectNo);
                     break;
                 case "minutes_extract":
                     dtReportsDetails = ReportsMgr.GetMinutesExtractReport(CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
@@ -466,6 +530,10 @@ namespace BMMS.Report
         private void GenReport(DataTable dtReportsDetails)
         {
             reportCode = ViewState["reportCode"].ToString();
+
+            // Step RA1b: which report ViewReport.aspx shows; it lets Management open only its own report kinds. Cleared
+            // first and set again only once the report is stored below, so a failed build leaves no kind (refused)
+            Session.Remove("ViewReportKind");
 
             // The PDF file name for ViewReport.aspx (Export to Pdf); the agenda PDFs are built in memory,
             // kept in Session["ReportPdf"] and streamed by ViewReport.aspx?pdf=1, not written to ~/Files/PDF (step 25)
@@ -534,6 +602,8 @@ namespace BMMS.Report
                     break;
             }
 
+            // Step RA1b: the report is stored; now ViewReport.aspx may show it (see above)
+            Session["ViewReportKind"] = reportCode;
         }
         #endregion
 
@@ -629,6 +699,16 @@ namespace BMMS.Report
                                     " at " + HttpUtility.HtmlEncode(dtMeeting.Rows[0]["MeetingTime"].ToString()) + "Hrs. at " + HttpUtility.HtmlEncode(dtMeeting.Rows[0]["Place"].ToString()) + ".</b>";
 
                         htmlTxt += "<div style='float:left; width:100%; text-align:justify; font-size:12pt;font-weight: bold; padding-top: 5px; padding-bottom: 5px;'>" + para + "</div>";
+
+                        // Step RA1b: the minutes status of this meeting (every-status report: Controller, Management);
+                        // a draft also gets the bordered note here and at the end of the meeting
+                        string statusMark = ReportsMgr.StatusMarkOf(dtMinutesFilter.Rows[0]);
+                        if (statusMark.Length > 0)
+                        {
+                            htmlTxt += HTML_Report.MinutesStatusLine(statusMark);
+                            if (HTML_Report.IsDraftMark(statusMark))
+                                htmlTxt += HTML_Report.DraftNote();
+                        }
 
                         htmlTxt += "<div style='float:left; width:100%; border-bottom-style:dashed; border-bottom-width:thin'></div>";
 
@@ -867,6 +947,10 @@ namespace BMMS.Report
                         htmlTxt += "</td></tr>";
 
                         htmlTxt += "</table><br />";
+
+                        // Step RA1b: the draft note again at the end of a draft meeting
+                        if (HTML_Report.IsDraftMark(statusMark))
+                            htmlTxt += HTML_Report.DraftNote();
 
                         htmlTxt += "</div>";
 

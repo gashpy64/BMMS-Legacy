@@ -3,8 +3,8 @@
 - Title: BMMS Documents - index, register and rules
 - Audience: Gashpy Software (owner, developers, doc-writer)
 - Shipped: No
-- Applies to: user-ud1a
-- Last updated by: WF2b1, based on 3dd0eec
+- Applies to: RA1b (step 41)
+- Last updated by: RA1b (step 41), based on 1d1bbbe
 - Status: Draft
 - Verified against: CLAUDE.md, .claude/agents/doc-writer.md, Documents/_build/*.ps1
 - To confirm:
@@ -119,11 +119,18 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
 - Title: BMMS Overall Manual
 - Audience: Everyone who uses BMMS, and the people who decide on it
 - Shipped: Yes (PDF export)
-- Applies to: user-ud1a
-- Last updated by: WF2a, based on 021e946
+- Applies to: RA1b (step 41)
+- Last updated by: RA1b (step 41), based on 1d1bbbe
 - Status: Draft
-- Verified against: none yet
-- To confirm: manual not written yet (WF2d1)
+- Verified against: for the section "MD Secretariat and Management": BMMS/UserControl/MenuUserControl.ascx
+  (Reports menu of Management), BMMS/Report/Reports.aspx(.cs), BMMS/Report/Followup.aspx(.cs),
+  BMMS/Report/ViewReport.aspx.cs, BMMS/XML/PageAccess.xml, BMMSBAL/ReportsMgr.cs (message texts),
+  BMMSBAL/HTML_Report.cs (status line, draft note), Database/BMMS-Fix-ReportAccess-Step41.sql
+- To confirm: manual not written yet (WF2d1), except the section "MD Secretariat and Management";
+  what MD Secretariat uses beyond Followup and the dashboard; whether the owner wants the Management
+  reports described only here (the rules give Management no manual of its own) or also as a short
+  manual; the button names "View" and "Generate" on the report pages are taken from the code
+  comments and the step test table, not from the page markup
 
 ### User-Manuals/01-User.md
 
@@ -152,32 +159,44 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
 - Title: BMMS Controller Manual
 - Audience: Controller role
 - Shipped: Yes (PDF export)
-- Applies to: user-ud1a
-- Last updated by: WF2a, based on 021e946
+- Applies to: RA1b (step 41)
+- Last updated by: RA1b (step 41), based on 1d1bbbe
 - Status: Draft
-- Verified against: none yet
-- To confirm: manual not written yet (WF2d3)
+- Verified against: for "What you can and cannot do": BMMS/XML/PageAccess.xml, BMMS/UserControl/MenuUserControl.ascx,
+  BMMS/Report/Reports.aspx.cs, BMMSBAL/ReportsMgr.cs, BMMSBAL/HTML_Report.cs,
+  Database/BMMS-Fix-ReportAccess-Step41.sql, the owner's principle of 2026-11-10 (Admin superior for the
+  technical items, Controller superior for the functional items)
+- To confirm: manual not written yet (WF2d3), except the first section in part; the wording of the
+  owner's principle as the owner wants it in a shipped manual; the button names "View" and "Generate" as
+  shown on the report page
 
 ### User-Manuals/04-Admin.md
 
 - Title: BMMS Admin Manual
 - Audience: Admin role
 - Shipped: Yes (PDF export)
-- Applies to: user-ud1a
-- Last updated by: WF2a, based on 021e946
+- Applies to: RA1b (step 41)
+- Last updated by: RA1b (step 41), based on 1d1bbbe
 - Status: Draft
-- Verified against: none yet
-- To confirm: manual not written yet (WF2d3)
+- Verified against: for "What you can and cannot do": BMMS/XML/PageAccess.xml, BMMS/UserControl/MenuUserControl.ascx
+  (Master, Admin and Reports menus by role), the owner's principle of 2026-11-10
+- To confirm: manual not written yet (WF2d3), except the first section in part; the wording of the
+  owner's principle as the owner wants it in a shipped manual; whether the Admin may also use the
+  functional masters that PageAccess.xml opens to both Admin and Controller (Member, Committee,
+  Committee Member, Meeting, Meeting Member, Attendance), which sits beside "Controller is superior for
+  the functional items" and is not described in the manual yet
 
 ### User-Manuals/Glossary.md
 
 - Title: BMMS Glossary
 - Audience: Everyone who uses BMMS
 - Shipped: Yes (appended to the Overall manual's export)
-- Applies to: access-ra1a
-- Last updated by: RA1a (step 40), based on ea268e5
+- Applies to: RA1b (step 41)
+- Last updated by: RA1b (step 41), based on 1d1bbbe
 - Status: Draft
-- Verified against: BMMS/XML/PageAccess.xml (role codes and the pages of each role; the nine
+- Verified against: for step RA1b (step 41): BMMS/XML/PageAccess.xml, BMMS/UserControl/MenuUserControl.ascx
+  (Reports menu of Management), BMMS/Report/Reports.aspx.cs, Followup.aspx.cs, BMMSBAL/HTML_Report.cs
+  (Minutes status, draft note), BMMSBAL/ReportsMgr.cs; and before: BMMS/XML/PageAccess.xml (role codes and the pages of each role; the nine
   Admin-only pages of step RA1a), BMMS/PageAccessModule.cs (RequireRole), BMMS/UserControl/MenuUserControl.ascx
   (Master and Admin menus by role), Database/BMMS-Fix-RoleAccess-Step40.sql (the Controller has
   no rights on other accounts),
@@ -196,8 +215,7 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
   Database/BMMS-Fix-UserHistory-Step39.sql (home department, several departments for a Manager),
   Database/README.md (In Attendance, Special Invitee, Invitee as member tags)
 - To confirm: the display names of the roles as stored in the database (the glossary uses the
-  names the code and PageAccess.xml use); what the Management role uses beyond the dashboard (the
-  menu shows it a Reports menu with no items; PageAccess.xml marks this CONFIRM); what MD
+  names the code and PageAccess.xml use); what the Management role uses beyond the dashboard and the three reports of RA1b; what MD
   Secretariat uses beyond Followup and the dashboard
 
 ## Update matrix

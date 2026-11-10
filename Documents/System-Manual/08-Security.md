@@ -3,10 +3,13 @@
 - Title: Security
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: access-ra1a
-- Last updated by: RA1a (step 40), based on ea268e5
+- Applies to: RA1b (step 41)
+- Last updated by: RA1b (step 41), based on 1d1bbbe
 - Status: Draft
-- Verified against: none yet (leads from the old Architecture notes added in WF2b1); the THROW
+- Verified against: for step RA1b (step 41): BMMS/PageAccessModule.cs (HasRole, RefuseRequest,
+  ReadDatabaseRole), BMMS/Report/Reports.aspx.cs, Followup.aspx.cs, ViewReport.aspx.cs,
+  BMMS/XML/PageAccess.xml, Database/BMMS-Fix-ReportAccess-Step41.sql (header, guards); before: none yet
+  (leads from the old Architecture notes added in WF2b1); the THROW
   pointer is from 04-Database.md and the BMMS_Test catalog export of 2026-11-09; for the RA1a
   paragraphs BMMS/PageAccessModule.cs, BMMS/XML/PageAccess.xml, BMMS/UserControl/MenuUserControl.ascx,
   the Page_Load of the nine pages, Database/BMMS-Fix-RoleAccess-Step40.sql (fn_UserChangeRefusal),
@@ -50,8 +53,33 @@ How a page is protected (read from the code for step RA1a; the rest of this sect
   Decision Type, Reset Password, Backup Database, Audit Trail, SMTP Configuration, System Settings and Reset
   Database. The Controller keeps Member Master, Committee Master, Committee Member Tag / UnTag, Meeting
   Master, Meeting - Member Tag / UnTag and Attendance, and changes only its own password.
+- Owner principle (decided 2026-11-10): the Admin is superior for the technical items and the Controller is
+  superior for the functional items and gets all functional rights. The first list above is the technical
+  group; the Controller's functional rights are the agenda, meeting, minutes, follow-up and report pages.
+- Report pages since step RA1b (step 41), checked in the page, with the role read from the database:
+  - `PageAccessModule.HasRole(roles)` is new: true for an active user with one of the roles, read from the
+    database as `RequireRole` reads it; it refuses nothing, a page uses it to choose a path; a database error
+    gives false and an entry in the error log. `PageAccessModule.RefuseRequest(reason)` is new: it refuses the
+    current request as `RequireRole` does (DENIED-PAGE in the log with the reason, the "Access denied" page,
+    `Response.End`), for a request the page itself rejects.
+  - `PageAccess.xml` adds mgmt to Report/Reports.aspx, Report/Followup.aspx and Report/ViewReport.aspx. Reports.aspx:
+    any `rc` other than minutes, minutes_extract, agenda_summary and agenda_details is refused ("unknown report
+    code"); minutes needs controller, manager or mgmt; the other three need controller or manager, so
+    Management with another code is refused on the server. Followup.aspx: any `fc` other than followup and
+    summary is refused; the roles are controller and mgmt; a session whose role is mgmt but whose database role
+    could not be read is refused (never given the Controller's path).
+  - The every-status Minutes report is chosen by `rc == "minutes"` and `HasRole("controller", "mgmt")`, for every
+    request, not from the address or ViewState. A database error that hides the role gives the finalised-only
+    report (less data, never more). The three step 41 procedures check the acting user again in the database
+    (Reason 8 missing or inactive; Reason 4 another role) and return no rows when refused.
+  - ViewReport.aspx: for a user whose database role is mgmt, or whose session role is mgmt (fail closed), Page_Load
+    refuses a missing, empty or unknown `Session["ViewReportKind"]` and `?pdf=1`; only minutes, followup and
+    summary pass. Reports.aspx and Followup.aspx clear the kind on Generate and set it after the report is
+    stored. This covers the report, `?pdf=1` and the Export to Word and Export to Pdf postbacks; Print is the
+    browser printing the page. The other roles are not affected.
+  - Unchanged: Management gets no Minutes Extract and no agenda report.
 - Security lead (not fixed; owner decision, a later step RA1d closes it): only these nine pages check the role
-  in the database. Every other page follows the role stored in the session until sign-out, so after a role
+  in the database (since step RA1b also Reports.aspx, Followup.aspx and ViewReport.aspx for the roles named above). Every other page follows the role stored in the session until sign-out, so after a role
   change an open session keeps the old role on those pages, and the menu keeps the old links until the next
   sign-in. [[CONFIRM: the step that closes this (named RA1d by the owner); its date and scope are not in the repository]]
 

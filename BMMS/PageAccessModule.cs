@@ -130,37 +130,69 @@ namespace BMMS.Security
         public static void RequireRole(params string[] roles)
         {
             HttpContext ctx = HttpContext.Current;
-            string page = (ctx.Request.AppRelativeCurrentExecutionFilePath ?? string.Empty).TrimStart('~', '/');
-            string role = string.Empty;
-            bool allowed = false;
+            string role = ReadDatabaseRole(ctx, "RequireRole");
 
-            int userId;
-            if (int.TryParse(Convert.ToString(ctx.Session["UserId"]), out userId) && userId > 0)
-            {
-                try
-                {
-                    System.Data.DataTable dt = BMMSBAL.UserMgr.GetUserDataTableByUserId(userId);
-                    if (dt != null && dt.Rows.Count > 0
-                        && dt.Columns.Contains("RoleCode") && dt.Columns.Contains("AccountStatus")
-                        && Convert.ToString(dt.Rows[0]["AccountStatus"]) == "1")
-                    {
-                        role = Convert.ToString(dt.Rows[0]["RoleCode"]).Trim();
-                        allowed = IsAllowed(roles, role);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    BMMSBAL.Utilities.WriteErrorLog("PageAccessModule", "RequireRole", ex.ToString());
-                    allowed = false;
-                }
-            }
-
-            if (allowed)
+            if (role.Length > 0 && IsAllowed(roles, role))
                 return;
 
-            Log(ctx, "DENIED-PAGE", page, role, "role not allowed by the page (allowed: " + string.Join(",", roles) + ")");
+            RefuseRequest(ctx, role, "role not allowed by the page (allowed: " + string.Join(",", roles) + ")");
+        }
+
+        /// <summary>
+        /// Step RA1b: true when the session's user is an active user with one of the roles, read from the
+        /// database as RequireRole reads it (not Session["RoleCode"]). It refuses nothing itself: a page
+        /// uses it to choose a path (for example the every-status Minutes report). A database error gives
+        /// false and is written to the error log.
+        /// </summary>
+        public static bool HasRole(params string[] roles)
+        {
+            string role = ReadDatabaseRole(HttpContext.Current, "HasRole");
+            return role.Length > 0 && IsAllowed(roles, role);
+        }
+
+        /// <summary>
+        /// Step RA1b: refuses the current request as RequireRole does (DENIED-PAGE in the log with the
+        /// reason given, the "Access denied" page, Response.End), for a request the page itself rejects,
+        /// for example an unknown report code. Call it outside any try/catch.
+        /// </summary>
+        public static void RefuseRequest(string reason)
+        {
+            HttpContext ctx = HttpContext.Current;
+            RefuseRequest(ctx, ReadDatabaseRole(ctx, "RefuseRequest"), reason);
+        }
+
+        private static void RefuseRequest(HttpContext ctx, string role, string reason)
+        {
+            string page = (ctx.Request.AppRelativeCurrentExecutionFilePath ?? string.Empty).TrimStart('~', '/');
+            Log(ctx, "DENIED-PAGE", page, role, reason);
             Deny(ctx.ApplicationInstance, ctx);
             ctx.Response.End();
+        }
+
+        // The role code of the session's user when that user is active (Users.AccountStatus = 1), read from the
+        // database (View_Users through UserMgr.GetUserDataTableByUserId); "" for no user, an inactive user or a
+        // database error (written to the error log under the caller's name).
+        private static string ReadDatabaseRole(HttpContext ctx, string caller)
+        {
+            int userId;
+            if (!int.TryParse(Convert.ToString(ctx.Session["UserId"]), out userId) || userId <= 0)
+                return string.Empty;
+
+            try
+            {
+                System.Data.DataTable dt = BMMSBAL.UserMgr.GetUserDataTableByUserId(userId);
+                if (dt != null && dt.Rows.Count > 0
+                    && dt.Columns.Contains("RoleCode") && dt.Columns.Contains("AccountStatus")
+                    && Convert.ToString(dt.Rows[0]["AccountStatus"]) == "1")
+                {
+                    return Convert.ToString(dt.Rows[0]["RoleCode"]).Trim();
+                }
+            }
+            catch (Exception ex)
+            {
+                BMMSBAL.Utilities.WriteErrorLog("PageAccessModule", caller, ex.ToString());
+            }
+            return string.Empty;
         }
 
         private static bool IsAllowed(string[] allowed, string role)

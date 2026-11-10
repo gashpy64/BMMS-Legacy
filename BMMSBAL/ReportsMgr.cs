@@ -10,6 +10,48 @@ namespace BMMSBAL
     #region ReportsMgr
     public class ReportsMgr
     {
+        #region Every-status reports (step RA1b, BMMS-Fix-ReportAccess-Step41.sql)
+        // The Controller's and Management's Minutes report in every minutes status, and Management's Followup.
+        // Each call passes the acting user; the procedure checks the role in the database (Reason 8: missing or
+        // inactive; Reason 4: another role; then no rows). Reason comes back 0 when allowed.
+        public const string NoMeetingsWithMinutesMessage = "No meetings with minutes for this committee.";
+
+        public static string ReportRefusedMessage(int Reason)
+        {
+            if (Reason == 8)
+                return "Your session is no longer valid. Please log in again.";
+            return "You are not allowed to see this report.";
+        }
+
+        public static DataTable GetMinutesReportMeetingsAllStatus(int CommitteeId, int ActingUserId, out int Reason)
+        {
+            return MinutesDB.GetMinutesReportMeetingsAllStatus(CommitteeId, ActingUserId, out Reason);
+        }
+
+        public static DataTable GetMinutesReportAllStatus(int CommitteeId, int DepartmentId, int MeetingNoSearch, int MeetingId, int FromMeetingId, int ToMeetingId,
+            int SubjectNoSearch, int FromSubjectNo, int ToSubjectNo, int ActingUserId, out int Reason)
+        {
+            return MinutesDB.GetMinutesReportAllStatus(CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
+                SubjectNoSearch, FromSubjectNo, ToSubjectNo, ActingUserId, out Reason);
+        }
+
+        public static DataTable GetFollowupReportForManagement(int CommitteeId, int MeetingNoSearch, int MeetingId, int FromMeetingId,
+            int ToMeetingId, int DepartmentId, int ConfirmStatus, int ActingUserId, out int Reason)
+        {
+            return ActionItemDB.GetFollowupReportForManagement(CommitteeId, MeetingNoSearch, MeetingId, FromMeetingId,
+                ToMeetingId, DepartmentId, ConfirmStatus, ActingUserId, out Reason);
+        }
+
+        // The mark of a report row; "" when the row has no MinutesStatusMark (the Controller's Followup, the
+        // finalised-only reports)
+        public static string StatusMarkOf(DataRow Row)
+        {
+            if (Row == null || !Row.Table.Columns.Contains("MinutesStatusMark") || Row["MinutesStatusMark"] == DBNull.Value)
+                return string.Empty;
+            return Row["MinutesStatusMark"].ToString();
+        }
+        #endregion
+
 
         #region GetFollowupReport
         public static DataTable GetFollowupReport(DateTime FromMeetingDate, DateTime ToMeetingDate, int CommitteeId,

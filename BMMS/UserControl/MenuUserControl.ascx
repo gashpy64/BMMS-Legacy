@@ -115,6 +115,14 @@
     <li><a href="../Report/Reports.aspx?rc=minutes_extract">Minutes Extract</a></li>
     <%
         } %>
+    <%-- Step RA1b: Management's reports (every minutes status, marked); no Minutes Extract --%>
+    <%if (Session["RoleCode"].ToString() == "mgmt")
+      { %>
+    <li><a href="../Report/Reports.aspx?rc=minutes">Minutes</a></li>
+    <li><a href="../Report/Followup.aspx?fc=followup">Followup</a></li>
+    <li><a href="../Report/Followup.aspx?fc=summary">Followup Summary</a></li>
+    <%
+        } %>
 </ul>
 <ul id="ddsubmenu3" class="ddsubmenustyle">
     <%if (Session["RoleCode"].ToString() == "controller")

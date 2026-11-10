@@ -159,6 +159,74 @@ namespace BMMSDAL
         }
         #endregion
 
+        #region GetMinutesReportAllStatus
+        // Step RA1b (BMMS-Fix-ReportAccess-Step41.sql): the Minutes report rows in every minutes status, with
+        // MinutesStatus and MinutesStatusMark, for the Controller and Management only. The procedure checks the
+        // acting user in the database: Reason 8 (missing or inactive) or 4 (another role), then no rows.
+        // Reason comes back 0 when allowed.
+        public static DataTable GetMinutesReportAllStatus(int CommitteeId, int DepartmentId, int MeetingNoSearch, int MeetingId, int FromMeetingId, int ToMeetingId,
+            int SubjectNoSearch, int FromSubjectNo, int ToSubjectNo, int ActingUserId, out int Reason)
+        {
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+
+            SqlParameter[] parameter = new SqlParameter[12];
+            parameter[0] = new SqlParameter("@CommitteeId", CommitteeId);
+            parameter[1] = new SqlParameter("@DepartmentId", DepartmentId);
+            parameter[2] = new SqlParameter("@MeetingNoSearch", MeetingNoSearch);
+            parameter[3] = new SqlParameter("@MeetingId", MeetingId);
+            parameter[4] = new SqlParameter("@FromMeetingId", FromMeetingId);
+            parameter[5] = new SqlParameter("@ToMeetingId", ToMeetingId);
+            parameter[6] = new SqlParameter("@SubjectNoSearch", SubjectNoSearch);
+            parameter[7] = new SqlParameter("@FromSubjectNo", FromSubjectNo);
+            parameter[8] = new SqlParameter("@ToSubjectNo", ToSubjectNo);
+            parameter[9] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[10] = result;
+            parameter[11] = reason;
+
+            DataTable dt = CommonDB.GetDataTable("spr_GetMinutesReportAllStatus", parameter);
+            Reason = RefusalReason(result, reason);
+            return dt;
+        }
+        #endregion
+
+        #region GetMinutesReportMeetingsAllStatus
+        // Step RA1b (BMMS-Fix-ReportAccess-Step41.sql): the meetings of a committee in every minutes status that have
+        // at least one minutes row, with MinutesStatusMark, for the Controller and Management only (Reason 8 or 4
+        // as above, then no rows; 0 when allowed)
+        public static DataTable GetMinutesReportMeetingsAllStatus(int CommitteeId, int ActingUserId, out int Reason)
+        {
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+
+            SqlParameter[] parameter = new SqlParameter[4];
+            parameter[0] = new SqlParameter("@CommitteeId", CommitteeId);
+            parameter[1] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[2] = result;
+            parameter[3] = reason;
+
+            DataTable dt = CommonDB.GetDataTable("spr_GetMinutesReportMeetingsAllStatus", parameter);
+            Reason = RefusalReason(result, reason);
+            return dt;
+        }
+        #endregion
+
+        #region RefusalReason
+        // Step RA1b: 0 when @Result is 1; otherwise @Reason (8 when the procedure gave none)
+        public static int RefusalReason(SqlParameter Result, SqlParameter Reason)
+        {
+            if (Result.Value != null && Result.Value != DBNull.Value && Convert.ToInt32(Result.Value) == 1)
+                return 0;
+            if (Reason.Value != null && Reason.Value != DBNull.Value && Convert.ToInt32(Reason.Value) > 0)
+                return Convert.ToInt32(Reason.Value);
+            return 8;
+        }
+        #endregion
+
         #region GetMinutesByMeetingIdAgendaId
         public static DataTable GetMinutesByMeetingIdAgendaId(int MeetingId, int AgendaId)
         {

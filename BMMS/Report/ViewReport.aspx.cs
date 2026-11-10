@@ -19,6 +19,19 @@ namespace BMMS.Report
     {
         protected void Page_Load(object sender, EventArgs e)
         {
+            // Step RA1b: Management may open only its own report kinds (Minutes, Followup, Followup Summary), fail
+            // closed: for a user whose role in the database is mgmt, a missing, empty or unknown Session["ViewReportKind"]
+            // (set by Reports.aspx and Followup.aspx on Generate), and the agenda PDF (?pdf=1), are refused. Page_Load
+            // runs for every entry point of this page: the report itself, ?pdf=1, and the Export to Word and Export to
+            // Pdf postbacks (Print is the browser printing this page). The other roles are not affected. Fail closed:
+            // the session role mgmt is checked as well, so a database error that hides the role does not skip it.
+            if ((Session["RoleCode"] as string) == "mgmt" || BMMS.Security.PageAccessModule.HasRole("mgmt"))
+            {
+                string kind = Session["ViewReportKind"] as string;
+                if (Request.QueryString["pdf"] == "1" || (kind != "minutes" && kind != "followup" && kind != "summary"))
+                    BMMS.Security.PageAccessModule.RefuseRequest("report kind not allowed for the role");
+            }
+
             // ViewReport.aspx?pdf=1: the PDF report (Agenda Summary, Agenda Details) built by Generate
             if (Request.QueryString["pdf"] == "1")
             {

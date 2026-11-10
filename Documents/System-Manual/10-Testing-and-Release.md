@@ -3,13 +3,15 @@
 - Title: Testing and Release
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: access-ra1a
-- Last updated by: RA1a (step 40), based on ea268e5
+- Applies to: RA1b (step 41)
+- Last updated by: RA1b (step 41), based on 1d1bbbe
 - Status: Draft
 - Verified against: none yet (leads from the old Architecture notes added in WF2b1); for the step 40
   section Database/BMMS-Test-RoleAccess-Step40.sql (header), the diff of the three changed Test scripts
-  and the owner's test result of step RA1a
-- To confirm: chapter not written yet (WF2b2); leads from the old Architecture notes to verify
+  and the owner's test result of step RA1a; for the step 41 section Database/BMMS-Test-ReportAccess-Step41.sql
+  (header), Database/README.md (section RA1b) and the owner's test result of step RA1b
+- To confirm: the count of 44 checks and the counts of the older Test scripts are Database/README.md's, not
+  recounted from the scripts; chapter not written yet (WF2b2); leads from the old Architecture notes to verify
 
 ## Test database
 
@@ -45,6 +47,29 @@ cases fail.
 
 The other user and member type Test scripts are unchanged and PASS. The Rollback script restores the earlier
 texts; BMMS-Check-InstalledSteps.sql shows step 40 Installed, 3 of 3.
+
+### Step 41 (RA1b): report access
+
+Database/BMMS-Test-ReportAccess-Step41.sql (BMMS_Test only; refuses the name BMMS; stops when step 41 is
+not installed). Part 1 only reads: the three markers, the parameters, the result columns (the old columns in
+the same order plus the new ones) and that the step 22 procedures are unchanged. Part 2 runs in one
+transaction that is rolled back, with made-up users, a committee, meetings, agenda items, minutes rows and
+action items (ZZ41...): who may call each procedure (Controller and Management the two Minutes procedures;
+Management only the Followup one; Manager, User, Admin and MD Secretariat Reason 4; an inactive, unknown or
+missing acting user Reason 8; a refused call returns no rows); the meeting list in every status with the
+marks (a meeting without a minutes row and another committee's meetings left out); the minutes rows (every
+meeting, one meeting, a range, a department, a subject number range); the step 22 procedures still F and C
+only; spr_GetFollowupReportForManagement against a copy of the Controller's code-built query for nine
+filter combinations (the same rows by count and ActionItemId); nothing left after the rollback and every
+identity counter put back. Count: 44 checks according to Database/README.md. Unchanged Test scripts that
+must still pass with step 41: BMMS-Test-MinutesGating-Step22.sql (36), BMMS-Test-UnicodeText-Step31.sql (41),
+BMMS-Test-WorkflowOrder-Step23.sql (53) and BMMS-Test-RoleAccess-Step40.sql (43).
+
+Result (owner's run on BMMS_Test for step RA1b): every row of the database Test script passed, and the
+browser table passed for the Controller, Management, Manager, User, Admin and MD Secretariat, the RA1a
+regression (the nine Admin-only addresses), Followup Cancel, a 1366 px window, and real Print, Export to Pdf
+and Export to Word of a draft; the error log was clean and PageAccessLog.txt showed the expected lines. Two
+Low findings of that test are in the change log (RA1b).
 
 ## Reviewer stage
 

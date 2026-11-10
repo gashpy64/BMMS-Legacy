@@ -3,8 +3,8 @@
 - Title: Overview and Architecture
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: WF2b1
-- Last updated by: WF2b1, based on 3dd0eec
+- Applies to: RA1b (step 41)
+- Last updated by: RA1b (step 41), based on 1d1bbbe
 - Status: Draft
 - Verified against: BMMS.sln, BMMS/BMMS.csproj, BMMSBAL/BMMSBAL.csproj, BMMSDAL/BMMSDAL.csproj,
   BMMS/Web.config (structure), BMMS/Global.asax.cs, BMMS/PageAccessModule.cs,
@@ -17,8 +17,10 @@
   BMMSBAL/DocToString.cs, BMMSBAL/WordUtilities.cs, BMMS/Master/Agenda.aspx.cs,
   BMMS/Report/ViewReport.aspx.cs (btnExportToWord_Click), Grep over BMMS, BMMSBAL and BMMSDAL for
   Interop, Word.Application, ProgID and CreateObject, BMMSBAL.csproj hint paths, git ls-files
-  BMMS/dll
-- To confirm: whether the installed site runs with compilation debug="true"; where
+  BMMS/dll; for step RA1b (step 41): the owner's principle of 2026-11-10, Database/README.md (section
+  RA1b), BMMS/UserControl/MenuUserControl.ascx and BMMS/XML/PageAccess.xml (diff)
+- To confirm: the owner's principle for Admin and Controller as a written decision (Purpose of
+  BMMS), and whether every functional page already gives the Controller the right; whether the installed site runs with compilation debug="true"; where
   itextsharp.dll and Microsoft.Office.Interop.Word.dll are to come from when BMMS/dll is restored
   (git tracks no file there); the licence of the iTextSharp version in use; that
   Documentation/Pages.xlsx is the only file left in Documentation/ after WF2b1
@@ -42,6 +44,14 @@ and committee meeting cycle of a company. The menu and the pages show these area
 The roles are admin, controller, manager, user, mgmt and md_sect (BMMS/XML/PageAccess.xml). What
 each role does is described in the user manuals; this manual is for the people who build, install
 and support BMMS.
+
+Owner principle for the two top roles (decided 2026-11-10, step RA1): the Admin is superior for the
+technical items (User Master and the code masters, Reset Password, Backup Database, SMTP
+Configuration, System Settings, Audit Trail, Reset Database); the Controller is superior for the
+functional items (agenda, meetings, minutes, follow-up, reports) and gets all functional rights.
+Since step RA1a the first group is Admin only; step RA1b (step 41) gave the Controller and
+Management the Minutes report in every minutes status and Management three reports (Minutes, Followup,
+Followup Summary). Chapter 08 has the checks. [[CONFIRM: the principle is the owner's wording from the step RA1b request; the repository holds no document with it except Database/README.md decisions RA1; whether every functional page already gives the Controller the right, beyond the pages changed in RA1a and RA1b, is not checked]]
 
 Owner's rule (the owner of BMMS is Gashpy Software): "Behaviour changes only by an owner decision,
 recorded in the step record and the change log. Approval and governance rules are never changed

@@ -3,10 +3,13 @@
 - Title: Database
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: access-ra1a
-- Last updated by: RA1a (step 40), based on ea268e5
+- Applies to: RA1b (step 41)
+- Last updated by: RA1b (step 41), based on 1d1bbbe
 - Status: Draft
-- Verified against: the BMMS_Test catalog export of 2026-11-09 (kept outside the repository): README.txt,
+- Verified against: for step 41 (RA1b): Database/BMMS-Fix-ReportAccess-Step41.sql (header and the first
+  procedure), BMMS-Rollback-ReportAccess-Step41.sql (messages), BMMS-Check-InstalledSteps.sql (diff),
+  BMMSDAL/MinutesDB.cs and ActionItemDB.cs (the three calls), BMMSBAL/ReportsMgr.cs (diff), Database/README.md
+  (section RA1b); the BMMS_Test catalog export of 2026-11-09 (kept outside the repository): README.txt,
   02-tables-columns.txt, 03-keys.txt, 04-indexes.txt, 05-constraints.txt, 07-database.txt, and
   01-modules.sql.txt (searched for how the tables are used); Database/BMMS-Add-PrimaryKeys.sql,
   BMMS-Add-ForeignKeys-Safe.sql, BMMS-Add-ForeignKeys-Step3.sql, -Step4.sql, -Step5.sql (headers),
@@ -931,6 +934,16 @@ code:
 |---|---|---|---|---|
 | spr_GetMinutesReport | MinutesDB.GetMinutesReport, called through ReportsMgr.GetMinutesReport and ReportsMgr.GetMinutesExtractReport (the minutes report and the minutes extract read the same procedure) | none | No (View_Minute rows of the committee, only for meetings whose MinutesStatus is 'F' or 'C'; filters: department, one meeting or a range of meetings, a range of subject numbers; a committee id of 0 or less returns no rows) | 22 |
 | spr_GetMinutesReportMeetings | MinutesDB.GetMinutesReportMeetings | none | No (View_Meeting rows of the committee with MinutesStatus 'F' or 'C', by MeetingNo) | 22 |
+| spr_GetMinutesReportMeetingsAllStatus | MinutesDB.GetMinutesReportMeetingsAllStatus, through ReportsMgr | none | Reports.aspx?rc=minutes for the Controller and Management: the View_Meeting columns of spr_GetMinutesReportMeetings plus MinutesStatusMark, for the meetings of the committee with at least one View_Minute row, in every status, by MeetingNo. Parameters @CommitteeId, @ActingUserId; OUTPUT @Result, @Reason (8 acting user missing or inactive, 4 another role; then no rows) | 41 |
+| spr_GetMinutesReportAllStatus | MinutesDB.GetMinutesReportAllStatus, through ReportsMgr | none | The nine parameters of spr_GetMinutesReport and the same View_Minute columns, filters and order without the F or C filter, plus MinutesStatus and MinutesStatusMark; @ActingUserId, OUTPUT @Result, @Reason as above. Controller and Management | 41 |
+| spr_GetFollowupReportForManagement | ActionItemDB.GetFollowupReportForManagement, through ReportsMgr | none | Followup.aspx for Management only: the View_Action_Item rows with the filters and order of the query ReportsMgr.GetFollowupReport builds for the Controller (committee; one meeting or a range; department; IsConfirmed; the From and To dates are not used), plus MinutesStatus and MinutesStatusMark. Parameters @CommitteeId, @MeetingNoSearch, @MeetingId, @FromMeetingId, @ToMeetingId, @DepartmentId, @ConfirmStatus, @ActingUserId; OUTPUT @Result, @Reason | 41 |
+
+The mark in the step 41 procedures: MinutesStatus 'F' gives "Finalised", 'C' gives "Confirmed", anything else
+(NULL, 'Open' or any other value) gives "Draft (not finalised)". A refused call returns an empty result with
+the same columns. The three procedures change no data and replace nothing (marker ReportAccess-Step41,
+BMMS-Fix-ReportAccess-Step41.sql). The Manager, the User and every other role keep spr_GetMinutesReport and
+spr_GetMinutesReportMeetings (finalised and confirmed only); the Controller's Followup keeps the query built in
+the code and shows no mark.
 
 The agenda summary, full summary and details reports and the follow-up report are not procedures; see
 "Report queries built in the code".
@@ -1247,6 +1260,7 @@ Procedure families used in the table:
 | 4 | User rules | The acting user's role may not do this: since step 40 (RA1a) only an Admin may create an account or change another user's account; every other role, the Controller included, may only edit and reset the password of its own account (until step 40 a Controller could act on Manager, User, Management and MD Secretariat accounts, but not on Admin or Controller accounts) | 13, 40 | "You are not allowed to [action, for example delete this user]. Only an Admin can change other users' accounts." (BMMSBAL/UserMgr.cs; the text before step 40 was "A Controller cannot change Admin or Controller accounts, or give anyone the Admin or Controller role.") |
 | 4 | Admin-only setting; spr_sys_ResetDatabase | The acting user is not an Admin | 16, 19, 29, 39 (as for Reason 3) | System Settings: "Only an Admin can change system settings." (department rule: "Not saved: only an Admin can change system settings."); Reset Database: "Only an Admin can reset the database. Nothing was changed." |
 | 4 | spr_AddEditMemberType; spr_DeleteMemberTypeByMemberTypeId | The acting user is not an Admin (an Admin or a Controller until step 40, RA1a) | 21, 40 | "Only an Admin can change member types." (BMMSBAL/MemberTypeMgr.cs; the text before step 40 was "Only an Admin or a Controller can change member types.") |
+| 4 | spr_GetMinutesReportMeetingsAllStatus; spr_GetMinutesReportAllStatus (not Controller or Management); spr_GetFollowupReportForManagement (not Management) | The acting user's role may not use the report procedure; no rows are returned (Reason 8 for a missing, 0 or inactive acting user, the same meaning as above) | 41 | "You are not allowed to see this report." (BMMSBAL/ReportsMgr.cs); Reason 8: "Your session is no longer valid. Please log in again." |
 | 5 | Agenda lock; spr_UpdateAgendaByAgendaId | The agenda is finalized (ReasonDetail Finalized; BypassOff for a Controller when the option AgendaControllerBypass is off) | 16 | "The agenda for this meeting is finalized, so agenda items can no longer be added, changed or deleted." With BypassOff, the same text followed by " Controller changes after finalization are switched off in System Settings." |
 | 5 | spr_DeleteUserByUserId | Other users have this user as manager, creator or last updater (ReasonDetail the names) | 13 | "This user cannot be deleted: these users have them as reporting person, or were created or last updated by them: [names]." |
 | 5 | spr_AddEditMemberType; spr_DeleteMemberTypeByMemberTypeId | The type is in use (ReasonDetail "[n] committee, [m] meeting"); an edit that changes the scope, or a delete | 21 | Delete: "This member type is in use ([counts] member rows), so it cannot be deleted. You can make it inactive instead." Edit: "This member type is in use ([counts] member rows), so it cannot be moved to the other tagging page." |

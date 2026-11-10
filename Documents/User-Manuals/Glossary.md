@@ -12,14 +12,19 @@ written as the menu shows them. More terms are added as the manuals are written.
 Every person who signs in to BMMS has one role. The role decides which menus you see and what
 you may do on each screen.
 
+The two top roles share the work by one rule. The Admin is superior for the technical items (user
+accounts, the code masters, Reset Password, Backup Database, SMTP Configuration, System Settings,
+Audit Trail and Reset Database). The Controller is superior for the functional items (the agenda,
+the meetings, the minutes, the follow-up and the reports) and has all of the functional rights.
+
 | Role | In short |
 |---|---|
 | User | Enters agenda items on Agenda Entry. |
 | Manager | Enters agenda items, approves or rejects the agenda items sent to them, and uses the Reports menu. |
-| Controller | Approves or rejects agenda items after the Manager, or items sent straight to the Controllers. Uses Agenda Entry, Agenda Finalize, Update Minutes, Finalize Minutes, Minutes Confirmation, Followup and the reports. The Master menu shows Member Master, Committee Master, Committee Member Tag / UnTag, Meeting Master, Meeting - Member Tag / UnTag and Attendance. A Controller has no Admin menu, cannot open User Master, the code masters, Reset Password, Backup Database or Audit Trail, and changes only their own password. |
+| Controller | Approves or rejects agenda items after the Manager, or items sent straight to the Controllers. Uses Agenda Entry, Agenda Finalize, Update Minutes, Finalize Minutes, Minutes Confirmation, Followup and the reports. The Minutes report shows the Controller every meeting that has minutes, in every minutes status, each marked Draft (not finalised), Finalised or Confirmed. The Master menu shows Member Master, Committee Master, Committee Member Tag / UnTag, Meeting Master, Meeting - Member Tag / UnTag and Attendance. A Controller has no Admin menu, cannot open User Master, the code masters, Reset Password, Backup Database or Audit Trail, and changes only their own password. |
 | Admin | Is the only role that uses User Master, Department, Designation, Member Type, Subject Type and Decision Type (Master menu), and the Admin menu (Reset Password, Backup Database, SMTP Configuration, System Settings, Audit Trail, Reset Database). Views agenda items on the dashboard but does not approve them. The menu has no Home link for Admin; the dashboard opens after sign-in. |
 | MD Secretariat | Uses the Followup screen. Views agenda items on the dashboard but does not approve them. The menu has no Home link for MD Secretariat; the dashboard opens after sign-in. |
-| Management | Views agenda items on the dashboard but does not approve them. |
+| Management | Views agenda items on the dashboard but does not approve them. Has a Reports menu with Minutes, Followup and Followup Summary only: the Minutes report in every minutes status and the follow-up reports for all committees in the list, each marked with its minutes status. Has no Minutes Extract. |
 
 ## Terms
 
@@ -57,6 +62,12 @@ that, its agenda items can no longer be approved or rejected; items that were st
 are rejected.
 
 **Minutes** - The record of what was decided at a meeting.
+
+**Minutes status** - Where the minutes of a meeting stand: Draft (not finalised), Finalised or
+Confirmed. The Controller and Management see the Minutes report in every status; the line
+"Minutes status: [status]" is printed under each meeting, and a draft also carries a bordered note
+"DRAFT - not finalised; this is not the approved text of the minutes." The Manager and the other
+roles see finalised and confirmed minutes only.
 
 **Update Minutes** - The screen where the Controller records the minutes after the meeting,
 including the Actual Resolution of each item.

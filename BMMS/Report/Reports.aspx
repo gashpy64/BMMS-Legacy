@@ -191,6 +191,13 @@
                                             </ItemTemplate>
                                             <ItemStyle Width="450px" CssClass="contentTabletd" HorizontalAlign="Left" VerticalAlign="Middle" />
                                         </asp:TemplateField>
+                                        <%-- Step RA1b: shown only in the every-status Minutes report (Controller, Management) --%>
+                                        <asp:TemplateField HeaderText="Minutes status" Visible="false">
+                                            <ItemTemplate>
+                                                <asp:Label ID="lblMinutesStatus" runat="server" SkinID="lblskingen" Text='<%# StatusMarkText(Container.DataItem) %>'></asp:Label>
+                                            </ItemTemplate>
+                                            <ItemStyle Width="150px" CssClass="contentTabletd" HorizontalAlign="Left" VerticalAlign="Middle" />
+                                        </asp:TemplateField>
                                     </Columns>
                                     <EmptyDataTemplate>
                                         <div class="divNoRecord">

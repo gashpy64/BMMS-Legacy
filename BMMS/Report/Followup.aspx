@@ -229,6 +229,13 @@
                                                 </ItemTemplate>
                                                 <ItemStyle CssClass="contentTabletd" HorizontalAlign="justify" VerticalAlign="Top" />
                                             </asp:TemplateField>
+                                            <%-- Step RA1b: shown only in Management's Followup (the minutes status of the item) --%>
+                                            <asp:TemplateField HeaderText="Minutes status" Visible="false">
+                                                <ItemTemplate>
+                                                    <asp:Label ID="lblMinutesStatus" runat="server" SkinID="lblskingen" Text='<%# StatusMarkText(Container.DataItem) %>'></asp:Label>
+                                                </ItemTemplate>
+                                                <ItemStyle Width="150px" CssClass="contentTabletd" HorizontalAlign="Left" VerticalAlign="Top" />
+                                            </asp:TemplateField>
                                         </Columns>
                                         <EmptyDataTemplate>
                                             <div class="divNoRecord">

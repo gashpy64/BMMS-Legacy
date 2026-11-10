@@ -39,6 +39,37 @@ namespace BMMSDAL
         }
         #endregion
 
+        #region GetFollowupReportForManagement
+        // Step RA1b (BMMS-Fix-ReportAccess-Step41.sql): the Followup rows for Management, with the filters of the
+        // Controller's query (ReportsMgr.GetFollowupReport) plus MinutesStatus and MinutesStatusMark. The procedure
+        // checks the acting user in the database: Reason 8 (missing or inactive) or 4 (not Management), then no
+        // rows. Reason comes back 0 when allowed.
+        public static DataTable GetFollowupReportForManagement(int CommitteeId, int MeetingNoSearch, int MeetingId, int FromMeetingId,
+            int ToMeetingId, int DepartmentId, int ConfirmStatus, int ActingUserId, out int Reason)
+        {
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+
+            SqlParameter[] parameter = new SqlParameter[10];
+            parameter[0] = new SqlParameter("@CommitteeId", CommitteeId);
+            parameter[1] = new SqlParameter("@MeetingNoSearch", MeetingNoSearch);
+            parameter[2] = new SqlParameter("@MeetingId", MeetingId);
+            parameter[3] = new SqlParameter("@FromMeetingId", FromMeetingId);
+            parameter[4] = new SqlParameter("@ToMeetingId", ToMeetingId);
+            parameter[5] = new SqlParameter("@DepartmentId", DepartmentId);
+            parameter[6] = new SqlParameter("@ConfirmStatus", ConfirmStatus);
+            parameter[7] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[8] = result;
+            parameter[9] = reason;
+
+            DataTable dt = CommonDB.GetDataTable("spr_GetFollowupReportForManagement", parameter);
+            Reason = MinutesDB.RefusalReason(result, reason);
+            return dt;
+        }
+        #endregion
+
         #region GetActionItemByUserId
         public static DataTable GetActionItemByUserId(int UserId)
         {

@@ -3,15 +3,69 @@
 - Title: BMMS Change Log
 - Audience: Gashpy Software (internal)
 - Shipped: No
-- Applies to: access-ra1a
-- Last updated by: RA1a (step 40), based on ea268e5
+- Applies to: RA1b (step 41)
+- Last updated by: RA1b (step 41), based on 1d1bbbe
 - Status: Draft
-- Verified against: git tags and commit subjects (git for-each-ref refs/tags), Database/README.md
-- To confirm:
+- Verified against: git tags and commit subjects (git for-each-ref refs/tags), Database/README.md, the diff
+  of step RA1b (BMMS/Report/*.cs, PageAccessModule.cs, PageAccess.xml, MenuUserControl.ascx, BMMSBAL,
+  BMMSDAL), Database/BMMS-Fix-ReportAccess-Step41.sql
+- To confirm: the tag of RA1b (not set when this entry was written); the two new Lows (a) and (b) are not yet
+  in Database/README.md, "Known items for later steps"
 
 One entry per step, newest first. Each entry names the step, its tag and what changed for users,
 for installers and in the database. Release entries (tags vX.Y.Z) collect the steps since the
 previous release.
+
+## RA1b - Minutes report in every status for the Controller and Management; Reports for Management (tag not yet set, 2026-11-10; database step 41)
+
+- For users: the Controller and Management (Management is the role code mgmt) see the Minutes report
+  for every meeting that has minutes, in every status: Draft (not finalised), Finalised or Confirmed.
+  Each meeting shows "Minutes status: [status]"; a draft also shows the bordered note "DRAFT - not
+  finalised; this is not the approved text of the minutes." at the start and at the end of the meeting.
+  The status line and the note are in Print, Export to Pdf and Export to Word. The list on screen has a
+  "Minutes status" column. Management gets a Reports menu with Minutes, Followup and Followup Summary (all
+  committees in the list); in Management's Followup each item shows its minutes status, and Followup
+  Summary has a "Minutes status" column. Management has no Minutes Extract. The Manager and every other
+  role keep finalised and confirmed minutes only; the Controller's Followup is unchanged (no status). A
+  meeting with no minutes rows (agenda not finalised) is not listed; an empty list says "No meetings with
+  minutes for this committee.". New texts: "Your session is no longer valid. Please log in again." and "You
+  are not allowed to see this report.". Followup, Cancel now returns to the same report (before, it opened
+  the page without a report code and gave the error page). Management with an address other than its
+  three reports, or with ViewReport.aspx before any report was generated, gets "Access denied".
+- Owner principle (decided 2026-11-10): the Admin is superior for the technical menu items; the
+  Controller is superior for the functional items and gets all functional rights. Written into the
+  System manual (chapters 01 and 08), the Glossary, the Controller manual, the Admin manual and the
+  Overall manual's section for Management.
+- For installers: run BMMS-Fix-ReportAccess-Step41.sql after step 40 and before deploying the build (the
+  build calls the new procedures; without them the Controller's and Management's Minutes report and
+  Management's Followup show the error page). BMMS-Rollback-ReportAccess-Step41.sql drops the three
+  procedures (roll back the build first). BMMS-Check-InstalledSteps.sql has a row for step 41 (3 markers).
+- Database: step 41 adds spr_GetMinutesReportMeetingsAllStatus, spr_GetMinutesReportAllStatus and
+  spr_GetFollowupReportForManagement (read only; @ActingUserId; OUTPUT @Result and @Reason, 8 acting user
+  missing or inactive, 4 another role; no rows when refused). Replaces nothing; spr_GetMinutesReport and
+  spr_GetMinutesReportMeetings of step 22 unchanged. Marker ReportAccess-Step41. No data changes.
+- Code: PageAccess.xml adds mgmt to Report/Reports.aspx, Report/Followup.aspx and Report/ViewReport.aspx;
+  PageAccessModule.HasRole and RefuseRequest (RequireRole behaves as before); Reports.aspx and Followup.aspx
+  refuse an unknown report code and check the role in the database; ViewReport.aspx fails closed for
+  Management (only minutes, followup and summary, never ?pdf=1); the menu block for Management;
+  HTML_Report (status line, draft note), ReportsMgr, MinutesDB and ActionItemDB (the three calls).
+- Tests on BMMS_Test (owner): the database Test script BMMS-Test-ReportAccess-Step41.sql passed every row
+  (44 checks according to Database/README.md); the browser table passed for the Controller, Management,
+  Manager, User, Admin and MD Secretariat, the RA1a regression, Followup Cancel, a 1366 px window and real
+  Print, Export to Pdf and Export to Word of a draft; the error log was clean and PageAccessLog.txt showed
+  the expected lines.
+- Known items for later (Lows): the Lows listed for RA1b in Database/README.md, "Known items for later
+  steps" (the Controller's Followup stays a query built in the code and shows no mark; Followup ignores the
+  From and To dates; active committees only; other pages that open ViewReport.aspx do not clear the report
+  kind; the role is read twice per request; a database error gives the finalised-only Minutes report; the
+  step 41 procedures do not test IsSystem; Reason 8 is a message with no link to sign-in; Management's
+  Followup repeats the draft note for every draft item; the Followup page shows unused From and To date
+  boxes; the 150 px "Minutes status" column and the border attribute of the draft note). Two more from the
+  owner's tests, to be added to that list by the owner (Database/README.md is outside Documents/):
+  (a) in the PDF of a draft, the top border of the DRAFT note touches the "Minutes status" line;
+  (b) on the Followup report page the View button's onclick calls a script function that is not defined on
+  that page (the browser console shows an error; the page still works). (b) was already there before
+  RA1b (baseline code) and is not new in RA1b.
 
 ## RA1a - Role access: user accounts and code masters for Admin only (tag access-ra1a, 2026-11-10; database step 40)
 

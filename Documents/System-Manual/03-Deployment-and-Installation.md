@@ -3,8 +3,8 @@
 - Title: Deployment and Installation
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: access-ra1a
-- Last updated by: RA1a (step 40), based on ea268e5
+- Applies to: RA1b (step 41)
+- Last updated by: RA1b (step 41), based on 1d1bbbe
 - Status: Draft
 - Verified against: Database/README.md ("Always test on a copy first", "Run order" with its
   re-run notes, "Test and check scripts", the "what to run where" parts of steps 13, 15, 29, 30
@@ -23,7 +23,10 @@
   HintPaths of BMMSBAL/BMMSBAL.csproj; for step 40 (RA1a): Database/BMMS-Fix-RoleAccess-Step40.sql
   (header, guards, messages), BMMS-Rollback-RoleAccess-Step40.sql (guards, messages),
   BMMS-Test-RoleAccess-Step40.sql (header), BMMS-Check-InstalledSteps.sql (the step 40 rows),
-  Database/README.md (step RA1a: order, test result)
+  Database/README.md (step RA1a: order, test result); for step 41 (RA1b):
+  Database/BMMS-Fix-ReportAccess-Step41.sql (header, guards, messages), BMMS-Rollback-ReportAccess-Step41.sql
+  (guards, messages), BMMS-Test-ReportAccess-Step41.sql (header), BMMS-Check-InstalledSteps.sql (diff),
+  Database/README.md (step RA1b section and run order line 41)
 - To confirm: where itextsharp.dll and the Interop DLL are to come from for a fresh clone; the IIS settings (site, application pool, .NET version, identity, bindings, folder
   permissions); the server prerequisites beyond what the project files show; what is installed on
   BMMS (step state, build, runtime Web.config, SMTP settings); the minimum SQL Server version; the
@@ -216,6 +219,7 @@ application.
 | 38 | BMMS-Fix-MinutesDueDate-Step38.sql | Optional due date on a Followup decision | Needs step 31; either order with the build |
 | 39 | BMMS-Fix-UserHistory-Step39.sql | Role and department history | After step 38; needs steps 13, 14, 18 and 30; either order with the build |
 | 40 | BMMS-Fix-RoleAccess-Step40.sql | User accounts and member types for Admin only | After step 39 (stops otherwise); either order with the build; BMMS-Rollback-RoleAccess-Step40.sql |
+| 41 | BMMS-Fix-ReportAccess-Step41.sql | Minutes report in every status for the Controller and Management; Followup for Management | After step 40 (stops otherwise; also needs step 22); SQL before the build (the build calls the procedures); BMMS-Rollback-ReportAccess-Step41.sql |
 
 Steps 25, 26 and 28 have no database script (code only). Step 27 is not built. Step 32 is reserved
 for role permissions and not built. The lettered code steps that have a database script are D1
@@ -228,8 +232,9 @@ The out-of-number-order installs, in the order to install:
 2. Step 23, after step 28 was built (the list in the README stays in number order; step 24 was
    installed before it on the databases that followed the README order).
 3. Steps 29, 30 and 31, last of the numbered group, in that order.
-4. Step D1, then 33, 34, 35, 36, 37, 38, 39 and 40 in number order. Step 40 is the last step; it
-   stops unless step 39 is installed. (Re-running step 13, 14, 18 or 21 brings back an older text:
+4. Step D1, then 33, 34, 35, 36, 37, 38, 39, 40 and 41 in number order. Step 41 is the last step; it
+   stops unless step 40 is installed (and step 22, whose two minutes report procedures it leaves
+   unchanged). Step 40 stops unless step 39 is installed. (Re-running step 13, 14, 18 or 21 brings back an older text:
    run step 40 again.)
 
 On a new database (restored from the baseline, not `BMMS`), after step 30, the README adds one
@@ -291,7 +296,7 @@ App_Setting row DeptNoManagerAction, 11 markers in all).
 
 What it prints (result grids):
 
-1. One row per step (1 to 24, 29, 30, 31, 33 to 40, and step D1 shown as step 100): Step,
+1. One row per step (1 to 24, 29, 30, 31, 33 to 41, and step D1 shown as step 100): Step,
    Script, Status, Detail. Status is Installed (every marker present), Partly (some present),
    Missing (none) or Not detectable (none of today's steps). Detail gives "[n] of [m] markers" and,
    for Partly, which step to run again.
@@ -390,6 +395,9 @@ README:
   Users.
 - If step 13, 14, 18 or 21 is run again, run step 40 again, after step 39 (step 40 changes no data
   and is safe to run again). The Check script then reads step 40 Partly or Missing until you do.
+- Step 41 adds three procedures and replaces nothing, so re-running an older step does not remove it.
+  The Fix script checks that spr_GetMinutesReport and spr_GetMinutesReportMeetings carry the step 22
+  marker, that View_Minute, View_Meeting and View_Action_Item exist, and that step 40 is installed.
 - If step 3, 18, 21 or 29 is run again, run step 30 again, as the last step (it holds the whole
   step 29 text).
 - If step 6, 15, 16, 17, 18, 20 or 23 is run again, run step 31 again, as the last step of that
@@ -404,7 +412,7 @@ Partly row. Step 31 refuses to run once step 32 has replaced one of its procedur
 
 ## Rolling back a step
 
-Rollback scripts exist for steps 33 to 40 only (Database/ folder):
+Rollback scripts exist for steps 33 to 41 only (Database/ folder):
 
 | Step | Script | What it restores | What it keeps |
 |---|---|---|---|
@@ -416,11 +424,12 @@ Rollback scripts exist for steps 33 to 40 only (Database/ folder):
 | 38 | BMMS-Rollback-MinutesDueDate-Step38.sql | The step 31 text of the minutes update procedure | The due dates already stored |
 | 39 | BMMS-Rollback-UserHistory-Step39.sql | The older procedures (steps 2, 13 and 30); drops the three new objects | The tables User_Role and User_Department with all rows, and the setting row |
 | 40 | BMMS-Rollback-RoleAccess-Step40.sql | The step 18 text of the user rule function and the step 21 texts of the two member type procedures (THROW included) | Changes no data; the Check script then reads step 40 Missing; stops with "Nothing was changed" when no object carries the step 40 marker |
+| 41 | BMMS-Rollback-ReportAccess-Step41.sql | Nothing is restored: it drops the three procedures spr_GetMinutesReportMeetingsAllStatus, spr_GetMinutesReportAllStatus and spr_GetFollowupReportForManagement | Changes no data; spr_GetMinutesReport and spr_GetMinutesReportMeetings of step 22 stay; roll back the build first (the step 41 build calls the procedures and would show the error page for the Controller's and Management's Minutes report and Management's Followup); stops with "Nothing was changed" when none of the three exists; the Check script then reads step 41 Missing |
 
 Each Rollback script has the database-name guard, checks that the step it undoes (or the step
 before it) is in place and stops with "Nothing was changed" otherwise, changes no other data, and is
 safe to run again, also where the step was never installed. Roll steps back in the reverse of their
-install order (40, 39, 38, 37, 36, 35, 34, 33). Roll back the application build of the step too, so the
+install order (41, 40, 39, 38, 37, 36, 35, 34, 33). Roll back the application build of the step too, so the
 database is not left half way (README, step 39).
 
 For steps 1 to 31 and D1 no Rollback script is tracked in Database/. [[CONFIRM: that restoring the backup taken before the step is the intended way back for those steps; Database/README.md names no other]]
@@ -599,3 +608,46 @@ no data: it replaces one function and two procedures.
 Drawn from: Database/BMMS-Fix-RoleAccess-Step40.sql, Database/BMMS-Rollback-RoleAccess-Step40.sql,
 Database/BMMS-Test-RoleAccess-Step40.sql, Database/BMMS-Check-InstalledSteps.sql, Database/README.md
 (step RA1a, "what to run where").
+
+## Installing step 41 on a test database
+
+A worked example with the step 41 scripts (step RA1b: the Minutes report in every status for the
+Controller and Management, Followup for Management). The server is `<server>` and the database is
+`BMMS_Test`. The step adds three read-only procedures, replaces nothing and changes no data. Run the
+SQL before you deploy the build: the build calls the procedures.
+
+1. Check the state. Select `BMMS_Test` and run BMMS-Check-InstalledSteps.sql. Step 40 should read
+   Installed and step 41 Missing.
+2. Back up the database as for any step ("Safe way to install any step").
+3. Run the Fix script (`sqlcmd -S <server> -d BMMS_Test -I -i Database/BMMS-Fix-ReportAccess-Step41.sql`).
+   It has no `USE` line; select the database first. It stops with "Nothing was changed." when the
+   database name does not start with BMMS, when spr_GetMinutesReport or spr_GetMinutesReportMeetings
+   does not have the step 22 text (or View_Minute, View_Meeting or View_Action_Item is missing), or when
+   step 40 is not installed ("The steps are installed in order: run step 40 first, then this script.").
+4. On success it prints `Database: BMMS_Test` and then `Step 41 installed:
+   spr_GetMinutesReportMeetingsAllStatus, spr_GetMinutesReportAllStatus and
+   spr_GetFollowupReportForManagement (ReportAccess-Step41); spr_GetMinutesReport and
+   spr_GetMinutesReportMeetings of step 22 unchanged.` A second run prints the same line. If a
+   procedure lacks the marker it ends with "Step 41 is not complete: [n] of 3 procedures carry the
+   marker ReportAccess-Step41. Read the messages above and run the script again."
+5. Run BMMS-Check-InstalledSteps.sql again. Step 41 should read Installed, 3 of 3 markers.
+6. Run the Test script on `BMMS_Test` only: `Database/BMMS-Test-ReportAccess-Step41.sql`. It refuses a
+   database named exactly `BMMS` and any name that does not start with BMMS, and stops if step 41 is not
+   installed. Part 1 only reads; part 2 works inside one transaction that is rolled back, with made-up
+   data (names beginning ZZ41). Result: one grid with a Status per check, all PASS (44 checks according to
+   Database/README.md; the owner's run for step RA1b passed every row). Then run, unchanged, the Test
+   scripts of steps 22, 31, 23 and 40 (chapter 10).
+7. Deploy the build, then make the browser checks of Database/README.md (section RA1b).
+8. To undo: the previous build first, then `Database/BMMS-Rollback-ReportAccess-Step41.sql`. It stops with
+   "Step 41 is not installed in [name] (none of its three procedures exists): nothing to roll back.
+   Nothing was changed." when none exists. On success it prints `Step 41 rolled back:
+   spr_GetMinutesReportMeetingsAllStatus, spr_GetMinutesReportAllStatus and
+   spr_GetFollowupReportForManagement dropped.` If a procedure is still there it ends with "Step 41 is
+   not fully rolled back: [n] procedures are still there. Read the messages above and run the script
+   again." The Check script then reads step 41 Missing.
+
+Drawn from: Database/BMMS-Fix-ReportAccess-Step41.sql, Database/BMMS-Rollback-ReportAccess-Step41.sql,
+Database/BMMS-Test-ReportAccess-Step41.sql (header), Database/BMMS-Check-InstalledSteps.sql,
+Database/README.md (step RA1b, "what to run where"). Chapter 03 agrees with the README section of step 41
+(order, SQL before the build, three markers, rollback behaviour); see "To confirm" for the points where it
+does not.
