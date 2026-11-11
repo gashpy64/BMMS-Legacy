@@ -3,10 +3,11 @@
 - Title: BMMS Documents - index, register and rules
 - Audience: Gashpy Software (owner, developers, doc-writer)
 - Shipped: No
-- Applies to: RA1b (step 41)
-- Last updated by: RA1b (step 41), based on 1d1bbbe
+- Applies to: WF3a1
+- Last updated by: WF3a1, based on 14d780c
 - Status: Draft
-- Verified against: CLAUDE.md, .claude/agents/doc-writer.md, Documents/_build/*.ps1
+- Verified against: CLAUDE.md, .claude/agents/doc-writer.md, Documents/_build/*.ps1, Tests/README.md
+  (the update matrix lines for the tester)
 - To confirm:
 
 This folder holds the BMMS documents. They are kept in git and committed with the code of the
@@ -230,6 +231,8 @@ Which change updates which document. The doc-writer uses it after every step.
 | An approval, routing, alert or status rule | Data-Flow/04-Workflows, 00-Overall, 02-Manager, 03-Controller (and 01-User where the User sees it) |
 | Mail (when, to whom, content) | System-Manual/07-Mail, the role manuals' "Alerts and mails you receive", the workflows |
 | Install, step order, a Fix, Rollback, Check or Test script | System-Manual/03-Deployment-and-Installation, System-Manual/10-Testing-and-Release, this README |
+| A new numbered database step | Also the tester's baseline: System-Manual/10-Testing-and-Release ("Upkeep after a new database step"; Update-Baseline.ps1) |
+| The tester (Tests/, .claude/agents/tester.md, .claude/hooks/tester-guard.ps1) | System-Manual/10-Testing-and-Release, System-Manual/02-Development-Environment ("The tester"); no user manual |
 | Every step | Release-Notes/CHANGELOG.md |
 
 A step with no document impact says "documents affected: none" in its plan, and only the

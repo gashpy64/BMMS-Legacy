@@ -66,3 +66,10 @@ UpgradeLog*.htm
 # Document exports are made per release (Documents/_build/Export-Documents.ps1) and not committed.
 Documents/Export/*
 !Documents/Export/README.md
+
+# Tester (WF3a): results, the site copy, its build, local credentials and npm packages are never committed.
+Tests/_results/
+Tests/_site/
+Tests/_build/
+Tests/local/
+Tests/node_modules/

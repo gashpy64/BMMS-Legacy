@@ -3,10 +3,11 @@
 - Title: BMMS Change Log
 - Audience: Gashpy Software (internal)
 - Shipped: No
-- Applies to: RA1b (step 41)
-- Last updated by: RA1b (step 41), based on 1d1bbbe
+- Applies to: WF3a1
+- Last updated by: WF3a1, based on 14d780c
 - Status: Draft
-- Verified against: git tags and commit subjects (git for-each-ref refs/tags), Database/README.md, the diff
+- Verified against: for WF3a1: Tests/README.md, Tests/_runner/*, .claude/agents/tester.md,
+  .claude/hooks/tester-guard.ps1, Database/README.md (section Step WF3a1), the owner's test result; and for the rest: git tags and commit subjects (git for-each-ref refs/tags), Database/README.md, the diff
   of step RA1b (BMMS/Report/*.cs, PageAccessModule.cs, PageAccess.xml, MenuUserControl.ascx, BMMSBAL,
   BMMSDAL), Database/BMMS-Fix-ReportAccess-Step41.sql
 - To confirm: the tag of RA1b (not set when this entry was written); the two new Lows (a) and (b) are not yet
@@ -15,6 +16,44 @@
 One entry per step, newest first. Each entry names the step, its tag and what changed for users,
 for installers and in the database. Release entries (tags vX.Y.Z) collect the steps since the
 previous release.
+
+## WF3a1 - Tester infrastructure; database BMMS_Quality with a fixture and a baseline (tag not yet set, 2026-11-11; no database step)
+
+- For users: nothing. No product code changed and no page, message or role right changed. No user
+  manual is touched.
+- For developers: a tester runs fixed browser checks against a copy of the site on the development
+  laptop and reports PASSED, FAILED, REFUSED, VOID, RUNNER FAILED or READY, with screenshots. It never
+  changes the product and complements the owner's acceptance tests (looks, print and Word stay with
+  the owner). Database: BMMS_Quality only (a restore of BMMS_Test, cleared with Reset Database, then a
+  fixture, then a baseline backup restored at the start of every run); the tester never uses BMMS or
+  BMMS_Test. Site: a copy in Tests/_site on http://localhost:18573 (IIS Express); the owner's site on
+  port 49573 is untouched. Two SQL logins made by the setup, bmms_tester and bmms_site, with no server
+  role and no access to another database; the runner asks the server to confirm that before every run.
+  Runner: Tests/_runner/Run-Tests.ps1 (-CheckOnly, -Pack; for the owner -LeaveSiteRunning and
+  -StopSite), Setup-Quality.ps1 (one time), Update-Baseline.ps1 (after a new database step). Every run
+  includes a self-test with three deliberately wrong expectations that must fail. A tester subagent
+  (.claude/agents/tester.md) is confined by a guard hook (.claude/hooks/tester-guard.ps1): it runs only
+  the runner and git status --short and reads only Tests/_results.
+- For installers: nothing to install on a server. A developer machine needs Node, `npm ci` in Tests,
+  the installed Chrome, MSBuild, IIS Express, the database BMMS_Quality and the two logins (System
+  manual 02, "The tester: what the development machine needs"). Local untracked folders: Tests/_results,
+  _site, _build, local, node_modules.
+- Database: no numbered step; no row in BMMS-Check-InstalledSteps.sql. The fixture runs only on a
+  database named exactly BMMS_Quality.
+- Not yet: the first real pack (the access matrix) and the change of the development workflow in
+  CLAUDE.md come with step WF3a2.
+- Tests: Setup ran to the end (fixture check 29 of 29); the selftest pack PASSED (5 checks, 3 of 3
+  planted failures caught, about 20 seconds); -CheckOnly READY; -LeaveSiteRunning and -StopSite work;
+  Update-Baseline.ps1 ran with the Fix script of step 41; the guard blocked every forbidden command,
+  tool and path form tried. security-reviewer and ux-reviewer: pass, no High or Medium open. The
+  owner's tests passed on 2026-11-11.
+- Known items for later (Lows): in Database/README.md, "Known items for later steps". Four security
+  Lows are the first task of WF3a2: the pre-run check allow-list, the role check timing, the read-back
+  of the icacls permissions and the reachability check for -LeaveSiteRunning (port 18573 listens on the
+  local loopback and on all IPv6 addresses, the Windows Firewall is on with no allow rule for IIS
+  Express; reachability from another machine is not tested). Facts found about the product: the sign-in
+  page takes at most 12 characters for User ID and password; Error/TestPage.aspx is an unlisted leftover
+  page that every role is refused; PageAccess.xml has 46 page entries and the site 47 pages.
 
 ## RA1b - Minutes report in every status for the Controller and Management; Reports for Management (tag not yet set, 2026-11-10; database step 41)
 

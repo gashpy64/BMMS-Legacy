@@ -3,10 +3,12 @@
 - Title: Development Environment
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: WF2b1
-- Last updated by: WF2b1, based on 3dd0eec
+- Applies to: WF3a1
+- Last updated by: WF3a1, based on 14d780c
 - Status: Draft
-- Verified against: BMMS.sln, BMMS/BMMS.csproj, BMMSBAL/BMMSBAL.csproj, BMMSDAL/BMMSDAL.csproj,
+- Verified against: for the section "The tester: what the development machine needs": Tests/package.json,
+  Tests/README.md, Tests/_runner/Tester.Common.ps1 and Run-Tests.ps1 (tool lookup), Tests/lib/run.js,
+  .gitignore, Database/README.md (section Step WF3a1); and for the rest: BMMS.sln, BMMS/BMMS.csproj, BMMSBAL/BMMSBAL.csproj, BMMSDAL/BMMSDAL.csproj,
   BMMS/Web.config (connectionStrings and compilation lines), BMMS/connectionStrings.config.example,
   .gitignore, CLAUDE.md, .claude/agents/*.md (name and description lines),
   .claude/hooks/doc-writer-guard.ps1, Documents/README.md, Documents/_build/DocTools.ps1,
@@ -63,6 +65,31 @@ The documents in Documents/ are checked and exported by scripts in Documents/_bu
 The check scripts (`Check-Documents.ps1`, `Check-UserManuals.ps1`) need pandoc and, for the Mermaid
 check, mermaid-cli; they skip a check they cannot run and say so. The export script needs all four
 tools and makes no network calls. [[CONFIRM: how the documentation tools are installed on the owner's machine; the scripts only say where they look]]
+
+### The tester: what the development machine needs
+
+The tester (step WF3a1; what it is and how it runs are in 10-Testing-and-Release) needs this on the
+development machine:
+
+| Item | What the files show |
+|---|---|
+| PowerShell 7 | The runner scripts start with `#Requires -Version 7` |
+| Node.js | Version 20 or later (`engines` in Tests/package.json); the runner refuses when node is not found |
+| playwright-core | The one Node package, version 1.65.0 (Tests/package.json, with package-lock.json). Install once per machine, and after Tests/package.json changes, with `npm ci` in the Tests folder (needs the internet). No browser is downloaded |
+| Chrome | The installed Google Chrome, started headless through playwright-core (`channel: 'chrome'` in Tests/lib/run.js) |
+| MSBuild | Found with vswhere from the Visual Studio Installer, else at a fixed Visual Studio 18 Community path; the runner builds BMMS/BMMS.csproj into Tests/_build (the projects' own bin and obj are not written) |
+| IIS Express | `C:\Program Files (x86)\IIS Express\iisexpress.exe`, run on port 18573 with the .NET 4 runtime |
+| SQL Server | The local default instance (the tester's server name is fixed as `.`), with sysadmin rights for the owner's Windows login for the one-time setup |
+| Database BMMS_Quality | A restore of BMMS_Test with every database step installed, then cleared, given its fixture and baselined by Tests/_runner/Setup-Quality.ps1. It is separate from BMMS and BMMS_Test, which the tester never uses |
+| Two SQL logins | bmms_tester (owner of BMMS_Quality) and bmms_site (the site copy's login), made by the setup; neither has a server role or access to another database. bmms_app must already be linked in BMMS_Quality with db_backupoperator, db_datareader and db_datawriter |
+| Port 18573 | Must be free when a run starts (the runner refuses otherwise). Port 49673 was tried first and lies in the Windows range for outgoing connections |
+| sqlcmd | Used by the runner and the setup scripts |
+
+Local folders that git does not hold (`.gitignore`): `Tests/_results/` (results of every run),
+`Tests/_site/` (the site copy, rebuilt at every run), `Tests/_build/` (its build), `Tests/local/` (the
+generated credentials and the baseline record, readable by the owner's Windows account only) and
+`Tests/node_modules/`. The baseline backup BMMS_Quality_baseline.bak lies in the SQL Server backup
+folder. Nothing in these folders is committed, and no password is written in a document.
 
 ## Getting the source
 
