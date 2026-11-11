@@ -32,7 +32,10 @@ The only commands you may run (from the project folder, written exactly so)
 - `pwsh -NoProfile -File Tests/_runner/Run-Tests.ps1 -CheckOnly`
   Preflight without packs: site copy current, database proved, baseline current, fixture intact.
 - `pwsh -NoProfile -File Tests/_runner/Run-Tests.ps1 -Pack <name>` (several: `-Pack a,b`)
-  A full run. The self-test always runs first. Allow up to 10 minutes.
+  A full run. The self-test always runs first. An access-matrix run takes about 4 minutes. Call the
+  Bash tool with its timeout set to 600000 (10 minutes) and not in the background, so the run's
+  last lines (the result word and the results folder) come back to you. Write the command alone,
+  with no pipe (`| tail` and the like are blocked).
 - `git status --short` (also with `--ignored` and `--untracked-files=all`)
 
 How to work

@@ -26,7 +26,7 @@ Columns: `admin` (qa_admin), `controller` (qa_ctrl), `manager` (qa_manager), `us
 | sign-in page | The browser ends on the sign-in page. |
 | Page not found | HTTP 404 with a "not found" page. |
 | owner to decide | No written rule decides the cell. The run shows what the site does, and the cell counts as failed until the owner decides it. (None left since 2026-11-11.) |
-| to be removed (RA1c1) | The page goes in step RA1c1. The run does not open it (Event Calendar runs out of memory on a GET); a note in the results, never a failure. |
+| to be removed (RA1c1) | The page goes in step RA1c1. The run does not open it; a note in the results, never a failure. (No row uses it since RA1c1 removed Event Calendar and Report Print.) |
 | to be decided (RA1c2) | The owner decides the cell in step RA1c2. The run opens the page and shows what it does; a note, never a failure. |
 
 `page_rule`: `RA1b` marks the rows whose page narrows the roles of PageAccess.xml by its own
@@ -94,10 +94,10 @@ Drafting rule (Claude's; confirmed by the owner on 2026-11-11):
 
 | Address | Cells | Decision |
 |---|---|---|
-| Report/EventCalendar.aspx | every cell | "to be removed (RA1c1)": the page is removed in RA1c1; a note, not a failure. |
-| Report/ReportPrint.aspx | every cell | "to be removed (RA1c1)", as above. |
+| Report/EventCalendar.aspx | every cell | "to be removed (RA1c1)"; the page and its row were removed in step RA1c1. |
+| Report/ReportPrint.aspx | every cell | "to be removed (RA1c1)"; the page and its row were removed in step RA1c1. |
 | Report/FollowupActionTaken.aspx | controller, manager | "to be decided (RA1c2)": a note, not a failure. |
-| Report/ViewReport.aspx | controller, manager | "opens": opened directly (no report kind) the page shows "The report is no longer available". Management "Access denied". Today the Controller and the Manager get HTTP 500: a real failure, a product defect fixed in RA1c1. |
+| Report/ViewReport.aspx | controller, manager | "opens": opened directly (no report kind) the page shows "The report is no longer available". Management "Access denied". Until step RA1c1 the Controller and the Manager got HTTP 500 (a product defect, fixed in RA1c1). |
 | Report/ViewReport.aspx?pdf=1 | controller, manager | "opens" (the same decision; this address already shows "The report is no longer available"). |
 | Master/NoSuchPage.aspx, Images/no-such-file.png | every cell | "Page not found" as the first run showed (HTTP 404 for every column, no DENIED line: a missing page never reaches the access check); the owner keeps them as observed. |
 

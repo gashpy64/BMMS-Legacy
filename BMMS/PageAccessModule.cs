@@ -17,7 +17,7 @@ namespace BMMS.Security
     ///   2. Everything else requires a logged-in user. Anyone else is sent to the
     ///      login page (this also protects the pages that never called
     ///      Common.InitSetup: ResetDatabase, BackupDatabase, ResetPassword,
-    ///      SMTPServerConfig, ViewReport, ReportPrint).
+    ///      SMTPServerConfig, ViewReport).
     ///      The user must also still be active (Users.AccountStatus = 1, read on
     ///      every request); otherwise the session is cleared and the login page
     ///      says the account is inactive.

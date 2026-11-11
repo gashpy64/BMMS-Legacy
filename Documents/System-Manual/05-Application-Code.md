@@ -3,14 +3,14 @@
 - Title: Application Code
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: access-ra1a
-- Last updated by: RA1a (step 40), based on ea268e5
+- Applies to: RA1c1
+- Last updated by: RA1c1, based on 4946500
 - Status: Draft
 - Verified against: BMMS/**/*.aspx, BMMS/MasterPage/*.Master(.cs), BMMS/UserControl/*.ascx(.cs),
   BMMS/XML/PageAccess.xml, PageSettings.xml, AppSettings.xml, ReportSettings.xml,
   BMMS/PageAccessModule.cs, BMMS/Global.asax.cs, BMMS/Default.aspx.cs, BMMS/Logout.aspx.cs,
   BMMS/Error/ErrorPage.aspx(.cs), BMMS/Error/TestPage.aspx.cs, BMMS/Report/ViewReport.aspx.cs,
-  BMMS/Report/ReportPrint.aspx.cs, BMMS/RichTextEditor.cs, BMMS/JScript/AsyncPostBackError.js,
+  BMMS/RichTextEditor.cs, BMMS/JScript/AsyncPostBackError.js,
   BMMS/Web.config, BMMSBAL/*.cs (Common, Utilities, Mail_Mgr, AgendaMail, WordUtilities,
   Sql_Backup_Mgr, PDFUtilities, PdfFonts, HtmlCleaner, RichTextPost, RichTextLimits, SafeFileName,
   OrganisationDetails and the class lists of the other files), BMMSDAL/CommonDB.cs, ConnectDB.cs,
@@ -19,9 +19,11 @@
   manual, and, as leads only, Documentation/Architecture/BMMS-Architecture.md section 9 and the
   "Known items for later steps" list of Database/README.md; for step RA1a: BMMS/PageAccessModule.cs
   (RequireRole), BMMS/UserControl/MenuUserControl.ascx, BMMS/XML/PageAccess.xml and the Page_Load
-  of the nine pages (git diff against ea268e5)
+  of the nine pages (git diff against ea268e5); for step RA1c1: git diff against 4946500 (BMMS/Report/ViewReport.aspx.cs,
+  BMMS/XML/PageAccess.xml, BMMS/BMMS.csproj, BMMS/PageAccessModule.cs), the file list of BMMS/Report
+  and the Grep count of MasterPageFile in BMMS/**/*.aspx
 - To confirm: whether the installed site runs PageAccess.xml in Enforce mode; whether anything
-  outside the repository links to Report/EventCalendar.aspx or Report/FollowupActionTaken.aspx;
+  outside the repository links to Report/FollowupActionTaken.aspx;
   whether building needs Microsoft Word itself or only the Interop DLL in BMMS/dll (no running code
   uses it, and Word is not needed on the server); the size limit for uploads (no maxRequestLength is set in Web.config)
 
@@ -32,20 +34,20 @@ BMMSDAL. A Grep count is given where a number is stated, so that it can be check
 
 ## Pages and master pages
 
-BMMS holds 47 `.aspx` pages, two master pages and two user controls. Two master pages are in
+BMMS holds 45 `.aspx` pages (47 before step RA1c1 removed Event Calendar and Report Print), two master pages and two user controls. Two master pages are in
 BMMS/MasterPage:
 
 | Master page | Used by | Contents |
 |---|---|---|
-| Main.Master | 41 pages (every page that names a master except ChangePasswordFirst) | Header with the logo, the menu (MenuUserControl), "Alerts ([n])" link to the Dashboard, the user's name and role (the login ID as tooltip), Change Password and Logout; the ScriptManager; the message bar for a failed UpdatePanel postback; the footer with the product line and, for Admin and Controller, "Database: [name]" |
+| Main.Master | 40 pages (every page that names a master except ChangePasswordFirst) | Header with the logo, the menu (MenuUserControl), "Alerts ([n])" link to the Dashboard, the user's name and role (the login ID as tooltip), Change Password and Logout; the ScriptManager; the message bar for a failed UpdatePanel postback; the footer with the product line and, for Admin and Controller, "Database: [name]" |
 | MainNoMenu.Master | ChangePasswordFirst.aspx | The same header without the menu and without the Alerts link |
 
 Both masters set the page title from `Session["PageTitle"]` or, when it is not set, from the
 `PageTitle` setting of AppSettings.xml, build the footer with `Common.ProductFooter`, and handle
 `OnAsyncPostBackError` (see "Error handling"). Main.Master also computes the number in "Alerts ([n])":
 the unread alerts of the list the Dashboard shows (`AlertMgr.GetAlertByUserId`, rows with
-`ReadStatus = 0`); it asks nothing during an UpdatePanel postback. Five pages have no master page
-(Default, Logout, TestPage, ReportPrint, ViewReport). The login page has its own footer and its own
+`ReadStatus = 0`); it asks nothing during an UpdatePanel postback. Four pages have no master page
+(Default, Logout, TestPage, ViewReport). The login page has its own footer and its own
 ScriptManager.
 
 Most pages carry `Title="Untitled Page"` in the markup. The title the user sees is set at run time
@@ -103,7 +105,7 @@ How the tables are read:
 | SystemSettings.aspx | System Settings (menu "Admin", Admin only) | admin | No call |
 | User.aspx | User Master | admin (since RA1a; page check RequireRole) | Yes |
 
-### Report folder (BMMS/Report, 17 pages)
+### Report folder (BMMS/Report, 15 pages)
 
 All entries except Reports.aspx, Followup.aspx and AuditTrail.aspx are in the "Reports" menu of the Controller.
 Since RA1a, Audit Trail is in the "Admin" menu (Admin only), after System Settings and before Reset Database,
@@ -117,18 +119,16 @@ entries only.
 | AuditTrail.aspx | Audit Trail (menu "Admin" since RA1a) | admin (since RA1a; page check RequireRole) | Yes |
 | CommitteeMaster.aspx | Committee Master report | controller | Yes |
 | CommitteeMember.aspx | Committee Member report | controller | Yes |
-| EventCalendar.aspx | Event Calendar (From Date and To Date list) | `*` | Yes |
 | Followup.aspx | Followup (`?fc=followup`) and Followup Summary (`?fc=summary`) | controller | Yes (name `followup_report`) |
 | FollowupActionTaken.aspx | Followup Action Taken report | controller, manager | Yes |
 | MeetingCalendar.aspx | Meeting Calendar | controller | Yes |
 | MeetingMaster.aspx | Meeting Master report | controller | Yes |
 | Notice.aspx | Notice (report and Send Mail of the notice) | controller | Yes |
-| ReportPrint.aspx | Print window of a report: shows `Session["ViewReport"]` | controller, manager | No call |
 | Reports.aspx | One page for four reports chosen by `?rc=`: `agenda_summary` (Agenda Summary), `agenda_details` (Agenda Details), `minutes` (Minutes), `minutes_extract` (Minutes Extract) | controller, manager | Yes (name is the report code) |
 | SendMail.aspx | Send Mail (free-form mail with an attachment) | controller | Yes |
 | SittingFees.aspx | Sitting Fees (reports and PDF certificates) | controller | Yes |
 | SittingFeesApplicable.aspx | Sitting Fees Applicable | controller | Yes |
-| ViewReport.aspx | The report window: shows `Session["ViewReport"]`, sends a stored PDF (`?pdf=1`), Export to PDF, Export to Word | controller, manager | No call |
+| ViewReport.aspx | The report window: shows `Session["ViewReport"]`, sends a stored PDF (`?pdf=1`), Export to PDF, Export to Word. With no stored report it shows "The report is no longer available. Close this window and click Generate again." (see "Pages in no menu and the unlisted page") | controller, manager, mgmt (Management for its own report kinds only) | No call |
 
 ### User controls and master pages
 
@@ -140,13 +140,15 @@ entries only.
 
 ### Pages in no menu and the unlisted page
 
-- Report/EventCalendar.aspx and Report/FollowupActionTaken.aspx have no link in the menu, and a search of
-  BMMS for their names (aspx, ascx, Master, js and xml files) finds only their own files and the two
-  comments in PageAccess.xml. The comment on EventCalendar says that no link was found; the comment on
-  FollowupActionTaken says that managers reach it from the dashboard action items, which the search does
-  not confirm. [[CONFIRM: whether anything outside the repository, such as a bookmark or an older build, opens Report/EventCalendar.aspx or Report/FollowupActionTaken.aspx; the code has no link to either]]
-- ChangePasswordFirst.aspx, Logout.aspx, Report/ViewReport.aspx and Report/ReportPrint.aspx are reached by
-  redirects, buttons and report pop-ups, not by the menu. Change Password is a link of the header.
+- Report/FollowupActionTaken.aspx has no link in the menu, and a search of BMMS for its name (aspx, ascx,
+  Master, js and xml files) finds only its own files and the comment in PageAccess.xml. That comment says
+  that managers reach it from the dashboard action items, which the search does not confirm.
+  [[CONFIRM: whether anything outside the repository, such as a bookmark or an older build, opens Report/FollowupActionTaken.aspx; the code has no link to it]]
+- Report/EventCalendar.aspx and Report/ReportPrint.aspx were removed in step RA1c1 (files, project entries
+  and PageAccess.xml lines). An old bookmark to either gets "Page not found" (HTTP 404), because the pages
+  are no longer in PageAccess.xml or on disk (the owner's test of 2026-11-11 saw this for both addresses).
+- ChangePasswordFirst.aspx, Logout.aspx and Report/ViewReport.aspx are reached by redirects, buttons and
+  report pop-ups, not by the menu. Change Password is a link of the header.
 - Error/TestPage.aspx has no entry in PageAccess.xml, neither under `<public>` nor under `<pages>`; the file
   says "intentionally not listed, so it is never allowed". PageAccessModule treats a page that is not in the
   file as not allowed (reason "page is not in PageAccess.xml"): in `Enforce` mode a logged-in user gets the
@@ -165,9 +167,18 @@ it); its Export to PDF builds the PDF in memory from the HTML (`PDFUtilities.Htm
 Word sends the HTML as a `.doc` with the content type `application/msword` (`ViewReport.WordDocument`); no file
 is written on the server and Word is not started.
 
+No stored report (step RA1c1): when `Session["ViewReport"]` is null or empty (the window was opened by address,
+or the session ended), `ViewReport.Page_Load` answers with a small HTML page that says "The report is no longer
+available. Close this window and click Generate again.", with HTTP 200 and no entry in the error log
+(`NoStoredReport`, `SendNoReportMessage`; the request ends with `Response.End`). The same text is used for
+`?pdf=1` when no PDF is stored. The Export to PDF and Export to Word handlers (`btnExportToPdf_Click`,
+`btnExportToWord_Click`) check again and send the same message; Page_Load answers first, so the second check
+is a safeguard. The Management check of step RA1b stays first in Page_Load: a Management user with no report
+kind is refused with "Access denied", before the message is considered.
+
 Drawn from: BMMS/MasterPage/Main.Master(.cs), MainNoMenu.Master(.cs), BMMS/UserControl/*.ascx(.cs),
 BMMS/XML/PageAccess.xml, PageSettings.xml, MenuUserControl.ascx, the `MasterPageFile` and `Common.InitSetup`
-Grep results, Report/ViewReport.aspx.cs, ReportPrint.aspx.cs, Error/TestPage.aspx.cs, PageAccessModule.cs.
+Grep results, Report/ViewReport.aspx.cs (diff of step RA1c1), Error/TestPage.aspx.cs, PageAccessModule.cs.
 
 ## Business layer (BAL)
 
@@ -460,7 +471,7 @@ keeps a user logged in after the session ends.
 | `LoginCount` | Default.aspx.cs | Nothing | Counts failed passwords in the session; the call that would lock the user is commented out |
 | `PageTitle`, `PageURL` | `Common.InitSetup` (`PageURL` also by Default.aspx.cs) | The masters (`PageTitle`) | `PageURL` is no longer used by the error page's Exit |
 | `ErrorReturnPage` | `Utilities.GoToErrPage` | ErrorPage.aspx Exit | The page that failed, with its query string |
-| `ViewReport`, `ViewReportName`, `ReportPdf`, `ReportPdfName`, `FollowupHTML` | The report pages | ViewReport.aspx, ReportPrint.aspx | The report HTML or PDF bytes handed to the pop-up |
+| `ViewReport`, `ViewReportName`, `ReportPdf`, `ReportPdfName`, `FollowupHTML` | The report pages | ViewReport.aspx | The report HTML or PDF bytes handed to the pop-up |
 
 Set at login (Default.aspx.cs, `btnLogin_Click`): the login page reads the user by login ID
 (`UserMgr.GetUserByLoginName`), then checks in this order: a user who does not exist or a wrong password gives

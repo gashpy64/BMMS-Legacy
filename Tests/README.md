@@ -259,8 +259,9 @@ the sign-in page takes at most 12 characters for the User ID and for the passwor
 
 Found by the access matrix (step WF3a2, recorded in the WF3a2 section of `Database\README.md`):
 `Report\EventCalendar.aspx` runs out of memory on every opening (an endless loop) and every
-signed-in role may open it (removed in RA1c1; the run does not open it); ViewReport.aspx opened
-directly gives the Controller and the Manager an error (fixed in RA1c1).
+signed-in role could open it, and ViewReport.aspx opened directly gave the Controller and the
+Manager an error. Step RA1c1 removed Event Calendar and Report Print and made ViewReport.aspx show
+"The report is no longer available" when it has no report.
 
 ## Limits
 

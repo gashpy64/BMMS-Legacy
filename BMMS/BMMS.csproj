@@ -382,13 +382,6 @@
     <Compile Include="Report\Reports.aspx.designer.cs">
       <DependentUpon>Reports.aspx</DependentUpon>
     </Compile>
-    <Compile Include="Report\ReportPrint.aspx.cs">
-      <DependentUpon>ReportPrint.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="Report\ReportPrint.aspx.designer.cs">
-      <DependentUpon>ReportPrint.aspx</DependentUpon>
-    </Compile>
     <Compile Include="Report\SendMail.aspx.cs">
       <DependentUpon>SendMail.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -423,13 +416,6 @@
     </Compile>
     <Compile Include="Report\Followup.aspx.designer.cs">
       <DependentUpon>Followup.aspx</DependentUpon>
-    </Compile>
-    <Compile Include="Report\EventCalendar.aspx.cs">
-      <DependentUpon>EventCalendar.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="Report\EventCalendar.aspx.designer.cs">
-      <DependentUpon>EventCalendar.aspx</DependentUpon>
     </Compile>
     <Compile Include="Report\SittingFeesApplicable.aspx.cs">
       <DependentUpon>SittingFeesApplicable.aspx</DependentUpon>
@@ -553,7 +539,6 @@
     <Content Include="Report\CommitteeMember.aspx" />
     <Content Include="Report\AgendaApproval.aspx" />
     <Content Include="Report\AuditTrail.aspx" />
-    <Content Include="Report\EventCalendar.aspx" />
     <Content Include="Report\SittingFeesApplicable.aspx" />
     <Content Include="Report\MeetingCalendar.aspx" />
     <Content Include="Report\Notice.aspx" />
@@ -569,7 +554,6 @@
     <Content Include="MasterPage\MainNoMenu.Master" />
     <Content Include="Master\Followup.aspx" />
     <Content Include="Report\Reports.aspx" />
-    <Content Include="Report\ReportPrint.aspx" />
     <Content Include="Report\SendMail.aspx" />
     <Content Include="Report\SittingFees.aspx" />
     <Content Include="Report\FollowupActionTaken.aspx" />

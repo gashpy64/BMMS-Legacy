@@ -25,7 +25,6 @@
     <page path="DashBoard/DashBoard.aspx" roles="*"/>
     <page path="ChangePasswordFirst.aspx" roles="*"/>
     <page path="Master/ChangePassword.aspx" roles="*"/>
-    <page path="Report/EventCalendar.aspx" roles="*"/>  <!-- CONFIRM: no link to it was found in the code -->
 
     <!-- admin only -->
     <page path="Master/ResetDatabase.aspx" roles="admin"/>
@@ -62,7 +61,6 @@
     <!-- Step RA1b: mgmt opens Reports.aspx for rc=minutes only and ViewReport.aspx for its own report kinds only (both checked in the page) -->
     <page path="Report/Reports.aspx" roles="controller,manager,mgmt"/>
     <page path="Report/ViewReport.aspx" roles="controller,manager,mgmt"/>  <!-- report pop-ups -->
-    <page path="Report/ReportPrint.aspx" roles="controller,manager"/>  <!-- report pop-ups -->
 
     <!-- controller only: agenda/minutes workflow and the report menu -->
     <page path="Master/AgendaFinalization.aspx" roles="controller"/>

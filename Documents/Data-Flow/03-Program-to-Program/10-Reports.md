@@ -3,10 +3,11 @@
 - Title: Program to Program: Reports
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: RA1b (step 41)
-- Last updated by: RA1b (step 41), based on 1d1bbbe
+- Applies to: RA1c1
+- Last updated by: RA1c1, based on 4946500
 - Status: Draft
-- Verified against: BMMS/Report/Reports.aspx.cs, Followup.aspx.cs, ViewReport.aspx.cs (diff of step RA1b),
+- Verified against: for step RA1c1: BMMS/Report/ViewReport.aspx.cs (git diff against 4946500); and before:
+  BMMS/Report/Reports.aspx.cs, Followup.aspx.cs, ViewReport.aspx.cs (diff of step RA1b),
   BMMS/PageAccessModule.cs (HasRole, RefuseRequest), BMMSBAL/ReportsMgr.cs, BMMSBAL/HTML_Report.cs,
   BMMSDAL/MinutesDB.cs and ActionItemDB.cs (the three calls), Database/BMMS-Fix-ReportAccess-Step41.sql,
   BMMS-Test-ReportAccess-Step41.sql (header), BMMS/XML/PageAccess.xml, Database/README.md (section RA1b)
@@ -100,6 +101,7 @@ Database/BMMS-Fix-ReportAccess-Step41.sql (header).
 | Followup.aspx Page_Load | fc not followup or summary; role not controller or mgmt | "Access denied" |
 | Followup.aspx Page_Load | Session role mgmt but the database role could not be read | RefuseRequest("role could not be read for the Management path") |
 | ViewReport.aspx Page_Load | Database or session role mgmt, and ViewReportKind missing, empty or not minutes, followup or summary, or ?pdf=1 | RefuseRequest("report kind not allowed for the role") |
+| ViewReport.aspx Page_Load (after the check above) | No stored report: Session["ViewReport"] null or empty (opened by address, or the session ended), or the Export to Pdf or Export to Word postback with none | Not a refusal: HTTP 200, a page that says "The report is no longer available. Close this window and click Generate again.", no error-log entry, the request ends (step RA1c1). Page_Load answers first; the two export handlers check again |
 | spr_GetMinutesReportMeetingsAllStatus, spr_GetMinutesReportAllStatus | Reason 8: acting user missing, 0 or inactive | No rows; the page shows "Your session is no longer valid. Please log in again." |
 | The same procedures | Reason 4: role not controller or mgmt | No rows; "You are not allowed to see this report." |
 | spr_GetFollowupReportForManagement | Reason 8 as above; Reason 4: role not mgmt | No rows; the same two messages |
@@ -111,6 +113,7 @@ Empty meeting list on the every-status path: "No meetings with minutes for this 
 | Rule | C# | Procedure |
 |---|---|---|
 | Who may open each report page | PageAccess.xml; RequireRole in Reports.aspx.cs and Followup.aspx.cs; ViewReport.aspx.cs for Management | none |
+| Message when no report is stored | ViewReport.aspx.cs (NoStoredReport, SendNoReportMessage; also in the two export handlers) | none |
 | Every-status path for the Controller and Management | Reports.aspx.cs (allStatus from HasRole) | spr_GetMinutesReportMeetingsAllStatus, spr_GetMinutesReportAllStatus |
 | Acting user check, Reasons 8 and 4 | ReportsMgr.ReportRefusedMessage turns them into text | The three step 41 procedures |
 | The mark (F Finalised, C Confirmed, anything else Draft (not finalised)) | ReportsMgr.StatusMarkOf reads it | The three step 41 procedures |

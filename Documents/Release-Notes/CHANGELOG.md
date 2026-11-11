@@ -3,10 +3,13 @@
 - Title: BMMS Change Log
 - Audience: Gashpy Software (internal)
 - Shipped: No
-- Applies to: WF3a2
-- Last updated by: WF3a2, based on 5c6228f
+- Applies to: RA1c1
+- Last updated by: RA1c1, based on 4946500
 - Status: Draft
-- Verified against: for WF3a2: CLAUDE.md, .claude/agents/tester.md, Tests/README.md, Tests/_runner/*,
+- Verified against: for RA1c1: git diff against 4946500 (BMMS/Report/ViewReport.aspx.cs, BMMS.csproj,
+  XML/PageAccess.xml, PageAccessModule.cs, Tests/packs/access-matrix/*, .claude/agents/tester.md,
+  Tests/README.md, Database/README.md section Step RA1c1), the owner's test result and the tester run of
+  2026-11-11 as given; for WF3a2: CLAUDE.md, .claude/agents/tester.md, Tests/README.md, Tests/_runner/*,
   Tests/lib/run.js, Tests/packs/access-matrix/*, Database/README.md (section Step WF3a2 and Known items
   for later steps), the owner's test result and the tester run of 2026-11-11 as given; for WF3a1: Tests/README.md, Tests/_runner/*, .claude/agents/tester.md,
   .claude/hooks/tester-guard.ps1, Database/README.md (section Step WF3a1), the owner's test result; and for the rest: git tags and commit subjects (git for-each-ref refs/tags), Database/README.md, the diff
@@ -18,6 +21,33 @@
 One entry per step, newest first. Each entry names the step, its tag and what changed for users,
 for installers and in the database. Release entries (tags vX.Y.Z) collect the steps since the
 previous release.
+
+## RA1c1 - Event Calendar and Report Print removed; ViewReport with no report (tag not yet set, 2026-11-11; no database step)
+
+- For users: the Event Calendar and Report Print pages are gone (nothing in the menu or the report
+  windows linked to them); an old bookmark to either address gets "Page not found". The report window
+  (ViewReport.aspx): when it is opened with no report stored, for example by address or after the session
+  ended, it shows "The report is no longer available. Close this window and click Generate again." (HTTP
+  200, no error-log entry) instead of an error; the same message appears if Export to Pdf or Export to
+  Word is clicked with no stored report. Management is still refused first ("Access denied") when the
+  window is opened with no report kind. No user manual mentions either removed page (searched).
+- For developers: BMMS/Report/EventCalendar.aspx and ReportPrint.aspx with their .cs and .designer.cs files
+  are deleted, with their BMMS.csproj entries and PageAccess.xml lines (44 page entries, 3 public; the
+  site has 45 pages). The comment in PageAccessModule.cs no longer names ReportPrint. The access-matrix
+  pack has 56 addresses (60 before); the rows of the two pages are removed from expected.csv and from the
+  not-in-menu file, and the pack README is updated. The tester agent's command timeout is raised
+  (.claude/agents/tester.md: the Bash tool with timeout 600000, not in the background; guard unchanged).
+- For installers: nothing to run; the next site build no longer has the two pages.
+- Database: no numbered step; no row in BMMS-Check-InstalledSteps.sql.
+- Tests: build checks passed (compile 0 errors; site precompile exit 0, 45 pages). Tester agent,
+  -Pack access-matrix (Tests/_results/2026-11-11_230233): PASSED, all 485 checks; 448 matrix cells, 446
+  ok, 0 failed, 2 notes (Followup Action Taken for the Controller and the Manager, to be decided in RA1c2);
+  standing proof holds; no new line in the error log; 202 s. The owner's tests passed on 2026-11-11 (the
+  Minutes report with Print, Export to Pdf and Export to Word; ViewReport.aspx opened directly as the
+  Controller shows the message and as Management gives "Access denied"; the two removed addresses give
+  "Page not found"). Reviewers: security Pass; ux and ui Pass with notes (Lows in the backlog).
+- Later step, not in RA1c1: the tester's results-folder file (Tests/_results/latest.txt), so that the
+  tester agent can find its results folder when its command moves to the background after 180 s.
 
 ## WF3a2 - Access-matrix pack, tester stage in the workflow, four security Lows closed (tag not yet set, 2026-11-11; no database step)
 

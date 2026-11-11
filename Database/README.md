@@ -2961,14 +2961,29 @@ Found by the first runs (2026-11-11), for the owner; nothing changed in the prod
 
 Test result of the build: see the build report (runs of 2026-11-11 in Tests/_results).
 
+## Step RA1c1: Event Calendar and Report Print removed; ViewReport without a report shows a message (code only, no numbered database step)
+
+Owner decision (2026-11-11, plan approved after WF3a2): remove the two unused pages; ViewReport.aspx with no stored report shows the same message as ?pdf=1; after RA1c1 the access matrix is expected to pass.
+
+- Removed: BMMS/Report/EventCalendar.aspx, .aspx.cs, .aspx.designer.cs (a GET ran out of memory: BindEventCalendar looped for ever; every signed-in role could open it) and BMMS/Report/ReportPrint.aspx, .aspx.cs, .aspx.designer.cs (no page opened it); their six entries in BMMS/BMMS.csproj (four Compile, two Content); their two entries in BMMS/XML/PageAccess.xml, which now has 44 page entries (3 public). A request for either address now gets "Page not found" (HTTP 404).
+- BMMS/Report/ViewReport.aspx.cs: the RA1b Management check stays first. Then, after ?pdf=1, when Session["ViewReport"] is missing or empty the page answers "The report is no longer available. Close this window and click Generate again." (HTTP 200) and ends the request (Response.End, so no event handler runs; no error-log entry). The text is one constant, NoReportHtml, used by ?pdf=1 too. The Export to Pdf and Export to Word handlers check the same before they read the report (a second check; Page_Load answers first on their postbacks). A stored report is shown as before.
+- BMMS/PageAccessModule.cs: comment only (ReportPrint no longer named).
+- Tests/packs/access-matrix: the EventCalendar and ReportPrint rows removed from expected.csv (56 addresses; not-in-menu.csv had none); README.md updated. .claude/agents/tester.md: the runner is called with the Bash tool's timeout at 10 minutes and not in the background (a matrix run takes about 4 minutes); the guard hook is unchanged.
+- No other file names the two pages (searched BMMS, BMMSBAL, BMMSDAL: .cs, .aspx, .ascx, .Master, .xml, .config, .js, .csproj).
+
+Browser checks: tester: access-matrix (expected PASSED, no error-log line). Owner by eye: a Minutes report generated and Print, Export to Pdf and Export to Word; Report/ViewReport.aspx opened directly as the Controller (the message) and as Management ("Access denied"); Report/EventCalendar.aspx and Report/ReportPrint.aspx give "Page not found".
+
 ## Known items for later steps
 
 - Step WF3a1 security pass (owner, 2026-11-11): the sign-in page limits the password to 12 characters (PasswordMaxLength in BMMS/XML/AppSettings.xml, as the User ID by LoginIdMaxLength; ChangePassword and ChangePasswordFirst ask for more than PasswordMinLength 6). Twelve is short for today's guidance; raising it touches the sign-in page, the two change-password pages, Reset Password and the User Master. Take it up in a security step.
 - Step WF3a1: Error/TestPage.aspx is a leftover of the baseline that writes a trial PDF in Page_Load; it is not in PageAccess.xml, so nobody can open it ("Access denied" for every role). Remove it with the unused pages (RA1c); WF3a2's agreement check names it as the one page on disk that is not listed.
 - Step WF3a1 security review (Low): Update-Baseline.ps1's scan of a Fix script does not see USE inside dynamic SQL or a three-part name; the wall is that bmms_tester can open no other database (asked of the server before every run). sqlcmd runs without -X.
 - Step WF3a1, the four security Lows (allow-list, role check timing, icacls read-back, reachability): closed in step WF3a2 (see its section). Left: the test from the other laptop (owner's test steps of WF3a2).
-- Step WF3a2 (High, product, baseline), to be fixed in RA1c1: Report/EventCalendar.aspx runs out of memory on every GET (endless loop in BindEventCalendar) and PageAccess.xml lets every signed-in role open it. RA1c1 removes the page and ReportPrint.aspx.
-- Step WF3a2 (product defect), to be fixed in RA1c1: Report/ViewReport.aspx opened directly with no report kind gives the Controller and the Manager HTTP 500 and an error-log entry (Session["ViewReport"] empty); it should show "The report is no longer available" as ?pdf=1 does. The access matrix fails on these two cells until then.
+- Step WF3a2 (High, product, baseline): Report/EventCalendar.aspx ran out of memory on every GET. Closed in step RA1c1 (the page and Report/ReportPrint.aspx removed).
+- Step RA1c1 review (Low, UI and UX): the "no longer available" page of ViewReport.aspx (one constant, NoReportHtml, for ?pdf=1 and a missing report) is a bare HTML fragment: no doctype, charset or stylesheet (quirks mode, default font), no Close link, and after an Export click it does not say that nothing was exported. Polish both paths together: a doctype and the page style, a Close link.
+- Step RA1c1: the tester agent's runner command moves to the background after 180 s (a limit of the agent's command tool; the 10-minute timeout in .claude/agents/tester.md does not change it), so the agent does not see the runner's last lines or the name of the results folder, and the main session has to give it the name (seen in WF3a2 and RA1c1). Fix in a later step: the runner writes the results folder name to Tests/_results/latest.txt, which the agent may read.
+- Step RA1c1 review (Low): Tests/packs/access-matrix/README.md still lists the cell word "to be removed (RA1c1)" and the decision rows of the two removed pages (marked as removed); drop them when the pack is next touched.
+- Step WF3a2 (product defect): Report/ViewReport.aspx opened directly with no report gave the Controller and the Manager HTTP 500. Closed in step RA1c1 ("The report is no longer available", HTTP 200, no error-log entry).
 - Step WF3a2: Report/FollowupActionTaken.aspx for the Controller and the Manager: to be decided by the owner in RA1c2.
 - Step WF3a2 UX review (Low): "Other notes for the owner" names the Master menu's drop-down list by its internal id (ddsubmenu1) and does not say that only Admin and the Controller can open it.
 - Step WF3a2 UX review (Low): results.md does not mark a failed check the owner has already seen (the two ViewReport cells, kept as a real failure until RA1c1) as known.

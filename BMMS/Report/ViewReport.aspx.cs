@@ -39,8 +39,35 @@ namespace BMMS.Report
                 return;
             }
 
+            // Step RA1c1: no stored report (the window opened by address, or the session ended): the same message as
+            // ?pdf=1, HTTP 200, no error-log entry. The postbacks (Export to Pdf, Export to Word) pass here first too.
+            if (NoStoredReport())
+            {
+                SendNoReportMessage();
+                return;
+            }
+
             ltrlViewReport.Text = Session["ViewReport"].ToString();
         }
+
+        #region NoStoredReport, SendNoReportMessage
+        // Step RA1c1: the text shown when the report this window should show is not in the session any more
+        private const string NoReportHtml = "<html><head><title>Report</title></head><body><p>The report is no longer available. Close this window and click Generate again.</p></body></html>";
+
+        private bool NoStoredReport()
+        {
+            return string.IsNullOrEmpty(Convert.ToString(Session["ViewReport"]));
+        }
+
+        // Ends the request with the message (Response.End: no event handler runs after it)
+        private void SendNoReportMessage()
+        {
+            Response.Clear();
+            Response.ContentType = "text/html";
+            Response.Write(NoReportHtml);
+            Response.End();
+        }
+        #endregion
 
         #region SendStoredPdf
         // Streams the PDF that Generate kept in Session["ReportPdf"], inline, and clears it: nothing is
@@ -58,7 +85,7 @@ namespace BMMS.Report
             if (pdf == null || pdf.Length == 0)
             {
                 Response.ContentType = "text/html";
-                Response.Write("<html><head><title>Report</title></head><body><p>The report is no longer available. Close this window and click Generate again.</p></body></html>");
+                Response.Write(NoReportHtml);
             }
             else
             {
@@ -73,6 +100,13 @@ namespace BMMS.Report
 
         protected void btnExportToPdf_Click(object sender, EventArgs e)
         {
+            // Step RA1c1: the report is gone from the session (Page_Load answers first; kept here as a second check)
+            if (NoStoredReport())
+            {
+                SendNoReportMessage();
+                return;
+            }
+
             // Tamil or Hindi text: no PDF; Export to Word and Print show it (step U1b). The report name is kept
             // for Export to Word.
             if (PdfFonts.HasIndicText(Session["ViewReport"].ToString()))
@@ -140,6 +174,13 @@ namespace BMMS.Report
 
         protected void btnExportToWord_Click(object sender, EventArgs e)
         {
+            // Step RA1c1: the report is gone from the session (Page_Load answers first; kept here as a second check)
+            if (NoStoredReport())
+            {
+                SendNoReportMessage();
+                return;
+            }
+
             string strHTML = WordDocument(Session["ViewReport"].ToString(), OrganisationDetails.LogoFilePath);
 
             string name = Session["ViewReportName"] as string;
