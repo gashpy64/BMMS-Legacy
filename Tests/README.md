@@ -26,6 +26,13 @@ pwsh -NoProfile -File Tests/_runner/Run-Tests.ps1 -Pack access-matrix
 - `-CheckOnly` runs no checks. It proves that the site copy is the current working tree, that it
   is on BMMS_Quality, that the baseline is current and the fixture intact.
 - `-Pack <name>` runs the self-test and then the pack. Several packs: `-Pack a,b`.
+- `-Pack access-matrix` (step WF3a2): what each role can open, against your rules. Its rules,
+  files and cells: `Tests\packs\access-matrix\README.md`. It starts with its standing proof (below)
+  and takes about three minutes in all (measured on this laptop: 2 min 40 s to 3 min 40 s; most of
+  it is the site's first requests, which compile the pages).
+- `-Pack access-matrix -ProofFullMatrix` (you only; the tester agent cannot use it): the standing
+  proof over every row instead of two. Exactly one cell must change. Use it when the pack itself
+  changes.
 - A run restores BMMS_Quality first. **Open windows on BMMS_Quality in SQL Server Management
   Studio are disconnected at the start of every run.** Windows on BMMS_Test are not affected.
 - A run of the self-test alone takes about 20 seconds.
@@ -57,7 +64,7 @@ Each run writes a folder `Tests\_results\<date_time>\`. Open `results.md`.
 | PASSED | Every check gave what was expected; the self-test caught its planted failures; no new line in the error log. | Go on to your own tests. |
 | FAILED | At least one check did not give what was expected, or the error log has new lines, or a request to another host was stopped. | Read "Failed checks": expected, seen, screenshot. Decide whether the product or the expected result is wrong. |
 | REFUSED | The tester would not start. Nothing was tested. | The first line says why (see "Refusals"). |
-| VOID | The self-test did not catch its planted failures, a pack broke off, or the browser part stopped (the first line says which). | No result of that run counts. The tester itself needs attention: tell Claude. |
+| VOID | The self-test did not catch its planted failures, the access matrix's standing proof failed (or the site copy's PageAccess.xml was not put back), a pack broke off, or the browser part stopped (the first line says which). | No result of that run counts. The tester itself needs attention: tell Claude. |
 | RUNNER FAILED | The tester itself broke. | Nothing can be said about the site; the run does not count. Copy the first line to Claude. |
 | READY | Check only; no pack was run. | Nothing. |
 
@@ -78,6 +85,29 @@ rows marked "caught (planted)" in the results are therefore not failures; do not
 A refusal writes a DENIED line to the page access log, so new DENIED lines are normal for
 checks that expect "Access denied". A new line in the error log always counts as a failure.
 
+The access matrix adds these sections to `results.md`:
+
+- **Access matrix**: one line per address, one column per role (the column names are explained
+  under the heading). "ok" means the page gave what the cell says and the page access log agrees
+  (one DENIED line for that user and page for a refusal, none otherwise). A failing cell reads,
+  for example, "**FAIL** opens / seen HTTP 500 (not expected) (439)": what was expected, what was
+  seen, and its number in "Failed checks". "note RA1c1" and "note RA1c2: ..." mark the cells of
+  the next section.
+- **Notes: cells that are not judged yet**: your decisions of 2026-11-11. "to be removed (RA1c1)"
+  (Event Calendar, Report Print: the run does not open them) and "to be decided (RA1c2)"
+  (Followup Action Taken for the Controller and the Manager: opened, what it shows is given).
+  Never failures.
+- **Cells for the owner to decide**: cells no written rule decides yet, with what the site does
+  today; each counts as failed until you write the cell into `expected.csv`. Empty since your
+  decisions of 2026-11-11, so the section is not shown.
+- **Other notes for the owner**: facts the pack reports without failing, for example the page on
+  disk that PageAccess.xml does not list, and menu links no menu bar item opens.
+- **Standing proof of the access matrix**: before the matrix, the runner adds `user` to the entry
+  of Report/MeetingCalendar.aspx in `Tests\_site\XML\PageAccess.xml` only (never in your working
+  tree), runs two rows for every role, and puts your file back in a finally block. Exactly the one
+  planted cell must come out different from the real matrix run; at the end the site copy's
+  PageAccess.xml must have the same SHA-256 as yours. Otherwise the run is VOID.
+
 What the tester cannot judge: looks (alignment, borders, spacing, the printed page, a document
 opened in Word). Those stay with you; the screenshots and exports are there for that.
 
@@ -92,7 +122,11 @@ opened in Word). Those stay with you; the screenshots and exports are there for 
 | "The build of the working tree failed" | The code does not compile. | Fix the code; nothing was tested. |
 | "does not name BMMS_Quality" / "does not show Database: BMMS_Quality" | The site copy is not on the tester's database. | Do not go on. Tell Claude; nothing was tested. |
 | "Port 18573 is already in use" | Another program listens on the tester's port. | Close it, run again. |
-| "... can open another database" / "... can open BMMS or BMMS_Test" / "... is a member of a server role" / "... holds CONTROL SERVER or an IMPERSONATE right" | One of the tester's two SQL logins was given more than it should have. | Do not go on. Tell Claude; nothing was tested. |
+| "... can open another database" / "... can open BMMS or BMMS_Test" / "... is a member of a server role" / "... holds CONTROL SERVER or an IMPERSONATE right" / "... holds the server permission(s) ... besides CONNECT SQL and VIEW ANY DATABASE" / "... was given ... on the server besides CONNECT SQL" | One of the tester's two SQL logins was given more than it should have (asked before every run and again after the restore). | Do not go on. Tell Claude; nothing was tested. |
+| "Tests\_site\connectionStrings.config can still be read by an account other than yours" | Another account has its own entry on that file. The password was not written. | Tell Claude; nothing was tested. |
+| "-LeaveSiteRunning is refused: the ... profile lets inbound traffic in by default" | A Windows Firewall profile is set to let inbound traffic in without a rule. | Run without `-LeaveSiteRunning`, or set that profile to block inbound traffic by default first. |
+| "WARNING (firewall): rule ... lets inbound traffic in" (console) / "Firewall: **warning**" (results.md) | Not a refusal. An enabled inbound rule for IIS Express, System or any program covers port 18573, or a profile is off. On this laptop (2026-11-11): the Windows rule "WFD Driver-only (TCP-In)" (System, every port). The run goes on: the site copy serves only callers on this laptop, checked through every address at every start. | Nothing to do for the run. The tester changes no Windows rule. |
+| "The site copy answers on a network address of this machine" | The site copy answered through a network address of this laptop (it must refuse: HTTP 400 for that address as host name, HTTP 403 for "Host: localhost"). | Do not go on. Tell Claude; nothing was tested. |
 | "... could not sign in to BMMS_Quality" | A tester login was dropped, re-created or its password changed outside setup. | `Setup-Quality.ps1` again. |
 | "The Node packages are missing" | `Tests\node_modules` is not there. | `npm ci` in the `Tests` folder. |
 | Anything else | | Copy the first line to Claude. Nothing was tested. |
@@ -223,17 +257,43 @@ the sign-in page takes at most 12 characters for the User ID and for the passwor
 `Error\TestPage.aspx`, a leftover page that is not listed in `PageAccess.xml`, so every role gets
 "Access denied" for it (to be removed with the unused pages).
 
+Found by the access matrix (step WF3a2, recorded in the WF3a2 section of `Database\README.md`):
+`Report\EventCalendar.aspx` runs out of memory on every opening (an endless loop) and every
+signed-in role may open it (removed in RA1c1; the run does not open it); ViewReport.aspx opened
+directly gives the Controller and the Manager an error (fixed in RA1c1).
+
 ## Limits
 
 - Never BMMS, never BMMS_Test.
 - No real mail. Nothing listens on port 25 unless smtp4dev is set to it; a pack that sends mail
   must say which of the two it expects.
 - The site copy and other machines: while the site copy runs, port 18573 listens on this laptop
-  (seen on 2026-11-11: on ::1 and on ::). The Windows Firewall is on for all three profiles and
-  has no rule that lets IIS Express or port 18573 in, and IIS Express answers only to the host
-  name localhost. Whether another machine can in fact reach it has not been tested; a check is
-  the first task of step WF3a2. Until then, do not leave the site running (`-LeaveSiteRunning`)
-  on a network you do not trust, and stop it with `-StopSite` when you have finished looking.
+  (seen on 2026-11-11: on ::1 and on ::). Two guards since step WF3a2.
+
+  The IP restriction. The site copy runs from the runner's own IIS Express configuration
+  (`Tests\_build\iisexpress\applicationhost.config`), which lets in only callers on this laptop
+  (127.0.0.1 and ::1). IIS Express listens through Windows (http.sys) on every address of the
+  laptop and, without that restriction, answered a caller that sends "Host: localhost" through
+  any of them (seen on 2026-11-11). Every run asks the site copy through each network address,
+  with that address and with "Host: localhost" as host name, and stops unless both are refused
+  (seen on 2026-11-11 for all five addresses: HTTP 400 and HTTP 403; localhost got the sign-in
+  page).
+
+  The firewall reading. Every run reads the Windows Firewall. An enabled inbound rule for IIS
+  Express, System or any program that covers port 18573, or a profile that is off, is a warning in
+  the console and in results.md ("Firewall"), not a refusal (your decision of 2026-11-11), because
+  the IP restriction above is checked on every run. `-LeaveSiteRunning` is refused only when a
+  profile lets inbound traffic in by default. Seen on 2026-11-11: all three profiles on and
+  blocking by default; one warning, the Windows rule "WFD Driver-only (TCP-In)" (System, every
+  port). The runner changes no Windows rule. A profile that is off filters nothing, as one that
+  lets inbound traffic in by default: then the IP restriction is the only barrier. It is still only
+  a warning (your decision), so read the "Firewall" line of results.md.
+
+  Neither guard is a test from another machine. Do that once from another device (a phone on the
+  same Wi-Fi, or the other laptop): with the site copy running, its address and port 18573 must
+  give an error page, never the sign-in page (your test steps of WF3a2). Even so, do not leave the
+  site running on a network you do not trust, and stop it with `-StopSite` when you have finished
+  looking.
 - Not a security audit.
 - No judgement of looks.
 - Packs are written in a step's build and reviewed; the tester agent runs them and cannot change

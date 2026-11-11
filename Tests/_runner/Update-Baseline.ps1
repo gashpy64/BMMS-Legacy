@@ -92,7 +92,9 @@ try {
     $steps = Assert-QaStepsInstalled -As Tester -What "$QaDatabase after the Fix script(s)"
     Write-Host "     $($steps.Rows.Count) step rows, all Installed."
 
-    Write-QaStep '5. Baseline backup taken again'
+    # Step WF3a2: the two logins are asked again after the Fix scripts, before the backup keeps their state.
+    Write-QaStep '5. Logins checked again, baseline backup taken again'
+    Assert-QaLoginsReach
     $null = Invoke-QaSqlcmd -As Tester -Query "SET NOCOUNT ON; IF (DB_NAME() COLLATE Latin1_General_BIN <> N'BMMS_Quality') BEGIN RAISERROR('Not on BMMS_Quality.', 16, 1); RETURN; END; BACKUP DATABASE [BMMS_Quality] TO DISK = N'$($baseline.backupPath)' WITH INIT, CHECKSUM, NAME = N'BMMS_Quality tester baseline';"
     [ordered]@{
         takenOn            = (Get-Date -Format 'yyyy-MM-dd HH:mm:ss')

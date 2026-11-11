@@ -3,17 +3,22 @@
 - Title: Testing and Release
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: WF3a1
-- Last updated by: WF3a1, based on 14d780c
+- Applies to: WF3a2
+- Last updated by: WF3a2, based on 5c6228f
 - Status: Draft
-- Verified against: for the section "The tester (step WF3a1)": Tests/README.md, Tests/_runner/Tester.Common.ps1,
+- Verified against: for the sections "The tester (steps WF3a1 and WF3a2)" and "The access-matrix pack (step WF3a2)":
+  CLAUDE.md (steps 1, 5 and 6), .claude/agents/tester.md, Tests/README.md, Tests/packs/access-matrix/
+  (README.md, expected.csv header and the two RA1c rows, not-in-menu.csv, home-link.csv, planted.json),
+  Database/README.md (section Step WF3a2 and Known items for later steps), the owner's test result and
+  the tester agent's run of 2026-11-11 as given for the step (Tests/_results/2026-11-11_215849, not
+  re-read); for the section "The tester (step WF3a1)": Tests/README.md, Tests/_runner/Tester.Common.ps1,
   Run-Tests.ps1 (exit codes, result words), Tests/lib/run.js (Chrome channel), Tests/package.json,
   .claude/agents/tester.md, .claude/hooks/tester-guard.ps1, Database/README.md (section Step WF3a1 and
   Known items for later steps), the owner's test result of 2026-11-11; none yet for the rest (leads from the old Architecture notes added in WF2b1); for the step 40
   section Database/BMMS-Test-RoleAccess-Step40.sql (header), the diff of the three changed Test scripts
   and the owner's test result of step RA1a; for the step 41 section Database/BMMS-Test-ReportAccess-Step41.sql
   (header), Database/README.md (section RA1b) and the owner's test result of step RA1b
-- To confirm: how the tester stage enters the development workflow (CLAUDE.md changes with WF3a2); the count of 44 checks and the counts of the older Test scripts are Database/README.md's, not
+- To confirm: the run times and request count of the access matrix are the owner's measurements as given for the step, not re-measured; the count of 44 checks and the counts of the older Test scripts are Database/README.md's, not
   recounted from the scripts; chapter not written yet (WF2b2); leads from the old Architecture notes to verify
 
 ## Test database
@@ -74,11 +79,12 @@ regression (the nine Admin-only addresses), Followup Cancel, a 1366 px window, a
 and Export to Word of a draft; the error log was clean and PageAccessLog.txt showed the expected lines. Two
 Low findings of that test are in the change log (RA1b).
 
-## The tester (step WF3a1)
+## The tester (steps WF3a1 and WF3a2)
 
-Step WF3a1 adds the infrastructure of a tester and nothing else. No product code changed, there is no
-numbered database step and nothing changed for a user. The first real pack (the access matrix) and the
-change to the development workflow in CLAUDE.md come with step WF3a2; neither exists yet.
+Step WF3a1 added the infrastructure of a tester. Step WF3a2 added the first real pack (the access
+matrix, described in "The access-matrix pack (step WF3a2)"), the tester stage in the development
+workflow (CLAUDE.md, step 5) and closed the four security Lows of WF3a1. Neither step changed product
+code, added a numbered database step or changed anything for a user.
 
 ### What it is
 
@@ -93,10 +99,10 @@ Database/README.md, section "Step WF3a1". What the development machine needs is 
 |---|---|
 | Database | BMMS_Quality only: a restore of BMMS_Test made for the tester, cleared with the application's Reset Database procedure, then a fixture, then a baseline backup (BMMS_Quality_baseline.bak) that is restored at the start of every run. The tester never uses BMMS or BMMS_Test; the name BMMS_Quality is a constant in Tests/_runner/Tester.Common.ps1, and every sqlcmd call goes through one function that accepts BMMS_Quality only (and master for the one RESTORE statement) |
 | Site | A copy of the working tree in Tests/_site, rebuilt (MSBuild into Tests/_build, so bin and obj are untouched) and re-synced at every run, served by IIS Express on http://localhost:18573. The owner's own site (port 49573, BMMS_Test) is not touched |
-| SQL logins | Two, made by the setup. bmms_tester owns BMMS_Quality; the runner restores and checks as this login. bmms_site is the site copy's login: a user in BMMS_Quality with db_datareader, db_datawriter, db_backupoperator and EXECUTE on the dbo schema. Neither has a server role or access to any other database. Before every run the runner asks the server, as each login, what it can reach, and refuses when that is more than BMMS_Quality (any other database, BMMS or BMMS_Test, a server role, CONTROL SERVER, IMPERSONATE). The application login bmms_app is not used |
+| SQL logins | Two, made by the setup. bmms_tester owns BMMS_Quality; the runner restores and checks as this login. bmms_site is the site copy's login: a user in BMMS_Quality with db_datareader, db_datawriter, db_backupoperator and EXECUTE on the dbo schema. Neither has a server role or access to any other database. Before every run the runner asks the server, as each login, what it can reach, and refuses when that is more than BMMS_Quality (any other database, BMMS or BMMS_Test, a server role, CONTROL SERVER, IMPERSONATE). Since WF3a2 the server permissions are an allow-list: in effect only CONNECT SQL and VIEW ANY DATABASE, and granted to the login only CONNECT SQL, otherwise the run is refused; the check is made again after the restore (Run-Tests.ps1), and Update-Baseline.ps1 makes it after the Fix scripts and before the baseline backup. The application login bmms_app is not used |
 | Browser | The installed Chrome, headless, driven by Node scripts (playwright-core). Requests to any host other than localhost are aborted and listed |
 | Mail | BMMS_Quality has the safe default (localhost, port 25); no real mail can be sent |
-| Packs | One folder per pack under Tests/packs (pack.js and data files). In WF3a1 the only pack is selftest. A pack is Node code: it is written in a step's build and reviewed there, and the tester cannot change it |
+| Packs | One folder per pack under Tests/packs (pack.js and data files). The packs are selftest (WF3a1) and access-matrix (WF3a2). A pack is Node code: it is written in a step's build and reviewed there, and the tester cannot change it |
 
 ### How it is run
 
@@ -108,8 +114,9 @@ From the repository folder, in PowerShell 7:
 - `pwsh -NoProfile -File Tests/_runner/Run-Tests.ps1 -Pack [name]` (several: `-Pack a,b`) - the
   self-test always runs first, then the packs.
 - For the owner only: `-LeaveSiteRunning` leaves the site copy on port 18573 after the run, to look at
-  the fixture by hand; `-StopSite` stops it and does nothing else. The tester agent's guard allows
-  neither.
+  the fixture by hand; `-StopSite` stops it and does nothing else; `-Pack access-matrix -ProofFullMatrix`
+  runs the standing proof of the access matrix over every row (see below). The tester agent's guard
+  allows none of them.
 
 Every run, in order: preflight (the two logins asked what they can reach); build of the working tree and
 mirror to Tests/_site; proof that the copy is current; the copy's connection string written from fixed
@@ -132,7 +139,7 @@ alone takes about 20 seconds.
 | PASSED | 0 | Every check gave what was expected, the self-test caught its planted failures, and the error log has no new line |
 | FAILED | 1 | A check did not give what was expected, or the error log has new lines, or a request to another host was stopped |
 | REFUSED | 2 | The runner would not start; nothing was tested. The first line gives the reason (for example: the baseline is out of date, the fixture script changed since the baseline, a tester login can reach more than BMMS_Quality, port 18573 in use, the build failed) |
-| VOID | 3 | The self-test did not catch its planted failures, a pack broke off, or the browser part stopped; no result of that run counts |
+| VOID | 3 | The self-test did not catch its planted failures, the access matrix's standing proof failed (or the site copy's PageAccess.xml was not put back), a pack broke off, or the browser part stopped; no result of that run counts |
 | RUNNER FAILED | 4 | The tester itself broke; nothing can be said about the site |
 | READY | 0 | Check only; no pack was run |
 
@@ -173,7 +180,8 @@ login and the setup never drops the login (a second run only changes the passwor
 ### Upkeep after a new database step
 
 After a numbered database step (step 42 and on) the baseline is out of date and every run is refused
-("out of date") until it is taken again:
+("out of date") until it is taken again. In the workflow this is done on the owner's approval of the
+build, before the tester runs (CLAUDE.md, step 5):
 
 `pwsh -NoProfile -File Tests\_runner\Update-Baseline.ps1 -ConfirmDatabase BMMS_Quality -FixScript BMMS-Fix-[name]-Step[n].sql`
 
@@ -199,7 +207,87 @@ no sqlcmd. The hook fails closed (its command ends with `|| exit 2`). It returns
 folder, result word, the three proofs, checks, failed checks with screenshot, log lines, requests outside
 localhost, working tree before and after). A failed check goes to the owner as it is; the agent never
 proposes a fix and does not run a failed pack again. As with doc-writer, the main session also compares
-`git status --short --ignored` before and after. [[CONFIRM: how the tester stage enters the development workflow; the change to CLAUDE.md comes with step WF3a2, so 02-Development-Environment ("The development workflow") does not name the tester stage yet]]
+`git status --short --ignored` before and after. Since WF3a2 its record also has the access-matrix
+line, the standing proof and the cells for the owner to decide; a cell "owner to decide" counts as
+failed, and a note ("to be removed (RA1c1)", "to be decided (RA1c2)") is counted under notes only.
+
+The tester stage in the workflow (CLAUDE.md, step 5; 02-Development-Environment, "The development
+workflow"): after the fixes of the reviewers' findings and before the owner's tests, the main session
+runs the tester agent with the step's packs, always at least access-matrix. A step with a new
+database script first brings the baseline up to date with Tests/_runner/Update-Baseline.ps1, on the
+owner's approval of the build. A failed check goes to the owner as it is, with the main session's
+reading of it (product, expected result or fixture); no product code, test or expected result is
+changed to make it pass without the owner's word, and the tester never writes or changes a test, a
+pack or an expected result. A REFUSED, VOID or RUNNER FAILED result is reported, and the tester is
+run again once the cause is removed. Every plan lists its browser checks in two sets, "tester" and
+"owner by eye" (looks, print, Word, PDF layout), and the report to the owner has the tester record
+verbatim as its part 6.
+
+## The access-matrix pack (step WF3a2)
+
+The pack proves, on every run, that what each role can open matches the owner's access rules, and it
+fails when it does not. The rules, their short names and the cells decided by the owner are in
+Tests/packs/access-matrix/README.md; this section says how the pack is built and run.
+
+| File | What | Who changes it |
+|---|---|---|
+| expected.csv | One row per address (60), one column per role (admin, controller, manager, user, mgmt, mdsec, inactive, and visitor, a browser that is not signed in), and the rule each row comes from. Each cell is opens, Access denied, sign-in page or Page not found (or one of the note words below) | The owner, or Claude on the owner's instruction; never the tester. Drafted from the owner's access rules, not generated from PageAccess.xml; approved by the owner and checked in |
+| not-in-menu.csv | Pages a role can open without a menu link, a reason per row | The owner (an approved list) |
+| home-link.csv | Which roles have the Home link: Management has it; Admin and MD Secretariat do not | The owner |
+| planted.json | The one change the standing proof makes | Claude, in a reviewed step |
+| pack.js | The checks | Claude, in a reviewed step |
+
+What the pack checks, in order:
+
+1. The files are complete: every cell is one of the allowed words, every row has a rule, every row of
+   not-in-menu.csv has a reason, no address twice.
+2. Every .aspx page on disk is in expected.csv or in PageAccess.xml; a page in neither fails the run.
+3. Agreement: each decided cell is compared with what PageAccess.xml lets through; a difference is a
+   failed check for the owner to decide (the XML or the cell). On the rows that narrow the XML's roles
+   by their own check (page_rule RA1b) only a cell that opens where the XML refuses counts.
+4. The matrix: each role signs in and opens each address (Logout last); what comes back and the lines of
+   the page access log (one DENIED line for that user and page for a refusal, none otherwise) are
+   compared with the cell. qa_inactive cannot sign in ("Your account is inactive"), so its column is the
+   visitor's.
+5. The menu: each role's links are read on the Dashboard. Every link must be an address in expected.csv
+   that opens for that role; every page a role opens must have a link or a row in not-in-menu.csv; a row
+   there that no longer applies fails; the Home link must match home-link.csv.
+
+The standing proof (the proof that the pack can fail). Before the matrix, on every run, Run-Tests.ps1
+changes one entry of PageAccess.xml in the site copy only, Tests/_site/XML/PageAccess.xml, never in
+the working tree: it adds the role user to Report/MeetingCalendar.aspx (planted.json). It runs the two
+rows of planted.json for every column; exactly one cell must come out different, qa_user on Meeting
+Calendar ("Access denied" expected, "opens" seen). The change is undone in a finally block. At the end
+of the run the hash (SHA-256) of Tests/_site/XML/PageAccess.xml is compared with the working tree's
+file, and the run is VOID if they differ, or if the proof gave any other result. -ProofFullMatrix (owner
+only) runs the proof over every row; the one-time full proof of 2026-11-11 changed exactly one cell.
+
+Notes (never failures):
+
+| Cell or note | Meaning |
+|---|---|
+| to be removed (RA1c1) | Report/EventCalendar.aspx and Report/ReportPrint.aspx, every cell (owner decision 2026-11-11). The run does not open them (a GET of Event Calendar runs out of memory) |
+| to be decided (RA1c2) | Report/FollowupActionTaken.aspx for the Controller and the Manager. The run opens the page and shows what it does |
+| owner to decide | No written rule decides the cell; it counts as failed until the owner decides it. None at present |
+
+Known failures kept as real failures: Report/ViewReport.aspx opened directly (no report kind) is expected
+to "open" for the Controller and the Manager (the page should show "The report is no longer available")
+and "Access denied" for Management. Today the Controller and the Manager get HTTP 500; the pack fails
+those two cells, a product defect recorded in Database/README.md and fixed in RA1c1. The two
+Page-not-found rows (Master/NoSuchPage.aspx, Images/no-such-file.png) are kept as observed, and the
+drafting rule D0 (a role has a page only when a written rule gives it) is confirmed by the owner.
+
+results.md of an access-matrix run adds the sections "Access matrix" (one line per address, one column
+per role), the notes, "Cells for the owner to decide", "Other notes for the owner" and "Standing proof
+of the access matrix", and a line "Firewall" (see "Limits").
+
+Result of the step (tester agent, run of 2026-11-11, Tests/_results/2026-11-11_215849): FAILED on exactly
+the two ViewReport.aspx cells (Controller and Manager: expected "opens", seen HTTP 500). 501 checks, 499
+passed; self-test 3 of 3 planted failures caught; access matrix 464 cells, 444 ok, 2 failed, 0 owner to
+decide, 18 notes; standing proof holds; no request outside localhost. Run time 170 s (measured runs
+158 to 216 s; about 510 page requests; most of the time is the site's first requests, which compile the
+pages). The plan's aim was about two minutes; Tests/README.md says about three minutes. The owner's tests
+of WF3a2 passed on 2026-11-11 and the expected files are approved.
 
 ### Limits
 
@@ -210,12 +298,22 @@ proposes a fix and does not run a failed pack again. As with doc-writer, the mai
   only. Every pack must be reviewed as code in the step that adds it.
 - No retry: a check that fails once is reported as failed.
 - While the site copy runs, port 18573 listens on this laptop (on the local loopback and on all IPv6
-  addresses, seen on 2026-11-11). The Windows Firewall is on and has no rule that lets IIS Express in,
-  and IIS Express answers only to the host name localhost; whether another machine can reach it has not
-  been tested. Do not leave the site running (-LeaveSiteRunning) on a network you do not trust.
-- Open items are in Database/README.md, "Known items for later steps". The first task of WF3a2 is four
-  security Lows: the allow-list of the pre-run check, the timing of the role check, the read-back of
-  the icacls permissions, and the reachability check for -LeaveSiteRunning.
+  addresses, seen on 2026-11-11). Since WF3a2 the site copy runs from the runner's own IIS Express
+  configuration (Tests/_build/iisexpress/applicationhost.config, made from IIS Express's template at
+  every start), which lets in only callers on this laptop (the loopback addresses; the IP restriction module); this configuration is
+  localhost-only. At every start the runner asks the site copy through each network address of the
+  machine, with that address and with "Host: localhost" as host name, and stops unless both are refused
+  (no connection, HTTP 400 or HTTP 403). The runner also reads the Windows Firewall at every run: an
+  enabled inbound rule that lets traffic in for IIS Express, System or any program on port 18573, or a
+  profile that is off, is printed as a warning in the console and in results.md ("Firewall"); it is not
+  a refusal. -LeaveSiteRunning is refused only when a profile lets inbound traffic in by default. The
+  runner changes no Windows rule. On the development laptop on 2026-11-11 the one warning is the rule
+  "WFD Driver-only (TCP-In)". These guards test from this machine; they are not a test from another
+  machine (Tests/README.md gives the owner's step). Do not leave the site running on a network you do
+  not trust.
+- The four security Lows of WF3a1 (allow-list of server permissions, role check timing, read-back of the
+  icacls permissions on the site copy's connection file before the password is written, reachability)
+  are closed in WF3a2. Other open items are in Database/README.md, "Known items for later steps".
 - Facts found about the product while building, recorded in Database/README.md: the sign-in page takes at
   most 12 characters for User ID and password; Error/TestPage.aspx is an unlisted leftover page that
   every role is refused; PageAccess.xml has 46 page entries and the site 47 pages.

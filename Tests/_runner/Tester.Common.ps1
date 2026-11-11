@@ -54,6 +54,8 @@ $QaAccounts = [ordered]@{
 }
 
 class QaRefusal : System.Exception { QaRefusal([string]$m) : base($m) {} }
+# Step WF3a2: the run broke off in a way that makes it not count (the standing proof's put-back failed).
+class QaVoid : System.Exception { QaVoid([string]$m) : base($m) {} }
 function Stop-Qa([string]$Message) { throw [QaRefusal]::new($Message) }
 function Write-QaStep([string]$Text) { Write-Host ("[{0}] {1}" -f (Get-Date -Format 'HH:mm:ss'), $Text) }
 
@@ -83,6 +85,17 @@ function Test-QaLocalDirAcl {
             if ($rule.IdentityReference.Value -ine $me) { return $false }
         }
     }
+    return $true
+}
+
+# One file: no inherited permissions, and every entry is the owner's Windows account (step WF3a2).
+function Test-QaOnlyMine([string]$Path) {
+    $me = Get-QaCurrentAccount
+    $acl = Get-Acl -LiteralPath $Path
+    if (-not $acl.AreAccessRulesProtected) { return $false }
+    $rules = @($acl.Access)
+    if ($rules.Count -eq 0) { return $false }
+    foreach ($rule in $rules) { if ($rule.IsInherited -or $rule.IdentityReference.Value -ine $me) { return $false } }
     return $true
 }
 
@@ -159,9 +172,14 @@ function Assert-QaDatabase([ValidateSet('Windows', 'Tester')][string]$As) {
 #   - can open BMMS or BMMS_Test (asked by name, so a hidden list cannot hide them);
 #   - is a member of any fixed server role;
 #   - holds CONTROL SERVER or IMPERSONATE ANY LOGIN, or any IMPERSONATE grant on another login;
+#   - (step WF3a2, an allow-list) holds any server permission in effect other than CONNECT SQL and
+#     VIEW ANY DATABASE (what every login has through public), however it was given: directly, to
+#     public or through a role (fn_my_permissions); or has any permission granted to the login
+#     itself other than CONNECT SQL on the server (sys.server_permissions);
 #   - bmms_site only: is in BMMS_Quality anything but a member of exactly db_backupoperator,
 #     db_datareader and db_datawriter (the roles of the application login bmms_app).
 # Every answer line must be there with the expected value: a missing line refuses too.
+New-Variable -Name QaAllowedServerPermissions -Value @('CONNECT SQL', 'VIEW ANY DATABASE') -Option Constant
 function Assert-QaLoginReach([ValidateSet('Tester', 'Site')][string]$As) {
     $login = $(if ($As -eq 'Site') { $QaSiteLogin } else { $QaTesterLogin })
     $q = "SET NOCOUNT ON; " +
@@ -170,6 +188,8 @@ function Assert-QaLoginReach([ValidateSet('Tester', 'Site')][string]$As) {
          "SELECT 'named|' + CAST(ISNULL(HAS_DBACCESS(N'BMMS'), 0) + ISNULL(HAS_DBACCESS(N'BMMS_Test'), 0) AS varchar(5)); " +
          "SELECT 'role|' + CAST(IS_SRVROLEMEMBER('sysadmin') + IS_SRVROLEMEMBER('securityadmin') + IS_SRVROLEMEMBER('serveradmin') + IS_SRVROLEMEMBER('setupadmin') + IS_SRVROLEMEMBER('processadmin') + IS_SRVROLEMEMBER('diskadmin') + IS_SRVROLEMEMBER('dbcreator') + IS_SRVROLEMEMBER('bulkadmin') + (SELECT COUNT(*) FROM sys.server_role_members m WHERE m.member_principal_id = SUSER_ID()) AS varchar(5)); " +
          "SELECT 'perm|' + CAST((SELECT COUNT(*) FROM fn_my_permissions(NULL, 'SERVER') WHERE permission_name IN ('CONTROL SERVER', 'IMPERSONATE ANY LOGIN')) + (SELECT COUNT(*) FROM sys.server_permissions WHERE grantee_principal_id = SUSER_ID() AND permission_name LIKE 'IMPERSONATE%') AS varchar(5)); " +
+         "SELECT 'eff|' + permission_name FROM fn_my_permissions(NULL, 'SERVER'); " +
+         "SELECT 'own|' + class_desc + ':' + permission_name + ':' + state_desc FROM sys.server_permissions WHERE grantee_principal_id = SUSER_ID(); " +
          "SELECT 'dbuser|' + USER_NAME(); " +
          "SELECT 'dbrole|' + r.name FROM sys.database_role_members m JOIN sys.database_principals r ON r.principal_id = m.role_principal_id WHERE m.member_principal_id = DATABASE_PRINCIPAL_ID() ORDER BY r.name;"
     $r = Invoke-QaSqlcmd -As $As -NoHeader -Query $q -NoThrow
@@ -181,6 +201,13 @@ function Assert-QaLoginReach([ValidateSet('Tester', 'Site')][string]$As) {
     if ($named.Count -ne 1 -or $named[0] -cne '0') { Stop-Qa "$login can open BMMS or BMMS_Test. It must reach $QaDatabase only. Nothing was done; tell Claude." }
     if ($roles.Count -ne 1 -or $roles[0] -cne '0') { Stop-Qa "$login is a member of a server role. It must have none. Nothing was done; tell Claude." }
     if ($perm.Count -ne 1 -or $perm[0] -cne '0') { Stop-Qa "$login holds CONTROL SERVER or an IMPERSONATE right. It must have neither. Nothing was done; tell Claude." }
+    # Step WF3a2: the allow-list. The answer must name CONNECT SQL (a login that can sign in has it), so an
+    # empty answer cannot pass.
+    $effective = @(One 'eff' | Sort-Object -Unique); $own = @(One 'own')
+    $extra = @($effective | Where-Object { $_ -cnotin $QaAllowedServerPermissions })
+    if ($effective -cnotcontains 'CONNECT SQL' -or $extra.Count -gt 0) { Stop-Qa "$login holds the server permission(s) '$($extra -join ', ')' besides CONNECT SQL and VIEW ANY DATABASE. It must hold no other. Nothing was done; tell Claude." }
+    $ownExtra = @($own | Where-Object { $_ -cne 'SERVER:CONNECT SQL:GRANT' })
+    if ($ownExtra.Count -gt 0) { Stop-Qa "$login was given '$($ownExtra -join ', ')' on the server besides CONNECT SQL. It must have nothing else. Nothing was done; tell Claude." }
     if ($As -eq 'Site') {
         if ($dbuser.Count -ne 1 -or $dbuser[0] -cne $QaSiteLogin) { Stop-Qa "$login is not the plain user $QaSiteLogin in $QaDatabase. Nothing was done; tell Claude." }
         if ($dbroles -cne 'db_backupoperator,db_datareader,db_datawriter') { Stop-Qa "$login has the roles '$dbroles' in $QaDatabase, not exactly db_backupoperator, db_datareader, db_datawriter. Nothing was done; tell Claude." }
@@ -344,6 +371,12 @@ function Write-QaSiteConnection {
     $me = Get-QaCurrentAccount
     $null = & icacls $target /inheritance:r /grant:r "${me}:F" 2>&1
     if ($LASTEXITCODE -ne 0) { Stop-Qa 'The permissions of Tests\_site\connectionStrings.config could not be restricted.' }
+    # Step WF3a2: read the permissions back before the password goes in. /grant:r replaces only the
+    # entries of this account, so an explicit entry of another account would stay: refuse then.
+    if (-not (Test-QaOnlyMine $target)) {
+        Remove-Item -LiteralPath $target -Force -ErrorAction SilentlyContinue
+        Stop-Qa 'Tests\_site\connectionStrings.config can still be read by an account other than yours after icacls (an explicit entry of another account, or inherited permissions). The password was not written. Tell Claude.'
+    }
     @('<connectionStrings>',
       "`t<add name=`"ConnectionString`"",
       "`t`t connectionString=`"server=$QaServer;database=$QaDatabase;uid=$QaSiteLogin;password=$password;TrustServerCertificate=True`"/>",
@@ -388,9 +421,41 @@ function Get-QaBuildMarker {
     }
 }
 
+# Step WF3a2: the site copy runs from the runner's own IIS Express configuration (Tests\_build\iisexpress),
+# made from IIS Express's template: one site, Tests\_site on http://localhost:18573, and the IP restriction
+# module set to let in only callers on this machine (127.0.0.1 and ::1). IIS Express listens through http.sys
+# on every address of the machine and answers a request that says "Host: localhost" on any of them (seen
+# 2026-11-11), so the host-name binding alone keeps no other machine out. BMMS\Web.config is not touched.
+New-Variable -Name QaIisSiteName -Value 'BMMSTester' -Option Constant
+$QaIisConfig = Join-Path $QaBuildDir 'iisexpress\applicationhost.config'
+
+function New-QaIisConfig {
+    $template = Join-Path (Split-Path -Parent $QaIisExpress) 'AppServer\applicationhost.config'
+    if (-not (Test-Path -LiteralPath $template)) { Stop-Qa "The IIS Express configuration template was not found ($template)." }
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $QaIisConfig) | Out-Null
+    $x = [xml]::new(); $x.PreserveWhitespace = $true; $x.Load($template)
+    $sites = $x.SelectSingleNode('/configuration/system.applicationHost/sites')
+    foreach ($s in @($sites.SelectNodes('site'))) { $null = $sites.RemoveChild($s) }
+    $site = $x.CreateElement('site'); $site.SetAttribute('name', $QaIisSiteName); $site.SetAttribute('id', '1'); $site.SetAttribute('serverAutoStart', 'true')
+    $app = $x.CreateElement('application'); $app.SetAttribute('path', '/'); $app.SetAttribute('applicationPool', 'Clr4IntegratedAppPool')
+    $vd = $x.CreateElement('virtualDirectory'); $vd.SetAttribute('path', '/'); $vd.SetAttribute('physicalPath', $QaSiteDir)
+    $null = $app.AppendChild($vd); $null = $site.AppendChild($app)
+    $bindings = $x.CreateElement('bindings'); $b = $x.CreateElement('binding'); $b.SetAttribute('protocol', 'http'); $b.SetAttribute('bindingInformation', ":${QaPort}:localhost")
+    $null = $bindings.AppendChild($b); $null = $site.AppendChild($bindings)
+    $null = $sites.PrependChild($site)
+    $ip = $x.SelectSingleNode('/configuration/system.webServer/security/ipSecurity')
+    if (-not $ip) { Stop-Qa 'The IIS Express template has no ipSecurity section; the site copy cannot be kept to this machine.' }
+    $ip.RemoveAll(); $ip.SetAttribute('allowUnlisted', 'false')
+    foreach ($a in '127.0.0.1', '::1') { $e = $x.CreateElement('add'); $e.SetAttribute('ipAddress', $a); $e.SetAttribute('allowed', 'true'); $null = $ip.AppendChild($e) }
+    $x.Save($QaIisConfig)
+}
+
 function Get-QaSiteProcesses {
+    # The runner's own configuration (since WF3a2), or an older /path start of the site copy (WF3a1).
     @(Get-CimInstance Win32_Process -Filter "Name='iisexpress.exe'" | Where-Object {
-        $_.CommandLine -and $_.CommandLine -like "*/port:$QaPort*" -and $_.CommandLine -like "*$QaSiteDir*" })
+        $_.CommandLine -and (
+            ($_.CommandLine -like "*$QaIisConfig*" -and $_.CommandLine -like "*/site:$QaIisSiteName*") -or
+            ($_.CommandLine -like "*/port:$QaPort*" -and $_.CommandLine -like "*$QaSiteDir*")) })
 }
 
 function Stop-QaSite {
@@ -400,12 +465,15 @@ function Stop-QaSite {
 
 function Start-QaSite {
     Stop-QaSite
-    if (Get-NetTCPConnection -LocalPort $QaPort -State Listen -ErrorAction SilentlyContinue) { Stop-Qa "Port $QaPort is already in use by another program. No test was run." }
+    # A listening entry owned by process 0 is a socket of a process that has already ended (seen after the
+    # address probes below); it does not keep IIS Express from starting, so only a live owner refuses.
+    if (@(Get-NetTCPConnection -LocalPort $QaPort -State Listen -ErrorAction SilentlyContinue | Where-Object { $_.OwningProcess -gt 0 }).Count -gt 0) { Stop-Qa "Port $QaPort is already in use by another program. No test was run." }
     if (-not (Test-Path -LiteralPath $QaIisExpress)) { Stop-Qa 'IIS Express was not found.' }
     Assert-QaSiteConnection
     # Started without redirecting its output, so it inherits none of the runner's pipes: a site copy
     # left running (-LeaveSiteRunning) then never keeps the caller of the runner waiting.
-    $p = Start-Process -FilePath $QaIisExpress -ArgumentList "/path:`"$QaSiteDir`"", "/port:$QaPort", '/clr:v4.0', '/systray:false' `
+    New-QaIisConfig
+    $p = Start-Process -FilePath $QaIisExpress -ArgumentList "/config:`"$QaIisConfig`"", "/site:$QaIisSiteName", '/systray:false' `
         -WindowStyle Hidden -PassThru
     $deadline = (Get-Date).AddSeconds(180); $ok = $false
     while ((Get-Date) -lt $deadline -and -not $p.HasExited) {
@@ -419,5 +487,82 @@ function Start-QaSite {
     # The process that answers is ours and serves Tests\_site.
     $mine = @(Get-QaSiteProcesses | Where-Object { $_.ProcessId -eq $p.Id })
     if ($mine.Count -ne 1) { Stop-QaSite; Stop-Qa 'The IIS Express process on the test port is not the one the runner started.' }
+    Assert-QaLocalhostOnly
     return $p
+}
+
+# Step WF3a2: the site copy serves only callers on this machine. Asked through each of this machine's own network
+# addresses (what another machine would use), twice: with the address as host name (HTTP 400: the localhost
+# binding) and with "Host: localhost" (HTTP 403: the IP restriction of New-QaIisConfig). Anything but no
+# connection, 400 or 403 stops the run; so does a probe that gets no answer in time. Local traffic does not pass
+# the firewall, so this tests the binding and the IP restriction, not the firewall (Get-QaFirewallOpenings).
+function Get-QaLocalAddresses {
+    @(Get-NetIPAddress -ErrorAction SilentlyContinue | Where-Object {
+        $_.AddressState -eq 'Preferred' -and $_.IPAddress -notmatch '^(127\.|169\.254\.|::1$|fe80:)' } |
+        ForEach-Object { $_.IPAddress } | Sort-Object -Unique)
+}
+
+function Assert-QaLocalhostOnly {
+    $answered = @()
+    foreach ($ip in Get-QaLocalAddresses) {
+        $hostPart = $(if ($ip -match ':') { "[$ip]" } else { $ip })
+        # Twice per address: with the address as host name (what a browser elsewhere sends) and with
+        # "Host: localhost" (what a caller elsewhere could send). Only a refusal passes: no connection,
+        # HTTP 400 (host name not served) or HTTP 403 (the IP restriction: not a caller on this machine).
+        foreach ($hostHeader in @($null, "localhost:$QaPort")) {
+            try {
+                $a = @{ Uri = "http://${hostPart}:$QaPort/Default.aspx"; UseBasicParsing = $true; TimeoutSec = 10; SkipHttpErrorCheck = $true; MaximumRedirection = 0; DisableKeepAlive = $true; NoProxy = $true }
+                if ($hostHeader) { $a.Headers = @{ Host = $hostHeader } }
+                $r = Invoke-WebRequest @a
+                if ($r.StatusCode -notin 400, 403) { $answered += "$ip$(if ($hostHeader) { ' (Host: localhost)' }) (HTTP $($r.StatusCode))" }
+            } catch {
+                # Refused or reset: as wanted. No answer in time: not shown to be refused, so it stops the run.
+                if ($_.Exception -is [System.Threading.Tasks.TaskCanceledException] -or $_.Exception -is [System.TimeoutException] -or "$($_.Exception.Message)" -match '(?i)time(d)? ?out') {
+                    $answered += "$ip$(if ($hostHeader) { ' (Host: localhost)' }) (no answer within 10 seconds)"
+                }
+            }
+        }
+    }
+    if ($answered.Count -gt 0) {
+        Stop-QaSite
+        Stop-Qa "The site copy answers on a network address of this machine, not only to localhost: $($answered -join ', '). It was stopped; no test was run. Tell Claude."
+    }
+}
+
+# Step WF3a2: what in the firewall could let another machine reach the site copy: a profile that is off or that
+# lets inbound traffic in by default, and every enabled inbound allow rule (TCP or any protocol) for IIS Express,
+# for System (http.sys receives the traffic) or for any program, that covers port 18573 (the number, a range,
+# "*" or no port given). Rules of other programs and app-container rules (LocalUserOwner set) are not counted.
+# Read through the firewall's COM interface, which needs no administrator rights; if it fails, the runner fails.
+# Owner decision (2026-11-11): each finding is an object { Refuse; Text }. Only a profile that lets inbound
+# traffic in by default refuses -LeaveSiteRunning; a rule or a profile that is off is a warning, because the IP
+# restriction is probed on every address with both host names on every run (Assert-QaLocalhostOnly). The
+# runner changes no Windows rule.
+function Get-QaFirewallOpenings {
+    $out = @()
+    $fw = New-Object -ComObject HNetCfg.FwPolicy2
+    foreach ($profile in @(@{ n = 'Domain'; v = 1 }, @{ n = 'Private'; v = 2 }, @{ n = 'Public'; v = 4 })) {
+        if (-not $fw.FirewallEnabled($profile.v)) { $out += [pscustomobject]@{ Refuse = $false; Text = "the Windows Firewall is off for the $($profile.n) profile" } }
+        elseif ($fw.DefaultInboundAction($profile.v) -eq 1) { $out += [pscustomobject]@{ Refuse = $true; Text = "the $($profile.n) profile lets inbound traffic in by default (no rule needed)" } }
+    }
+    # The traffic of the site copy is received by System (http.sys) on behalf of IIS Express. A rule counts when
+    # it is for IIS Express, for System or for any program, and covers port 18573 (the number, a range, or every
+    # port). Rules of an app container (LocalUserOwner set: a Store app's own rule) and of other programs do not
+    # reach System and are not counted.
+    foreach ($rule in $fw.Rules) {
+        if ($rule.Direction -ne 1 -or -not $rule.Enabled -or $rule.Action -ne 1 -or $rule.Protocol -notin 6, 256) { continue }
+        $owner = ''; try { $owner = "$($rule.LocalUserOwner)" } catch { }
+        if ($owner) { continue }
+        $app = "$($rule.ApplicationName)"
+        if ($app -and $app -notmatch '(?i)(^|\\)iisexpress\.exe$|^System$') { continue }
+        $ports = "$($rule.LocalPorts)".Trim()
+        $covers = (-not $ports -or $ports -eq '*')
+        foreach ($part in ($ports -split ',')) {
+            $x = $part.Trim()
+            if ($x -match '^(\d+)-(\d+)$') { if ($QaPort -ge [int]$Matches[1] -and $QaPort -le [int]$Matches[2]) { $covers = $true } }
+            elseif ($x -match '^\d+$' -and [int]$x -eq $QaPort) { $covers = $true }
+        }
+        if ($covers) { $out += [pscustomobject]@{ Refuse = $false; Text = "rule '$($rule.Name)' (" + $(if ($app) { $app } else { 'any program' }) + ", port " + $(if ($ports -and $ports -ne '*') { $ports } else { 'any' }) + ") lets inbound traffic in" } }
+    }
+    return @($out)
 }

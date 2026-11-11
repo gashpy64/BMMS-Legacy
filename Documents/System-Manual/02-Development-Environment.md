@@ -3,10 +3,11 @@
 - Title: Development Environment
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: WF3a1
-- Last updated by: WF3a1, based on 14d780c
+- Applies to: WF3a2
+- Last updated by: WF3a2, based on 5c6228f
 - Status: Draft
-- Verified against: for the section "The tester: what the development machine needs": Tests/package.json,
+- Verified against: for the development workflow (steps 1, 5, 6, 7 and 9) and the agents: CLAUDE.md (diff),
+  .claude/agents/tester.md; for the section "The tester: what the development machine needs": Tests/package.json,
   Tests/README.md, Tests/_runner/Tester.Common.ps1 and Run-Tests.ps1 (tool lookup), Tests/lib/run.js,
   .gitignore, Database/README.md (section Step WF3a1); and for the rest: BMMS.sln, BMMS/BMMS.csproj, BMMSBAL/BMMSBAL.csproj, BMMSDAL/BMMSDAL.csproj,
   BMMS/Web.config (connectionStrings and compilation lines), BMMS/connectionStrings.config.example,
@@ -211,7 +212,8 @@ CLAUDE.md sets the workflow for every step. In short:
 
 1. Plan first. The owner approves the plan before any code or file change. Every plan names the
    documents affected (by the update matrix in Documents/README.md) or says "documents affected:
-   none".
+   none". It lists its browser checks in two sets: "tester" (the packs the tester runs) and "owner
+   by eye" (looks, print, Word, PDF layout).
 2. Build, then the build checks: the compile into a scratch folder, the site precompile, an SQL
    parse, and the step's Test script on BMMS_Test.
 3. Review: three read-only reviewer agents, each run separately on the step's git diff and its new
@@ -219,12 +221,20 @@ CLAUDE.md sets the workflow for every step. In short:
 4. Fix the High and Medium findings, or list them as open with a reason; Low findings go to the
    backlog ("Known items for later steps" in Database/README.md). After a fix, run the build checks
    again and the reviewer that raised the finding.
-5. Report to the owner: the build checks and results, the files changed, the three reviewer
-   records, what was fixed and what is open, and test steps for the owner.
-6. Documentation stage, after the owner's tests pass and before the commit: the doc-writer agent
+5. Tester, after the fixes and before the owner's tests: the tester agent runs the step's packs
+   (always at least access-matrix). A step with a new database script first brings the tester's
+   baseline up to date with Tests/_runner/Update-Baseline.ps1, on the owner's approval of the build.
+   A failed check goes to the owner as it is, with the main session's reading of it; the tester
+   never writes or changes a test, a pack or an expected result, and nothing is changed to make a
+   run pass without the owner's word. A REFUSED, VOID or RUNNER FAILED result is reported, and the
+   tester is run again once the cause is removed (10-Testing-and-Release, "The tester").
+6. Report to the owner in six parts: the build checks and results, the files changed, the three
+   reviewer records, what was fixed and what is open, test steps for the owner (the "owner by eye"
+   set), and the tester record verbatim.
+7. Documentation stage, after the owner's tests pass and before the commit: the doc-writer agent
    updates the documents; the two check scripts run; the documents go in the same commit as the
    step.
-7. Nobody but the owner commits, tags or pushes.
+8. Nobody but the owner commits, tags or pushes.
 
 ```mermaid
 flowchart LR
@@ -232,13 +242,15 @@ flowchart LR
     B[Build and build checks]
     C[Three reviews]
     D[Fix or list open]
+    T[Tester]
     E[Owner tests]
     F[Documentation stage]
     G[Owner commits and tags]
     A --> B
     B --> C
     C --> D
-    D --> E
+    D --> T
+    T --> E
     E --> F
     F --> G
 ```
@@ -248,11 +260,12 @@ flowchart LR
 | Plan approved by owner | Build and build checks | The approved plan | Names the documents affected |
 | Build and build checks | Three reviews | The step's git diff and new files | Reviewers get the requirement, not the reasoning |
 | Three reviews | Fix or list open | Findings | High and Medium fixed or listed open; Low to the backlog |
-| Fix or list open | Owner tests | The report in five parts | Build checks run again after a fix |
+| Fix or list open | Tester | The step's packs; a new database script first updates the baseline | The tester agent runs the packs; a failure goes to the owner as it is |
+| Tester | Owner tests | The report in six parts, the tester record verbatim | Build checks run again after a fix |
 | Owner tests | Documentation stage | The test result | The doc-writer gets the requirement, the diff and the test result |
 | Documentation stage | Owner commits and tags | Code and documents | One commit and one tag per step |
 
-Drawn from: CLAUDE.md.
+Drawn from: CLAUDE.md (development workflow, steps 1 to 9).
 
 ### The build checks
 
@@ -289,6 +302,7 @@ The agents are Claude Code subagents defined in `.claude/agents/`:
 | security-reviewer | Read-only security review of one step: SQL and procedures, input and output handling, roles and acting-user rules, mail headers, secrets, uploads, audit rows, races and rollback. Never edits files |
 | ux-reviewer | Read-only usability review of one step: steps per role, the owner's terms, messages about what was and was not saved, validation, confirmations, read-only states, keyboard use, edge cases, mail failure after a save. Never edits files |
 | ui-reviewer | Read-only visual review of one step: use of bmms-workbench.css and existing page patterns, clipping and overflow at laptop widths, column alignment, colour and contrast, icons with text or tooltip, Chrome and Edge at 100 percent. Never edits files |
+| tester | Runs the tester's packs (Tests/_runner/Run-Tests.ps1) and returns a fixed record; tools Read and Bash, confined by .claude/hooks/tester-guard.ps1; writes nothing and changes no test (10-Testing-and-Release) |
 | doc-writer | Writes and updates the documents in Documents/ for one step, after the owner's tests pass and before the commit, and returns a record of the documents changed, the statements it could not verify and a shot list. Writes only inside Documents/ |
 
 The doc-writer has a guard hook (`.claude/hooks/doc-writer-guard.ps1`, declared in the agent's

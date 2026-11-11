@@ -3,10 +3,11 @@
 - Title: Deployment and Installation
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: RA1b (step 41)
-- Last updated by: RA1b (step 41), based on 1d1bbbe
+- Applies to: WF3a2 (section "The tester's baseline after a new database step"); the rest RA1b (step 41)
+- Last updated by: WF3a2, based on 5c6228f
 - Status: Draft
-- Verified against: Database/README.md ("Always test on a copy first", "Run order" with its
+- Verified against: for WF3a2: CLAUDE.md (step 5), Tests/_runner/Update-Baseline.ps1 (diff),
+  Database/README.md (section Step WF3a2); and for the rest: Database/README.md ("Always test on a copy first", "Run order" with its
   re-run notes, "Test and check scripts", the "what to run where" parts of steps 13, 15, 29, 30
   and UD1a (step 39)), the header comments and guard code of the Database/ Fix, Rollback, Add,
   Check and Test scripts (all names listed by git; BMMS-Check-SmallintParameters.sql left out),
@@ -309,6 +310,14 @@ What it prints (result grids):
 Partly usually means that an older script was run again after a newer one, which brings back an
 older procedure text (see "Upgrading an existing installation"). Step 32 is reserved and has no
 row.
+
+### The tester's baseline after a new database step
+
+After a new numbered database step the tester's baseline (the database BMMS_Quality on the
+development machine) is brought up to date with Tests/_runner/Update-Baseline.ps1, on the owner's
+approval of the build and before the tester runs (CLAUDE.md, step 5); until then every tester run is
+refused as "out of date". It does not install the step on BMMS or BMMS_Test. How it works is in
+10-Testing-and-Release ("Upkeep after a new database step").
 
 ## Web application install
 

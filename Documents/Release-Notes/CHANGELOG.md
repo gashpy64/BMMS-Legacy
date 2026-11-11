@@ -3,10 +3,12 @@
 - Title: BMMS Change Log
 - Audience: Gashpy Software (internal)
 - Shipped: No
-- Applies to: WF3a1
-- Last updated by: WF3a1, based on 14d780c
+- Applies to: WF3a2
+- Last updated by: WF3a2, based on 5c6228f
 - Status: Draft
-- Verified against: for WF3a1: Tests/README.md, Tests/_runner/*, .claude/agents/tester.md,
+- Verified against: for WF3a2: CLAUDE.md, .claude/agents/tester.md, Tests/README.md, Tests/_runner/*,
+  Tests/lib/run.js, Tests/packs/access-matrix/*, Database/README.md (section Step WF3a2 and Known items
+  for later steps), the owner's test result and the tester run of 2026-11-11 as given; for WF3a1: Tests/README.md, Tests/_runner/*, .claude/agents/tester.md,
   .claude/hooks/tester-guard.ps1, Database/README.md (section Step WF3a1), the owner's test result; and for the rest: git tags and commit subjects (git for-each-ref refs/tags), Database/README.md, the diff
   of step RA1b (BMMS/Report/*.cs, PageAccessModule.cs, PageAccess.xml, MenuUserControl.ascx, BMMSBAL,
   BMMSDAL), Database/BMMS-Fix-ReportAccess-Step41.sql
@@ -16,6 +18,46 @@
 One entry per step, newest first. Each entry names the step, its tag and what changed for users,
 for installers and in the database. Release entries (tags vX.Y.Z) collect the steps since the
 previous release.
+
+## WF3a2 - Access-matrix pack, tester stage in the workflow, four security Lows closed (tag not yet set, 2026-11-11; no database step)
+
+- For users: nothing. No product code changed and no page, message or role right changed. No user
+  manual is touched.
+- For developers: the tester has its first real pack, access-matrix (Tests/packs/access-matrix/): 60
+  addresses by eight columns (qa_admin, qa_ctrl, qa_manager, qa_user, qa_mgmt, qa_mdsec, qa_inactive and
+  a visitor not signed in), each cell opens, Access denied, sign-in page or Page not found. The
+  expected files are drafted from the owner's access rules, approved by the owner and never changed by
+  the tester. The pack agrees them with PageAccess.xml and the menu; a page on disk in neither
+  expected.csv nor PageAccess.xml fails the run; not-in-menu.csv and home-link.csv are approved lists.
+  Standing proof on every run: one entry of PageAccess.xml is changed in the site copy only and undone
+  in a finally block; the run is VOID if the cell is not caught or the site copy's file differs from the
+  working tree's afterwards. -ProofFullMatrix (owner only) runs it over every row. Notes "to be removed
+  (RA1c1)" (Event Calendar, Report Print) and "to be decided (RA1c2)" (Followup Action Taken for the
+  Controller and the Manager) are never failures. Workflow (CLAUDE.md): plans list "tester" and
+  "owner by eye" checks; new step 5 Tester (Update-Baseline.ps1 first for a new database script; a
+  failure goes to the owner as it is; the tester never changes a test); the report has six parts, the
+  tester record verbatim as the sixth. Security: the four Lows of WF3a1 are closed (allow-list of server
+  permissions before every run and again after the restore and before the baseline backup; read-back of
+  the permissions on the site copy's connection file; the site copy runs from the runner's own IIS
+  Express configuration that lets in only callers on this laptop (the loopback addresses), and every run probes each network address
+  and stops unless it is refused; every run reads the Windows Firewall and prints a warning in the
+  console and in results.md ("Firewall"); -LeaveSiteRunning is refused only when a profile lets inbound
+  traffic in by default; the runner changes no Windows rule).
+- For installers: nothing.
+- Database: no numbered step; no row in BMMS-Check-InstalledSteps.sql.
+- Tests: the owner's tests passed on 2026-11-11 and the expected files are approved. Tester run
+  (Tests/_results/2026-11-11_215849): FAILED on exactly the two ViewReport.aspx cells (Controller and
+  Manager: expected opens, seen HTTP 500; a known product defect, fixed in RA1c1); 501 checks, 499
+  passed; self-test 3 of 3 planted failures caught; access matrix 464 cells, 444 ok, 2 failed, 0 owner
+  to decide, 18 notes; standing proof holds; no request outside localhost; 170 s, about 510 page
+  requests (measured runs 158 to 216 s, over the plan's two minutes; Tests/README.md says about three
+  minutes). The one-time full-matrix proof changed exactly one cell. A later self-test with
+  -LeaveSiteRunning passed, with the Firewall warning for the rule "WFD Driver-only (TCP-In)".
+- Found, for the owner (Database/README.md, section Step WF3a2): Report/EventCalendar.aspx runs out of
+  memory on every opening and every signed-in role may open it (removed in RA1c1); ViewReport.aspx
+  opened directly gives the Controller and the Manager HTTP 500 (fixed in RA1c1); Followup Action Taken
+  for the Controller and the Manager (RA1c2). The test from another machine is the owner's step. Lows
+  are in "Known items for later steps".
 
 ## WF3a1 - Tester infrastructure; database BMMS_Quality with a fixture and a baseline (tag not yet set, 2026-11-11; no database step)
 
@@ -40,15 +82,15 @@ previous release.
   _site, _build, local, node_modules.
 - Database: no numbered step; no row in BMMS-Check-InstalledSteps.sql. The fixture runs only on a
   database named exactly BMMS_Quality.
-- Not yet: the first real pack (the access matrix) and the change of the development workflow in
-  CLAUDE.md come with step WF3a2.
+- Not yet (done in WF3a2): the first real pack (the access matrix) and the change of the development
+  workflow in CLAUDE.md.
 - Tests: Setup ran to the end (fixture check 29 of 29); the selftest pack PASSED (5 checks, 3 of 3
   planted failures caught, about 20 seconds); -CheckOnly READY; -LeaveSiteRunning and -StopSite work;
   Update-Baseline.ps1 ran with the Fix script of step 41; the guard blocked every forbidden command,
   tool and path form tried. security-reviewer and ux-reviewer: pass, no High or Medium open. The
   owner's tests passed on 2026-11-11.
 - Known items for later (Lows): in Database/README.md, "Known items for later steps". Four security
-  Lows are the first task of WF3a2: the pre-run check allow-list, the role check timing, the read-back
+  Lows, closed in WF3a2: the pre-run check allow-list, the role check timing, the read-back
   of the icacls permissions and the reachability check for -LeaveSiteRunning (port 18573 listens on the
   local loopback and on all IPv6 addresses, the Windows Firewall is on with no allow rule for IIS
   Express; reachability from another machine is not tested). Facts found about the product: the sign-in

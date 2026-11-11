@@ -4,7 +4,9 @@
 
 1. Plan first. Wait for the owner's approval before any code or file change. Every plan names the
    documents affected (by the update matrix in Documents/README.md), or says
-   "documents affected: none".
+   "documents affected: none". Every plan lists its browser checks in two sets: "tester" (the
+   packs the tester runs) and "owner by eye" (what only the owner can judge: looks, print, Word,
+   PDF layout).
 2. Build, then run the build checks: compile into the scratchpad (Build, not Rebuild; bin and obj
    untouched), site precompile, SQL parse with NOEXEC, and the step's Test script on BMMS_Test.
 3. Run security-reviewer, ux-reviewer and ui-reviewer separately, each on git diff plus the new
@@ -13,13 +15,22 @@
 4. Fix High and Medium findings, or list them as open with a reason. Low findings go to the backlog
    list ("Known items for later steps" in Database/README.md). After a fix, run the build checks
    again and the reviewer that raised it.
-5. Report to the owner in 5 parts:
+5. Tester, after the fixes of step 4 and before the owner's tests: run the tester agent with the
+   step's packs (always at least access-matrix; Tests/README.md). A step with a new database
+   script first brings the tester's baseline up to date with Tests/_runner/Update-Baseline.ps1
+   (on the owner's approval of the build). A failed check goes to the owner as it is, with the
+   main session's reading of it (product, expected result or fixture); the main session changes
+   no product code, test or expected result to make it pass without the owner's word. The tester
+   never writes or changes a test, a pack or an expected result. A REFUSED, VOID or RUNNER FAILED
+   result is reported, and the tester is run again once the cause is removed.
+6. Report to the owner in 6 parts:
    1. build checks and results;
    2. files changed (git status --short);
    3. the three reviewer records, verbatim;
    4. what was fixed and what is open;
-   5. test steps for the owner.
-6. Documentation stage, after the owner's tests pass and before the commit commands:
+   5. test steps for the owner (the "owner by eye" set);
+   6. the tester record, verbatim.
+7. Documentation stage, after the owner's tests pass and before the commit commands:
    1. Run doc-writer with the step's requirement, the diff (git range or diff plus the new files)
       and the test result, not the reasoning behind the code.
    2. In this stage only files inside Documents/ may change: git status --short --ignored, taken
@@ -36,8 +47,8 @@
    4. Show the owner doc-writer's record (documents changed, To confirm, shot list) and the check
       output. The documents go in the same commit as the step.
    A step with "documents affected: none" still gets its CHANGELOG entry.
-7. Never commit, tag or push. The owner does that.
-8. Always left out of commits: BMMS/Files/AgendaText/, Database/BMMS-Check-SmallintParameters.sql,
+8. Never commit, tag or push. The owner does that.
+9. Always left out of commits: BMMS/Files/AgendaText/, Database/BMMS-Check-SmallintParameters.sql,
    bin, obj.
 
 House rules (unchanged)

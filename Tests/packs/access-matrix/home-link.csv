@@ -1,0 +1,7 @@
+role,home,rule
+admin,no,"R4 Admin has no Home link (RA1a: no Home for Admin and MD Secretariat; the header link Alerts opens the Dashboard)"
+controller,yes,"RA1a check 2: Controller, Home"
+manager,yes,"R5 Manager: the menu as before RA1a (Home)"
+user,yes,"R5 User: the menu as before RA1a (Home)"
+mgmt,yes,"Owner decision 2026-11-11: Management has the Home link (owner's sheet and the code agree); only Admin and MD Secretariat have none"
+mdsec,no,"R4 MD Secretariat has no Home link"

@@ -33,14 +33,19 @@ const SESSION_MAX_MS = 6 * 60 * 1000; // the site ends a session after 10 minute
 function fail(message) { const e = new Error(message); e.fatal = true; throw e; }
 
 function parseArgs(argv) {
-  const out = { results: null, packs: [], proofOnly: false };
+  const out = { results: null, packs: [], proofOnly: false, phase: 'main', checksFile: 'checks.json' };
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--results') out.results = argv[++i];
     else if (argv[i] === '--pack') out.packs.push(argv[++i]);
     else if (argv[i] === '--proof-only') out.proofOnly = true;
+    else if (argv[i] === '--phase') out.phase = argv[++i];
+    else if (argv[i] === '--checks-file') out.checksFile = argv[++i];
     else fail('unknown argument: ' + argv[i]);
   }
   if (!out.results) fail('--results is required');
+  // Step WF3a2: the standing proof of the access matrix runs as its own phase, into its own checks file.
+  if (!/^(main|planted|planted-full)$/.test(out.phase)) fail('--phase is main, planted or planted-full');
+  if (!/^checks(-[a-z]+)?\.json$/.test(out.checksFile)) fail('--checks-file is checks.json or checks-<name>.json');
   for (const p of out.packs) if (!/^[a-z0-9][a-z0-9-]*$/.test(p)) fail('pack names are lower-case letters, digits and hyphens: ' + p);
   return out;
 }
@@ -48,7 +53,7 @@ function parseArgs(argv) {
 function slug(text) { return String(text).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60); }
 
 class Tester {
-  constructor(browser, creds, resultsDir) {
+  constructor(browser, creds, resultsDir, phase) {
     this.browser = browser;
     this.creds = creds;
     this.resultsDir = resultsDir;
@@ -57,6 +62,10 @@ class Tester {
     this.blocked = [];
     this.sessions = new Map();
     this.pack = '';
+    this.phase = phase || 'main';
+    this.shotPrefix = this.phase === 'main' ? '' : 'p';
+    this.siteDir = path.resolve(SITE_DIR);
+    this.repo = path.resolve(TESTS, '..');
     this.accessLog = path.join(SITE_DIR, 'App_Data', 'PageAccessLog.txt');
     fs.mkdirSync(this.shotDir, { recursive: true });
   }
@@ -119,6 +128,13 @@ class Tester {
     return s.page;
   }
 
+  // After Logout.aspx the session is over: the next session(role) signs in again.
+  async endSession(role) {
+    const s = this.sessions.get(role);
+    this.sessions.delete(role);
+    if (s) await s.context.close().catch(() => null);
+  }
+
   async anonymousPage() {
     const context = await this.newContext();
     return { context, page: await context.newPage() };
@@ -143,7 +159,8 @@ class Tester {
     if (/\/error\/errorpage\.aspx$/i.test(finalPath) && !/\/error\/errorpage\.aspx$/i.test(askedPath)) kind = 'error';
     else if (/\/default\.aspx$/i.test(finalPath) && !/\/default\.aspx$/i.test(askedPath)) kind = 'signin';
     else if (status === 403 && /Access denied/i.test(body)) kind = 'denied';
-    else if (status === 404 && /Page not found/i.test(body)) kind = 'notfound';
+    // The application's "Page not found" page, or IIS's own 404 page for a missing static file (step WF3a2)
+    else if (status === 404 && /Page not found|HTTP Error 404|cannot be found/i.test(body)) kind = 'notfound';
     else if (status === 200) kind = 'opens';
     else kind = 'http-' + status;
     return { kind, status, path: finalPath, note: body.slice(0, 120) };
@@ -163,7 +180,7 @@ class Tester {
   }
 
   async shot(page, name) {
-    const file = String(this.checks.length + 1).padStart(4, '0') + '-' + slug(name) + '.png';
+    const file = this.shotPrefix + String(this.checks.length + 1).padStart(4, '0') + '-' + slug(name) + '.png';
     try { await page.screenshot({ path: path.join(this.shotDir, file), fullPage: false }); return 'screenshots/' + file; }
     catch (e) { return ''; }
   }
@@ -210,11 +227,12 @@ async function main() {
   const creds = JSON.parse(fs.readFileSync(path.join(TESTS, 'local', 'credentials.json'), 'utf8').replace(/^﻿/, ''));
 
   const out = { database: DATABASE, baseUrl: BASE, startedAt: new Date().toISOString(), finishedAt: null, proof: null, packs: [], checks: [], blockedRequests: [], fatal: null };
-  const write = () => fs.writeFileSync(path.join(resultsDir, 'checks.json'), JSON.stringify(out, null, 2));
+  out.phase = args.phase;
+  const write = () => fs.writeFileSync(path.join(resultsDir, args.checksFile), JSON.stringify(out, null, 2));
   let browser = null, tester = null, code = 0;
   try {
     browser = await chromium.launch({ channel: 'chrome', headless: true });
-    tester = new Tester(browser, creds, resultsDir);
+    tester = new Tester(browser, creds, resultsDir, args.phase);
     out.browser = 'Chrome ' + browser.version();
 
     // 1. The database proof, before anything else is opened.
