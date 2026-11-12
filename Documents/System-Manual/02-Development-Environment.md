@@ -3,10 +3,11 @@
 - Title: Development Environment
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: WF3a2
-- Last updated by: WF3a2, based on 5c6228f
+- Applies to: UN6b (the memory reading in "The tester: what the development machine needs"); the rest WF3a2
+- Last updated by: UN6b, based on 0736c7f
 - Status: Draft
-- Verified against: for the development workflow (steps 1, 5, 6, 7 and 9) and the agents: CLAUDE.md (diff),
+- Verified against: for step UN6b: Tests/_runner/Tester.Common.ps1 (diff: Get-QaMemory, QaMemoryWarnMB),
+  Run-Tests.ps1 (diff, preflight), Tests/README.md (diff, the memory warning row); for the development workflow (steps 1, 5, 6, 7 and 9) and the agents: CLAUDE.md (diff),
   .claude/agents/tester.md; for the section "The tester: what the development machine needs": Tests/package.json,
   Tests/README.md, Tests/_runner/Tester.Common.ps1 and Run-Tests.ps1 (tool lookup), Tests/lib/run.js,
   .gitignore, Database/README.md (section Step WF3a1); and for the rest: BMMS.sln, BMMS/BMMS.csproj, BMMSBAL/BMMSBAL.csproj, BMMSDAL/BMMSDAL.csproj,
@@ -85,6 +86,7 @@ development machine:
 | Two SQL logins | bmms_tester (owner of BMMS_Quality) and bmms_site (the site copy's login), made by the setup; neither has a server role or access to another database. bmms_app must already be linked in BMMS_Quality with db_backupoperator, db_datareader and db_datawriter |
 | Port 18573 | Must be free when a run starts (the runner refuses otherwise). Port 49673 was tried first and lies in the Windows range for outgoing connections |
 | sqlcmd | Used by the runner and the setup scripts |
+| Memory reading (step UN6b) | The preflight reads the available memory (Task Manager's "Available") with `Get-CimInstance` on the class Win32_PerfFormattedData_PerfOS_Memory, else `Get-Counter '\Memory\Available MBytes'`. Below 1500 MB it prints a warning and the run goes on; it is never a refusal. Keep at least 1500 MB available: with less, the browser can be stopped or SQL Server can make queries wait, and a run can end VOID or with pages that "could not be loaded" (Tests/README.md; 10-Testing-and-Release). No setup is needed |
 
 Local folders that git does not hold (`.gitignore`): `Tests/_results/` (results of every run),
 `Tests/_site/` (the site copy, rebuilt at every run), `Tests/_build/` (its build), `Tests/local/` (the

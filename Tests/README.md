@@ -30,6 +30,9 @@ pwsh -NoProfile -File Tests/_runner/Run-Tests.ps1 -Pack access-matrix
   files and cells: `Tests\packs\access-matrix\README.md`. It starts with its standing proof (below)
   and takes about three minutes in all (measured on this laptop: 2 min 40 s to 3 min 40 s; most of
   it is the site's first requests, which compile the pages).
+- `-Pack dashboard` (step UN6b): the Dashboard's Meetings card per role (meetings, colours, statistics,
+  filters, titles), the Alert and Action Item lists, and the page width at 1366, 1024 and 800 px. Its rules,
+  files and rows: `Tests\packs\dashboard\README.md`. About two and a half minutes.
 - `-Pack access-matrix -ProofFullMatrix` (you only; the tester agent cannot use it): the standing
   proof over every row instead of two. Exactly one cell must change. Use it when the pack itself
   changes.
@@ -126,6 +129,7 @@ opened in Word). Those stay with you; the screenshots and exports are there for 
 | "Tests\_site\connectionStrings.config can still be read by an account other than yours" | Another account has its own entry on that file. The password was not written. | Tell Claude; nothing was tested. |
 | "-LeaveSiteRunning is refused: the ... profile lets inbound traffic in by default" | A Windows Firewall profile is set to let inbound traffic in without a rule. | Run without `-LeaveSiteRunning`, or set that profile to block inbound traffic by default first. |
 | "WARNING (firewall): rule ... lets inbound traffic in" (console) / "Firewall: **warning**" (results.md) | Not a refusal. An enabled inbound rule for IIS Express, System or any program covers port 18573, or a profile is off. On this laptop (2026-11-11): the Windows rule "WFD Driver-only (TCP-In)" (System, every port). The run goes on: the site copy serves only callers on this laptop, checked through every address at every start. | Nothing to do for the run. The tester changes no Windows rule. |
+| "WARNING (memory): ... MB available" (console) / "Memory at the start: ... (**warning**: below 1500 MB)" (results.md) | Not a refusal (step UN6b). Less than 1500 MB of memory is available (Task Manager, Performance, Memory, "Available"). With too little memory the browser can be stopped or SQL Server can make queries wait, and the run can end VOID or with pages that "could not be loaded". A VOID or RUNNER FAILED run reads the memory again and says in its summary when it was low. | Close other programs (browsers, Visual Studio, SSMS windows not needed) and run again. |
 | "The site copy answers on a network address of this machine" | The site copy answered through a network address of this laptop (it must refuse: HTTP 400 for that address as host name, HTTP 403 for "Host: localhost"). | Do not go on. Tell Claude; nothing was tested. |
 | "... could not sign in to BMMS_Quality" | A tester login was dropped, re-created or its password changed outside setup. | `Setup-Quality.ps1` again. |
 | "The Node packages are missing" | `Tests\node_modules` is not there. | `npm ci` in the `Tests` folder. |

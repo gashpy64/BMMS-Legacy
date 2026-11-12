@@ -12,8 +12,10 @@
       ... -StopSite                           stops a site copy that was left running; nothing else
 
   Every run, in this order (a refusal stops the run before any test):
-    1. Preflight: local credentials (readable by your account only), baseline record, the fixture
-       script unchanged since the baseline, Node and its packages.
+    1. Preflight: the available memory (a warning below 1500 MB, never a refusal; a VOID or RUNNER
+       FAILED run reads it again and says when it was low), local credentials (readable by your
+       account only), baseline record, the fixture script unchanged since the baseline, Node and
+       its packages.
     2. Rebuilds and re-syncs the site copy Tests\_site from the working tree and proves it current.
     3. Proves the copy's connection string names BMMS_Quality (and only it).
     4. Restores BMMS_Quality from the baseline (as bmms_tester), sets the fixture dates, and checks
@@ -119,6 +121,10 @@ try {
 
     # ----- 1. preflight -----------------------------------------------------------------------
     Write-QaStep '1. Preflight'
+    # Step UN6b: the available memory, so a starved machine is reported as such (a warning, never a refusal)
+    $run['memoryStart'] = Get-QaMemory
+    Write-Host "     Memory: $(Format-QaMemory $run.memoryStart)."
+    if ($run.memoryStart -and $run.memoryStart.Low) { Write-Host "     WARNING (memory): $(Format-QaMemory $run.memoryStart); below $QaMemoryWarnMB MB the browser or the database may be stopped or slowed and the run may end VOID. Close other programs and run again if it does." }
     $null = Get-QaCredentials
     $baseline = Get-QaBaselineInfo
     Assert-QaFixtureUnchanged $baseline
@@ -319,6 +325,16 @@ finally {
     if (-not $siteLeft) { try { Stop-QaSite } catch { } }
 }
 
+# Step UN6b: a run that does not count is read against the memory: low at its start or at its end, the summary
+# says so, so a starved machine is not taken for a fault of the site or the tester
+if ($run.result -in 'VOID', 'RUNNER FAILED') {
+    $run['memoryEnd'] = Get-QaMemory
+    $low = @($run['memoryStart'], $run.memoryEnd | Where-Object { $_ -and $_.Low })
+    if ($low.Count -gt 0) {
+        $run.summary += " The machine was low on memory ($(Format-QaMemory $run['memoryStart']) at the start, $(Format-QaMemory $run.memoryEnd) at the end; the warning limit is $QaMemoryWarnMB MB), which may be the cause: close other programs and run again."
+    }
+}
+
 # ----- results.md and results.json --------------------------------------------------------------
 $finished = Get-Date
 $run.finishedAt = $finished.ToString('yyyy-MM-dd HH:mm:ss'); $run.seconds = [int]($finished - $started).TotalSeconds
@@ -348,6 +364,9 @@ try {
     if ($run.Contains('firewallWarnings')) {
         $fwList = @($run.firewallWarnings) + @($run.firewallRefusals | ForEach-Object { "$_ (this would refuse -LeaveSiteRunning)" })
         $md.Add("- Firewall: " + $(if ($fwList.Count -eq 0) { 'no rule or profile that lets inbound traffic in to port ' + $QaPort + '.' } else { '**warning**: ' + ($fwList -join '; ') + '. Not a refusal (owner decision 2026-11-11): the site copy serves only callers on this machine, checked through every network address at its start.' }))
+    }
+    if ($run.Contains('memoryStart')) {
+        $md.Add("- Memory at the start: $(Format-QaMemory $run.memoryStart)" + $(if ($run.memoryStart -and $run.memoryStart.Low) { " (**warning**: below $QaMemoryWarnMB MB)" } else { '' }) + $(if ($run.Contains('memoryEnd')) { "; at the end: $(Format-QaMemory $run.memoryEnd)" } else { '' }) + '.')
     }
     if (@($run.packs).Count -gt 0) { $md.Add('- Packs: ' + ((@($run.packs) | ForEach-Object { "$($_.name) ($($_.checks) checks, $($_.seconds) s)" }) -join '; ') + '.') }
     $mainOpened = @($checks | Where-Object { $_.PSObject.Properties['grid'] -and $_.seen -ne 'not-opened' }).Count

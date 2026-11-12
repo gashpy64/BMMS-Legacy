@@ -1,87 +1,127 @@
 <%@ Control Language="C#" AutoEventWireup="true" Codebehind="MeetingSummary.ascx.cs"
     Inherits="BMMS.UserControl.MeetingSummary" %>
-<h2>
-    Scheduled Meetings:</h2>
-<div style="padding: 5px; margin-bottom: 10px; height:400px;">
-    <table border="0" width="100%" cellspacing="0" cellpadding="0">
-        <tr>
-            <td valign="top">
-                <asp:GridView ID="grvMeetSchedule" runat="server" CssClass="contentTable1"
-                    CellPadding="3" CellSpacing="2" Width="100%" AutoGenerateColumns="False"
-                    BorderStyle="None" BorderWidth="0px">
-                    <HeaderStyle HorizontalAlign="Center" CssClass="contentTableHeader" Font-Bold="True" />
-                    <RowStyle CssClass="contentTabletd" borderstyle="Solid" borderwidth="0px" />
-                    <AlternatingRowStyle borderstyle="Solid" borderwidth="0px" />
-                    <FooterStyle CssClass="contentTabletd" />
-                    <SelectedRowStyle CssClass="bmms-row-selected" font-bold="True" />
-                    <PagerStyle HorizontalAlign="Center" />
-                    <Columns>
-                        <asp:TemplateField HeaderText="Committee">
-                            <ItemTemplate>
-                                <asp:Label ID="lblCommitteeName" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("CommitteeName")) %>'></asp:Label>
-                            </ItemTemplate>
-                            <ItemStyle VerticalAlign="Middle" HorizontalAlign="Left" />
-                        </asp:TemplateField>
-                        <asp:TemplateField HeaderText="Meeting No">
-                            <ItemTemplate>
-                                <asp:Label ID="lblMeetingNo" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("MeetingNo")) %>'></asp:Label>
-                                <asp:Label ID="lblMeetingId" runat="server" Text='<%#Eval("MeetingId") %>' Visible="false"></asp:Label>
-                            </ItemTemplate>
-                            <ItemStyle VerticalAlign="Middle" HorizontalAlign="Center" />
-                        </asp:TemplateField>
-                        <asp:TemplateField HeaderText="Meeting <br/>Date">
-                            <ItemTemplate>
-                                <asp:Label ID="lblMeetingDate" runat="server" Text='<%#Eval("MeetingDate", "{0:dd-MMM-yyyy}") %>'></asp:Label>
-                                <asp:Label ID="lblMeetingTime" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("MeetingTime")) %>'></asp:Label> Hrs.
-                            </ItemTemplate>
-                            <ItemStyle VerticalAlign="Middle" HorizontalAlign="Center" />
-                        </asp:TemplateField>
-                    </Columns>
-                </asp:GridView>
-            </td>
-        </tr>
-    </table>
+<%-- Step UN6b: the Dashboard heading with the filters, the place of the summary cards (UN6c) and the Meetings card.
+     The control renders no wrapper of its own: its three blocks are cells of the Dashboard grid (.wb-dash). --%>
+<div class="wb-dash-head">
+    <div class="wb-dash-title">
+        <h1 class="wb-h1">Dashboard</h1>
+        <p id="pSubtitle" runat="server" class="wb-dash-subtitle" visible="false"></p>
+    </div>
+    <%-- Hidden until a load succeeds: the code shows only the filters of the role (a failed load shows none) --%>
+    <div id="divFilters" runat="server" class="wb-dash-filters" visible="false">
+        <div id="divDepartmentFilter" runat="server" class="wb-dash-filter" visible="false">
+            <asp:Label ID="lblDepartment" runat="server" AssociatedControlID="ddlDepartment" Text="Department" />
+            <asp:DropDownList ID="ddlDepartment" runat="server" AutoPostBack="true" OnSelectedIndexChanged="Filter_Changed" />
+        </div>
+        <div id="divCommitteeFilter" runat="server" class="wb-dash-filter" visible="false">
+            <asp:Label ID="lblCommittee" runat="server" AssociatedControlID="ddlCommittee" Text="Committee" />
+            <asp:DropDownList ID="ddlCommittee" runat="server" AutoPostBack="true" OnSelectedIndexChanged="Filter_Changed" />
+        </div>
+    </div>
 </div>
-
-<div style="padding: 5px; margin-bottom: 10px; visibility:hidden; height:0px;">
-<h2>
-    Completed Meetings:</h2>
-    <table border="0" width="100%" cellspacing="0" cellpadding="0" class="leftColTab">
-        <tr>
-            <td valign="Top">
-            <asp:GridView ID="grvCompleteMeet" runat="server" CssClass="contentTable1"
-                    CellPadding="3" CellSpacing="2" Width="100%" AutoGenerateColumns="False"
-                    BorderStyle="None" BorderWidth="0px">
-                    <HeaderStyle HorizontalAlign="Center" CssClass="contentTableHeader" Font-Bold="True" />
-                    <RowStyle CssClass="contentTabletd" borderstyle="Solid" borderwidth="0px" />
-                    <AlternatingRowStyle borderstyle="Solid" borderwidth="0px" />
-                    <FooterStyle CssClass="contentTabletd" />
-                    <SelectedRowStyle CssClass="bmms-row-selected" font-bold="True" />
-                    <PagerStyle HorizontalAlign="Center" />
+<%-- Summary cards: step UN6c. Empty until then; it takes no space while empty. --%>
+<div class="wb-dash-summary" id="divSummaryCards"></div>
+<div class="wb-card wb-dash-meetings">
+    <div class="wb-card-header">
+        <h2 class="wb-dash-card-title"><asp:Literal ID="litMeetingsTitle" runat="server" Mode="Encode" Text="Meetings" /></h2>
+    </div>
+    <div class="wb-card-body">
+        <div aria-live="polite">
+            <p id="pMeetingsMessage" runat="server" class="wb-dash-message" visible="false"></p>
+        </div>
+        <asp:Panel ID="pnlMeetingLists" runat="server">
+            <h3 class="wb-section-title">Scheduled</h3>
+            <div class="wb-table-scroll">
+                <asp:GridView ID="grvScheduled" runat="server" CssClass="wb-table wb-dash-table" AutoGenerateColumns="False"
+                    GridLines="None" UseAccessibleHeader="true" EmptyDataText="No scheduled meetings.">
                     <Columns>
-                        <asp:TemplateField HeaderText="Committee">
+                        <asp:TemplateField HeaderText="Meeting">
                             <ItemTemplate>
-                                <asp:Label ID="lblCommitteeName" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("CommitteeName")) %>'></asp:Label>
+                                <span class="wb-dash-committee"><%# HttpUtility.HtmlEncode(Eval("CommitteeName")) %></span>
+                                <span class="wb-dash-meeting-no">No <%# HttpUtility.HtmlEncode(Eval("MeetingNo")) %></span>
                             </ItemTemplate>
-                            <ItemStyle VerticalAlign="Middle" HorizontalAlign="Left" />
                         </asp:TemplateField>
-                        <asp:TemplateField HeaderText="Meeting No">
+                        <asp:TemplateField HeaderText="Meeting date">
                             <ItemTemplate>
-                                <asp:Label ID="lblMeetingNo" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("MeetingNo")) %>'></asp:Label>
-                                <asp:Label ID="lblMeetingId" runat="server" Text='<%#Eval("MeetingId") %>' Visible="false"></asp:Label>
+                                <span class="wb-dash-date"><%# HttpUtility.HtmlEncode(FormatDate(Eval("MeetingDate"))) %></span>
+                                <span class="wb-dash-time"><%# HttpUtility.HtmlEncode(FormatTime(Eval("MeetingTime"))) %></span>
                             </ItemTemplate>
-                            <ItemStyle VerticalAlign="Middle" HorizontalAlign="Center" />
                         </asp:TemplateField>
-                        <asp:TemplateField HeaderText="Meeting <br/>Date">
+                        <asp:TemplateField HeaderText="Submit agenda by">
                             <ItemTemplate>
-                                <asp:Label ID="lblMeetingDate" runat="server" Text='<%#Eval("MeetingDate", "{0:dd-MMM-yyyy}") %>'></asp:Label>
-                                <asp:Label ID="lblMeetingTime" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("MeetingTime")) %>'></asp:Label> Hrs.
+                                <span class="wb-dash-date"><%# HttpUtility.HtmlEncode(FormatDate(Eval("AgendaSubmissionDate"))) %></span>
                             </ItemTemplate>
-                            <ItemStyle VerticalAlign="Middle" HorizontalAlign="Center" />
                         </asp:TemplateField>
+                        <asp:TemplateField HeaderText="Status">
+                            <ItemTemplate>
+                                <span class='<%# StateCssClass(Eval("StateCode")) %>'><%# HttpUtility.HtmlEncode(Eval("StateLabel")) %></span>
+                            </ItemTemplate>
+                        </asp:TemplateField>
+                        <asp:BoundField DataField="Items" HeaderText="Items" HtmlEncode="true">
+                            <ItemStyle CssClass="wb-dash-num" />
+                            <HeaderStyle CssClass="wb-dash-num" />
+                        </asp:BoundField>
+                        <asp:BoundField DataField="Approved" HeaderText="Approved" HtmlEncode="true">
+                            <ItemStyle CssClass="wb-dash-num" />
+                            <HeaderStyle CssClass="wb-dash-num" />
+                        </asp:BoundField>
+                        <asp:BoundField DataField="Rejected" HeaderText="Rejected" HtmlEncode="true">
+                            <ItemStyle CssClass="wb-dash-num" />
+                            <HeaderStyle CssClass="wb-dash-num" />
+                        </asp:BoundField>
+                        <asp:BoundField DataField="Pending" HeaderText="Pending" HtmlEncode="true">
+                            <ItemStyle CssClass="wb-dash-num" />
+                            <HeaderStyle CssClass="wb-dash-num" />
+                        </asp:BoundField>
                     </Columns>
                 </asp:GridView>
-            </td>
-        </tr>
-    </table>
+            </div>
+            <h3 class="wb-section-title">Completed (last 10)</h3>
+            <div class="wb-table-scroll">
+                <asp:GridView ID="grvCompleted" runat="server" CssClass="wb-table wb-dash-table" AutoGenerateColumns="False"
+                    GridLines="None" UseAccessibleHeader="true" EmptyDataText="No completed meetings.">
+                    <Columns>
+                        <asp:TemplateField HeaderText="Meeting">
+                            <ItemTemplate>
+                                <span class="wb-dash-committee"><%# HttpUtility.HtmlEncode(Eval("CommitteeName")) %></span>
+                                <span class="wb-dash-meeting-no">No <%# HttpUtility.HtmlEncode(Eval("MeetingNo")) %></span>
+                            </ItemTemplate>
+                        </asp:TemplateField>
+                        <asp:TemplateField HeaderText="Meeting date">
+                            <ItemTemplate>
+                                <span class="wb-dash-date"><%# HttpUtility.HtmlEncode(FormatDate(Eval("MeetingDate"))) %></span>
+                                <span class="wb-dash-time"><%# HttpUtility.HtmlEncode(FormatTime(Eval("MeetingTime"))) %></span>
+                            </ItemTemplate>
+                        </asp:TemplateField>
+                        <asp:TemplateField HeaderText="Submit agenda by">
+                            <ItemTemplate>
+                                <span class="wb-dash-date"><%# HttpUtility.HtmlEncode(FormatDate(Eval("AgendaSubmissionDate"))) %></span>
+                            </ItemTemplate>
+                        </asp:TemplateField>
+                        <asp:TemplateField HeaderText="Status">
+                            <ItemTemplate>
+                                <span class='<%# StateCssClass(Eval("StateCode")) %>'><%# HttpUtility.HtmlEncode(Eval("StateLabel")) %></span>
+                            </ItemTemplate>
+                        </asp:TemplateField>
+                        <asp:BoundField DataField="Items" HeaderText="Items" HtmlEncode="true">
+                            <ItemStyle CssClass="wb-dash-num" />
+                            <HeaderStyle CssClass="wb-dash-num" />
+                        </asp:BoundField>
+                        <asp:BoundField DataField="Approved" HeaderText="Approved" HtmlEncode="true">
+                            <ItemStyle CssClass="wb-dash-num" />
+                            <HeaderStyle CssClass="wb-dash-num" />
+                        </asp:BoundField>
+                        <asp:BoundField DataField="Rejected" HeaderText="Rejected" HtmlEncode="true">
+                            <ItemStyle CssClass="wb-dash-num" />
+                            <HeaderStyle CssClass="wb-dash-num" />
+                        </asp:BoundField>
+                        <asp:BoundField DataField="Pending" HeaderText="Pending" HtmlEncode="true">
+                            <ItemStyle CssClass="wb-dash-num" />
+                            <HeaderStyle CssClass="wb-dash-num" />
+                        </asp:BoundField>
+                    </Columns>
+                </asp:GridView>
+            </div>
+        </asp:Panel>
+    </div>
 </div>

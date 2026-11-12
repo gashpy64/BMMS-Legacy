@@ -106,6 +106,28 @@ namespace BMMSDAL
         }
         #endregion
 
+        #region GetDashboardDepartments
+        // Step UN6b (BMMS-Fix-DashboardMeetings-Step42.sql): the departments of a Manager or a User, home first
+        // (DepartmentId, DepartmentName, IsHome), read by the procedure from the acting user id. Reason 0 when
+        // allowed, otherwise 8 (user missing or inactive) or 4 (another role), and then no rows.
+        public static DataTable GetDashboardDepartments(int ActingUserId, out int Reason)
+        {
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+
+            SqlParameter[] parameter = new SqlParameter[3];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = result;
+            parameter[2] = reason;
+
+            DataTable dt = CommonDB.GetDataTable("spr_GetDashboardDepartments", parameter);
+            Reason = MinutesDB.RefusalReason(result, reason);
+            return dt;
+        }
+        #endregion
+
         #region GetNextDeptCode
         public static string GetNextDeptCode()
         {

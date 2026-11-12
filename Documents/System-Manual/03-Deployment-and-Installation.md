@@ -3,10 +3,13 @@
 - Title: Deployment and Installation
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: WF3a2 (section "The tester's baseline after a new database step"); the rest RA1b (step 41)
-- Last updated by: WF3a2, based on 5c6228f
+- Applies to: UN6b (step 42: the run order, rollback and the section "Installing step 42 on a test database"); WF3a2 (section "The tester's baseline after a new database step"); the rest RA1b (step 41)
+- Last updated by: UN6b, based on 0736c7f
 - Status: Draft
-- Verified against: for WF3a2: CLAUDE.md (step 5), Tests/_runner/Update-Baseline.ps1 (diff),
+- Verified against: for UN6b (step 42): Database/BMMS-Fix-DashboardMeetings-Step42.sql (header, guards, messages),
+  BMMS-Rollback-DashboardMeetings-Step42.sql (guards, messages), BMMS-Test-DashboardMeetings-Step42.sql (header, guards),
+  BMMS-Check-InstalledSteps.sql (diff), Database/README.md (section Step UN6b, "What to run where"), the owner's
+  test result as given (71 of 71); for WF3a2: CLAUDE.md (step 5), Tests/_runner/Update-Baseline.ps1 (diff),
   Database/README.md (section Step WF3a2); and for the rest: Database/README.md ("Always test on a copy first", "Run order" with its
   re-run notes, "Test and check scripts", the "what to run where" parts of steps 13, 15, 29, 30
   and UD1a (step 39)), the header comments and guard code of the Database/ Fix, Rollback, Add,
@@ -35,7 +38,8 @@
   backup folder under the site; whether a restore of the pre-step backup is the intended way back
   for steps 1 to 31; how the deployed build reaches the server; the Check script's result after the
   step 39 rollback (its two headers disagree); that the live connection string does not use the sa
-  login; the permission the application login needs for Backup Database
+  login; the permission the application login needs for Backup Database; the step 42 Test script was read in
+  part (header and part 1), not in full (its count, 71 numbered checks, is confirmed by the owner's full run)
 
 This chapter covers installing BMMS: the database scripts, the web application and the order of
 both. The projects and layers are in 01-Overview-and-Architecture, the development tools, the
@@ -221,6 +225,7 @@ application.
 | 39 | BMMS-Fix-UserHistory-Step39.sql | Role and department history | After step 38; needs steps 13, 14, 18 and 30; either order with the build |
 | 40 | BMMS-Fix-RoleAccess-Step40.sql | User accounts and member types for Admin only | After step 39 (stops otherwise); either order with the build; BMMS-Rollback-RoleAccess-Step40.sql |
 | 41 | BMMS-Fix-ReportAccess-Step41.sql | Minutes report in every status for the Controller and Management; Followup for Management | After step 40 (stops otherwise; also needs step 22); SQL before the build (the build calls the procedures); BMMS-Rollback-ReportAccess-Step41.sql |
+| 42 | BMMS-Fix-DashboardMeetings-Step42.sql | Dashboard Meetings card: status colours, last 10 completed meetings, counts by role and department | After step 41 (stops otherwise; also needs the tables User_Department and Agenda_Status); SQL before the build (the build calls the objects); BMMS-Rollback-DashboardMeetings-Step42.sql |
 
 Steps 25, 26 and 28 have no database script (code only). Step 27 is not built. Step 32 is reserved
 for role permissions and not built. The lettered code steps that have a database script are D1
@@ -233,9 +238,9 @@ The out-of-number-order installs, in the order to install:
 2. Step 23, after step 28 was built (the list in the README stays in number order; step 24 was
    installed before it on the databases that followed the README order).
 3. Steps 29, 30 and 31, last of the numbered group, in that order.
-4. Step D1, then 33, 34, 35, 36, 37, 38, 39, 40 and 41 in number order. Step 41 is the last step; it
-   stops unless step 40 is installed (and step 22, whose two minutes report procedures it leaves
-   unchanged). Step 40 stops unless step 39 is installed. (Re-running step 13, 14, 18 or 21 brings back an older text:
+4. Step D1, then 33, 34, 35, 36, 37, 38, 39, 40, 41 and 42 in number order. Step 42 is the last step; it
+   stops unless step 41 is installed. Step 41 stops unless step 40 is installed (and step 22, whose two
+   minutes report procedures it leaves unchanged). Step 40 stops unless step 39 is installed. (Re-running step 13, 14, 18 or 21 brings back an older text:
    run step 40 again.)
 
 On a new database (restored from the baseline, not `BMMS`), after step 30, the README adds one
@@ -297,7 +302,7 @@ App_Setting row DeptNoManagerAction, 11 markers in all).
 
 What it prints (result grids):
 
-1. One row per step (1 to 24, 29, 30, 31, 33 to 41, and step D1 shown as step 100): Step,
+1. One row per step (1 to 24, 29, 30, 31, 33 to 42, and step D1 shown as step 100): Step,
    Script, Status, Detail. Status is Installed (every marker present), Partly (some present),
    Missing (none) or Not detectable (none of today's steps). Detail gives "[n] of [m] markers" and,
    for Partly, which step to run again.
@@ -407,6 +412,9 @@ README:
 - Step 41 adds three procedures and replaces nothing, so re-running an older step does not remove it.
   The Fix script checks that spr_GetMinutesReport and spr_GetMinutesReportMeetings carry the step 22
   marker, that View_Minute, View_Meeting and View_Action_Item exist, and that step 40 is installed.
+- Step 42 adds five objects (three inline table functions and two procedures) and replaces nothing, so
+  re-running an older step does not remove it. The Fix script checks that spr_GetFollowupReportForManagement
+  carries the step 41 marker and that the tables User_Department and Agenda_Status exist.
 - If step 3, 18, 21 or 29 is run again, run step 30 again, as the last step (it holds the whole
   step 29 text).
 - If step 6, 15, 16, 17, 18, 20 or 23 is run again, run step 31 again, as the last step of that
@@ -421,7 +429,7 @@ Partly row. Step 31 refuses to run once step 32 has replaced one of its procedur
 
 ## Rolling back a step
 
-Rollback scripts exist for steps 33 to 41 only (Database/ folder):
+Rollback scripts exist for steps 33 to 42 only (Database/ folder):
 
 | Step | Script | What it restores | What it keeps |
 |---|---|---|---|
@@ -434,11 +442,12 @@ Rollback scripts exist for steps 33 to 41 only (Database/ folder):
 | 39 | BMMS-Rollback-UserHistory-Step39.sql | The older procedures (steps 2, 13 and 30); drops the three new objects | The tables User_Role and User_Department with all rows, and the setting row |
 | 40 | BMMS-Rollback-RoleAccess-Step40.sql | The step 18 text of the user rule function and the step 21 texts of the two member type procedures (THROW included) | Changes no data; the Check script then reads step 40 Missing; stops with "Nothing was changed" when no object carries the step 40 marker |
 | 41 | BMMS-Rollback-ReportAccess-Step41.sql | Nothing is restored: it drops the three procedures spr_GetMinutesReportMeetingsAllStatus, spr_GetMinutesReportAllStatus and spr_GetFollowupReportForManagement | Changes no data; spr_GetMinutesReport and spr_GetMinutesReportMeetings of step 22 stay; roll back the build first (the step 41 build calls the procedures and would show the error page for the Controller's and Management's Minutes report and Management's Followup); stops with "Nothing was changed" when none of the three exists; the Check script then reads step 41 Missing |
+| 42 | BMMS-Rollback-DashboardMeetings-Step42.sql | Nothing is restored: it drops spr_GetDashboardMeetings, spr_GetDashboardDepartments, fn_MeetingDashboardState, fn_UserDepartmentScope and fn_AgendaStatusGroup | Changes no data; spr_GetScheduleMeet was never changed; roll back the build first or at the same time (the step 42 build calls the objects; without them the Meetings card shows "The meeting list could not be loaded. Reload the page to try again." and the alerts and action items still work); stops with "Nothing was changed" when none of the five exists; the Check script then reads step 42 Missing |
 
 Each Rollback script has the database-name guard, checks that the step it undoes (or the step
 before it) is in place and stops with "Nothing was changed" otherwise, changes no other data, and is
 safe to run again, also where the step was never installed. Roll steps back in the reverse of their
-install order (41, 40, 39, 38, 37, 36, 35, 34, 33). Roll back the application build of the step too, so the
+install order (42, 41, 40, 39, 38, 37, 36, 35, 34, 33). Roll back the application build of the step too, so the
 database is not left half way (README, step 39).
 
 For steps 1 to 31 and D1 no Rollback script is tracked in Database/. [[CONFIRM: that restoring the backup taken before the step is the intended way back for those steps; Database/README.md names no other]]
@@ -660,3 +669,48 @@ Database/BMMS-Test-ReportAccess-Step41.sql (header), Database/BMMS-Check-Install
 Database/README.md (step RA1b, "what to run where"). Chapter 03 agrees with the README section of step 41
 (order, SQL before the build, three markers, rollback behaviour); see "To confirm" for the points where it
 does not.
+
+## Installing step 42 on a test database
+
+A worked example with the step 42 scripts (step UN6b: the Dashboard's Meetings card). The server is `<server>`
+and the database is `BMMS_Test`. The step adds five read-only objects (three inline table functions and two
+procedures), replaces nothing and changes no data. Run the SQL before you deploy the build: the build calls
+the procedures.
+
+1. Check the state. Select `BMMS_Test` and run BMMS-Check-InstalledSteps.sql. Step 41 should read
+   Installed and step 42 Missing.
+2. Back up the database as for any step ("Safe way to install any step").
+3. Run the Fix script (`sqlcmd -S <server> -d BMMS_Test -I -i Database/BMMS-Fix-DashboardMeetings-Step42.sql`).
+   It has no `USE` line; select the database first. It stops with "Nothing was changed." when the database name
+   does not start with BMMS, or when spr_GetFollowupReportForManagement does not carry the step 41 marker or the
+   table User_Department or Agenda_Status is missing ("The steps are installed in order: run step 41 first,
+   then this script.").
+4. On success it prints `Database: BMMS_Test` and then `Step 42 installed: fn_MeetingDashboardState,
+   fn_UserDepartmentScope, fn_AgendaStatusGroup, spr_GetDashboardMeetings and spr_GetDashboardDepartments
+   (DashboardMeetings-Step42); spr_GetScheduleMeet unchanged.` A second run prints the same line. If an object
+   lacks the marker it ends with "Step 42 is not complete: [n] of 5 objects carry the marker
+   DashboardMeetings-Step42. Read the messages above and run the script again."
+5. Run BMMS-Check-InstalledSteps.sql again. Step 42 should read Installed, 5 of 5 markers.
+6. Run the Test script on `BMMS_Test` only: `Database/BMMS-Test-DashboardMeetings-Step42.sql`. It refuses a
+   database named exactly `BMMS` and any name that does not start with BMMS, and stops if step 42 is not
+   installed. Part 1 only reads; part 2 works inside one transaction that is rolled back, with made-up data
+   (names beginning ZZ42). Result: one grid with a Status per check, all PASS (71 of 71 in the owner's run for
+   step UN6b).
+7. Deploy the build, then make the browser checks of Database/README.md (section Step UN6b).
+8. To undo: the previous build first, then `Database/BMMS-Rollback-DashboardMeetings-Step42.sql`. It stops with
+   "Step 42 is not installed in [name] (none of its five objects exists): nothing to roll back. Nothing was
+   changed." when none exists. On success it prints `Step 42 rolled back: spr_GetDashboardMeetings,
+   spr_GetDashboardDepartments, fn_MeetingDashboardState, fn_UserDepartmentScope and fn_AgendaStatusGroup
+   dropped.` If an object is still there it ends with "Step 42 is not fully rolled back: [n] objects are still
+   there. Read the messages above and run the script again." The Check script then reads step 42 Missing.
+
+On `BMMS`, the Consultant runs the Check script, the Fix script and the Check script again (steps 1, 3 and 5
+of this list) after the backup (there is no Test script on `BMMS`), then deploys the build
+(Database/README.md, section Step UN6b, "What to run where").
+
+The tester's baseline was brought up to date for step 42 with Update-Baseline.ps1, and BMMS_Quality was built
+afresh with the extended fixture (Setup-Quality.ps1, 2026-11-12); see 10-Testing-and-Release.
+
+Drawn from: Database/BMMS-Fix-DashboardMeetings-Step42.sql, Database/BMMS-Rollback-DashboardMeetings-Step42.sql,
+Database/BMMS-Test-DashboardMeetings-Step42.sql (header), Database/BMMS-Check-InstalledSteps.sql,
+Database/README.md (section Step UN6b, "What to run where").

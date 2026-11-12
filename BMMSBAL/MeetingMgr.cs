@@ -385,6 +385,15 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region GetDashboardMeetings
+        // Step UN6b: the Dashboard's meeting list (spr_GetDashboardMeetings); see MeetingDB.GetDashboardMeetings
+        public static DataTable GetDashboardMeetings(int ActingUserId, int CommitteeId, int DepartmentId,
+            out int Reason, out bool StatisticsShown, out string ActingRoleCode)
+        {
+            return MeetingDB.GetDashboardMeetings(ActingUserId, CommitteeId, DepartmentId, out Reason, out StatisticsShown, out ActingRoleCode);
+        }
+        #endregion
+
         #region GetMeetingByCommitteeId
         public static DataTable GetMeetingByCommitteeId(int CommitteeId)
         {

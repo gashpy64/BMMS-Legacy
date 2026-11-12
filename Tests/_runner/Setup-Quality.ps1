@@ -209,7 +209,7 @@ while ($null -ne ($line = [Console]::In.ReadLine())) {
     $pass = ($r.Lines | Where-Object { $_ -match '^FIXTURE CHECK: PASS' } | Select-Object -First 1)
     if (-not $pass) { throw 'The fixture check did not pass.' }
     Write-Host "     $pass"
-    $changes.Add("Fixture data added to ${QaDatabase}: nine qa_ accounts, committee QA1 with two members, six meetings, thirteen agenda items and their minutes.")
+    $changes.Add("Fixture data added to ${QaDatabase}: nine qa_ accounts, committee QA1 with two members, six meetings, thirteen agenda items and their minutes; committee QA2 with twelve meetings and twelve agenda items (step UN6b).")
 
     Write-QaStep '8. Tests\local\credentials.json'
     $cred = [ordered]@{

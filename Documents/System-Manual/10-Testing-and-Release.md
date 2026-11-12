@@ -3,10 +3,14 @@
 - Title: Testing and Release
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: RA1c2
-- Last updated by: RA1c2, based on 1db6ac6
+- Applies to: UN6b (the step 42 Test script section, the dashboard pack, the memory preflight, the fixture's committee QA2, the baseline upkeep note); the rest RA1c2
+- Last updated by: UN6b, based on 0736c7f
 - Status: Draft
-- Verified against: for step RA1c2: git diff against 1db6ac6 of Tests/packs/access-matrix/expected.csv,
+- Verified against: for step UN6b: Database/BMMS-Test-DashboardMeetings-Step42.sql (header, guards, part 1),
+  Tests/packs/dashboard/README.md, expected.json (case names), pack.js (header), Tests/README.md (diff),
+  Tests/_runner/Run-Tests.ps1, Tester.Common.ps1 and Setup-Quality.ps1 (diff), Tests/fixture/BMMS-Quality-Fixture-Check.sql
+  (diff), Database/README.md (section Step UN6b, Known items), the owner's test result and the tester run of
+  2026-11-12 (Tests/_results/2026-11-12_214642, PASSED, 649 checks) as given for the step, not re-read; for step RA1c2: git diff against 1db6ac6 of Tests/packs/access-matrix/expected.csv,
   README.md and pack.js, BMMS/XML/PageAccess.xml, and the tester result (477 checks) as given for the step, not re-read; for step RA1c1 (the access-matrix pack section): git diff against 4946500 of
   Tests/packs/access-matrix/expected.csv and README.md, .claude/agents/tester.md, Tests/README.md,
   BMMS/XML/PageAccess.xml, Database/README.md (section Step RA1c1), the tester run of 2026-11-11
@@ -22,7 +26,7 @@
   section Database/BMMS-Test-RoleAccess-Step40.sql (header), the diff of the three changed Test scripts
   and the owner's test result of step RA1a; for the step 41 section Database/BMMS-Test-ReportAccess-Step41.sql
   (header), Database/README.md (section RA1b) and the owner's test result of step RA1b
-- To confirm: the counts of the RA1c2 run (477 checks) are as given for the step, not re-read from the results folder; the run time and counts of the RA1c1 run are as given for the step, not re-read from the results folder; the run times and request count of the access matrix are the owner's measurements as given for the step, not re-measured; the count of 44 checks and the counts of the older Test scripts are Database/README.md's, not
+- To confirm: the UN6b tester result (649 checks, access-matrix and dashboard together, run folder 2026-11-12_214642, memory 1522 MB available of 7886 MB) is as given for the step, not re-read from the results folder; the count of the step 42 Test script (71 in the owner's run) is as given, not recounted; the number of checks of the dashboard pack alone and its run time are not recorded here; the fixture check count after QA2 (29 before, three rows added) was not re-run; the counts of the RA1c2 run (477 checks) are as given for the step, not re-read from the results folder; the run time and counts of the RA1c1 run are as given for the step, not re-read from the results folder; the run times and request count of the access matrix are the owner's measurements as given for the step, not re-measured; the count of 44 checks and the counts of the older Test scripts are Database/README.md's, not
   recounted from the scripts; chapter not written yet (WF2b2); leads from the old Architecture notes to verify
 
 ## Test database
@@ -83,6 +87,35 @@ regression (the nine Admin-only addresses), Followup Cancel, a 1366 px window, a
 and Export to Word of a draft; the error log was clean and PageAccessLog.txt showed the expected lines. Two
 Low findings of that test are in the change log (RA1b).
 
+### Step 42 (UN6b): Dashboard meetings
+
+Database/BMMS-Test-DashboardMeetings-Step42.sql (BMMS_Test only; refuses the name BMMS and any name that does not
+start with BMMS; stops when step 42 is not installed). Part 1 only reads: the five markers, the parameters (7 with 4
+OUTPUT for spr_GetDashboardMeetings, 3 with 2 OUTPUT for spr_GetDashboardDepartments), the result columns in order,
+that spr_GetScheduleMeet is unchanged (still the GETDATE() rule, no step 42 marker) and that on this database every
+agenda item is in one of the groups approved, rejected or in progress. Part 2 runs in one transaction that is
+rolled back, with made-up departments, users, committees, meetings and agenda items (ZZ42...):
+
+- the colour rules of fn_MeetingDashboardState on fixed dates, in their order (grey, red, green, orange, blue); a
+  meeting dated today is scheduled and not red; the submission date itself is still open; a meeting with no date
+  is scheduled;
+- fn_UserDepartmentScope (open rows and the home department; a closed row left out; a user without history rows
+  gets the home department) and fn_AgendaStatusGroup (the four groups add up to all items);
+- spr_GetDashboardMeetings: who may call it (the six roles; another role, an inactive, unknown or missing user
+  refused); every scheduled meeting ordered by date; the last 10 completed meetings, newest first, for every role
+  (13 completed test meetings: exactly 10 shown, with one committee and with all committees); for a Manager and a
+  User only completed meetings with an item of their department(s); the statistics per role and department filter;
+  NULL statistics for MD Secretariat and Admin; the refused filters;
+- spr_GetDashboardDepartments (a Manager's departments, home first; a User's department; another role and an
+  inactive user refused);
+- rows outside the test unchanged after the rollback, and every identity counter put back.
+
+Result on BMMS_Test (owner's run for UN6b): 71 of 71 PASS. Its first version stopped at test 7 (error 547,
+CK_User_Department_Closed: the Manager's closed department row had no ClosedOn, ClosedBy and CloseReason); the
+test data now has CloseReason 'C'. The owner's other checks passed: all six role views, the widths 1366, 1024, 900
+and 800 px, the Agenda Alert and Action Item Details panels, the counts after Approve and Reject, the compact
+Alerts card, the failure test and the timeout test. Step 42 replaces nothing, so no older Test script is changed.
+
 ## The tester (steps WF3a1 and WF3a2)
 
 Step WF3a1 added the infrastructure of a tester. Step WF3a2 added the first real pack (the access
@@ -106,7 +139,7 @@ Database/README.md, section "Step WF3a1". What the development machine needs is 
 | SQL logins | Two, made by the setup. bmms_tester owns BMMS_Quality; the runner restores and checks as this login. bmms_site is the site copy's login: a user in BMMS_Quality with db_datareader, db_datawriter, db_backupoperator and EXECUTE on the dbo schema. Neither has a server role or access to any other database. Before every run the runner asks the server, as each login, what it can reach, and refuses when that is more than BMMS_Quality (any other database, BMMS or BMMS_Test, a server role, CONTROL SERVER, IMPERSONATE). Since WF3a2 the server permissions are an allow-list: in effect only CONNECT SQL and VIEW ANY DATABASE, and granted to the login only CONNECT SQL, otherwise the run is refused; the check is made again after the restore (Run-Tests.ps1), and Update-Baseline.ps1 makes it after the Fix scripts and before the baseline backup. The application login bmms_app is not used |
 | Browser | The installed Chrome, headless, driven by Node scripts (playwright-core). Requests to any host other than localhost are aborted and listed |
 | Mail | BMMS_Quality has the safe default (localhost, port 25); no real mail can be sent |
-| Packs | One folder per pack under Tests/packs (pack.js and data files). The packs are selftest (WF3a1) and access-matrix (WF3a2). A pack is Node code: it is written in a step's build and reviewed there, and the tester cannot change it |
+| Packs | One folder per pack under Tests/packs (pack.js and data files). The packs are selftest (WF3a1), access-matrix (WF3a2) and dashboard (UN6b). A pack is Node code: it is written in a step's build and reviewed there, and the tester cannot change it |
 
 ### How it is run
 
@@ -122,7 +155,8 @@ From the repository folder, in PowerShell 7:
   runs the standing proof of the access matrix over every row (see below). The tester agent's guard
   allows none of them.
 
-Every run, in order: preflight (the two logins asked what they can reach); build of the working tree and
+Every run, in order: preflight (since step UN6b it starts with the memory reading, below; then the two logins
+asked what they can reach); build of the working tree and
 mirror to Tests/_site; proof that the copy is current; the copy's connection string written from fixed
 parts (the local server, BMMS_Quality, the login bmms_site; BMMS/connectionStrings.config is not read)
 and proved; restore of the baseline as bmms_tester; the fixture dates set again, relative to the day;
@@ -131,6 +165,17 @@ passes; IIS Express started; sign-in as the fixture Admin and a check that the f
 "Database: BMMS_Quality"; the self-test and the packs; results written to Tests/_results/[date_time]/
 (results.md and results.json, screenshots of every failed and planted check, the new lines of the site
 copy's page access log and error log, installed-steps.txt, fixture-check.txt).
+
+The memory reading (step UN6b, owner decision of 2026-11-12). The preflight reads the machine's available memory
+(Task Manager's "Available") through `Get-QaMemory` in Tests/_runner/Tester.Common.ps1, from the CIM class
+Win32_PerfFormattedData_PerfOS_Memory, else from Get-Counter; it never stops a run. It prints "Memory: [n] MB
+available of [m] MB." and, below 1500 MB (`QaMemoryWarnMB`), "WARNING (memory): ..." and the run goes on: it is
+never a refusal. results.md has a line "Memory at the start: ..." (with "warning: below 1500 MB" when low). A run
+that ends VOID or RUNNER FAILED reads the memory again, and its summary says when it was low at the start or the
+end ("The machine was low on memory ...", which may be the cause). Why: on 2026-11-12 a starved machine (SQL
+Server memory grants waiting, 711 MB available of 7.9 GB) made the Dashboard's Meetings card show "could not be
+loaded" for a Manager and a User, which looked like a product fault (Database/README.md, section Step UN6b, Finding
+A). The reading on the run of 2026-11-12 21:46:42 was 1522 MB available of 7886 MB.
 
 A run restores BMMS_Quality, so windows open on BMMS_Quality in SQL Server Management Studio are
 disconnected at the start of every run. Windows on BMMS_Test are not affected. A run of the self-test
@@ -165,11 +210,16 @@ BMMS_Quality holds only the seed rows of Reset Database and the fixture (Tests/f
   have at most 12 characters because the sign-in page takes no more), the committee QA1 with a Chairman
   and a Member, and six meetings 00001 to 00006 in the states agenda open, submission date passed, agenda
   finalised, minutes in Draft, minutes Finalised (with a Followup and its action item) and minutes
-  Confirmed. It is one transaction. The fixture is not a numbered step and has no row in
-  BMMS-Check-InstalledSteps.sql.
-- BMMS-Quality-Fixture-Dates.sql sets the two date columns of the six meetings relative to today after
-  every restore.
-- BMMS-Quality-Fixture-Check.sql is read only: 29 checks, ending "FIXTURE CHECK: PASS (n checks)".
+  Confirmed. Since step UN6b it also creates the committee QA2 ("QA Dashboard Committee"): twelve meetings
+  (00001 dated today with no items; 00002 to 00012 completed, with Credit items, 00003 with a Secretarial item
+  only) and twelve agenda items, so that every role whose scope allows it has more than ten completed meetings
+  and the cap of 10 shows. All nine accounts existed already (qa_user2 is an active HRD User). Saving QA2 writes
+  its Committee alert, so every account but qa_ctrl has one alert more than before. It is one transaction. The
+  fixture is not a numbered step and has no row in BMMS-Check-InstalledSteps.sql.
+- BMMS-Quality-Fixture-Dates.sql sets the two date columns of the meetings relative to today after every
+  restore (since UN6b the QA2 meetings too).
+- BMMS-Quality-Fixture-Check.sql is read only: 29 checks before UN6b, with three more rows for QA2 since (not
+  recounted), ending "FIXTURE CHECK: PASS (n checks)".
 - The test account passwords are generated at setup, hashed with the application's own hash function and
   kept only in Tests/local/credentials.json (not committed).
 
@@ -184,7 +234,9 @@ login and the setup never drops the login (a second run only changes the passwor
 ### Upkeep after a new database step
 
 After a numbered database step (step 42 and on) the baseline is out of date and every run is refused
-("out of date") until it is taken again. In the workflow this is done on the owner's approval of the
+("out of date") until it is taken again; step 42 (UN6b) was the first such step: its Fix script was installed in
+the baseline with Update-Baseline.ps1, then BMMS_Quality was built afresh with the extended fixture
+(Setup-Quality.ps1, 2026-11-12). In the workflow this is done on the owner's approval of the
 build, before the tester runs (CLAUDE.md, step 5):
 
 `pwsh -NoProfile -File Tests\_runner\Update-Baseline.ps1 -ConfirmDatabase BMMS_Quality -FixScript BMMS-Fix-[name]-Step[n].sql`
@@ -343,6 +395,47 @@ Result (owner's tests of step WF3a1, 2026-11-11): passed. Build checks: Setup ra
 check 29 of 29); Run-Tests.ps1 -Pack selftest PASSED; -CheckOnly READY; -LeaveSiteRunning and -StopSite
 worked; Update-Baseline.ps1 ran with the re-runnable Fix script of step 41; the guard blocked every
 forbidden command, tool and path form tried.
+
+## The dashboard pack (step UN6b)
+
+Run with `-Pack dashboard` (Tests/README.md; about two and a half minutes). It proves on every run that the
+Dashboard's Meetings card shows each role the meetings, colours and statistics of the owner's rules (Database/README.md,
+section Step UN6b), that the Alert and Action Item lists still show what they showed, and that the page fits the
+window. Its own README is Tests/packs/dashboard/README.md.
+
+| File | What | Who changes it |
+|---|---|---|
+| expected.json | The cases (12: Controller on all committees, on QA2 with exactly 10 completed rows shown, and on QA1; Management; MD Secretariat; Admin; the Manager with one department; the Manager with two departments on all, on HRD and on Secretarial; the User of Credit and the User of HRD), each with the account, the filter chosen, the drop-downs, the subtitle, the card title, the last column header, whether statistics are shown and the Scheduled and Completed rows; the first-page row counts of the Alert and Action Item lists; the two headings of the Alerts card; the window widths | The owner, or Claude on the owner's instruction (the build report lists it under "expectations changed"); never the tester |
+| pack.js | The checks | Claude, in a reviewed step |
+
+A row is `committee | meeting number | colour | label | Items Approved Rejected Pending`; the colour is the class of
+the status chip, the label its text, and the four counts only where statistics are shown. For MD Secretariat and
+Admin the shared lists are compared without the counts, and the pack also checks that no statistics word (Items,
+Approved, Rejected, Pending, In progress) is anywhere in the Meetings card. Scheduled rows are by meeting date,
+oldest first; Completed rows newest first, at most 10 for every role.
+
+What the pack checks, in order:
+
+1. Each case: no message, the card title, the subtitle, the drop-downs, the column headers, the Scheduled and
+   Completed rows in order, the empty texts, the dates in dd-MMM-yyyy.
+2. The Alert and Action Item lists: the number of rows on their first page per account (an Alerts row is a compact
+   row: the Source link with the alert type, committee and department below it).
+3. The inactive account is refused at sign-in; a visitor who opens the Dashboard ends on the sign-in page.
+4. At 1366, 1024 and 800 px (qa_manager): the page is no wider than the window and the content area does not scroll
+   sideways; the Meetings and Alerts cards side by side at 1366 px and stacked below 1100 px; the same width check
+   with the Agenda Alert panel open (qa_manager) and the Action Item Details panel open (qa_user). At each width the
+   Alerts card (qa_manager): the headings "Alert" and "Created on" whole and the grid no wider than its card; every
+   date dd-MMM-yyyy with HH:mm below it, on at most two lines.
+
+The data is the fixture (see "The fixture and the baseline"): QA1 has meetings 00001 Open for submission, 00002
+Submission closed and 00003 Agenda finalised (scheduled), 00004 Minutes pending, 00005 Minutes finalised and 00006
+Minutes confirmed (completed); QA2 is described there. The pack cannot see looks, colours or print: those stay in
+the owner's checks by eye.
+
+Result of the step (tester agent, run of 2026-11-12 21:46:42, Tests/_results/2026-11-12_214642, packs access-matrix
+and dashboard): PASSED, 649 checks, no new error-log line; memory at the start 1522 MB available of 7886 MB. The
+owner's tests of UN6b passed. The tester agent could not read its own result when the run moved to the background
+(a later step, WF3a3; Database/README.md, Known items).
 
 ## Reviewer stage
 

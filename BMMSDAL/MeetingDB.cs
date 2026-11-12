@@ -136,6 +136,41 @@ namespace BMMSDAL
         }
         #endregion
 
+        #region GetDashboardMeetings
+        // Step UN6b (BMMS-Fix-DashboardMeetings-Step42.sql): the Dashboard's meeting list. The procedure reads the role
+        // and the departments of the acting user from the database and checks the two filters against them
+        // (CommitteeId 0 = all committees, DepartmentId 0 = all the user's departments). Reason 0 when allowed,
+        // otherwise 8 (user missing or inactive) or 4 (role or filter not allowed), and then no rows.
+        // StatisticsShown and ActingRoleCode come from the procedure, never from the session.
+        public static DataTable GetDashboardMeetings(int ActingUserId, int CommitteeId, int DepartmentId,
+            out int Reason, out bool StatisticsShown, out string ActingRoleCode)
+        {
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+            SqlParameter shown = new SqlParameter("@StatisticsShown", SqlDbType.Int);
+            shown.Direction = ParameterDirection.Output;
+            SqlParameter role = new SqlParameter("@ActingRoleCode", SqlDbType.VarChar, 50);
+            role.Direction = ParameterDirection.Output;
+
+            SqlParameter[] parameter = new SqlParameter[7];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = new SqlParameter("@CommitteeId", CommitteeId);
+            parameter[2] = new SqlParameter("@DepartmentId", DepartmentId);
+            parameter[3] = result;
+            parameter[4] = reason;
+            parameter[5] = shown;
+            parameter[6] = role;
+
+            DataTable dt = CommonDB.GetDataTable("spr_GetDashboardMeetings", parameter);
+            Reason = MinutesDB.RefusalReason(result, reason);
+            StatisticsShown = Reason == 0 && shown.Value != null && shown.Value != DBNull.Value && Convert.ToInt32(shown.Value) == 1;
+            ActingRoleCode = role.Value == null || role.Value == DBNull.Value ? string.Empty : role.Value.ToString();
+            return dt;
+        }
+        #endregion
+
         #region GetMeetingByCommitteeId
         public static DataTable GetMeetingByCommitteeId(int CommitteeId)
         {

@@ -3,10 +3,14 @@
 - Title: Database
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: RA1b (step 41)
-- Last updated by: RA1b (step 41), based on 1d1bbbe
+- Applies to: UN6b (step 42: the Meeting, Alerts and the dashboard, functions, Reason codes and not-called tables); the rest RA1b (step 41)
+- Last updated by: UN6b, based on 0736c7f
 - Status: Draft
-- Verified against: for step 41 (RA1b): Database/BMMS-Fix-ReportAccess-Step41.sql (header and the first
+- Verified against: for step 42 (UN6b): Database/BMMS-Fix-DashboardMeetings-Step42.sql (all five objects),
+  BMMS-Rollback-DashboardMeetings-Step42.sql, BMMS-Check-InstalledSteps.sql (diff), BMMSDAL/MeetingDB.cs and
+  DepartmentDB.cs (diff), BMMSBAL/MeetingMgr.cs and DepartmentMgr.cs (diff), BMMS/UserControl/MeetingSummary.ascx.cs
+  (message texts), Grep of BMMS, BMMSBAL and BMMSDAL for GetScheduleMeet, Database/README.md (section Step UN6b);
+  for step 41 (RA1b): Database/BMMS-Fix-ReportAccess-Step41.sql (header and the first
   procedure), BMMS-Rollback-ReportAccess-Step41.sql (messages), BMMS-Check-InstalledSteps.sql (diff),
   BMMSDAL/MinutesDB.cs and ActionItemDB.cs (the three calls), BMMSBAL/ReportsMgr.cs (diff), Database/README.md
   (section RA1b); the BMMS_Test catalog export of 2026-11-09 (kept outside the repository): README.txt,
@@ -77,7 +81,9 @@
   in an .aspx file or in a user control is not covered; the minimum SQL Server version, because 24
   procedures use THROW against the house rule for compatibility level 100 (see "Known database
   limitations"); the step 39 status after its rollback (Missing against Partly, 3 of 11); the count of procedures with
-  THROW after step 40 (a new catalog export is needed)
+  THROW after step 40 (a new catalog export is needed); the five step 42 objects are described from the Fix
+  script, not from a catalog export (the export of 2026-11-09 predates them); that the data-layer and BAL
+  methods GetScheduleMeet are unused is from a Grep of .cs files only (a caller in an .aspx file is not covered)
 
 ## Source of this chapter (BMMS_Test catalog)
 
@@ -812,7 +818,9 @@ without a primary key, and columns without a foreign key" refers to (Minutes.Cre
 | spr_GetMeetingForController | MeetingDB.GetMeetingForController | none | No (View_Meeting) | baseline |
 | spr_GetMeetingForUsers | MeetingDB.GetMeetingForUsers | none | No (View_Meeting) | baseline |
 | spr_GetLastMeetingByCommitteeId | MeetingDB.GetLastMeetingByCommitteeId | none | No (View_Meeting) | baseline |
-| spr_GetScheduleMeet | MeetingDB.GetScheduleMeet (@Code 'Scheduled' or 'Completed', by MeetingDate against the server time) | none | No (View_Meeting) | baseline |
+| spr_GetScheduleMeet | MeetingDB.GetScheduleMeet (@Code 'Scheduled' or 'Completed', by MeetingDate against the server time). Since step 42 (UN6b) no page calls it: the Dashboard reads spr_GetDashboardMeetings; it is unchanged and left for a later step to drop | none | No (View_Meeting) | baseline |
+| spr_GetDashboardMeetings | MeetingDB.GetDashboardMeetings, through MeetingMgr.GetDashboardMeetings (called by BMMS/UserControl/MeetingSummary.ascx.cs) | none | The Dashboard Meetings card, all six roles. Parameters @ActingUserId, @CommitteeId (0 = all committees), @DepartmentId (0 = all of the user's departments); OUTPUT @Result, @Reason, @StatisticsShown, @ActingRoleCode. Reason 8: the acting user is missing, 0 or inactive; Reason 4: a role outside admin, controller, manager, user, mgmt and md_sect, a committee that does not exist, a department that is not one of a Manager's or a User's, or any department for another role; a refused call returns the same columns with no rows. Rows: every scheduled meeting (no cap) then the last 10 completed meetings, newest first, for every role (a Manager or a User gets only completed meetings with an item of the chosen department or departments); columns MeetingId, CommitteeId, CommitteeCode, CommitteeName, MeetingNo, MeetingDate, MeetingTime, AgendaSubmissionDate, ListCode (S or C), StateCode, StateLabel, Items, Approved, Rejected, Pending. The counts are NULL and @StatisticsShown is 0 for md_sect and admin; for the others @StatisticsShown is 1 and Pending is AC plus AMA, over the chosen department or departments for a Manager and a User. "Today" is the database server's date | 42 |
+| spr_GetDashboardDepartments | DepartmentDB.GetDashboardDepartments, through DepartmentMgr.GetDashboardDepartments | none | The departments of a Manager or a User for the Dashboard: DepartmentId, DepartmentName, IsHome, the home department first, then by name. Parameters @ActingUserId; OUTPUT @Result, @Reason (8 acting user missing or inactive, 4 another role; then no rows) | 42 |
 | spr_GetNextMeetingNo | MeetingDB.GetNextMeetingNo | none | No (the next number, five digits, from the committee's MeetingStartNo for the first) | baseline |
 | spr_GetMeetingStatusByMeetingId | MeetingDB.GetMeetingStatusByMeetingId | none | No (AgendaStatus, MinutesStatus, IsHeld, IsMinutesFinalized) | 15 |
 | spr_GetMeetingEditLockByMeetingId | MeetingDB.GetMeetingEditLockByMeetingId | none | No (HasAttendance, HasAgenda; no row when the meeting does not exist) | 16 |
@@ -912,7 +920,10 @@ procedures of the other areas (agenda, meeting, committee and the approval proce
 below only read and mark them. The dashboard page (BMMS/DashBoard/DashBoard.aspx.cs) reads them with
 AlertMgr.GetAlertByUserId and ActionItemMgr.GetActionItemByUserId, marks them with AlertMgr.UpdateAlertByUserId,
 AlertMgr.UpdateAlertByAlertUserId and ActionItemMgr.UpdateActionItemByUserId, and makes the approval calls
-(AgendaMgr.UpdateAgendaByAgendaId, GenerateSubjectNoByMeetingId, AlertMgr.GetAlertMailId).
+(AgendaMgr.UpdateAgendaByAgendaId, GenerateSubjectNoByMeetingId, AlertMgr.GetAlertMailId). The Meetings card
+of the Dashboard is a user control, BMMS/UserControl/MeetingSummary.ascx, that reads spr_GetDashboardMeetings and
+spr_GetDashboardDepartments since step 42 (listed in "Meeting"; the three functions they use are in "Views and
+functions of the areas in part 2"). Both read only.
 
 | Procedure | Data layer | Writes | Returns | Step |
 |---|---|---|---|---|
@@ -954,6 +965,9 @@ The agenda summary, full summary and details reports and the follow-up report ar
 |---|---|---|---|---|
 | fn_AgendaChangeRefusal(@MeetingId, @ActingUserId, @BypassAllowed) | Inline table function: one row, Reason and ReasonDetail | Reason 8 acting user missing or inactive; 4 meeting not found; 1 minutes finalized or confirmed; 0 agenda open; 0 when @BypassAllowed is 1, the user is a Controller and the setting AgendaControllerBypass is '1' (the default when the row is missing); otherwise 5 (ReasonDetail Finalized, or BypassOff for a Controller with the option off) | spr_AddEditAgenda (bypass not allowed), spr_AddEditAgendaByManager (not allowed), spr_AddEditAgendaByController (allowed), spr_DeleteAgendaByAgendaId, spr_UpdateSubjectNoByAgendaId, spr_GetAgendaLockByMeetingId (bypass allowed) | 16 |
 | fn_AgendaRoute(@UserId) | Inline table function: one row, Route, ManagerId, ManagerName, ActiveControllers | Route M (the creator's manager is active and has the Manager role), C (no manager, or the manager is a Controller or has another role), I (the manager is set but inactive); ActiveControllers counts active Controllers other than the system account | spr_AddEditAgenda, spr_GetAgendaCreationMailId, spr_RerouteWaitingAgendas | 20 |
+| fn_MeetingDashboardState(@Today) | Inline table function: one row per meeting: MeetingId, IsScheduled, StateCode, StateLabel | IsScheduled is 1 when the meeting date is @Today or later, or there is no date. The state is the first rule that fits: grey "Minutes finalised" or "Minutes confirmed" (MinutesStatus F or C), red "Minutes pending" (the meeting date is before @Today), green "Agenda finalised" (AgendaStatus not Open; NULL counts as Open), orange "Submission closed" (the agenda submission date is before @Today), blue "Open for submission" | spr_GetDashboardMeetings | 42 |
+| fn_UserDepartmentScope(@UserId, @Today) | Inline table function: DepartmentId rows | The User_Department rows open on @Today (EffectiveFrom on or before it, EffectiveTo empty or after it) together with the home department Users.DepartmentId | spr_GetDashboardMeetings, spr_GetDashboardDepartments | 42 |
+| fn_AgendaStatusGroup() | Inline table function: every agenda item with AgendaId, MeetingId, CommitteeId, DepartmentId, AgendaStatusCode, StatusGroup | The one definition of the groups: approved ACA, rejected AMR and ACR, in progress AC and AMA, other (AF and any other code; counted in Items only). The summary cards planned for a later step (UN6c) are to use it too | spr_GetDashboardMeetings | 42 |
 | fn_WorkflowState(@MeetingId) | Inline table function: one row, none when the meeting does not exist | IsNew (created on or after the setting WorkflowOrderFrom), AgendaFinalized, AttendanceRecorded (chairman set and one member present 'P'), MinutesTotal, MinutesUpdated (StatusId 1) | spr_GetMeetingWorkflowState, spr_MinutesFinalizeByMeetingId, spr_UpdateAgendaShortText, spr_UpdateAttendance, spr_UpdateMeetingChairman, spr_UpdateMinutes | 23 |
 | View_Agenda | View | Agenda joined to Committee, Meeting, Subject_Type, Agenda_Status and Department (left join) | spr_CheckAgendaApprovedByMeetingId, spr_GetAgendaApprovedByMeetingId, spr_GetAgendaByAgendaId, spr_GetAgendaByMeetingId, spr_GetAgendaByMeetingIdDeptId, spr_GetAgendaBySubjectNo; the report queries in ReportsMgr | 31 (refreshed) |
 | View_Minute | View | Minutes joined to Agenda, Decision_Type, Committee, Meeting and Department; carries DueDate | spr_AddEditAgenda, spr_AddEditAgendaByController, spr_AddEditAgendaByManager, spr_UpdateMinutes, the minutes readers, spr_GetMinutesReport | 31 (refreshed) |
@@ -1025,8 +1039,9 @@ data-layer and BAL methods exist; checked for these only):
 | spr_GetAgendaBySubjectNo | AgendaDB.GetAgendaBySubjectNo, AgendaMgr.GetAgendaBySubjectNo | No page |
 | spr_CheckSubjectNoByMeetingId | AgendaDB.CheckSubjectNoByMeetingId, AgendaMgr.CheckSubjectNoByMeetingId | No page |
 | spr_LockUserByUserId | See "Users, roles and the user history" in part 1 | The one call is commented out |
+| spr_GetScheduleMeet | MeetingDB.GetScheduleMeet, MeetingMgr.GetScheduleMeet | No page since step 42 (UN6b): the Dashboard's Meetings card reads spr_GetDashboardMeetings. The procedure is unchanged (the Step 42 Test script checks that it still carries the GETDATE() rule). Drop it in a later database step (Database/README.md, Known items) |
 
-Not every data-layer method was searched for callers; the five rows above are the ones searched.
+Not every data-layer method was searched for callers; the six rows above are the ones searched.
 
 ### Dynamic SQL in the stored procedures
 
@@ -1261,6 +1276,7 @@ Procedure families used in the table:
 | 4 | Admin-only setting; spr_sys_ResetDatabase | The acting user is not an Admin | 16, 19, 29, 39 (as for Reason 3) | System Settings: "Only an Admin can change system settings." (department rule: "Not saved: only an Admin can change system settings."); Reset Database: "Only an Admin can reset the database. Nothing was changed." |
 | 4 | spr_AddEditMemberType; spr_DeleteMemberTypeByMemberTypeId | The acting user is not an Admin (an Admin or a Controller until step 40, RA1a) | 21, 40 | "Only an Admin can change member types." (BMMSBAL/MemberTypeMgr.cs; the text before step 40 was "Only an Admin or a Controller can change member types.") |
 | 4 | spr_GetMinutesReportMeetingsAllStatus; spr_GetMinutesReportAllStatus (not Controller or Management); spr_GetFollowupReportForManagement (not Management) | The acting user's role may not use the report procedure; no rows are returned (Reason 8 for a missing, 0 or inactive acting user, the same meaning as above) | 41 | "You are not allowed to see this report." (BMMSBAL/ReportsMgr.cs); Reason 8: "Your session is no longer valid. Please log in again." |
+| 4 | spr_GetDashboardMeetings; spr_GetDashboardDepartments | spr_GetDashboardMeetings: a role outside the six; a committee id that does not exist or is below 0; a department id that is below 0, is given for a role other than Manager and User, or is not one of the user's departments; spr_GetDashboardDepartments: the role is not Manager or User. No rows are returned | 42 | spr_GetDashboardMeetings: "The meeting list is not shown for this choice." followed by "Choose All committees or All my departments.", "Choose All committees." or "Choose All my departments." (by the filters shown), or "The meeting list is not shown for your role." when no filter is shown (BMMS/UserControl/MeetingSummary.ascx.cs). spr_GetDashboardDepartments: no message, the page does not use the list for the other roles |
 | 5 | Agenda lock; spr_UpdateAgendaByAgendaId | The agenda is finalized (ReasonDetail Finalized; BypassOff for a Controller when the option AgendaControllerBypass is off) | 16 | "The agenda for this meeting is finalized, so agenda items can no longer be added, changed or deleted." With BypassOff, the same text followed by " Controller changes after finalization are switched off in System Settings." |
 | 5 | spr_DeleteUserByUserId | Other users have this user as manager, creator or last updater (ReasonDetail the names) | 13 | "This user cannot be deleted: these users have them as reporting person, or were created or last updated by them: [names]." |
 | 5 | spr_AddEditMemberType; spr_DeleteMemberTypeByMemberTypeId | The type is in use (ReasonDetail "[n] committee, [m] meeting"); an edit that changes the scope, or a delete | 21 | Delete: "This member type is in use ([counts] member rows), so it cannot be deleted. You can make it inactive instead." Edit: "This member type is in use ([counts] member rows), so it cannot be moved to the other tagging page." |
@@ -1271,6 +1287,7 @@ Procedure families used in the table:
 | 7 | User rules | The protected system account (Users.IsSystem = 1) | 18 | "This is the protected system account. It cannot be edited, deactivated, deleted, or have its role or Login ID changed, and only the account itself can change its password (Change Password)." |
 | 7 | spr_AddEditMemberType; spr_DeleteMemberTypeByMemberTypeId | The type is reserved | 21 | "This member type is reserved: the application uses it for the minutes, the notices and their signer, so it cannot be changed or deleted." |
 | 8 | Agenda lock; spr_UpdateAgendaByAgendaId; User rules (also a NULL or 0 acting user in spr_AddEditUser, spr_DeleteUserByUserId, spr_SetUserStatusByUserId); Admin-only setting; spr_AddEditMemberType; spr_DeleteMemberTypeByMemberTypeId; spr_sys_ResetDatabase | The acting user is missing or inactive (same meaning in every family) | 13 (missing), 14 (inactive) for users; 16 agenda lock and settings; 19 organisation settings and logo; 20 approval; 21 member type; 29 reset; 39 department rule | "Your session is no longer valid. Please log in again." |
+| 8 | spr_GetDashboardMeetings; spr_GetDashboardDepartments | The acting user is missing, 0 or inactive; no rows are returned | 42 | "The meeting list is not available: your account is not active. Sign in again." |
 | 9 | spr_UpdateMeetingChairman | The new chairman is not on the committee on the meeting date (ReasonDetail the member name) | 16 | "[member name] is not a member of this committee on the meeting date." |
 | 9 | spr_DeleteUserByUserId | A foreign key error (547) that the checks did not foresee; ReasonDetail the SQL Server message | 13 | "This user cannot be deleted because other data still refers to them. The details were written to the error log." (the detail is written to the error log and never shown) |
 | 10 | spr_AddEditMeeting | Agenda items exist and the committee changes | 16 | "Agenda items are recorded for this meeting, so its committee cannot be changed." |
@@ -1454,6 +1471,7 @@ cover are referred to, not repeated.
 | Status columns without a code table or a check | Meeting.AgendaStatus, MinutesStatus and SubjectStatus and Attendance.MemberOf have no check constraint (05-constraints.txt holds the 8 checks listed in "Tables and keys") | "Meetings and attendance" |
 | THROW in the procedure texts (open) | 24 procedures use THROW on BMMS_Test although the house rule for compatibility level 100 says no THROW; it runs because the server is SQL Server 17 (07-database.txt). Not fixed. Step 40 (RA1a) replaces THROW by RAISERROR in spr_AddEditMemberType and spr_DeleteMemberTypeByMemberTypeId (Fix script header and Database/README.md), so the count of 24 is for the catalog of 2026-11-09, before step 40. [[CONFIRM: the count of procedures with THROW after step 40; take a new catalog export of BMMS_Test with step 40 installed]] The step Fix scripts (Database/BMMS-Fix-*.sql) also use CREATE OR ALTER, which needs SQL Server 2016 SP1 or later, so the minimum-version decision covers both. [[CONFIRM: owner decision on the minimum SQL Server version; with a lower version these procedures and the Fix scripts would not run]] | "Result, Reason and ReasonDetail" |
 | Seven procedures named by the data layer are missing from the catalog (open) | spr_GetAgenda, spr_GetNextCommitteeMemberCode, spr_GetNextMeetingMemberCode, spr_GetNextRoleCode, spr_GetRoleByRoleId, spr_AddEditRole and spr_DeleteRoleByRoleId have no header in the catalog; no page calls the methods that name them. Not fixed | "Called by the code, not in the database" |
+| Agenda has only its primary key, so the Dashboard counts scan it (open, planned for step UN6e) | spr_GetDashboardMeetings reads Agenda through fn_AgendaStatusGroup once per listed meeting for the counts (13 scans of 10 pages for the Controller on BMMS_Test) and once for the completed meetings of a Manager or a User, so the reads grow with the number of agenda items. Timing of 2026-11-12 on BMMS_Test (17 meetings, 66 items): 373 to 613 logical reads, 7 to 33 ms elapsed. An index on Agenda (MeetingId) with DepartmentId and AgendaStatusCode included is planned in a numbered step (Database/README.md, Known items) | Part 2, "Meeting" (spr_GetDashboardMeetings) |
 | The status of step 39 after its rollback is stated two ways (open) | The Rollback script's header says the Check script then reads step 39 Missing; the Check script's header and Database/README.md say Partly, 3 of 11. Not settled; no run of the Check script after a rollback is recorded | 03-Deployment-and-Installation, "Installing step 39 on a test database" |
 
 Not database items, so left to the chapters that cover them: mail without TLS, the mail Bcc rule, the DPAPI

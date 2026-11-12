@@ -721,6 +721,7 @@ namespace BMMS.DashBoard
                     MsgDisplay(ApprovedMailNotSentMessage, MessageKind.Warning);
 
                 ClearAgendaEditors();   // step A3: saved, the panel closes
+                MeetingSummary1.Reload();   // step UN6b: the meeting counts follow the approval
             }
             else if (approveResult.Reason == MeetingChangeReason.NotFound)
                 ShowItemGone();
@@ -810,6 +811,7 @@ namespace BMMS.DashBoard
                     MsgDisplay(RejectedMailNotSentMessage, MessageKind.Warning);
 
                 ClearAgendaEditors();   // step A3: saved, the panel closes
+                MeetingSummary1.Reload();   // step UN6b: the meeting counts follow the rejection
             }
             else if (rejectResult.Reason == MeetingChangeReason.NotFound)
                 ShowItemGone();
@@ -1078,14 +1080,44 @@ namespace BMMS.DashBoard
 
         #region FormatDate
         // Step F2: the same text as Convert.ToDateTime(value.ToString()).ToString("dd-MMM-yyyy") (current culture,
-        // both ways); a NULL, empty or unreadable date gives an empty string instead of an error
-        private static string FormatDate(object value)
+        // both ways); a NULL, empty or unreadable date gives an empty string instead of an error. Protected since
+        // step UN6b: the Alerts card binds its date with it.
+        protected static string FormatDate(object value)
         {
             DateTime date;
             if (value == null || value == DBNull.Value || !DateTime.TryParse(value.ToString(), out date))
                 return string.Empty;
 
             return date.ToString("dd-MMM-yyyy");
+        }
+        #endregion
+
+        #region Alerts card (step UN6b)
+        // The time of the alert's CreatedOn as HH:mm (shown under the date, as in the Meetings card); empty when
+        // the value is missing or unreadable
+        protected static string FormatTimeOfDay(object value)
+        {
+            DateTime date;
+            if (value is DateTime)
+                date = (DateTime)value;
+            else if (value == null || value == DBNull.Value || !DateTime.TryParse(value.ToString(), out date))
+                return string.Empty;
+
+            return date.ToString("HH:mm");
+        }
+
+        // The muted line under the Source link: alert type, committee and department, the empty ones left out.
+        // Plain text; the markup encodes it.
+        protected static string AlertDetails(object alertType, object committee, object department)
+        {
+            System.Collections.Generic.List<string> parts = new System.Collections.Generic.List<string>();
+            foreach (object value in new object[] { alertType, committee, department })
+            {
+                string text = value == null || value == DBNull.Value ? string.Empty : value.ToString().Trim();
+                if (text.Length > 0)
+                    parts.Add(text);
+            }
+            return string.Join(" | ", parts.ToArray());
         }
         #endregion
 

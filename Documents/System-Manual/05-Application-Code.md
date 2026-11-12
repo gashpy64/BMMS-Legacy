@@ -3,10 +3,13 @@
 - Title: Application Code
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: RA1c2
-- Last updated by: RA1c2, based on 1db6ac6
+- Applies to: UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
+- Last updated by: UN6b, based on 0736c7f
 - Status: Draft
-- Verified against: BMMS/**/*.aspx, BMMS/MasterPage/*.Master(.cs), BMMS/UserControl/*.ascx(.cs),
+- Verified against: for step UN6b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/DashBoard/DashBoard.aspx
+  (headings and column headers by Grep), DashBoard.aspx.cs (diff), BMMSBAL/MeetingMgr.cs and DepartmentMgr.cs (diff),
+  BMMSDAL/MeetingDB.cs and DepartmentDB.cs (diff), Grep of .cs files for GetScheduleMeet, Database/README.md (section
+  Step UN6b); and: BMMS/**/*.aspx, BMMS/MasterPage/*.Master(.cs), BMMS/UserControl/*.ascx(.cs),
   BMMS/XML/PageAccess.xml, PageSettings.xml, AppSettings.xml, ReportSettings.xml,
   BMMS/PageAccessModule.cs, BMMS/Global.asax.cs, BMMS/Default.aspx.cs, BMMS/Logout.aspx.cs,
   BMMS/Error/ErrorPage.aspx(.cs), BMMS/Report/ViewReport.aspx.cs,
@@ -76,7 +79,7 @@ How the tables are read:
 | Default.aspx | Login. Checks the login ID and password, opens the session, sends the user to the Dashboard, or to ChangePasswordFirst after a first sign-in with the default password | Public | No master page; `?status=inactive` shows "Your account is inactive. Contact the administrator." |
 | Logout.aspx | Records the end of the login in the access log, clears the session and returns to Default.aspx | Public | No master page; reached by the Logout button of the masters (PostBackUrl) |
 | ChangePasswordFirst.aspx | "Change Password" for the first sign-in (MainNoMenu.Master) | `*` | Reached from Default.aspx only |
-| DashBoard/DashBoard.aspx | Alerts, action items, committee, meeting and agenda alerts, approval of agenda items; the landing page of every role; menu entry "Home" for every role except Admin and MD Secretariat | `*` | Hosts the MeetingSummary user control; the code-behind has more than 1,000 lines |
+| DashBoard/DashBoard.aspx | Alerts, action items, committee, meeting and agenda alerts, approval of agenda items; the landing page of every role; menu entry "Home" for every role except Admin and MD Secretariat | `*` | Hosts the MeetingSummary user control; the code-behind has more than 1,000 lines. Since step UN6b the layout is cards in the grid `.wb-dash` (Meetings about two thirds beside Alerts, Action Items below; one column under 1100 px); the Alerts card has two columns, "Alert" (the Source link with the alert type, committee and department below it, separated by a vertical bar with a space on each side) and "Created on" (dd-MMM-yyyy with HH:mm below it); the list behaviour, the links and the control IDs are unchanged. After a successful Approve or Reject the page calls `MeetingSummary1.Reload()` |
 | Error/ErrorPage.aspx | The error page shown after `Utilities.GoToErrPage`: a fixed text and an Exit button | Public | OnPreInit sends a visitor with no session to Default.aspx |
 
 ### Master folder (BMMS/Master, 24 pages)
@@ -138,8 +141,71 @@ entries only.
 | File | Purpose | Notes |
 |---|---|---|
 | UserControl/MenuUserControl.ascx | The top menu and its drop-down lists; the links shown depend on `Session["RoleCode"]` | Hides links only; PageAccessModule is the server-side check. Since RA1a the Master menu shows Department Master, Designation Master, Member Type, Subject Type, Decision Type and User Master to Admin only (the Controller keeps Member Master, Committee Master, Committee Member Tag / UnTag, Meeting Master, Meeting - Member Tag / UnTag and Attendance), and the "Admin" heading and menu are for Admin only (Reset Password, Backup Database, SMTP Configuration, System Settings, Audit Trail, Reset Database, in that order). The code-behind is empty. The markup calls `Session["RoleCode"].ToString()`, so it needs a logged-in session; only Main.Master uses it (MainNoMenu.Master has it commented out) |
-| UserControl/MeetingSummary.ascx | The two meeting lists of the Dashboard: scheduled and completed (`MeetingMgr.GetScheduleMeet`) | Used by DashBoard.aspx only |
+| UserControl/MeetingSummary.ascx | Since step UN6b (rewritten): the Dashboard heading "Dashboard" with the Committee and Department drop-downs and the subtitle, an empty container for the summary cards planned for UN6c, and the Meetings card with the Scheduled and Completed (last 10) lists (columns Meeting, Meeting date, Submit agenda by, Status, Items, Approved, Rejected and the last column). It reads `MeetingMgr.GetDashboardMeetings` and `DepartmentMgr.GetDashboardDepartments` (see "The Dashboard Meetings card (step UN6b)" below) | Used by DashBoard.aspx only. It renders no wrapper: its blocks are cells of the Dashboard grid (`.wb-dash`) |
 | MasterPage/Main.Master, MainNoMenu.Master | See above | |
+
+### The Dashboard Meetings card (step UN6b)
+
+UserControl/MeetingSummary.ascx(.cs) was rewritten in step UN6b. What it does, from the code:
+
+- Page_Load (first load only), `Filter_Changed` (both drop-downs post back on every change) and the public
+  `Reload()` (called by DashBoard.aspx.cs after a successful Approve or Reject) all call `LoadMeetings`.
+- `LoadMeetings` reads the acting user id from `Session["UserId"]` (none or not a number: the "not active"
+  message and no filters). It calls `DepartmentMgr.GetDashboardDepartments` on every load, then
+  `MeetingMgr.GetDashboardMeetings(actingUserId, committeeId, departmentId, out reason, out statisticsShown, out
+  roleCode)`. The two filter values come from the drop-downs; a chosen department that is no longer in the
+  department list falls back to 0 ("All my departments"). The role and the departments are read by the
+  procedures from the acting user id; nothing comes from ViewState, the query string or the session role. The
+  procedures check both filter values again (Reason 4).
+- The role table `RoleViews` (one place in MeetingSummary.ascx.cs) holds, per role code returned by the
+  procedure: whether the Committee drop-down is shown, whether the Department drop-down may be shown (only for a
+  Manager with two or more departments), whether the titles carry the department, and the header of the last
+  statistics column ("In progress" for the User, "Pending" for the others). controller, manager, mgmt, md_sect
+  and admin show the Committee drop-down; user does not. controller, mgmt, md_sect and admin have the plain
+  title "Meetings"; the last three are provisional until their mock-up screens are decided (Database/README.md).
+  A role code the table does not know gets no filter and no title change.
+- `ShowTitles`: Manager with two or more departments: subtitle "Departments: [a, b]", title "Meetings, items of
+  my departments", or "Meetings, [department] items" when one is chosen; one department (Manager or User):
+  subtitle "Department: [name]" and title "Meetings, [department] items". The department names come from the
+  database and are encoded on output (`InnerText`, a Literal in encode mode).
+- The statistics columns (Items, Approved, Rejected and the last one) are shown or hidden by the value of
+  `StatisticsShown` returned by the procedure, not by the role table. The table is split into the Scheduled and
+  Completed grids by `ListCode` (S or C), in the procedure's order.
+- `StateCssClass` turns the colour name of the procedure (grey, red, green, orange, blue) into the chip classes
+  `wb-chip wb-chip-[colour]`; an unknown name gives the plain `wb-chip`. The label text is always shown.
+- Dates are formatted dd-MMM-yyyy (`FormatDate`, the same format as DashBoard.aspx.cs); the meeting time is shown
+  under the date as "[time] Hrs.".
+- Failure handling: any exception is written to the error log (`Utilities.WriteErrorLog`, class MeetingSummary,
+  method LoadMeetings) and `ShowFailure` hides the filters and the subtitle, sets the title to "Meetings" and
+  shows "The meeting list could not be loaded. Reload the page to try again." A SqlException with number -2, 8645
+  or 701, an InvalidOperationException whose message starts with "Timeout expired" (no free connection in the
+  pool in time) or an OutOfMemoryException (`IsServerBusy`) gives "The server is busy and the meeting list could
+  not be loaded. Wait a moment, then reload the page." instead. The filters are also hidden in the markup until a
+  load succeeds. The Alerts and Action Items lists load on their own.
+- Messages for a refusal: Reason 8 "The meeting list is not available: your account is not active. Sign in
+  again."; Reason 4 "The meeting list is not shown for this choice." plus "Choose All committees or All my
+  departments." (both filters shown), "Choose All committees." or "Choose All my departments.", or, with no
+  filter shown, "The meeting list is not shown for your role." Empty lists: "No scheduled meetings." and "No
+  completed meetings."
+- Markup and styles: the heading with the filters, an empty container `divSummaryCards` for the summary cards of
+  step UN6c (not built), and the Meetings card in the Workbench card style. DashBoard.aspx puts the control and
+  the Alerts and Action Items cards in the grid `.wb-dash` (CSS/bmms-workbench.css, Dashboard section: grid, heading
+  and filters, chips with the palette's tints, number columns, the panel widths, the 1100 px and 720 px rules).
+  The Agenda Alert and Action Item Details panels have a 165 px label column and fields up to 550 px, with the
+  labels above the fields at 720 px and below.
+- DashBoard.aspx.cs (Alerts card): `FormatDate` is now protected, and `FormatTimeOfDay` (HH:mm) and `AlertDetails`
+  (alert type, committee and department, empty ones left out, joined by a vertical bar with a space on each side)
+  are new. The unused hidden Read column of the Alerts grid is gone; the read and unread rows, paging, hidden values
+  and every control ID that `lnkSource_Click` reads are unchanged.
+- BAL and DAL: `MeetingMgr.GetDashboardMeetings` and `MeetingDB.GetDashboardMeetings` (seven parameters, four of
+  them OUTPUT; `StatisticsShown` is true only when the Reason is 0 and the procedure returned 1);
+  `DepartmentMgr.GetDashboardDepartments` and `DepartmentDB.GetDashboardDepartments` (the Reason turned into one
+  number by `MinutesDB.RefusalReason`).
+
+Drawn from: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/DashBoard/DashBoard.aspx (headings) and
+DashBoard.aspx.cs (diff), BMMSBAL/MeetingMgr.cs and DepartmentMgr.cs (diff), BMMSDAL/MeetingDB.cs and
+DepartmentDB.cs (diff), Database/README.md (section Step UN6b). The CSS file and DashBoard.aspx were not read in
+full for this section: the CSS and layout statements are from Database/README.md.
 
 ### Pages in no menu and the unlisted page
 
@@ -669,7 +735,7 @@ chapter 04 ("Known database limitations"). The full backlog stays in Database/RE
 | The mail audit row keeps the full server path of the attachment, and a mail that was sent but whose audit row could not be written is reported as a failure | Mail_Mgr.cs line 109 (`Common.SaveSendMail` with the attachment path, after `smtp.Send`, inside the same `try`) |
 | The IP address recorded at login is an address of the machine that runs the site, not of the user's computer | Default.aspx.cs line 71 (`Utilities.GetLocalIPAddress`, which uses the server's own host name) |
 | User ids are read with `Convert.ToInt16` in several places, so an id above 32767 fails there | Global.asax.cs `Session_End` (no handler around it), Logout.aspx.cs, Master/ResetPassword.aspx.cs |
-| Code with no caller: `WordUtilities` (all methods), `DocToString`, `Common.EncryptVal`, `Common.CreateRandomPassword`, `Common.MondifyAppSettings`; the Send Mail handler `btnSendMail_Click` of Report/Followup has no button (the same code of Report/FollowupActionTaken was removed in RA1c2); `PDFUtilities.GenerateHTMLPdf` and `HtmlToPdfBuilder` have no caller since RA1c2 removed TestPage | Grep for callers |
+| Code with no caller: `WordUtilities` (all methods), `DocToString`, `Common.EncryptVal`, `Common.CreateRandomPassword`, `Common.MondifyAppSettings`; the Send Mail handler `btnSendMail_Click` of Report/Followup has no button (the same code of Report/FollowupActionTaken was removed in RA1c2); `PDFUtilities.GenerateHTMLPdf` and `HtmlToPdfBuilder` have no caller since RA1c2 removed TestPage; `MeetingMgr.GetScheduleMeet` and `MeetingDB.GetScheduleMeet` have no caller since UN6b (the Dashboard reads `GetDashboardMeetings`) | Grep for callers |
 | Files under ~/Files (uploads, attachments) are plain files served by IIS: PageAccessModule checks `.aspx` requests only, and Web.config hides only the segments `PDF`, `SqlBackup` and `Log`. Database/README.md lists a login-checked download page as an open step (step 27) | PageAccessModule.cs lines 62 to 68; Web.config `hiddenSegments` |
 | Web.config sets no `maxRequestLength`, so the ASP.NET default applies to uploads; the old list says a larger upload is refused before the page runs and shows the safe error page | Web.config (`httpRuntime`); [[CONFIRM: the effective upload limit on the installed site; check the installed Web.config and the IIS request-filtering limit]] |
 | `CommonDB` rethrows with `throw ex;`, so the stack trace of an error starts at `CommonDB` and not at the procedure call | CommonDB.cs lines 36 to 39 and 78 to 81 |

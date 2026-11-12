@@ -123,6 +123,11 @@
    (spr_GetMinutesReportMeetingsAllStatus, spr_GetMinutesReportAllStatus,
    spr_GetFollowupReportForManagement) and replaces nothing: 3 markers. After
    BMMS-Rollback-ReportAccess-Step41.sql it reads Missing.
+   Step 42 (step UN6b) adds three read-only functions
+   (fn_MeetingDashboardState, fn_UserDepartmentScope, fn_AgendaStatusGroup)
+   and two read-only procedures (spr_GetDashboardMeetings,
+   spr_GetDashboardDepartments) and replaces nothing: 5 markers. After
+   BMMS-Rollback-DashboardMeetings-Step42.sql it reads Missing.
    Step 32 is reserved and not built; it has no row.
    Step D1 (shown as step 100) replaces spr_DeleteMeetingByMeetingId, which
    no numbered script contains: it reads Missing only on a database restored
@@ -411,6 +416,11 @@ INSERT INTO @M
 SELECT 41, o.Name + ' (ReportAccess-Step41)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%ReportAccess-Step41%' THEN 1 ELSE 0 END
 FROM (VALUES ('spr_GetMinutesReportMeetingsAllStatus'), ('spr_GetMinutesReportAllStatus'), ('spr_GetFollowupReportForManagement')) o(Name);
 
+-- 42. BMMS-Fix-DashboardMeetings-Step42.sql, installed after step 41 (five new objects; nothing is replaced)
+INSERT INTO @M
+SELECT 42, o.Name + ' (DashboardMeetings-Step42)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%DashboardMeetings-Step42%' THEN 1 ELSE 0 END
+FROM (VALUES ('fn_MeetingDashboardState'), ('fn_UserDepartmentScope'), ('fn_AgendaStatusGroup'), ('spr_GetDashboardMeetings'), ('spr_GetDashboardDepartments')) o(Name);
+
 -- D1 (shown as step 100). BMMS-Fix-MeetingDelete-D1.sql; no numbered script contains spr_DeleteMeetingByMeetingId
 INSERT INTO @M VALUES
 (100, 'spr_DeleteMeetingByMeetingId (MeetingDelete-D1)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_DeleteMeetingByMeetingId')), '') LIKE '%MeetingDelete-D1%' THEN 1 ELSE 0 END);
@@ -453,6 +463,7 @@ INSERT INTO @Steps VALUES
 (39, 'BMMS-Fix-UserHistory-Step39.sql', 'step 2, 3, 6, 10, 13, 18, 21, 29 or 30 was re-run after step 39, or step 39 was rolled back (3 of 11: the tables and the setting stay): run step 39 again, as the last step'),
 (40, 'BMMS-Fix-RoleAccess-Step40.sql', 'step 13, 14, 18 or 21 was re-run after step 40: run step 40 again (after step 39)'),
 (41, 'BMMS-Fix-ReportAccess-Step41.sql', 'a procedure is missing: run step 41 again (after step 40)'),
+(42, 'BMMS-Fix-DashboardMeetings-Step42.sql', 'an object is missing: run step 42 again (after step 41)'),
 (100, 'BMMS-Fix-MeetingDelete-D1.sql (step D1)', '');
 
 SELECT s.Step, s.Script,

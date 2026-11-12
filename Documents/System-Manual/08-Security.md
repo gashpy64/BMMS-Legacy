@@ -3,10 +3,13 @@
 - Title: Security
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: RA1c2
-- Last updated by: RA1c2, based on 1db6ac6
+- Applies to: UN6b (the paragraph on the Dashboard meeting list under "Role and acting-user checks in procedures"); the rest RA1c2
+- Last updated by: UN6b, based on 0736c7f
 - Status: Draft
-- Verified against: for step RA1c2: git diff against 1db6ac6 (BMMS/Report/FollowupActionTaken.aspx(.cs),
+- Verified against: for step UN6b: Database/BMMS-Fix-DashboardMeetings-Step42.sql (spr_GetDashboardMeetings,
+  spr_GetDashboardDepartments, fn_UserDepartmentScope), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (what is
+  sent, what is read back, the encoding), BMMSDAL/MeetingDB.cs and DepartmentDB.cs (diff), Database/README.md
+  (section Step UN6b, scope and filters); for step RA1c2: git diff against 1db6ac6 (BMMS/Report/FollowupActionTaken.aspx(.cs),
   BMMS/XML/PageAccess.xml, BMMS/UserControl/MenuUserControl.ascx); for step RA1b (step 41): BMMS/PageAccessModule.cs (HasRole, RefuseRequest,
   ReadDatabaseRole), BMMS/Report/Reports.aspx.cs, Followup.aspx.cs, ViewReport.aspx.cs,
   BMMS/XML/PageAccess.xml, Database/BMMS-Fix-ReportAccess-Step41.sql (header, guards); before: none yet
@@ -101,6 +104,23 @@ How a page is protected (read from the code for step RA1a; the rest of this sect
 [[CONFIRM: lead from old Architecture notes: the stored procedures decide which changes a role may make; dbo.fn_UserChangeRefusal (step 13 onwards) says who may change which user]]
 [[CONFIRM: lead from old Architecture notes: nobody can delete, deactivate or change the role of their own account; the last active ordinary Admin and the last active Controller cannot be deleted, deactivated or given another role (checked under a lock in the same transaction)]]
 Since step 40 (RA1a), dbo.fn_UserChangeRefusal has no branch for the Controller. An Admin may change any user (the rules below still apply); every other role, the Controller included, may only Edit and ResetPassword its own account, and Create or any action on another account is refused with Reason 4 ("You are not allowed to [action]. Only an Admin can change other users' accounts."). Until step 40 a Controller could change Manager, User, Management and MD Secretariat accounts. spr_AddEditMemberType and spr_DeleteMemberTypeByMemberTypeId refuse anyone but an active Admin with Reason 4 ("Only an Admin can change member types."; Reason 8 for a missing or inactive acting user). The Reason codes and the procedures are in chapter 04.
+The Dashboard meeting list since step 42 (UN6b) takes its scope from the database, not from the page. The page
+sends the acting user id (`Session["UserId"]`) and two filter values (a committee id and a department id, 0 for all).
+spr_GetDashboardMeetings and spr_GetDashboardDepartments read the acting user's role and account status
+themselves (Users and Roles; an inactive or missing user gets Reason 8 and no rows), take a Manager's or a User's
+departments from fn_UserDepartmentScope (the open User_Department rows and the home department), and check both
+filter values against that scope: a department that is not one of the user's, or any department for another role,
+or a committee that does not exist gives Reason 4 and no rows. So a changed drop-down value or a forged post-back
+cannot widen what a Manager or a User sees: a completed meeting is listed only when it has an item of one of the
+user's departments, and the counts cover only those items. Controller and Management see every meeting and every
+count; MD Secretariat and Admin get the meetings but the counts are not computed (NULL, @StatisticsShown 0). The
+page takes the role code and the statistics flag from the procedure, never from ViewState, the query string or
+`Session["RoleCode"]`. Both procedures read only and change no data. Department names, committee names and
+other text from the database are encoded on output (`HttpUtility.HtmlEncode` in the grid templates, `InnerText`,
+a Literal in encode mode). A failure is written to the error log and the card shows a fixed message; no SQL
+text or exception detail reaches the page. The recommended hardening is unchanged: the page itself is still
+protected by the page-access module like every page (`*` in PageAccess.xml); the meeting list adds no new page
+and no new address.
 [[CONFIRM: lead from old Architecture notes: the acting user is the logged-in user, passed as @ActingUserId; a missing or inactive acting user is refused]]
 [[CONFIRM: lead from old Architecture notes: one protected system account (Users.IsSystem = 1) cannot be edited, deleted, deactivated or given another role, even by itself; only it can change its own password; it takes no part in the workflow (step 18)]]
 [[CONFIRM: lead from old Architecture notes: every protected procedure returns one row Result, Reason, ReasonDetail (1 done, 0 refused); the page turns the Reason into a sentence; a database error is re-raised, not reported as a refusal]]

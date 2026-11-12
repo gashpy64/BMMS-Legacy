@@ -1,5 +1,6 @@
 /* ============================================================================
-   BMMS tester - fixture for BMMS_Quality (step WF3a1)
+   BMMS tester - fixture for BMMS_Quality (step WF3a1; committee QA2 added in
+   step UN6b)
    ----------------------------------------------------------------------------
    Test data for the tester's database only. It is NOT a product step: it has no
    row in BMMS-Check-InstalledSteps.sql and must never run on BMMS or BMMS_Test.
@@ -34,6 +35,17 @@
        00004 minutes in Draft         meeting day passed, attendance entered
        00005 minutes Finalised        one Followup decision (an action item)
        00006 minutes Confirmed
+     Committee QA2 "QA Dashboard Committee" (step UN6b, for the Dashboard's
+     meeting list), twelve meetings and twelve agenda items:
+       00001 dated today, submission today, agenda open, no items
+             (scheduled until the end of the day, not "Minutes pending")
+       00002 to 00012 eleven completed meetings (days -1 to -9, -11, -12):
+             00002 agenda finalised, minutes Draft, a Credit item at ACA and
+                   one at ACR
+             00003 minutes Finalised, only a Secretarial item (ACA)
+             00004 to 00012 minutes Confirmed, a Credit item at ACA each
+       So every role's Completed list holds more than ten meetings where its
+       scope allows it, and the cap of ten can be seen.
 
    How: the workflow is driven through the application's procedures, in the
    application's order (item saved by the User, approved or rejected by the
@@ -43,6 +55,12 @@
    refuses a date before today, and four of the six meetings need a past date
    or a past submission date. BMMS-Quality-Fixture-Dates.sql sets the dates
    again after every restore, relative to that day.
+   The QA2 meetings and their items are direct rows as well (eleven meetings in
+   the past; their minutes status is set directly). The QA2 items have no
+   minutes rows and no alerts, so the Minutes report and Followup are the same
+   as without QA2. Saving committee QA2 with spr_AddEditCommittee writes its
+   Committee alert, as for QA1: one more alert for every account except
+   qa_ctrl, who saved it.
 
    Compatibility level 100. Plain ASCII. Safe to run once only (the guard
    refuses a second run).
@@ -81,6 +99,7 @@ DECLARE @Design INT;
 DECLARE @QaAdmin INT, @QaController INT, @QaManager INT, @QaManager2 INT, @QaUser INT, @QaUser2 INT, @QaMgmt INT, @QaMdSec INT, @QaInactive INT;
 DECLARE @DeptList VARCHAR(50);
 DECLARE @C INT;
+DECLARE @C2 INT;
 DECLARE @TypeChairman INT, @TypeMember INT;
 DECLARE @M1 INT, @M2 INT;
 DECLARE @SubjectType INT;
@@ -393,6 +412,51 @@ BEGIN TRY
         END
         SET @No = @No + 1;
     END
+
+    ---------------------------------------------------------------------------
+    -- Committee QA2 (step UN6b): the Dashboard's meeting list. Direct rows: eleven
+    -- meetings lie in the past. Day offsets avoid -10, the day of QA1 00004.
+    ---------------------------------------------------------------------------
+    SET @Step = 'committee QA2';
+    EXEC spr_AddEditCommittee @Code = 'Save', @CommitteeId = 0, @CommitteeCode = 'QA2', @CommitteeName = 'QA Dashboard Committee', @Board = 0,
+        @IncorporationDate = '20200101', @MeetingStartNo = 1, @CommitteeColorCode = '', @CessationDate = '', @StatusId = 1,
+        @CreatedOn = @Now, @CreatedBy = @QaController, @UpdatedOn = @Now, @UpdatedBy = @QaController;
+    SET @C2 = (SELECT CommitteeId FROM Committee WHERE CommitteeCode = 'QA2');
+    IF (@C2 IS NULL) RAISERROR('not saved', 16, 1);
+
+    SET @Step = 'QA2 meetings';
+    INSERT INTO Meeting (MeetingNo, CommitteeId, Place, Venue, MeetingDate, MeetingTime, AgendaSubmissionDate, MeetingColorCode, AgendaStatus, MinutesStatus, CreatedOn, CreatedBy)
+    SELECT x.MeetingNo, @C2, 'QA', 'QA dashboard', DATEADD(DAY, x.DayOffset, @Today), '10:00', DATEADD(DAY, x.SubOffset, @Today), '',
+           x.AgendaStatus, x.MinutesStatus, @Now, @QaController
+    FROM (SELECT '00001' AS MeetingNo, 0 AS DayOffset, 0 AS SubOffset, 'Open' AS AgendaStatus, 'Open' AS MinutesStatus
+          UNION ALL SELECT '00002', -1, -6, 'Close', 'Open'
+          UNION ALL SELECT '00003', -2, -7, 'Close', 'F'
+          UNION ALL SELECT '00004', -3, -8, 'Close', 'C'
+          UNION ALL SELECT '00005', -4, -9, 'Close', 'C'
+          UNION ALL SELECT '00006', -5, -10, 'Close', 'C'
+          UNION ALL SELECT '00007', -6, -11, 'Close', 'C'
+          UNION ALL SELECT '00008', -7, -12, 'Close', 'C'
+          UNION ALL SELECT '00009', -8, -13, 'Close', 'C'
+          UNION ALL SELECT '00010', -9, -14, 'Close', 'C'
+          UNION ALL SELECT '00011', -11, -16, 'Close', 'C'
+          UNION ALL SELECT '00012', -12, -17, 'Close', 'C') x;
+    IF ((SELECT COUNT(*) FROM Meeting WHERE CommitteeId = @C2) <> 12) RAISERROR('not all twelve QA2 meetings were saved', 16, 1);
+
+    SET @Step = 'QA2 agenda items';
+    INSERT INTO Agenda (AgendaNo, CommitteeId, MeetingId, DepartmentId, SubjectTypeId, ShortText, AgendaType, AgendaText, ProposedResolution,
+                        CurrentStatus, AgendaStatusCode, MgrApprovedStatus, ControllerApprovedStatus, CreatedOn, CreatedBy, UpdatedOn, UpdatedBy)
+    SELECT 'QA2-' + m.MeetingNo + '-' + x.Seq, @C2, m.MeetingId, CASE x.Dept WHEN 'S' THEN @DeptSec ELSE @DeptCredit END, @SubjectType,
+           N'QA2 item ' + m.MeetingNo + N'-' + x.Seq, 'Entry', N'<p>QA agenda text.</p>', N'<p>QA proposed resolution.</p>',
+           'New', x.StatusCode, 'Approved', CASE x.StatusCode WHEN 'ACR' THEN 'Rejected' ELSE 'Approved' END,
+           @Now, CASE x.Dept WHEN 'S' THEN @QaController ELSE @QaUser END, @Now, @QaController
+    FROM (SELECT '00002' AS MeetingNo, '1' AS Seq, 'C' AS Dept, 'ACA' AS StatusCode
+          UNION ALL SELECT '00002', '2', 'C', 'ACR'
+          UNION ALL SELECT '00003', '1', 'S', 'ACA'
+          UNION ALL SELECT '00004', '1', 'C', 'ACA' UNION ALL SELECT '00005', '1', 'C', 'ACA' UNION ALL SELECT '00006', '1', 'C', 'ACA'
+          UNION ALL SELECT '00007', '1', 'C', 'ACA' UNION ALL SELECT '00008', '1', 'C', 'ACA' UNION ALL SELECT '00009', '1', 'C', 'ACA'
+          UNION ALL SELECT '00010', '1', 'C', 'ACA' UNION ALL SELECT '00011', '1', 'C', 'ACA' UNION ALL SELECT '00012', '1', 'C', 'ACA') x
+    JOIN Meeting m ON m.CommitteeId = @C2 AND m.MeetingNo = x.MeetingNo;
+    IF ((SELECT COUNT(*) FROM Agenda WHERE CommitteeId = @C2) <> 12) RAISERROR('not all twelve QA2 items were saved', 16, 1);
 
     COMMIT TRANSACTION;
     PRINT 'FIXTURE: DONE';

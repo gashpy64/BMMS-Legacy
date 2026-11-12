@@ -100,6 +100,14 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region GetDashboardDepartments
+        // Step UN6b: the departments of a Manager or a User for the Dashboard (spr_GetDashboardDepartments)
+        public static DataTable GetDashboardDepartments(int ActingUserId, out int Reason)
+        {
+            return DepartmentDB.GetDashboardDepartments(ActingUserId, out Reason);
+        }
+        #endregion
+
         #region GetNextDeptCode
         public static string GetNextDeptCode()
         {

@@ -58,7 +58,50 @@ Print instead.
 
 ## Screens
 
-[[CONFIRM: not written yet]]
+### Dashboard
+
+Purpose: the first screen after you sign in. It shows every meeting with the state of its agenda items,
+your alerts, your action items and the Approve and Reject buttons for the items that wait for you.
+
+Fields and buttons, in the Meetings card:
+
+- Committee drop-down: "All committees" first, then the committees. It narrows both lists. You have no
+  Department drop-down.
+- The card title is "Meetings".
+- Scheduled: every meeting that has not been held yet, the earliest first, with no limit. A meeting dated
+  today is still here until the end of the day.
+- Completed (last 10): the ten latest meetings that have been held, the newest first.
+- The columns are Meeting (the committee and, under it, "No" and the meeting number), Meeting date (with
+  the time), Submit agenda by, Status, Items, Approved, Rejected and Pending. The counts cover every item
+  of the meeting: Items (all of them), Approved (approved by a Controller), Rejected (rejected by the Manager
+  or by a Controller) and Pending (still waiting for approval, with the Manager or with a Controller).
+- The Status label is coloured: Open for submission (blue), Submission closed (orange), Agenda finalised
+  (green), Minutes pending (red), Minutes finalised and Minutes confirmed (grey). The Overall manual
+  explains each label.
+
+Steps:
+
+1. To look at one committee, choose it in the Committee drop-down. The lists change at once. Choose
+   "All committees" to go back.
+2. After you approve or reject an item in its panel, the counts in the Meetings card are read again.
+
+Messages and what to do:
+
+- "No scheduled meetings." or "No completed meetings.": there is nothing in that list for your choice.
+- "The meeting list is not shown for this choice. Choose All committees.": choose "All committees".
+- "The meeting list could not be loaded. Reload the page to try again.": reload the page. Your alerts and
+  action items are still shown, and the Committee drop-down is hidden until the list loads.
+- "The server is busy and the meeting list could not be loaded. Wait a moment, then reload the page."
+- "The meeting list is not available: your account is not active. Sign in again."
+
+Notes: in the Alerts card the "Alert" column holds the link, with the alert type, committee and
+department on a smaller line under it, and "Created on" holds the date and, under it, the time. The
+Agenda Alert panel and the Action Item Details panel fit a narrow window: below about 720 pixels the
+labels sit above the fields. On a window under about 1100 pixels the cards stack one under the other.
+
+[Screenshot: Dashboard as the Controller - supplied by Gashpy Software]
+
+[[CONFIRM: the other screens are not written yet]]
 
 ## Tasks by goal
 

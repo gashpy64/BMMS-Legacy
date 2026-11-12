@@ -1064,6 +1064,301 @@ body.wb .bmms-comment-by-line
 }
 
 /* ==========================================================================
+   Dashboard (step UN6b): heading with the filters, the place of the summary cards (UN6c), the Meetings card
+   (about two thirds) beside the Alerts card (one third), the Action Items card below; one column under 1100 px.
+   The cells come from DashBoard.aspx and UserControl/MeetingSummary.ascx (the control renders no wrapper).
+   ========================================================================== */
+.wb-dash
+{
+	display: grid;
+	grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);   /* Meetings about two thirds, Alerts the rest */
+	grid-template-areas:
+		"head head"
+		"summary summary"
+		"msg msg"
+		"meetings alerts"
+		"actions actions";
+	column-gap: var(--wb-space-4);
+	align-items: start;
+}
+.wb-dash > .wb-dash-head { grid-area: head; }
+.wb-dash > .wb-dash-summary { grid-area: summary; }
+.wb-dash > .wb-dash-msg { grid-area: msg; }
+.wb-dash > .wb-dash-meetings { grid-area: meetings; }
+.wb-dash > .wb-dash-alerts { grid-area: alerts; }
+.wb-dash > .wb-dash-actions { grid-area: actions; }
+/* UN6c fills it; until then it takes no space */
+.wb-dash-summary:empty
+{
+	display: none;
+}
+.wb-dash-head
+{
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--wb-space-3) var(--wb-space-5);
+	margin-bottom: var(--wb-space-4);
+	min-width: 0;
+}
+.wb-dash-head .wb-h1
+{
+	margin-bottom: var(--wb-space-1);
+}
+.wb-dash-subtitle
+{
+	margin: 0;
+	color: var(--wb-text-muted);
+	overflow-wrap: anywhere;
+}
+.wb-dash-filters
+{
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: var(--wb-space-3);
+	min-width: 0;
+}
+.wb-dash-filter
+{
+	display: flex;
+	flex-direction: column;
+	gap: var(--wb-space-1);
+	min-width: 0;
+}
+.wb-dash-filter label
+{
+	font-size: 13px;
+	font-weight: 700;
+}
+.wb-page .wb-dash-filter select
+{
+	width: 240px;
+	max-width: 100%;
+}
+.wb-dash-card-header
+{
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--wb-space-2);
+}
+.wb-dash-card-title
+{
+	margin: 0;
+	padding: 0;
+	background: none;           /* not the old h2 band of MainMaster.css */
+	color: var(--wb-text);
+	font-size: 14px;
+	font-weight: 700;
+}
+.wb-dash-links
+{
+	font-size: 13px;
+	font-weight: 400;
+}
+.wb-dash-message
+{
+	margin: 0 0 var(--wb-space-3);
+	padding: var(--wb-space-2) var(--wb-space-3);
+	background: var(--wb-notice-bg);
+	border: 1px solid var(--bmms-warning-border);
+	border-radius: var(--wb-radius);
+}
+/* The Alerts grid (old classes, as before) in the narrow column: its cells wrap at spaces, with tighter padding,
+   and without the two fixed 100 px cells it had in the wide column. Since the compact rows (below) nothing in
+   it needs to scroll; the scroll box stays as a last guard (inside the card, never the page). */
+.wb-dash-alerts .wb-card-body
+{
+	padding: var(--wb-space-3) var(--wb-space-2);
+}
+.wb-dash-alerts table.contentTable1 th,
+.wb-dash-alerts table.contentTable1 td
+{
+	padding: 4px 3px;
+	white-space: normal;
+}
+/* The compact Alerts rows (Finding B): the Source link with a muted line below it (alert type, committee,
+   department), both wrapping, inside words too when a word is longer than the column; the date column only as
+   wide as "dd-MMM-yyyy", its date and time never wrapping (two lines at most) */
+.wb-dash-alert-source,
+.wb-dash-alert-meta
+{
+	display: block;
+	overflow-wrap: anywhere;
+}
+.wb-dash-alert-meta
+{
+	color: var(--wb-text-muted);
+	font-size: 13px;
+	font-weight: 400;           /* an unread row is bold; its link carries that, not this line */
+}
+.wb-dash-alerts table.contentTable1 th.wb-dash-alert-when,
+.wb-dash-alerts table.contentTable1 td.wb-dash-alert-when
+{
+	width: 1%;
+	white-space: nowrap;
+	text-align: left;
+	vertical-align: top;
+}
+.wb-dash-alerts table.contentTable1 td
+{
+	vertical-align: top;
+}
+.wb-dash-meetings .wb-table-scroll
+{
+	margin-bottom: var(--wb-space-4);
+}
+.wb-dash-committee
+{
+	display: block;
+	min-width: 7.5em;           /* a committee name wraps between words, not inside them */
+	font-weight: 700;
+}
+.wb-dash-meeting-no,
+.wb-dash-time
+{
+	display: block;
+	color: var(--wb-text-muted);
+	font-size: 13px;
+	white-space: nowrap;
+}
+/* The Meetings grid in about two thirds of 1200 px: tighter cells and headings on two lines where needed, so the
+   eight columns fit at 1366 px; a narrower card scrolls inside .wb-table-scroll */
+.wb-dash-table > tbody > tr > th,
+.wb-dash-table > tbody > tr > td
+{
+	padding: 8px;
+}
+.wb-dash-table > tbody > tr > th
+{
+	white-space: normal;
+	vertical-align: bottom;
+}
+.wb-dash-date
+{
+	white-space: nowrap;
+}
+.wb-table > tbody > tr > th.wb-dash-num,
+.wb-table > tbody > tr > td.wb-dash-num
+{
+	padding-left: 6px;
+	padding-right: 6px;
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+/* Meeting status: a tinted chip with its label (the colour is never the only sign) */
+.wb-chip
+{
+	display: inline-block;
+	padding: 2px 7px;
+	border: 1px solid var(--wb-border);
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 700;
+	line-height: 1.4;
+	white-space: nowrap;
+}
+.wb-chip::before
+{
+	content: "";
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	margin-right: 6px;
+	border-radius: 50%;
+	background: currentColor;
+	vertical-align: 1px;
+}
+.wb-chip-grey
+{
+	background: var(--bmms-disabled-bg);
+	border-color: var(--bmms-disabled-border);
+	color: var(--bmms-text-muted);
+}
+.wb-chip-red
+{
+	background: var(--bmms-error-tint);
+	border-color: var(--bmms-error-border);
+	color: var(--bmms-error);
+}
+.wb-chip-green
+{
+	background: var(--bmms-success-tint);
+	border-color: var(--bmms-success-border);
+	color: var(--bmms-success);
+}
+.wb-chip-orange
+{
+	background: var(--bmms-warning-tint);
+	border-color: var(--bmms-warning-border);
+	color: var(--bmms-warning);
+}
+.wb-chip-blue
+{
+	background: var(--bmms-table-head-bg);
+	border-color: var(--bmms-btn-secondary-hover-bg);
+	color: var(--bmms-primary);
+}
+/* Committee and Meeting Alert panel (pnlAlert): was 610 px wide; at most 610 px, never wider than the window */
+.wb-dash-popup
+{
+	width: 100%;
+	max-width: 610px;
+	box-sizing: border-box;
+}
+/* Agenda Alert and Action Item Details: the label column 165 px and the field up to 550 px (were fixed widths);
+   text boxes never wider than their column */
+/* the panel body keeps its padding inside its width (it is outside .wb-page) */
+.wb-dash-pane
+{
+	box-sizing: border-box;
+}
+.wb-dash-pane .wb-dash-plabel
+{
+	width: 165px;
+}
+.wb-dash-pane .wb-dash-pfield
+{
+	width: calc(100% - 175px);
+	max-width: 550px;
+}
+.wb-dash-pane input[type="text"],
+.wb-dash-pane textarea
+{
+	max-width: 100%;
+	box-sizing: border-box;
+}
+@media (max-width: 1100px)
+{
+	.wb-dash
+	{
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-areas:
+			"head"
+			"summary"
+			"msg"
+			"meetings"
+			"alerts"
+			"actions";
+	}
+}
+@media (max-width: 720px)
+{
+	.wb-dash-pane .divRowLeft,
+	.wb-dash-pane .divRowRight,
+	.wb-dash-pane .wb-dash-plabel,
+	.wb-dash-pane .wb-dash-pfield
+	{
+		float: none;
+		width: 100%;
+		max-width: none;
+		text-align: left;
+	}
+}
+/* ==========================================================================
    Narrow windows
    ========================================================================== */
 @media (max-width: 640px)

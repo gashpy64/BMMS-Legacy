@@ -3,10 +3,15 @@
 - Title: BMMS Change Log
 - Audience: Gashpy Software (internal)
 - Shipped: No
-- Applies to: RA1c2
-- Last updated by: RA1c2, based on 1db6ac6
+- Applies to: UN6b
+- Last updated by: UN6b, based on 0736c7f
 - Status: Draft
-- Verified against: for RA1c2: git diff against 1db6ac6 (BMMS/Report/FollowupActionTaken.aspx(.cs, .designer.cs),
+- Verified against: for UN6b: git diff against 0736c7f and the new files (BMMS/UserControl/MeetingSummary.ascx(.cs, .designer.cs),
+  BMMS/DashBoard/DashBoard.aspx(.cs), BMMSBAL/MeetingMgr.cs and DepartmentMgr.cs, BMMSDAL/MeetingDB.cs and
+  DepartmentDB.cs, Database/BMMS-Fix-DashboardMeetings-Step42.sql, BMMS-Rollback-DashboardMeetings-Step42.sql,
+  BMMS-Test-DashboardMeetings-Step42.sql (header), BMMS-Check-InstalledSteps.sql, Tests/_runner/Run-Tests.ps1 and
+  Tester.Common.ps1, Tests/packs/dashboard/*, Tests/fixture/*, Database/README.md section Step UN6b and Known
+  items), the owner's tests and the tester run of 2026-11-12 as given; for RA1c2: git diff against 1db6ac6 (BMMS/Report/FollowupActionTaken.aspx(.cs, .designer.cs),
   MenuUserControl.ascx, XML/PageAccess.xml, PageSettings.xml, BMMS.csproj, the deleted Error/TestPage files,
   Tests/packs/access-matrix/*, Database/README.md section Step RA1c2), the tester result and the owner's tests as
   given; for RA1c1: git diff against 4946500 (BMMS/Report/ViewReport.aspx.cs, BMMS.csproj,
@@ -18,12 +23,56 @@
   .claude/hooks/tester-guard.ps1, Database/README.md (section Step WF3a1), the owner's test result; and for the rest: git tags and commit subjects (git for-each-ref refs/tags), Database/README.md, the diff
   of step RA1b (BMMS/Report/*.cs, PageAccessModule.cs, PageAccess.xml, MenuUserControl.ascx, BMMSBAL,
   BMMSDAL), Database/BMMS-Fix-ReportAccess-Step41.sql
-- To confirm: the tag of RA1b (not set when this entry was written); the two new Lows (a) and (b) are not yet
+- To confirm: the tag of UN6b (not set when this entry was written); the tag of RA1b (not set when this entry was written); the two new Lows (a) and (b) are not yet
   in Database/README.md, "Known items for later steps"
 
 One entry per step, newest first. Each entry names the step, its tag and what changed for users,
 for installers and in the database. Release entries (tags vX.Y.Z) collect the steps since the
 previous release.
+
+## UN6b - Dashboard in cards; meeting list with status colours and counts by role (tag not yet set, 2026-11-12; database step 42)
+
+- For users: the Dashboard has a new Meetings card in place of the old Scheduled Meetings list. It lists every
+  scheduled meeting (no limit) and the last 10 completed meetings, for every role. A meeting dated today is
+  Scheduled until the end of that day. Each meeting has a coloured status label: Open for submission (blue),
+  Submission closed (orange), Agenda finalised (green), Minutes pending (red), Minutes finalised and Minutes
+  confirmed (grey). The Controller, Management, the Manager (own departments) and the User (own department) also see
+  Items, Approved, Rejected and a last column ("In progress" for the User, "Pending" for the others); MD
+  Secretariat and Admin see no counts. The Controller, Management, MD Secretariat and Admin have a Committee
+  drop-down and the title "Meetings". The Manager has the Committee drop-down, a Department drop-down only with two
+  or more departments, the subtitle "Departments: [a, b]" (or "Department: [name]") and the title "Meetings, items
+  of my departments" or "Meetings, [department] items". The User has no drop-down, the subtitle "Department:
+  [name]" and the title "Meetings, [department] items". The Manager and the User see a completed meeting only when
+  it has items of their department. The counts are read again after Approve or Reject. The Alerts card is compact:
+  "Alert" (the link, with the alert type, committee and department below it) and "Created on" (dd-MMM-yyyy, with
+  HH:mm below it). If the meeting list cannot be loaded the card says "The meeting list could not be loaded. Reload
+  the page to try again." (or, for a timeout or lack of memory, "The server is busy and the meeting list could not
+  be loaded. Wait a moment, then reload the page.") and the filters are hidden. The cards stack under 1100 px, and
+  the Agenda Alert and Action Item Details panels fit narrow windows. Described in the Overall manual and the four
+  role manuals (Dashboard).
+- For developers: UserControl/MeetingSummary.ascx(.cs) is rewritten (role table `RoleViews`, titles, chips,
+  failure and server-busy messages); DashBoard.aspx is a grid of cards (`.wb-dash`); DashBoard.aspx.cs calls
+  `MeetingSummary1.Reload()` after Approve and Reject and has `FormatTimeOfDay` and `AlertDetails`;
+  `MeetingMgr.GetDashboardMeetings` and `DepartmentMgr.GetDashboardDepartments` with their DAL methods; the
+  Dashboard section of bmms-workbench.css. Scope is decided on the server from the acting user id.
+- For installers: run BMMS-Fix-DashboardMeetings-Step42.sql (after step 41) before the new build, on BMMS_Test
+  first. BMMS-Rollback-DashboardMeetings-Step42.sql drops the five objects (roll back the build first).
+- Database: step 42, five read-only objects (marker DashboardMeetings-Step42; 5 rows in
+  BMMS-Check-InstalledSteps.sql): fn_MeetingDashboardState, fn_UserDepartmentScope, fn_AgendaStatusGroup,
+  spr_GetDashboardMeetings and spr_GetDashboardDepartments. Nothing is replaced; spr_GetScheduleMeet is unchanged
+  and has no caller (to be dropped in a later step). Test script
+  BMMS-Test-DashboardMeetings-Step42.sql. The tester's baseline was updated with Update-Baseline.ps1.
+- Tests: Test script step 42, 71 of 71 (owner's run on BMMS_Test). Tester agent, run of 2026-11-12 21:46:42
+  (Tests/_results/2026-11-12_214642), packs access-matrix and dashboard: PASSED, 649 checks, no new error-log
+  line, memory at the start 1522 MB available of 7886 MB. The new pack dashboard (12 cases; the fixture has a new
+  committee QA2). The tester's preflight now reads the available memory and warns below 1500 MB (never a refusal;
+  a VOID or RUNNER FAILED summary says when the memory was low). The owner's tests passed: all six role views,
+  widths 1366, 1024, 900 and 800 px, the two panels, the counts after Approve and Reject, the compact Alerts card,
+  the failure test and the timeout test.
+- Planned, not done: step UN6c (the header "Alerts (n)" refresh, "My approvals", the summary cards, "Waiting for
+  me", the Alerts functional-alert rule for Admin); step WF3a3 (the tester reads its own result when a run moves
+  to the background); step UN6e (an index on Agenda for the counts). Further follow-up items are in
+  Database/README.md, "Known items for later steps".
 
 ## RA1c2 - Followup by Department in the Controller's Reports menu; Error/TestPage removed (tag not yet set, 2026-11-12; no database step)
 

@@ -24,6 +24,8 @@ New-Variable -Name QaSiteLogin    -Value 'bmms_site'                 -Option Con
 New-Variable -Name QaPort         -Value 18573                       -Option Constant
 New-Variable -Name QaBaseUrl      -Value 'http://localhost:18573'    -Option Constant
 New-Variable -Name QaBaselineFile -Value 'BMMS_Quality_baseline.bak' -Option Constant
+# Step UN6b (owner, 2026-11-12): below this much available memory the preflight warns (the run still goes on)
+New-Variable -Name QaMemoryWarnMB -Value 1500                        -Option Constant
 
 $QaRepo        = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $QaTests       = Join-Path $QaRepo 'Tests'
@@ -65,6 +67,26 @@ function Get-QaFileHash([string]$Path) { (Get-FileHash -Algorithm SHA256 -Litera
 # Local folder and credentials
 # ---------------------------------------------------------------------------------------------
 function Get-QaCurrentAccount { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
+
+# Step UN6b: the machine's available memory (Task Manager's "Available": free plus standby cache) and its total,
+# in MB. The counter is read through CIM (its name is the same in every Windows language), else through
+# Get-Counter. $null when neither can be read; the reading never stops a run.
+function Get-QaMemory {
+    $available = $null
+    try { $available = [int](Get-CimInstance -ClassName Win32_PerfFormattedData_PerfOS_Memory -ErrorAction Stop).AvailableMBytes } catch { }
+    if ($null -eq $available) {
+        try { $available = [int](Get-Counter -Counter '\Memory\Available MBytes' -ErrorAction Stop).CounterSamples[0].CookedValue } catch { }
+    }
+    if ($null -eq $available) { return $null }
+    $total = $null
+    try { $total = [int]([math]::Round((Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction Stop).TotalPhysicalMemory / 1MB)) } catch { }
+    [pscustomobject]@{ AvailableMB = $available; TotalMB = $total; Low = ($available -lt $QaMemoryWarnMB) }
+}
+
+function Format-QaMemory([object]$Memory) {
+    if ($null -eq $Memory) { return 'could not be read' }
+    "$($Memory.AvailableMB) MB available" + $(if ($Memory.TotalMB) { " of $($Memory.TotalMB) MB" } else { '' })
+}
 
 # Tests\local is readable by the owner's Windows account only (no inherited permissions).
 function Protect-QaLocalDir {

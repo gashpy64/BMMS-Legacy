@@ -1,5 +1,6 @@
 /* ============================================================================
-   BMMS tester - fixture check for BMMS_Quality (step WF3a1)
+   BMMS tester - fixture check for BMMS_Quality (step WF3a1; committee QA2
+   checked since step UN6b)
    ----------------------------------------------------------------------------
    READ ONLY. It reads rows and changes nothing (one table variable).
    Run by the tester after the fixture, after every restore of the baseline
@@ -25,12 +26,14 @@ GO
 DECLARE @T TABLE (Seq INT IDENTITY(1, 1), Name VARCHAR(120), Expected VARCHAR(200), Actual VARCHAR(200));
 DECLARE @Today DATETIME;
 DECLARE @C INT;
+DECLARE @C2 INT;
 DECLARE @Failed INT;
 DECLARE @Total INT;
 DECLARE @A TABLE (LoginName VARCHAR(50), RoleCode VARCHAR(50), Active INT, Departments INT);
 
 SET @Today = DATEADD(DAY, DATEDIFF(DAY, 0, GETDATE()), 0);
 SET @C = (SELECT CommitteeId FROM Committee WHERE CommitteeCode = 'QA1');
+SET @C2 = (SELECT CommitteeId FROM Committee WHERE CommitteeCode = 'QA2');
 
 -- Accounts: role, active flag, open department rows
 INSERT INTO @A VALUES ('qa_admin', 'admin', 1, 1);
@@ -127,6 +130,26 @@ INSERT INTO @T (Name, Expected, Actual)
 SELECT 'Meeting 00005: Followup action items', '1',
        CAST((SELECT COUNT(*) FROM Action_Item ai JOIN Minutes mi ON mi.MinutesId = ai.MinutesId JOIN Agenda a ON a.AgendaId = mi.AgendaId
              JOIN Meeting m ON m.MeetingId = a.MeetingId WHERE m.CommitteeId = @C AND m.MeetingNo = '00005') AS VARCHAR(12));
+
+-- Committee QA2 (step UN6b): the Dashboard's meeting list
+INSERT INTO @T (Name, Expected, Actual)
+SELECT 'Committee QA2: active; meetings; dated today; completed', '1; 12; 1; 11',
+       ISNULL((SELECT CAST(c.StatusId AS VARCHAR(2)) FROM Committee c WHERE c.CommitteeId = @C2), 'committee missing') + '; '
+     + CAST((SELECT COUNT(*) FROM Meeting WHERE CommitteeId = @C2) AS VARCHAR(12)) + '; '
+     + CAST((SELECT COUNT(*) FROM Meeting WHERE CommitteeId = @C2 AND MeetingDate = @Today) AS VARCHAR(12)) + '; '
+     + CAST((SELECT COUNT(*) FROM Meeting WHERE CommitteeId = @C2 AND MeetingDate < @Today) AS VARCHAR(12));
+INSERT INTO @T (Name, Expected, Actual)
+SELECT 'Committee QA2: minutes Open, F, C', '2, 1, 9',
+       CAST((SELECT COUNT(*) FROM Meeting WHERE CommitteeId = @C2 AND ISNULL(MinutesStatus, 'Open') = 'Open') AS VARCHAR(12)) + ', '
+     + CAST((SELECT COUNT(*) FROM Meeting WHERE CommitteeId = @C2 AND MinutesStatus = 'F') AS VARCHAR(12)) + ', '
+     + CAST((SELECT COUNT(*) FROM Meeting WHERE CommitteeId = @C2 AND MinutesStatus = 'C') AS VARCHAR(12));
+INSERT INTO @T (Name, Expected, Actual)
+SELECT 'Committee QA2 items: Credit ACA, Credit ACR, Secretarial ACA; minutes rows; alerts', '10, 1, 1; 0; 0',
+       CAST((SELECT COUNT(*) FROM Agenda a JOIN Department d ON d.DepartmentId = a.DepartmentId WHERE a.CommitteeId = @C2 AND d.DepartmentCode = 'D004' AND a.AgendaStatusCode = 'ACA') AS VARCHAR(12)) + ', '
+     + CAST((SELECT COUNT(*) FROM Agenda a JOIN Department d ON d.DepartmentId = a.DepartmentId WHERE a.CommitteeId = @C2 AND d.DepartmentCode = 'D004' AND a.AgendaStatusCode = 'ACR') AS VARCHAR(12)) + ', '
+     + CAST((SELECT COUNT(*) FROM Agenda a JOIN Department d ON d.DepartmentId = a.DepartmentId WHERE a.CommitteeId = @C2 AND d.DepartmentCode = 'D002' AND a.AgendaStatusCode = 'ACA') AS VARCHAR(12)) + '; '
+     + CAST((SELECT COUNT(*) FROM Minutes mi JOIN Agenda a ON a.AgendaId = mi.AgendaId WHERE a.CommitteeId = @C2) AS VARCHAR(12)) + '; '
+     + CAST((SELECT COUNT(*) FROM Alert_Master am JOIN Agenda a ON a.AgendaId = am.SourceTypeId WHERE am.SourceType = 'Agenda' AND a.CommitteeId = @C2) AS VARCHAR(12));
 
 -- Mail: the safe default row only (no real mail can be sent)
 INSERT INTO @T (Name, Expected, Actual)
