@@ -26,8 +26,6 @@ Columns: `admin` (qa_admin), `controller` (qa_ctrl), `manager` (qa_manager), `us
 | sign-in page | The browser ends on the sign-in page. |
 | Page not found | HTTP 404 with a "not found" page. |
 | owner to decide | No written rule decides the cell. The run shows what the site does, and the cell counts as failed until the owner decides it. (None left since 2026-11-11.) |
-| to be removed (RA1c1) | The page goes in step RA1c1. The run does not open it; a note in the results, never a failure. (No row uses it since RA1c1 removed Event Calendar and Report Print.) |
-| to be decided (RA1c2) | The owner decides the cell in step RA1c2. The run opens the page and shows what it does; a note, never a failure. |
 
 `page_rule`: `RA1b` marks the rows whose page narrows the roles of PageAccess.xml by its own
 check (the report code `rc`, the followup code `fc`, the report kind of ViewReport); `missing on
@@ -57,7 +55,7 @@ The `rule` column of every row names the rules below by their short names.
   PageAccess.xml; where a cell cannot be decided from a written rule it is marked "owner to
   decide" (listed below).
 - **Q3:** ViewReport.aspx opened directly: the run shows what it does for each role (decided
-  2026-11-11, see below). ReportPrint.aspx is marked "to be removed (RA1c1)" and is not a failure.
+  2026-11-11, see below). ReportPrint.aspx was marked "to be removed (RA1c1)" until RA1c1 removed it.
 - **Q4:** Logout.aspx is opened last for each role.
 - **Q5:** one missing .aspx and one missing file that is not a page; the cells come from what
   the run shows and are reviewed by the owner.
@@ -77,7 +75,7 @@ Written rules the draft also cites (Database\README.md and the code comments of 
 - **W5:** Admin's Master menu shows all twelve items (RA1a browser check 1), so Admin opens the
   six committee and meeting masters too.
 - **W6:** MD Secretariat works on Followup (Minutes menu; step A2 browser checks).
-- **W7:** Error/TestPage.aspx is a leftover; nobody may open it; remove it with RA1c (step WF3a1).
+- **W7:** Error/TestPage.aspx was a leftover nobody could open (step WF3a1); removed in step RA1c2 with its row.
 - **W8:** Logout ends the session and shows the sign-in page.
 - **RA1b:** the code rules of step RA1b: Reports.aspx refuses any rc other than minutes,
   minutes_extract, agenda_summary and agenda_details (and no rc); rc=minutes for Controller,
@@ -96,7 +94,7 @@ Drafting rule (Claude's; confirmed by the owner on 2026-11-11):
 |---|---|---|
 | Report/EventCalendar.aspx | every cell | "to be removed (RA1c1)"; the page and its row were removed in step RA1c1. |
 | Report/ReportPrint.aspx | every cell | "to be removed (RA1c1)"; the page and its row were removed in step RA1c1. |
-| Report/FollowupActionTaken.aspx | controller, manager | "to be decided (RA1c2)": a note, not a failure. |
+| Report/FollowupActionTaken.aspx | controller, manager | Decided in step RA1c2: "Followup by Department" in the Controller's Reports menu; Controller "opens", Manager "Access denied" (option A). |
 | Report/ViewReport.aspx | controller, manager | "opens": opened directly (no report kind) the page shows "The report is no longer available". Management "Access denied". Until step RA1c1 the Controller and the Manager got HTTP 500 (a product defect, fixed in RA1c1). |
 | Report/ViewReport.aspx?pdf=1 | controller, manager | "opens" (the same decision; this address already shows "The report is no longer available"). |
 | Master/NoSuchPage.aspx, Images/no-such-file.png | every cell | "Page not found" as the first run showed (HTTP 404 for every column, no DENIED line: a missing page never reaches the access check); the owner keeps them as observed. |

@@ -3,16 +3,19 @@
 - Title: Program to Program: Reports
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: RA1c1
-- Last updated by: RA1c1, based on 4946500
+- Applies to: RA1c2
+- Last updated by: RA1c2, based on 1db6ac6
 - Status: Draft
-- Verified against: for step RA1c1: BMMS/Report/ViewReport.aspx.cs (git diff against 4946500); and before:
+- Verified against: for step RA1c2: BMMS/Report/FollowupActionTaken.aspx(.cs) (git diff against 1db6ac6),
+  BMMS/XML/PageAccess.xml, BMMS/UserControl/MenuUserControl.ascx, BMMSDAL/ActionItemDB.cs
+  (GetActionItemByMeetingIdDeptId), Database/README.md (section Step RA1c2); for step RA1c1: BMMS/Report/ViewReport.aspx.cs (git diff against 4946500); and before:
   BMMS/Report/Reports.aspx.cs, Followup.aspx.cs, ViewReport.aspx.cs (diff of step RA1b),
   BMMS/PageAccessModule.cs (HasRole, RefuseRequest), BMMSBAL/ReportsMgr.cs, BMMSBAL/HTML_Report.cs,
   BMMSDAL/MinutesDB.cs and ActionItemDB.cs (the three calls), Database/BMMS-Fix-ReportAccess-Step41.sql,
   BMMS-Test-ReportAccess-Step41.sql (header), BMMS/XML/PageAccess.xml, Database/README.md (section RA1b)
-- To confirm: the file covers only the flows changed in step RA1b (the Minutes report in every status and
-  Management's Followup); the other reports (agenda reports, Minutes Extract, the Controller's Followup,
+- To confirm: why Export to Pdf cannot print Tamil or Hindi for Followup by Department (from the step
+  requirement, not shown by the code read); the file covers only the flows changed in steps RA1b and RA1c2 (the Minutes report in every
+  status, Management's Followup and Followup by Department); the other reports (agenda reports, Minutes Extract, the Controller's Followup,
   notices, sitting fees and so on) are not written yet (WF2c3); the tables the three procedures read are
   from the views named in their header (View_Minute, View_Meeting, View_Action_Item), not from the view
   texts
@@ -21,7 +24,8 @@
 
 The report pages that read minutes and follow-up data: Reports.aspx (rc=minutes) for the Controller,
 the Manager and Management, and Followup.aspx (fc=followup, fc=summary) for the Controller and Management,
-with ViewReport.aspx that shows, prints and exports what they built. Written for step RA1b (step 41).
+with ViewReport.aspx that shows, prints and exports what they built. Written for step RA1b (step 41). Step
+RA1c2 adds Followup by Department (FollowupActionTaken.aspx, Controller only; see "Followup by Department").
 [[CONFIRM: the other report pages are not written yet (WF2c3)]]
 
 ## Programs involved
@@ -30,6 +34,7 @@ with ViewReport.aspx that shows, prints and exports what they built. Written for
 |---|---|
 | Report/Reports.aspx(.cs) | Meeting list, filters, grid, builds the report HTML for rc=minutes |
 | Report/Followup.aspx(.cs) | Same for fc=followup and fc=summary |
+| Report/FollowupActionTaken.aspx(.cs) | Followup by Department (RA1c2): grid and report HTML of one committee's follow-up items |
 | Report/ViewReport.aspx(.cs) | Shows the stored report, Print, Export to Pdf, Export to Word |
 | PageAccessModule | RequireRole, HasRole, RefuseRequest (role read from the database) |
 | ReportsMgr, HTML_Report (BMMSBAL) | The three report calls, StatusMarkOf, refusal texts; MinutesStatusLine, DraftNote |
@@ -92,6 +97,54 @@ minutes), BMMS/Report/Followup.aspx.cs (Page_Load, GetReportDetails and the two 
 BMMSBAL/ReportsMgr.cs, BMMSBAL/HTML_Report.cs, BMMSDAL/MinutesDB.cs, BMMSDAL/ActionItemDB.cs,
 Database/BMMS-Fix-ReportAccess-Step41.sql (header).
 
+## Followup by Department (step RA1c2)
+
+Report/FollowupActionTaken.aspx, in the Controller's Reports menu after Followup Summary. The Controller
+chooses a committee, a department (all or one), a meeting or a range of meetings and the subjects, then Submit
+(View Format View shows the grid; Print shows Generate Report). The page keeps only the rows of the chosen
+committee, because the procedure ignores its committee parameter and meeting numbers start again in every
+committee.
+
+```mermaid
+sequenceDiagram
+    participant Br as Browser
+    participant Pg as FollowupActionTaken.aspx
+    participant PM as PageAccessModule
+    participant AM as ActionItemMgr, ActionItemDB
+    participant SQ as spr_GetActionItemByMeetingIdDeptId
+    participant VR as ViewReport.aspx
+    Br->>Pg: Open the page
+    Pg->>PM: RequireRole controller
+    PM->>Pg: Allowed (role read from the database)
+    Br->>Pg: Submit (committee, meetings, department, subjects)
+    Pg->>AM: GetActionItemByMeetingIdDeptId committee, meeting from and to, department
+    AM->>SQ: CommitteeId, MeetingNoFrom, MeetingNoTo, DepartmentId
+    SQ->>AM: Rows of every committee with those meeting numbers
+    AM->>Pg: Rows
+    Pg->>Pg: Keep CommitteeId equal to the chosen committee
+    Br->>Pg: Generate Report
+    Pg->>PM: RequireRole controller (again, first)
+    Pg->>Pg: Same input checks, same rows, report HTML
+    Pg->>VR: Session holds the report, the report name FollowupByDepartment, no report kind
+    VR->>Br: Report, Print, Export to Pdf, Export to Word
+```
+
+| From | To | Data | Notes |
+|---|---|---|---|
+| Browser | FollowupActionTaken.aspx | Committee, Department, Meeting No (Particular or Between), Subject No. (All or Between), View Format | The Subject No lists offer the subjects of the same filtered rows |
+| FollowupActionTaken.aspx | PageAccessModule | RequireRole("controller") | First in Page_Load and first in the Generate Report handler |
+| FollowupActionTaken.aspx | spr_GetActionItemByMeetingIdDeptId | CommitteeId, MeetingNoFrom, MeetingNoTo, DepartmentId (-1 for all) | The procedure does not use CommitteeId; no database step |
+| spr_GetActionItemByMeetingIdDeptId | FollowupActionTaken.aspx | Follow-up rows with CommitteeId | By meeting number and department only |
+| FollowupActionTaken.aspx | ViewReport.aspx | Report HTML in the session, report name FollowupByDepartment | The report kind is removed first, so a kind left by an earlier report does not stay |
+
+Report HTML: the table is written with border='1' (it was border='1px', which the PDF converter of the report
+window rejected, so Export to Pdf printed its fallback sentence); the stray style block for printing was
+removed. Export to Pdf cannot print Tamil or Hindi text; Export to Word and Print can.
+[[CONFIRM: why Export to Pdf cannot print Tamil or Hindi for this report; taken from the step requirement, not shown by the code read]]
+
+Drawn from: BMMS/Report/FollowupActionTaken.aspx.cs (Page_Load, btnCreatePDF_Click, GetCommitteeFollowupRows,
+CreateReportHTML), BMMS/UserControl/MenuUserControl.ascx, BMMS/XML/PageAccess.xml, BMMSDAL/ActionItemDB.cs.
+
 ## Refusal paths
 
 | Where | When | What happens |
@@ -102,6 +155,8 @@ Database/BMMS-Fix-ReportAccess-Step41.sql (header).
 | Followup.aspx Page_Load | Session role mgmt but the database role could not be read | RefuseRequest("role could not be read for the Management path") |
 | ViewReport.aspx Page_Load | Database or session role mgmt, and ViewReportKind missing, empty or not minutes, followup or summary, or ?pdf=1 | RefuseRequest("report kind not allowed for the role") |
 | ViewReport.aspx Page_Load (after the check above) | No stored report: Session["ViewReport"] null or empty (opened by address, or the session ended), or the Export to Pdf or Export to Word postback with none | Not a refusal: HTTP 200, a page that says "The report is no longer available. Close this window and click Generate again.", no error-log entry, the request ends (step RA1c1). Page_Load answers first; the two export handlers check again |
+| FollowupActionTaken.aspx Page_Load and Generate Report handler | Role in the database not controller (a Manager, for example) | RequireRole refuses: "Access denied" (RA1c2) |
+| FollowupActionTaken.aspx Generate Report | The same input checks as Submit fail (committee, meeting or ranges), or no rows | The check message or the no-record message; no report is stored |
 | spr_GetMinutesReportMeetingsAllStatus, spr_GetMinutesReportAllStatus | Reason 8: acting user missing, 0 or inactive | No rows; the page shows "Your session is no longer valid. Please log in again." |
 | The same procedures | Reason 4: role not controller or mgmt | No rows; "You are not allowed to see this report." |
 | spr_GetFollowupReportForManagement | Reason 8 as above; Reason 4: role not mgmt | No rows; the same two messages |
@@ -118,11 +173,14 @@ Empty meeting list on the every-status path: "No meetings with minutes for this 
 | Acting user check, Reasons 8 and 4 | ReportsMgr.ReportRefusedMessage turns them into text | The three step 41 procedures |
 | The mark (F Finalised, C Confirmed, anything else Draft (not finalised)) | ReportsMgr.StatusMarkOf reads it | The three step 41 procedures |
 | Status line and draft note | HTML_Report.MinutesStatusLine, DraftNote, IsDraftMark (one-cell table with border 1, because the PDF export draws a table border but not a div border) | none |
+| Followup by Department: Controller only | PageAccess.xml; RequireRole in FollowupActionTaken.aspx.cs (Page_Load, Generate Report) | none |
+| Followup by Department: only the chosen committee's rows | FollowupActionTaken.aspx.cs (GetCommitteeFollowupRows, a row filter on CommitteeId) | spr_GetActionItemByMeetingIdDeptId ignores @CommitteeId (baseline, not changed) |
 | Manager and other roles: finalised and confirmed only | Reports.aspx.cs (older path) | spr_GetMinutesReport, spr_GetMinutesReportMeetings (step 22, unchanged) |
 
 ## Tables read and written
 
-None written. The three procedures read the views View_Minute (minutes rows), View_Meeting (meetings) and
+None written. Followup by Department reads View_Action_Item through spr_GetActionItemByMeetingIdDeptId (as
+listed in chapter 04). The three procedures read the views View_Minute (minutes rows), View_Meeting (meetings) and
 View_Action_Item (follow-up rows), and Users and Roles for the acting user's role. PageAccessModule reads
 the user through UserMgr.GetUserDataTableByUserId (View_Users).
 

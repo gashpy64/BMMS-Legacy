@@ -24,7 +24,7 @@ const COLUMNS = ['admin', 'controller', 'manager', 'user', 'mgmt', 'mdsec', 'ina
 const SIGNED_IN = ['admin', 'controller', 'manager', 'user', 'mgmt', 'mdsec'];
 const WORDS = {
   'opens': 'opens', 'Access denied': 'denied', 'sign-in page': 'signin', 'Page not found': 'notfound',
-  'owner to decide': 'decide', 'to be removed (RA1c1)': 'remove', 'to be decided (RA1c2)': 'pending',
+  'owner to decide': 'decide',
 };
 const INACTIVE_MESSAGE = 'Your account is inactive';
 
@@ -200,7 +200,7 @@ module.exports = {
       if (r.page_rule === 'missing on purpose') continue;
       for (const c of COLUMNS) {
         const kind = WORDS[r[c]];
-        if (kind === 'decide' || kind === 'remove' || kind === 'pending') continue;
+        if (kind === 'decide') continue;
         const v = xmlVerdict(xml, r.address, c);
         const cellLetsThrough = kind !== 'denied' && !(kind === 'signin' && v === 'signin');
         let differs;
@@ -328,16 +328,6 @@ async function runColumn(t, column, rows, opts) {
   try {
     for (const r of rows) {
       const kind = WORDS[r[column]];
-      // Owner decision 2026-11-11: pages to be removed (RA1c1) are not opened (Event Calendar runs out of
-      // memory on a GET); the cell is a note, never a failure.
-      if (kind === 'remove') {
-        t.record({
-          title: column + ' opens ' + r.address, role: column, address: r.address, expected: kind, seen: 'not-opened',
-          detail: 'not opened by the run: to be removed with RA1c1', pass: true, proof: opts.proof,
-          grid: { row: r.address, column, cell: r[column], rule: r.rule },
-        });
-        continue;
-      }
       if (column !== 'visitor' && column !== 'inactive' && key(r.address) !== 'logout.aspx') page = await t.session(column);
       const mark = t.logMark();
       const seen = await t.visit(page, r.address);
@@ -349,7 +339,6 @@ async function runColumn(t, column, rows, opts) {
       const denials = lines.filter((l) => /\tDENIED(-PAGE)?\t/.test(l)).length;
       let pass, logNote = '';
       if (kind === 'decide') pass = false;
-      else if (kind === 'pending') pass = true;
       else {
         pass = seen.kind === kind;
         const wantDenials = kind === 'denied' ? 1 : 0;

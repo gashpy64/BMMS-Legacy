@@ -3,13 +3,13 @@
 - Title: Application Code
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: RA1c1
-- Last updated by: RA1c1, based on 4946500
+- Applies to: RA1c2
+- Last updated by: RA1c2, based on 1db6ac6
 - Status: Draft
 - Verified against: BMMS/**/*.aspx, BMMS/MasterPage/*.Master(.cs), BMMS/UserControl/*.ascx(.cs),
   BMMS/XML/PageAccess.xml, PageSettings.xml, AppSettings.xml, ReportSettings.xml,
   BMMS/PageAccessModule.cs, BMMS/Global.asax.cs, BMMS/Default.aspx.cs, BMMS/Logout.aspx.cs,
-  BMMS/Error/ErrorPage.aspx(.cs), BMMS/Error/TestPage.aspx.cs, BMMS/Report/ViewReport.aspx.cs,
+  BMMS/Error/ErrorPage.aspx(.cs), BMMS/Report/ViewReport.aspx.cs,
   BMMS/RichTextEditor.cs, BMMS/JScript/AsyncPostBackError.js,
   BMMS/Web.config, BMMSBAL/*.cs (Common, Utilities, Mail_Mgr, AgendaMail, WordUtilities,
   Sql_Backup_Mgr, PDFUtilities, PdfFonts, HtmlCleaner, RichTextPost, RichTextLimits, SafeFileName,
@@ -21,9 +21,13 @@
   (RequireRole), BMMS/UserControl/MenuUserControl.ascx, BMMS/XML/PageAccess.xml and the Page_Load
   of the nine pages (git diff against ea268e5); for step RA1c1: git diff against 4946500 (BMMS/Report/ViewReport.aspx.cs,
   BMMS/XML/PageAccess.xml, BMMS/BMMS.csproj, BMMS/PageAccessModule.cs), the file list of BMMS/Report
-  and the Grep count of MasterPageFile in BMMS/**/*.aspx
-- To confirm: whether the installed site runs PageAccess.xml in Enforce mode; whether anything
-  outside the repository links to Report/FollowupActionTaken.aspx;
+  and the Grep count of MasterPageFile in BMMS/**/*.aspx; for step RA1c2: git diff against 1db6ac6
+  (BMMS/Report/FollowupActionTaken.aspx(.cs, .designer.cs), BMMS/UserControl/MenuUserControl.ascx,
+  BMMS/XML/PageAccess.xml, PageSettings.xml, BMMS/BMMS.csproj, the deleted BMMS/Error/TestPage.aspx(.cs)), the Grep
+  results for PDFUtilities.GenerateHTMLPdf and btnSendMail_Click in BMMS/Report and BMMSBAL
+- To confirm: whether the installed site runs PageAccess.xml in Enforce mode;
+  the reason Export to Pdf cannot print Tamil or Hindi text for the Followup by Department report (from the
+  step requirement, not shown by the code read); what an old address of Error/TestPage.aspx now answers;
   whether building needs Microsoft Word itself or only the Interop DLL in BMMS/dll (no running code
   uses it, and Word is not needed on the server); the size limit for uploads (no maxRequestLength is set in Web.config)
 
@@ -34,7 +38,7 @@ BMMSDAL. A Grep count is given where a number is stated, so that it can be check
 
 ## Pages and master pages
 
-BMMS holds 45 `.aspx` pages (47 before step RA1c1 removed Event Calendar and Report Print), two master pages and two user controls. Two master pages are in
+BMMS holds 44 `.aspx` pages (47 before step RA1c1 removed Event Calendar and Report Print, 45 before step RA1c2 removed Error/TestPage), two master pages and two user controls. Two master pages are in
 BMMS/MasterPage:
 
 | Master page | Used by | Contents |
@@ -46,8 +50,8 @@ Both masters set the page title from `Session["PageTitle"]` or, when it is not s
 `PageTitle` setting of AppSettings.xml, build the footer with `Common.ProductFooter`, and handle
 `OnAsyncPostBackError` (see "Error handling"). Main.Master also computes the number in "Alerts ([n])":
 the unread alerts of the list the Dashboard shows (`AlertMgr.GetAlertByUserId`, rows with
-`ReadStatus = 0`); it asks nothing during an UpdatePanel postback. Four pages have no master page
-(Default, Logout, TestPage, ViewReport). The login page has its own footer and its own
+`ReadStatus = 0`); it asks nothing during an UpdatePanel postback. Three pages have no master page
+(Default, Logout, ViewReport). The login page has its own footer and its own
 ScriptManager.
 
 Most pages carry `Title="Untitled Page"` in the markup. The title the user sees is set at run time
@@ -74,7 +78,6 @@ How the tables are read:
 | ChangePasswordFirst.aspx | "Change Password" for the first sign-in (MainNoMenu.Master) | `*` | Reached from Default.aspx only |
 | DashBoard/DashBoard.aspx | Alerts, action items, committee, meeting and agenda alerts, approval of agenda items; the landing page of every role; menu entry "Home" for every role except Admin and MD Secretariat | `*` | Hosts the MeetingSummary user control; the code-behind has more than 1,000 lines |
 | Error/ErrorPage.aspx | The error page shown after `Utilities.GoToErrPage`: a fixed text and an Exit button | Public | OnPreInit sends a visitor with no session to Default.aspx |
-| Error/TestPage.aspx | Development test: `Page_Load` calls `PDFUtilities.GenerateHTMLPdf` to write Test.pdf under Files/PDF | Not listed | See "Pages in no menu and the unlisted page" |
 
 ### Master folder (BMMS/Master, 24 pages)
 
@@ -107,7 +110,7 @@ How the tables are read:
 
 ### Report folder (BMMS/Report, 15 pages)
 
-All entries except Reports.aspx, Followup.aspx and AuditTrail.aspx are in the "Reports" menu of the Controller.
+All entries except Reports.aspx, Followup.aspx, AuditTrail.aspx and ViewReport.aspx are in the "Reports" menu of the Controller (FollowupActionTaken.aspx, "Followup by Department", since RA1c2).
 Since RA1a, Audit Trail is in the "Admin" menu (Admin only), after System Settings and before Reset Database,
 and the Controller's "Reports" menu no longer has it. The Manager's "Reports" menu holds the four Reports.aspx
 entries only.
@@ -120,7 +123,7 @@ entries only.
 | CommitteeMaster.aspx | Committee Master report | controller | Yes |
 | CommitteeMember.aspx | Committee Member report | controller | Yes |
 | Followup.aspx | Followup (`?fc=followup`) and Followup Summary (`?fc=summary`) | controller | Yes (name `followup_report`) |
-| FollowupActionTaken.aspx | Followup Action Taken report | controller, manager | Yes |
+| FollowupActionTaken.aspx | Followup by Department (menu "Reports" of the Controller, after Followup Summary; the heading and the page title are "Followup by Department"): the follow-up items of one committee, one meeting or a range of meetings, all departments or one, all subjects or a range; View shows the grid, Generate Report opens the report in ViewReport.aspx | controller (since RA1c2; `RequireRole("controller")` first in Page_Load and again first in the Generate Report handler); the Manager gets "Access denied" | Yes |
 | MeetingCalendar.aspx | Meeting Calendar | controller | Yes |
 | MeetingMaster.aspx | Meeting Master report | controller | Yes |
 | Notice.aspx | Notice (report and Send Mail of the notice) | controller | Yes |
@@ -140,22 +143,34 @@ entries only.
 
 ### Pages in no menu and the unlisted page
 
-- Report/FollowupActionTaken.aspx has no link in the menu, and a search of BMMS for its name (aspx, ascx,
-  Master, js and xml files) finds only its own files and the comment in PageAccess.xml. That comment says
-  that managers reach it from the dashboard action items, which the search does not confirm.
-  [[CONFIRM: whether anything outside the repository, such as a bookmark or an older build, opens Report/FollowupActionTaken.aspx; the code has no link to it]]
+- Report/FollowupActionTaken.aspx was in no menu until step RA1c2. It is now the last entry of the Controller's
+  "Reports" menu, "Followup by Department" (after Followup Summary), with its own entry in PageSettings.xml
+  (title "Followup by Department"), and PageAccess.xml gives it `roles="controller"` (before: controller and
+  manager, with a comment that managers reach it from the dashboard action items; the code has no such link).
+  The page calls `PageAccessModule.RequireRole("controller")` first in `Page_Load` and again first in the
+  Generate Report handler, so a Manager who opens the address gets "Access denied". The Send Mail code of the
+  page (`btnSendMail_Click`, `CreateBodyText`, `CreatePDF`, the download panel), whose button was commented out,
+  was removed. Two fixes of the report:
+  - Committee filter: `spr_GetActionItemByMeetingIdDeptId` selects by meeting number and department and
+    ignores `@CommitteeId`, and meeting numbers start again in every committee, so the page filters the rows by
+    `CommitteeId` itself (`GetCommitteeFollowupRows`; the grid, the report, the Subject No lists and the check
+    "no record" use it). No database step.
+  - PDF border: the report table was written with `border='1px'`, which the PDF converter rejects (it reads the
+    border as a number), so Export to Pdf in the report window printed its fallback sentence; it is now
+    `border='1'`, and the stray `<style>@media print` block of the report HTML was removed. Export to Pdf cannot
+    print Tamil or Hindi text (the converter has no font for it); Export to Word and Print can.
+    [[CONFIRM: the reason Export to Pdf cannot print Tamil or Hindi text for this report; the note is taken from the step requirement, and the code read here does not show it]]
 - Report/EventCalendar.aspx and Report/ReportPrint.aspx were removed in step RA1c1 (files, project entries
   and PageAccess.xml lines). An old bookmark to either gets "Page not found" (HTTP 404), because the pages
   are no longer in PageAccess.xml or on disk (the owner's test of 2026-11-11 saw this for both addresses).
 - ChangePasswordFirst.aspx, Logout.aspx and Report/ViewReport.aspx are reached by redirects, buttons and
   report pop-ups, not by the menu. Change Password is a link of the header.
-- Error/TestPage.aspx has no entry in PageAccess.xml, neither under `<public>` nor under `<pages>`; the file
-  says "intentionally not listed, so it is never allowed". PageAccessModule treats a page that is not in the
-  file as not allowed (reason "page is not in PageAccess.xml"): in `Enforce` mode a logged-in user gets the
-  "Access denied" page (HTTP 403) and the request is written to `App_Data\PageAccessLog.txt` as DENIED; in
-  `LogOnly` mode the request would run and is written as WOULD-DENY. A visitor who is not logged in is sent to
-  the login page first, in both modes. The page itself calls `PDFUtilities.GenerateHTMLPdf`, which writes a
-  PDF under ~/Files/PDF.
+- Error/TestPage.aspx (a development page that wrote a PDF under ~/Files/PDF and was not listed in
+  PageAccess.xml) was removed in step RA1c2 (files, project entries and the PageAccess.xml comment). PageAccessModule
+  treats a page that is not in the file as not allowed (reason "page is not in PageAccess.xml"): in `Enforce`
+  mode a logged-in user gets the "Access denied" page (HTTP 403) and the request is written to
+  `App_Data\PageAccessLog.txt` as DENIED; in `LogOnly` mode the request would run and is written as WOULD-DENY.
+  A visitor who is not logged in is sent to the login page first, in both modes. [[CONFIRM: what an old address of Error/TestPage.aspx now answers; the page is gone from disk and from PageAccess.xml, so it should be "Page not found" like the two pages of RA1c1, but the step test does not show it]]
 - Pages that make their own choices from the query string: Reports.aspx (`rc`), Followup.aspx (`fc`) and
   ViewReport.aspx (`pdf=1`).
 
@@ -178,7 +193,8 @@ kind is refused with "Access denied", before the message is considered.
 
 Drawn from: BMMS/MasterPage/Main.Master(.cs), MainNoMenu.Master(.cs), BMMS/UserControl/*.ascx(.cs),
 BMMS/XML/PageAccess.xml, PageSettings.xml, MenuUserControl.ascx, the `MasterPageFile` and `Common.InitSetup`
-Grep results, Report/ViewReport.aspx.cs (diff of step RA1c1), Error/TestPage.aspx.cs, PageAccessModule.cs.
+Grep results, Report/ViewReport.aspx.cs (diff of step RA1c1), Report/FollowupActionTaken.aspx(.cs) (diff of
+step RA1c2), PageAccessModule.cs.
 
 ## Business layer (BAL)
 
@@ -222,7 +238,7 @@ data layer calls them" and the tables of "Stored procedures and functions").
 | AgendaMail | The parts shared by the agenda mails: detail rows, the comment row, the item read after the save (`ReadItemAfterSave`) | No database access of its own; it calls AgendaMgr |
 | PDF_Reports | The three sitting-fee certificates and reports as PDF bytes, and the Tamil/Hindi test for them | Fixed wording in the code (see "Known limitations in the code") |
 | PDFUtilities | PDF building blocks: cells, HTML text, logo, page numbers, uploaded agenda text, and `HtmlReportToPdf` | iTextSharp 4.0.2.0 (chapter 01, "Third-party components") |
-| HtmlToPdfBuilder (with `HtmlPdfPage`) | Builds a PDF from HTML pages and style sheets | Used by `PDFUtilities.GenerateHTMLPdf`, which only TestPage calls |
+| HtmlToPdfBuilder (with `HtmlPdfPage`) | Builds a PDF from HTML pages and style sheets | Used by `PDFUtilities.GenerateHTMLPdf`, which no page calls since RA1c2 removed TestPage (Grep) |
 | PdfFonts | The Noto Serif fonts of the PDF output, the test for Tamil or Hindi text and the message for it | Constant `IndicTextMessage` |
 | WordUtilities | Word conversion with Microsoft.Office.Interop.Word (`CreateWord`) and old HTML helpers (`ExportToWord`, `ExportToPdf`, `ReadWordDocument`) | No page or class calls any of its methods (Grep); the Word export of a report is `ViewReport.WordDocument` and needs no Word |
 | DocToString | Reads a Word file as text through Word Interop | The only call is commented out (Master/Agenda.aspx.cs) |
@@ -389,7 +405,7 @@ How a page shows a message:
   `divError`), `Success` (class `divError msg-success`) or `Error` (class `divError msg-error`); the styles are in
   CSS/bmms-workbench.css. Because the text goes into the box as HTML, a text that contains typed or database
   text is encoded by the page first (for example Notice.aspx.cs line 54 uses `HttpUtility.HtmlEncode`).
-- Alert windows. The Dashboard refusal and the report pages (Agenda Approval, Followup, Followup Action Taken,
+- Alert windows. The Dashboard refusal and the report pages (Agenda Approval, Followup, Followup by Department,
   Notice, Sitting Fees) use `ScriptManager.RegisterStartupScript` with a JavaScript `alert(...)`; the text is
   encoded for JavaScript (`HttpUtility.JavaScriptStringEncode`) where it can hold typed text. ChangePasswordFirst
   shows an alert and then goes to the login page.
@@ -653,8 +669,7 @@ chapter 04 ("Known database limitations"). The full backlog stays in Database/RE
 | The mail audit row keeps the full server path of the attachment, and a mail that was sent but whose audit row could not be written is reported as a failure | Mail_Mgr.cs line 109 (`Common.SaveSendMail` with the attachment path, after `smtp.Send`, inside the same `try`) |
 | The IP address recorded at login is an address of the machine that runs the site, not of the user's computer | Default.aspx.cs line 71 (`Utilities.GetLocalIPAddress`, which uses the server's own host name) |
 | User ids are read with `Convert.ToInt16` in several places, so an id above 32767 fails there | Global.asax.cs `Session_End` (no handler around it), Logout.aspx.cs, Master/ResetPassword.aspx.cs |
-| Code with no caller: `WordUtilities` (all methods), `DocToString`, `Common.EncryptVal`, `Common.CreateRandomPassword`, `Common.MondifyAppSettings`; the Send Mail handlers `btnSendMail_Click` of Report/Followup and Report/FollowupActionTaken have no button (the button of the second is commented out) | Grep for callers; FollowupActionTaken.aspx line 115 |
-| Error/TestPage.aspx is a development page that writes a PDF under Files/PDF; it is not in PageAccess.xml, so `Enforce` blocks it, but `LogOnly` would not | Error/TestPage.aspx.cs; PageAccessModule.cs |
+| Code with no caller: `WordUtilities` (all methods), `DocToString`, `Common.EncryptVal`, `Common.CreateRandomPassword`, `Common.MondifyAppSettings`; the Send Mail handler `btnSendMail_Click` of Report/Followup has no button (the same code of Report/FollowupActionTaken was removed in RA1c2); `PDFUtilities.GenerateHTMLPdf` and `HtmlToPdfBuilder` have no caller since RA1c2 removed TestPage | Grep for callers |
 | Files under ~/Files (uploads, attachments) are plain files served by IIS: PageAccessModule checks `.aspx` requests only, and Web.config hides only the segments `PDF`, `SqlBackup` and `Log`. Database/README.md lists a login-checked download page as an open step (step 27) | PageAccessModule.cs lines 62 to 68; Web.config `hiddenSegments` |
 | Web.config sets no `maxRequestLength`, so the ASP.NET default applies to uploads; the old list says a larger upload is refused before the page runs and shows the safe error page | Web.config (`httpRuntime`); [[CONFIRM: the effective upload limit on the installed site; check the installed Web.config and the IIS request-filtering limit]] |
 | `CommonDB` rethrows with `throw ex;`, so the stack trace of an error starts at `CommonDB` and not at the procedure call | CommonDB.cs lines 36 to 39 and 78 to 81 |
@@ -666,5 +681,5 @@ the Agenda Details report) were not rechecked in this chapter and stay in that l
 
 Drawn from: Documentation/Architecture/BMMS-Architecture.md section 9 (lead), Database/README.md "Known items for
 later steps" (lead), BMMSBAL/PDF_Reports.cs, Mail_Mgr.cs, Common.cs, Utilities.cs, BMMS/Default.aspx.cs,
-Global.asax.cs, Logout.aspx.cs, Master/ResetPassword.aspx.cs, Report/Reports.aspx.cs, Error/TestPage.aspx.cs,
+Global.asax.cs, Logout.aspx.cs, Master/ResetPassword.aspx.cs, Report/Reports.aspx.cs,
 PageAccessModule.cs, Web.config, BMMSDAL/CommonDB.cs.

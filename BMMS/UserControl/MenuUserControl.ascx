@@ -105,6 +105,8 @@
     <li><a href="../Report/Reports.aspx?rc=minutes_extract">Minutes Extract</a></li>
     <li><a href="../Report/Followup.aspx?fc=followup">Followup</a></li>
     <li><a href="../Report/Followup.aspx?fc=summary">Followup Summary</a></li>
+    <%-- Step RA1c2: Followup by Department (Report/FollowupActionTaken.aspx), Controller only --%>
+    <li><a href="../Report/FollowupActionTaken.aspx">Followup by Department</a></li>
     <%
         } %>
     <%if (Session["RoleCode"].ToString() == "manager")

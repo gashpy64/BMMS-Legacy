@@ -55,7 +55,7 @@
 
     <!-- followup -->
     <page path="Master/Followup.aspx" roles="controller,md_sect"/>
-    <page path="Report/FollowupActionTaken.aspx" roles="controller,manager"/>  <!-- CONFIRM: managers reach it from the dashboard action items -->
+    <page path="Report/FollowupActionTaken.aspx" roles="controller"/>  <!-- Step RA1c2: Followup by Department, Controller's Reports menu; Controller only (also checked in the page) -->
 
     <!-- reports -->
     <!-- Step RA1b: mgmt opens Reports.aspx for rc=minutes only and ViewReport.aspx for its own report kinds only (both checked in the page) -->
@@ -78,7 +78,5 @@
     <page path="Report/SendMail.aspx" roles="controller"/>
     <page path="Report/SittingFees.aspx" roles="controller"/>
     <page path="Report/SittingFeesApplicable.aspx" roles="controller"/>
-
-    <!-- Error/TestPage.aspx is intentionally not listed, so it is never allowed -->
   </pages>
 </pageAccess>

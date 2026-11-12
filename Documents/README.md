@@ -3,10 +3,10 @@
 - Title: BMMS Documents - index, register and rules
 - Audience: Gashpy Software (owner, developers, doc-writer)
 - Shipped: No
-- Applies to: WF3a1
-- Last updated by: WF3a1, based on 14d780c
+- Applies to: RA1c2
+- Last updated by: RA1c2, based on 1db6ac6 (register entry of 03-Controller only)
 - Status: Draft
-- Verified against: CLAUDE.md, .claude/agents/doc-writer.md, Documents/_build/*.ps1, Tests/README.md
+- Verified against: the register entry of 03-Controller: see there; CLAUDE.md, .claude/agents/doc-writer.md, Documents/_build/*.ps1, Tests/README.md
   (the update matrix lines for the tester)
 - To confirm:
 
@@ -160,16 +160,18 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
 - Title: BMMS Controller Manual
 - Audience: Controller role
 - Shipped: Yes (PDF export)
-- Applies to: RA1b (step 41)
-- Last updated by: RA1b (step 41), based on 1d1bbbe
+- Applies to: RA1c2
+- Last updated by: RA1c2, based on 1db6ac6
 - Status: Draft
 - Verified against: for "What you can and cannot do": BMMS/XML/PageAccess.xml, BMMS/UserControl/MenuUserControl.ascx,
+  BMMS/Report/FollowupActionTaken.aspx(.cs) (Followup by Department, step RA1c2),
   BMMS/Report/Reports.aspx.cs, BMMSBAL/ReportsMgr.cs, BMMSBAL/HTML_Report.cs,
   Database/BMMS-Fix-ReportAccess-Step41.sql, the owner's principle of 2026-11-10 (Admin superior for the
   technical items, Controller superior for the functional items)
 - To confirm: manual not written yet (WF2d3), except the first section in part; the wording of the
   owner's principle as the owner wants it in a shipped manual; the button names "View" and "Generate" as
-  shown on the report page
+  shown on the report page; the Followup by Department wording (the owner looks at the page's function in a
+  later review), and that Export to Pdf cannot print Tamil or Hindi (taken from the step requirement)
 
 ### User-Manuals/04-Admin.md
 

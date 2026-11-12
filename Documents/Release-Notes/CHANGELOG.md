@@ -3,10 +3,13 @@
 - Title: BMMS Change Log
 - Audience: Gashpy Software (internal)
 - Shipped: No
-- Applies to: RA1c1
-- Last updated by: RA1c1, based on 4946500
+- Applies to: RA1c2
+- Last updated by: RA1c2, based on 1db6ac6
 - Status: Draft
-- Verified against: for RA1c1: git diff against 4946500 (BMMS/Report/ViewReport.aspx.cs, BMMS.csproj,
+- Verified against: for RA1c2: git diff against 1db6ac6 (BMMS/Report/FollowupActionTaken.aspx(.cs, .designer.cs),
+  MenuUserControl.ascx, XML/PageAccess.xml, PageSettings.xml, BMMS.csproj, the deleted Error/TestPage files,
+  Tests/packs/access-matrix/*, Database/README.md section Step RA1c2), the tester result and the owner's tests as
+  given; for RA1c1: git diff against 4946500 (BMMS/Report/ViewReport.aspx.cs, BMMS.csproj,
   XML/PageAccess.xml, PageAccessModule.cs, Tests/packs/access-matrix/*, .claude/agents/tester.md,
   Tests/README.md, Database/README.md section Step RA1c1), the owner's test result and the tester run of
   2026-11-11 as given; for WF3a2: CLAUDE.md, .claude/agents/tester.md, Tests/README.md, Tests/_runner/*,
@@ -21,6 +24,28 @@
 One entry per step, newest first. Each entry names the step, its tag and what changed for users,
 for installers and in the database. Release entries (tags vX.Y.Z) collect the steps since the
 previous release.
+
+## RA1c2 - Followup by Department in the Controller's Reports menu; Error/TestPage removed (tag not yet set, 2026-11-12; no database step)
+
+- For users: the Controller's Reports menu has a new item, "Followup by Department", after Followup
+  Summary (the Controller only; a Manager who opens it gets "Access denied"). It now shows only the
+  meetings of the committee you choose (before, a meeting number that exists in two committees showed the
+  items of both). Export to Pdf now works for this report (it used to print a fallback sentence); it still
+  cannot print Tamil or Hindi text, so use Export to Word or Print for those. Described in the Controller manual.
+- For developers: Report/FollowupActionTaken.aspx checks the role first in Page_Load and again first in
+  Generate Report (PageAccessModule.RequireRole("controller"); PageAccess.xml roles="controller", was
+  controller and manager); its title and heading are "Followup by Department" (new PageSettings.xml entry); the
+  committee filter is made in the page because spr_GetActionItemByMeetingIdDeptId ignores @CommitteeId; the
+  report table uses border='1' instead of '1px' and the stray style block is removed; the unused Send Mail code
+  of the page is removed. Error/TestPage.aspx, .aspx.cs and .designer.cs are deleted with their BMMS.csproj
+  entries and the PageAccess.xml comment. Counts: 44 pages on disk (45 before), 43 page entries in
+  PageAccess.xml (44 before). The access-matrix pack has 55 addresses (56 before); the Followup by Department
+  row is Controller "opens", Manager "Access denied"; the cell words "to be removed (RA1c1)" and "to be
+  decided (RA1c2)" are retired, so no notes are left.
+- For installers: nothing to run; the next site build has the new menu item and no TestPage.
+- Database: no numbered step; no row in BMMS-Check-InstalledSteps.sql.
+- Tests: tester agent, -Pack access-matrix: PASSED, all 477 checks passed, 0 notes. The owner's tests passed.
+  The build check counts and the reviewer records are not given to the documentation stage.
 
 ## RA1c1 - Event Calendar and Report Print removed; ViewReport with no report (tag not yet set, 2026-11-11; no database step)
 

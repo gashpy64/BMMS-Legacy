@@ -131,13 +131,6 @@
     <Compile Include="Error\ErrorPage.aspx.designer.cs">
       <DependentUpon>ErrorPage.aspx</DependentUpon>
     </Compile>
-    <Compile Include="Error\TestPage.aspx.cs">
-      <SubType>ASPXCodeBehind</SubType>
-      <DependentUpon>TestPage.aspx</DependentUpon>
-    </Compile>
-    <Compile Include="Error\TestPage.aspx.designer.cs">
-      <DependentUpon>TestPage.aspx</DependentUpon>
-    </Compile>
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -478,7 +471,6 @@
     <Content Include="CSS\PasswordCheck.css" />
     <Content Include="CSS\MainMaster.css" />
     <Content Include="Error\ErrorPage.aspx" />
-    <Content Include="Error\TestPage.aspx" />
     <Content Include="Files\MemberPhoto\FemalePhoto.png" />
     <Content Include="Files\MemberPhoto\MalePhoto.png" />
     <Content Include="Fonts\OFL.txt" />

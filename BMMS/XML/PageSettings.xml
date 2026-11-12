@@ -128,6 +128,10 @@
 		<pageTitle>Followup</pageTitle>
 		<pageURL>~/Report/Followup.aspx</pageURL>
 	</page>
+	<page Name="FollowupActionTaken">
+		<pageTitle>Followup by Department</pageTitle>
+		<pageURL>~/Report/FollowupActionTaken.aspx</pageURL>
+	</page>
 	
 	<page Name="Notice">
 		<pageTitle>Notice</pageTitle>

@@ -3,10 +3,11 @@
 - Title: Security
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: RA1b (step 41)
-- Last updated by: RA1b (step 41), based on 1d1bbbe
+- Applies to: RA1c2
+- Last updated by: RA1c2, based on 1db6ac6
 - Status: Draft
-- Verified against: for step RA1b (step 41): BMMS/PageAccessModule.cs (HasRole, RefuseRequest,
+- Verified against: for step RA1c2: git diff against 1db6ac6 (BMMS/Report/FollowupActionTaken.aspx(.cs),
+  BMMS/XML/PageAccess.xml, BMMS/UserControl/MenuUserControl.ascx); for step RA1b (step 41): BMMS/PageAccessModule.cs (HasRole, RefuseRequest,
   ReadDatabaseRole), BMMS/Report/Reports.aspx.cs, Followup.aspx.cs, ViewReport.aspx.cs,
   BMMS/XML/PageAccess.xml, Database/BMMS-Fix-ReportAccess-Step41.sql (header, guards); before: none yet
   (leads from the old Architecture notes added in WF2b1); the THROW
@@ -78,8 +79,18 @@ How a page is protected (read from the code for step RA1a; the rest of this sect
     stored. This covers the report, `?pdf=1` and the Export to Word and Export to Pdf postbacks; Print is the
     browser printing the page. The other roles are not affected.
   - Unchanged: Management gets no Minutes Extract and no agenda report.
+- Followup by Department since step RA1c2 (Report/FollowupActionTaken.aspx): `PageAccess.xml` gives it
+  `roles="controller"` (the Manager had it before), and the page calls `PageAccessModule.RequireRole("controller")`
+  first in `Page_Load` and again first in the Generate Report handler, with the role read from the database as in
+  RA1a. A Manager, or any other role, gets the "Access denied" page. The Generate Report handler runs the same
+  input checks as the View button (committee, meeting and ranges) before it builds the report, clears
+  `Session["ViewReportKind"]` before it stores the report (so a kind left by an earlier Minutes or Followup report
+  does not stay behind), and the grid labels of meeting number, time, agenda number, subject number and department
+  name are HTML-encoded. This is the tenth page that checks the role in the database (the nine of RA1a),
+  beside the report pages of RA1b.
 - Security lead (not fixed; owner decision, a later step RA1d closes it): only these nine pages check the role
-  in the database (since step RA1b also Reports.aspx, Followup.aspx and ViewReport.aspx for the roles named above). Every other page follows the role stored in the session until sign-out, so after a role
+  in the database (since step RA1b also Reports.aspx, Followup.aspx and ViewReport.aspx for the roles named above,
+  and since RA1c2 FollowupActionTaken.aspx). Every other page follows the role stored in the session until sign-out, so after a role
   change an open session keeps the old role on those pages, and the menu keeps the old links until the next
   sign-in. [[CONFIRM: the step that closes this (named RA1d by the owner); its date and scope are not in the repository]]
 

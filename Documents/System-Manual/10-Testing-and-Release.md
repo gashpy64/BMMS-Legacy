@@ -3,10 +3,11 @@
 - Title: Testing and Release
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: RA1c1
-- Last updated by: RA1c1, based on 4946500
+- Applies to: RA1c2
+- Last updated by: RA1c2, based on 1db6ac6
 - Status: Draft
-- Verified against: for step RA1c1 (the access-matrix pack section): git diff against 4946500 of
+- Verified against: for step RA1c2: git diff against 1db6ac6 of Tests/packs/access-matrix/expected.csv,
+  README.md and pack.js, BMMS/XML/PageAccess.xml, and the tester result (477 checks) as given for the step, not re-read; for step RA1c1 (the access-matrix pack section): git diff against 4946500 of
   Tests/packs/access-matrix/expected.csv and README.md, .claude/agents/tester.md, Tests/README.md,
   BMMS/XML/PageAccess.xml, Database/README.md (section Step RA1c1), the tester run of 2026-11-11
   (Tests/_results/2026-11-11_230233) as given for the step, not re-read; for the sections "The tester (steps WF3a1 and WF3a2)" and "The access-matrix pack (step WF3a2)":
@@ -21,7 +22,7 @@
   section Database/BMMS-Test-RoleAccess-Step40.sql (header), the diff of the three changed Test scripts
   and the owner's test result of step RA1a; for the step 41 section Database/BMMS-Test-ReportAccess-Step41.sql
   (header), Database/README.md (section RA1b) and the owner's test result of step RA1b
-- To confirm: the run time and counts of the RA1c1 run are as given for the step, not re-read from the results folder; the run times and request count of the access matrix are the owner's measurements as given for the step, not re-measured; the count of 44 checks and the counts of the older Test scripts are Database/README.md's, not
+- To confirm: the counts of the RA1c2 run (477 checks) are as given for the step, not re-read from the results folder; the run time and counts of the RA1c1 run are as given for the step, not re-read from the results folder; the run times and request count of the access matrix are the owner's measurements as given for the step, not re-measured; the count of 44 checks and the counts of the older Test scripts are Database/README.md's, not
   recounted from the scripts; chapter not written yet (WF2b2); leads from the old Architecture notes to verify
 
 ## Test database
@@ -212,7 +213,8 @@ localhost, working tree before and after). A failed check goes to the owner as i
 proposes a fix and does not run a failed pack again. As with doc-writer, the main session also compares
 `git status --short --ignored` before and after. Since WF3a2 its record also has the access-matrix
 line, the standing proof and the cells for the owner to decide; a cell "owner to decide" counts as
-failed, and a note ("to be removed (RA1c1)", "to be decided (RA1c2)") is counted under notes only.
+failed. Until step RA1c2 a note word ("to be removed (RA1c1)", "to be decided (RA1c2)") was counted
+under notes only; no cell uses a note word now and the pack no longer accepts them.
 
 The tester stage in the workflow (CLAUDE.md, step 5; 02-Development-Environment, "The development
 workflow"): after the fixes of the reviewers' findings and before the owner's tests, the main session
@@ -234,7 +236,7 @@ Tests/packs/access-matrix/README.md; this section says how the pack is built and
 
 | File | What | Who changes it |
 |---|---|---|
-| expected.csv | One row per address (56 since step RA1c1; 60 before it removed Event Calendar and Report Print), one column per role (admin, controller, manager, user, mgmt, mdsec, inactive, and visitor, a browser that is not signed in), and the rule each row comes from. Each cell is opens, Access denied, sign-in page or Page not found (or one of the note words below) | The owner, or Claude on the owner's instruction; never the tester. Drafted from the owner's access rules, not generated from PageAccess.xml; approved by the owner and checked in |
+| expected.csv | One row per address (55 since step RA1c2, which removed the Error/TestPage.aspx row; 56 after step RA1c1; 60 before RA1c1 removed Event Calendar and Report Print), one column per role (admin, controller, manager, user, mgmt, mdsec, inactive, and visitor, a browser that is not signed in), and the rule each row comes from. Each cell is opens, Access denied, sign-in page or Page not found (or "owner to decide", below) | The owner, or Claude on the owner's instruction; never the tester. Drafted from the owner's access rules, not generated from PageAccess.xml; approved by the owner and checked in |
 | not-in-menu.csv | Pages a role can open without a menu link, a reason per row | The owner (an approved list) |
 | home-link.csv | Which roles have the Home link: Management has it; Admin and MD Secretariat do not | The owner |
 | planted.json | The one change the standing proof makes | Claude, in a reviewed step |
@@ -265,13 +267,16 @@ of the run the hash (SHA-256) of Tests/_site/XML/PageAccess.xml is compared with
 file, and the run is VOID if they differ, or if the proof gave any other result. -ProofFullMatrix (owner
 only) runs the proof over every row; the one-time full proof of 2026-11-11 changed exactly one cell.
 
-Notes (never failures):
+No notes are left (step RA1c2). The two note words "to be removed (RA1c1)" and "to be decided (RA1c2)" are
+retired: the first was used for Report/EventCalendar.aspx and Report/ReportPrint.aspx until RA1c1 removed the
+pages, the second for Report/FollowupActionTaken.aspx until RA1c2 decided it. The only special cell word left:
 
-| Cell or note | Meaning |
+| Cell word | Meaning |
 |---|---|
-| to be removed (RA1c1) | Used for Report/EventCalendar.aspx and Report/ReportPrint.aspx until step RA1c1 removed the pages and their rows; no row uses it now |
-| to be decided (RA1c2) | Report/FollowupActionTaken.aspx for the Controller and the Manager. The run opens the page and shows what it does |
 | owner to decide | No written rule decides the cell; it counts as failed until the owner decides it. None at present |
+
+Report/FollowupActionTaken.aspx ("Followup by Department") is expected to "open" for the Controller and to give
+"Access denied" to the Manager and every other role (decided by the owner, option A; Controller only).
 
 Report/ViewReport.aspx opened directly (no report kind) is expected to "open" for the Controller and the
 Manager (the page shows "The report is no longer available. Close this window and click Generate again.")
@@ -301,6 +306,9 @@ results-folder file (Tests/_results/latest.txt, so that the agent can find its r
 command moves to the background after 180 s) is a later step, not part of RA1c1. The owner's tests of
 RA1c1 passed on 2026-11-11.
 
+Result of step RA1c2 (tester agent, `-Pack access-matrix`): PASSED, all 477 checks passed, 0 notes; the pack has
+55 addresses. The owner's tests of RA1c2 passed. The run folder and the run time are not recorded here.
+
 ### Limits
 
 - Never BMMS, never BMMS_Test.
@@ -327,9 +335,9 @@ RA1c1 passed on 2026-11-11.
   icacls permissions on the site copy's connection file before the password is written, reachability)
   are closed in WF3a2. Other open items are in Database/README.md, "Known items for later steps".
 - Facts found about the product while building, recorded in Database/README.md: the sign-in page takes at
-  most 12 characters for User ID and password; Error/TestPage.aspx is an unlisted leftover page that
-  every role is refused; PageAccess.xml had 46 page entries and the site 47 pages (44 and 45 since
-  step RA1c1 removed Event Calendar and Report Print).
+  most 12 characters for User ID and password; Error/TestPage.aspx was an unlisted leftover page that
+  every role was refused (removed in step RA1c2); PageAccess.xml had 46 page entries and the site 47 pages (44
+  and 45 after step RA1c1 removed Event Calendar and Report Print; 43 and 44 since RA1c2 removed TestPage).
 
 Result (owner's tests of step WF3a1, 2026-11-11): passed. Build checks: Setup ran to the end (fixture
 check 29 of 29); Run-Tests.ps1 -Pack selftest PASSED; -CheckOnly READY; -LeaveSiteRunning and -StopSite
