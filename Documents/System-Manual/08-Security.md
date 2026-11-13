@@ -3,10 +3,11 @@
 - Title: Security
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6b (the paragraph on the Dashboard meeting list under "Role and acting-user checks in procedures"); the rest RA1c2
-- Last updated by: UN6b, based on 0736c7f
+- Applies to: UN6c1 (the paragraph on the Dashboard alerts and Action Items under "Role and acting-user checks in procedures"); UN6b (the paragraph on the Dashboard meeting list under "Role and acting-user checks in procedures"); the rest RA1c2
+- Last updated by: UN6c1, based on e3bff6b
 - Status: Draft
-- Verified against: for step UN6b: Database/BMMS-Fix-DashboardMeetings-Step42.sql (spr_GetDashboardMeetings,
+- Verified against: for step UN6c1: Database/BMMS-Fix-DashboardAlerts-Step43.sql (the procedures and functions), BMMS/DashBoard/DashBoard.aspx.cs (what is sent and read back),
+  Database/README.md (section Step UN6c1, rules); for step UN6b: Database/BMMS-Fix-DashboardMeetings-Step42.sql (spr_GetDashboardMeetings,
   spr_GetDashboardDepartments, fn_UserDepartmentScope), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (what is
   sent, what is read back, the encoding), BMMSDAL/MeetingDB.cs and DepartmentDB.cs (diff), Database/README.md
   (section Step UN6b, scope and filters); for step RA1c2: git diff against 1db6ac6 (BMMS/Report/FollowupActionTaken.aspx(.cs),
@@ -121,6 +122,19 @@ a Literal in encode mode). A failure is written to the error log and the card sh
 text or exception detail reaches the page. The recommended hardening is unchanged: the page itself is still
 protected by the page-access module like every page (`*` in PageAccess.xml); the meeting list adds no new page
 and no new address.
+The Dashboard Alerts card, the header count and the Action Items card since step 43 (UN6c1) work the same way:
+the page sends the acting user id and, for the alerts, a mode (R, U or A) and a page number; the role is read
+from the database by the procedures and never from the page or `Session["RoleCode"]`. fn_DashboardAlerts is the
+one listing rule (an Admin gets no functional alerts; a Controller does not get ACA and ACR, a Manager does not
+get AMA and AMR), fn_DashboardActionItems the one scope rule (a Controller and Management every item that is not
+confirmed; a Manager and a User the items of their departments whose minutes are finalised or confirmed; MD
+Secretariat and Admin none). spr_RemoveAlertForUser changes a row only when it is the acting user's own: the row
+id comes back from the page in a hidden field, and another user's or an unknown id gives Reason 4 and changes
+nothing. spr_OpenDashboardActionItem and spr_SaveDashboardActionText check the scope again on the server whatever
+the page sends: Management can open an item but its save is refused (Reason 4), as are MD Secretariat, Admin and
+an item of another department; the scope is part of the UPDATE itself. Opening an item writes only the person's
+own read row. A mode other than R, U or A and a page number below 1 give Reason 4. The two mail procedures leave
+the Admin role out. Failures are written to the error log and the cards show fixed messages.
 [[CONFIRM: lead from old Architecture notes: the acting user is the logged-in user, passed as @ActingUserId; a missing or inactive acting user is refused]]
 [[CONFIRM: lead from old Architecture notes: one protected system account (Users.IsSystem = 1) cannot be edited, deleted, deactivated or given another role, even by itself; only it can change its own password; it takes no part in the workflow (step 18)]]
 [[CONFIRM: lead from old Architecture notes: every protected procedure returns one row Result, Reason, ReasonDetail (1 done, 0 refused); the page turns the Reason into a sentence; a database error is re-raised, not reported as a refusal]]

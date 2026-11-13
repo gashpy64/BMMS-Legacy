@@ -21,8 +21,22 @@
      00011, 00012                  meeting today - 11, today - 12, likewise
 
    It updates the two date columns of those eighteen Meeting rows directly
-   and nothing else (spr_AddEditMeeting refuses a date before today). It runs
-   on BMMS_Quality only and stops unless all eighteen meetings are there.
+   (spr_AddEditMeeting refuses a date before today).
+
+   Step UN6c1 (the Alerts card lists read alerts of the last seven days only,
+   and a baseline ages): it also sets, relative to today,
+     - CreatedOn of every alert, and CreatedOn, UpdatedOn, MgrApprovedDate and
+       ControllerApprovedDate (where set) of every item of QA1: today;
+     - the decision and update date of item QA1-00004-001: today - 12, and of
+       QA1-00004-002: today - 2 (qa_user has read both alerts: the first is
+       not "recent", the second is);
+     - CreatedOn of the alert "Committee (QA2)": today - 10 (read by qa_user,
+       unread for everybody else);
+     - the due dates of the three Followups: QA1-00005-001 today - 3
+       (overdue), QA1-00005-002 today + 5, QA1-00006-001 none.
+
+   It runs on BMMS_Quality only and stops unless all eighteen meetings, the
+   two items, the alert and the three Followups are there.
    Compatibility level 100. Plain ASCII. Safe to run again.
    ============================================================================ */
 SET NOCOUNT ON;
@@ -76,8 +90,50 @@ JOIN (SELECT '00001' AS MeetingNo, 0 AS DayOffset, 0 AS SubOffset
       UNION ALL SELECT '00011', -11, -16 UNION ALL SELECT '00012', -12, -17) x ON x.MeetingNo = m.MeetingNo
 WHERE c.CommitteeCode = 'QA2';
 
-IF (@SetQa1 <> 6 OR @@ROWCOUNT <> 12)
+DECLARE @SetQa2 INT;
+SET @SetQa2 = @@ROWCOUNT;
+
+-- Step UN6c1: the alert dates (see the header)
+DECLARE @Set INT;
+SET @Set = 0;
+
+UPDATE Alert_Master SET CreatedOn = @Today;
+
+UPDATE a SET
+    CreatedOn = @Today,
+    UpdatedOn = CASE WHEN a.UpdatedOn IS NULL THEN NULL ELSE @Today END,
+    MgrApprovedDate = CASE WHEN a.MgrApprovedDate IS NULL THEN NULL ELSE @Today END,
+    ControllerApprovedDate = CASE WHEN a.ControllerApprovedDate IS NULL THEN NULL ELSE @Today END
+FROM Agenda a
+JOIN Committee c ON c.CommitteeId = a.CommitteeId
+WHERE c.CommitteeCode = 'QA1';
+
+UPDATE a SET
+    UpdatedOn = DATEADD(DAY, CASE a.AgendaNo WHEN 'QA1-00004-001' THEN -12 ELSE -2 END, @Today),
+    ControllerApprovedDate = DATEADD(DAY, CASE a.AgendaNo WHEN 'QA1-00004-001' THEN -12 ELSE -2 END, @Today)
+FROM Agenda a
+JOIN Committee c ON c.CommitteeId = a.CommitteeId
+WHERE c.CommitteeCode = 'QA1' AND a.AgendaNo IN ('QA1-00004-001', 'QA1-00004-002') AND a.ControllerApprovedBy IS NOT NULL;
+SET @Set = @Set + @@ROWCOUNT;
+
+UPDATE Alert_Master SET CreatedOn = DATEADD(DAY, -10, @Today)
+WHERE SourceType = 'Committee' AND DisplayText = 'Committee (QA2)';
+SET @Set = @Set + @@ROWCOUNT;
+
+UPDATE mi SET
+    DueDate = CASE a.AgendaNo WHEN 'QA1-00005-001' THEN DATEADD(DAY, -3, @Today)
+                              WHEN 'QA1-00005-002' THEN DATEADD(DAY, 5, @Today) ELSE NULL END
+FROM Minutes mi
+JOIN Agenda a ON a.AgendaId = mi.AgendaId
+JOIN Committee c ON c.CommitteeId = a.CommitteeId
+JOIN Action_Item ai ON ai.MinutesId = mi.MinutesId
+WHERE c.CommitteeCode = 'QA1' AND a.AgendaNo IN ('QA1-00005-001', 'QA1-00005-002', 'QA1-00006-001');
+SET @Set = @Set + @@ROWCOUNT;
+
+IF (@SetQa1 <> 6 OR @SetQa2 <> 12)
     RAISERROR('The dates of the eighteen fixture meetings were not all set.', 16, 1);
+ELSE IF (@Set <> 6)
+    RAISERROR('The alert and due dates of step UN6c1 were not all set (two items, one alert, three Followups).', 16, 1);
 ELSE
     PRINT 'FIXTURE DATES: DONE';
 GO

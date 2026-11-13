@@ -201,9 +201,37 @@
       "completed": []
     }
   ],
-  "alertsFirstPage": { "admin": 10, "controller": 1, "manager": 10, "manager2": 3, "user": 10, "user2": 2, "mgmt": 2, "mdsec": 2 },
-  "alertHeadings": ["Alert", "Created on"],
-  "actionItemsFirstPage": { "admin": 1, "controller": 1, "manager": 1, "manager2": 1, "user": 1, "user2": 1, "mgmt": 1, "mdsec": 1 },
+  "alertsFirstPage": { "admin": 0, "controller": 1, "manager": 10, "manager2": 3, "user": 10, "user2": 2, "mgmt": 2, "mdsec": 2 },
+  "alertHeader": { "admin": 0, "controller": 1, "manager": 12, "manager2": 3, "user": 9, "user2": 2, "mgmt": 2, "mdsec": 2 },
+  "alertModes": { "account": "user", "recent": 10, "recentLast": "Agenda (QA1-00004-002)", "unread": 9,
+                  "allPage2": ["Committee (QA2)", "Agenda (QA1-00004-001)"] },
+  "alertActors": {
+    "Agenda (QA1-00001-003)": { "name": "QA Controller", "tooltip": "qa_ctrl" },
+    "Agenda (QA1-00001-004)": { "name": "QA Manager", "tooltip": "qa_manager" },
+    "Committee (QA1)": { "name": "QA Controller", "tooltip": "qa_ctrl" },
+    "Agenda (QA1-00005-001)": { "name": "-", "tooltip": "" }
+  },
+  "actionItemsDue": { "QA1-00005-001": "date Overdue", "QA1-00005-002": "date", "QA1-00006-001": "none" },
+  "alertActions": {
+    "account": "user2", "unread": 2, "otherAccount": "mgmt"
+  },
+  "filterKept": { "account": "manager2", "alerts": 3, "actionAccount": "manager", "actionItems": 3 },
+  "actionItemsList": {
+    "admin": "no card",
+    "controller": ["QA2-00002-1", "QA2-00003-1", "QA1-00005-001", "QA1-00005-002", "QA1-00006-001"],
+    "manager": ["QA1-00005-001", "QA1-00005-002", "QA1-00006-001"],
+    "manager2": ["QA2-00003-1"],
+    "user": ["QA1-00005-001", "QA1-00005-002", "QA1-00006-001"],
+    "user2": [],
+    "mgmt": ["QA2-00002-1", "QA2-00003-1", "QA1-00005-001", "QA1-00005-002", "QA1-00006-001"],
+    "mdsec": "no card"
+  },
+  "actionScope": {
+    "opener": "controller", "unmappedItem": "QA1-00006-001", "readOnly": "mgmt",
+    "account": "manager2", "ownItem": "QA2-00003-1", "otherAccount": "user", "otherItem": "QA1-00005-002"
+  },
+  "alertHeadings": ["Alert", "Date"],
+  "actionItemsFirstPage": { "admin": "no card", "controller": 5, "manager": 3, "manager2": 1, "user": 3, "user2": 0, "mgmt": 5, "mdsec": "no card" },
   "widths": [
     { "width": 1366, "height": 768, "layout": "side by side" },
     { "width": 1024, "height": 768, "layout": "stacked" },

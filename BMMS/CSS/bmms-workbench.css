@@ -1195,6 +1195,27 @@ body.wb .bmms-comment-by-line
 	font-size: 13px;
 	font-weight: 400;           /* an unread row is bold; its link carries that, not this line */
 }
+/* The person who caused the alert (step UN6c1): the login ID is its tooltip */
+.wb-dash-alert-actor[title]:not([title=""])
+{
+	cursor: help;
+}
+/* The link of the list that is shown (Recent / Unread / All of the Alerts card, Show All / Read / Unread of the
+   Action Items card; the class is set by DashBoard.aspx.cs): bold and not underlined, so the mark is not colour only.
+   Since the card layout of UN6b the earlier rule (td.showAll, MainMaster.css) no longer reached these links. */
+.wb-page .wb-dash-links a.bmms-filter-current,
+.wb-page .wb-dash-links a.bmms-filter-current:visited
+{
+	color: var(--wb-text);
+	font-weight: 700;
+	text-decoration: none;
+}
+/* The word "Overdue" beside a due date in the Action Items card (step UN6c1): text in the red chip, with a little
+   space after the date */
+.wb-dash-overdue
+{
+	margin-left: var(--wb-space-1);
+}
 .wb-dash-alerts table.contentTable1 th.wb-dash-alert-when,
 .wb-dash-alerts table.contentTable1 td.wb-dash-alert-when
 {

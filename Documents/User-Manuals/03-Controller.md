@@ -94,9 +94,36 @@ Messages and what to do:
 - "The server is busy and the meeting list could not be loaded. Wait a moment, then reload the page."
 - "The meeting list is not available: your account is not active. Sign in again."
 
-Notes: in the Alerts card the "Alert" column holds the link, with the alert type, committee and
-department on a smaller line under it, and "Created on" holds the date and, under it, the time. The
-Agenda Alert panel and the Action Item Details panel fit a narrow window: below about 720 pixels the
+Alerts card: the links Recent | Unread | All choose what is listed; the one you are looking at is in bold.
+Recent (shown first) lists every alert you have not read and the alerts you have read in the last 7 days.
+Unread lists only the alerts you have not read. All lists every alert that is not removed from your list.
+The card shows 10 alerts to a page. The "Alert" column holds the link, with the alert type, committee,
+department and the person ("by [Name]") on a smaller line under it; rest the pointer on the name to see
+the login ID. Where the person is not known the line ends with "by -". The "Date" column holds the date
+of the event (the day of a decision, or of an edit) and, under it, the time. You do not see the alerts of
+your own decisions. The card says "No alerts." when there is nothing to list. The header shows "Alerts (n)",
+the alerts you have not read; it changes after you press Approve, Reject or "Remove from my list", open an
+alert or click one of the three links. If BMMS cannot read the number, the header shows "Alerts" without a
+number. "Remove from my list" in an alert's panel removes the alert from your list only; if the item is
+edited later, the alert comes back, unread. If the alerts cannot be loaded the card says "The alerts could
+not be loaded. Reload the page to try again." (or "The server is busy and the alerts could not be loaded.
+Wait a moment, then reload the page.", or "The alerts are not available: your account is not active. Sign
+in again.").
+
+Action Items card: the newest meeting is first. It has a "Due date" column; when the date is before today
+and the item is not complied with or confirmed, a red "Overdue" label stands beside it. The links Show All |
+Read | Unread narrow the list; the one you are looking at is in bold and stays chosen when you open an item
+or go to another page. An item in bold is one you have not opened yet. You see every action item that is
+not confirmed, whatever the status of its minutes, and you can change the action text of any of them. On
+the day this release is installed, each open item shows in bold once, because you have not opened it yet.
+If the action items cannot be loaded the card says "The action items could not be loaded. Reload the page
+to try again." (or "The server is busy and the action items could not be loaded. Wait a moment, then reload
+the page.", or "The action items are not available: your account is not active. Sign in again.").
+
+The Committee drop-down narrows the Meetings card only. The Alerts card and the Action Items card do not
+follow it.
+
+The Agenda Alert panel and the Action Item Details panel fit a narrow window: below about 720 pixels the
 labels sit above the fields. On a window under about 1100 pixels the cards stack one under the other.
 
 [Screenshot: Dashboard as the Controller - supplied by Gashpy Software]

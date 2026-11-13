@@ -56,22 +56,22 @@ namespace BMMS.DashBoard {
         protected global::System.Web.UI.HtmlControls.HtmlGenericControl spanErrLogin;
 
         /// <summary>
-        /// lnkShowAll control.
+        /// lnkRecent control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.LinkButton lnkShowAll;
+        protected global::System.Web.UI.WebControls.LinkButton lnkRecent;
         
         /// <summary>
-        /// lnkRead control.
+        /// lnkAll control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.LinkButton lnkRead;
+        protected global::System.Web.UI.WebControls.LinkButton lnkAll;
         
         /// <summary>
         /// lnkUnread control.
@@ -144,6 +144,33 @@ namespace BMMS.DashBoard {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.GridView grvActionItem;
+        
+        /// <summary>
+        /// pAlertsMessage control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl pAlertsMessage;
+        
+        /// <summary>
+        /// cardActionItems control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl cardActionItems;
+
+        /// <summary>
+        /// pActionItemsMessage control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl pActionItemsMessage;
         
         /// <summary>
         /// MpCommittee control.

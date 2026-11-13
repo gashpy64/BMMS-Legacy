@@ -511,6 +511,30 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region IsServerBusy
+        // Steps UN6b and UN6c1: a load failed because the server did not answer in time or had no memory: a
+        // SqlException -2 (command or connection timeout), 8645 (a wait for query memory that timed out) or 701 (not
+        // enough system memory on the database server); no free connection in the pool in time
+        // (InvalidOperationException "Timeout expired ..."); or no memory on the web server (OutOfMemoryException).
+        // The Dashboard then says the server is busy instead of "could not be loaded".
+        public static bool IsServerBusy(Exception ex)
+        {
+            SqlException sqlEx = ex as SqlException;
+            if (sqlEx != null)
+            {
+                foreach (SqlError error in sqlEx.Errors)
+                {
+                    if (error.Number == -2 || error.Number == 8645 || error.Number == 701)
+                        return true;
+                }
+                return false;
+            }
+            if (ex is OutOfMemoryException)
+                return true;
+            return ex is InvalidOperationException && ex.Message.StartsWith("Timeout expired", StringComparison.Ordinal);
+        }
+        #endregion
+
         #region IsSystemAccountSession / IsSystemAccountRow
         // The protected system account (BMMS-Fix-SystemAccount-Stage3.sql): Session["IsSystem"] is set at login
         public static bool IsSystemAccountSession()

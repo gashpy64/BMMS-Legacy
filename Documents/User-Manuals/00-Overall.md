@@ -44,12 +44,73 @@ those items. BMMS works out what you may see from your own sign-in; the drop-dow
 In the Committee drop-down, "All committees" comes first. In the Manager's Department drop-down, "All my
 departments" comes first. After you approve or reject an item on the Dashboard, the counts are read again.
 
-The Alerts card beside the Meetings card has two columns. "Alert" holds the link to the item, with the alert
-type, the committee and the department on a smaller line under it, separated by " | ". "Created on" holds
-the date and, under it, the time (for example 14:05). The Action Items card is below. On a narrow window
-(under about 1100 pixels) the cards stack one under the other.
+The Committee drop-down narrows the Meetings card only. The Alerts card and the Action Items card do not
+follow it.
+
+The Alerts card beside the Meetings card has the links Recent | Unread | All. The one you are looking at is
+in bold.
+
+- Recent (the one you see first) shows every alert you have not read, and the alerts you have read in the
+  last 7 days.
+- Unread shows only the alerts you have not read.
+- All shows every alert that is not removed from your list, also the older ones you have read.
+
+The card shows 10 alerts to a page. It has two columns. "Alert" holds the link to the item, with the alert
+type, the committee, the department and the person on a smaller line under it, separated by " | ", and
+ending with "by [Name]". Rest the pointer on the name to see the person's login ID.
+Where BMMS has no record of the person (an approval made long ago) the line ends with "by -". "Date" holds
+the date of the event that the alert is about and, under it, the time (for example 14:05): for an approval
+or a rejection, the day of the decision; for an item that was edited, the day it was edited. The card says
+"No alerts." when there is nothing to list.
+
+When you open an alert, its panel has the button "Remove from my list". It removes the alert from your list
+only; other people keep theirs. If the item is edited later, the alert comes back, unread. If the page
+cannot find the alert in your list it says "This alert is not in your list."
+
+The header shows "Alerts (n)", the number of alerts you have not read. The number changes by itself after
+you press Approve, Reject or "Remove from my list", after you open an alert and when you click Recent, Unread
+or All. If BMMS cannot read the number, the header shows "Alerts" without a number.
+
+If the alerts cannot be loaded, the card says "The alerts could not be loaded. Reload the page to try again."
+or, when the server is busy, "The server is busy and the alerts could not be loaded. Wait a moment, then
+reload the page." If your account is not active it says "The alerts are not available: your account is not
+active. Sign in again."
+
+The Admin has no functional alerts: the card says "No alerts." and the header reads "Alerts (0)". The
+Admin also receives no mail about agenda items, meetings or committees. The Controller does not see the
+alerts of the Controller's own decisions (approved or rejected), and the Manager does not see the alerts of
+the Manager's own decisions.
+
+The Action Items card is below. It lists the action items of the follow-up decisions, the newest meeting
+first. Its columns include Meeting Date (for example 12-Nov-2026) and Due date. When the due date is before
+today and the item is not complied with or confirmed, a red "Overdue" label stands beside the date. The
+links Show All | Read | Unread narrow the list; the one you are looking at is in bold, and it stays chosen
+when you open an item or go to another page of the list. An item in bold is one you have not opened yet.
+
+Who sees which action items is decided from your own sign-in:
+
+| Role | Action items you see | Can you change the action text |
+|---|---|---|
+| Controller | Every item that is not confirmed, whatever the status of its minutes | Yes, any item that is not confirmed |
+| Management | The same as the Controller | No: you can open an item and read it. If you press Submit, BMMS says "You cannot change this action item: your role can only read it, or it is not an item of your department. Nothing was saved." |
+| Manager | Items of your departments whose minutes are finalised or confirmed | Yes, for an item of your department |
+| User | Items of your department whose minutes are finalised or confirmed | Yes, for an item of your department |
+| MD Secretariat | No Action Items card | - |
+| Admin | No Action Items card | - |
+
+If the action items cannot be loaded, the card says "The action items could not be loaded. Reload the page to
+try again." or "The server is busy and the action items could not be loaded. Wait a moment, then reload the
+page." If your account is not active it says "The action items are not available: your account is not
+active. Sign in again."
+
+With this release some people notice changes in the Action Items card. You no longer see an item of
+another department. Users and Managers no longer see items whose minutes are still open (draft). A
+Controller sees each open item in bold once, because the Controller has not opened it yet.
+
+On a narrow window (under about 1100 pixels) the cards stack one under the other.
 
 [Screenshot: Dashboard, Meetings card and Alerts card - supplied by Gashpy Software]
+[Screenshot: Dashboard, Action Items card with an Overdue item - supplied by Gashpy Software]
 
 ## MD Secretariat and Management
 
@@ -81,6 +142,8 @@ them.
 On the Dashboard, the Meetings card of both roles has a Committee drop-down and the title "Meetings".
 Management sees the counts (Items, Approved, Rejected, Pending) over every item. MD Secretariat sees the
 meetings and their Status but no counts. See "The Dashboard meeting list, by role" for the columns.
+Management sees every action item that is not confirmed and can open it, but cannot change it. MD
+Secretariat has no Action Items card. The Committee drop-down narrows the Meetings card only.
 
 [[CONFIRM: what MD Secretariat does beyond Followup and the dashboard]]
 

@@ -31,6 +31,30 @@ namespace BMMSBAL
     public class ActionItemMgr
     {
 
+        #region GetDashboardActionItems
+        // Step UN6c1 (step 43): see ActionItemDB
+        public static DataTable GetDashboardActionItems(int ActingUserId, out int Reason)
+        {
+            return ActionItemDB.GetDashboardActionItems(ActingUserId, out Reason);
+        }
+        #endregion
+
+        #region OpenDashboardActionItem
+        // Step UN6c1 (step 43): see ActionItemDB
+        public static DataTable OpenDashboardActionItem(int ActingUserId, int ActionItemId, out int Reason)
+        {
+            return ActionItemDB.OpenDashboardActionItem(ActingUserId, ActionItemId, out Reason);
+        }
+        #endregion
+
+        #region SaveDashboardActionText
+        // Step UN6c1 (step 43): see ActionItemDB
+        public static int SaveDashboardActionText(int ActingUserId, int ActionItemId, string ActionText)
+        {
+            return ActionItemDB.SaveDashboardActionText(ActingUserId, ActionItemId, ActionText);
+        }
+        #endregion
+
         #region GetActionItemByUserId
         public static DataTable GetActionItemByUserId(int UserId)
         {

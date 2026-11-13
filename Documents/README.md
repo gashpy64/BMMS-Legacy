@@ -3,8 +3,8 @@
 - Title: BMMS Documents - index, register and rules
 - Audience: Gashpy Software (owner, developers, doc-writer)
 - Shipped: No
-- Applies to: UN6b
-- Last updated by: UN6b, based on 0736c7f (register entries of 00-Overall, 01-User, 02-Manager, 03-Controller and 04-Admin only)
+- Applies to: UN6c1
+- Last updated by: UN6c1, based on e3bff6b (register entries of 00-Overall, 01-User, 02-Manager, 03-Controller and 04-Admin only)
 - Status: Draft
 - Verified against: the register entries of the five manuals: see there; CLAUDE.md, .claude/agents/doc-writer.md, Documents/_build/*.ps1, Tests/README.md
   (the update matrix lines for the tester)
@@ -120,10 +120,12 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
 - Title: BMMS Overall Manual
 - Audience: Everyone who uses BMMS, and the people who decide on it
 - Shipped: Yes (PDF export)
-- Applies to: UN6b (sections "The Dashboard meeting list, by role", "Meeting status on the Dashboard" and the Dashboard paragraph of "MD Secretariat and Management"); the rest RA1b (step 41)
-- Last updated by: UN6b, based on 0736c7f
+- Applies to: UN6c1 (section "The Dashboard meeting list, by role": the Alerts card, the header count, the Action Items card; the Dashboard paragraph of "MD Secretariat and Management"); UN6b (sections "The Dashboard meeting list, by role", "Meeting status on the Dashboard" and the Dashboard paragraph of "MD Secretariat and Management"); the rest RA1b (step 41)
+- Last updated by: UN6c1, based on e3bff6b
 - Status: Draft
-- Verified against: for UN6b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (role table, titles, columns, chips, messages),
+- Verified against: for UN6c1: BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (links, column headings, buttons, message texts),
+  BMMS/MasterPage/Main.Master.cs (the header count), Database/BMMS-Fix-DashboardAlerts-Step43.sql (the listing rules, the Action Items
+  scope, Overdue, who may save), Database/README.md (section Step UN6c1), the owner's tests as given; for UN6b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (role table, titles, columns, chips, messages),
   BMMS/DashBoard/DashBoard.aspx (card titles and column headers), DashBoard.aspx.cs (diff: the Alerts card date, time and
   detail line, the counts read again after Approve and Reject), Database/BMMS-Fix-DashboardMeetings-Step42.sql (the
   status rules, the groups, the scope), Database/README.md (section Step UN6b), the owner's test result as given;
@@ -132,7 +134,10 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
   BMMS/Report/ViewReport.aspx.cs, BMMS/XML/PageAccess.xml, BMMSBAL/ReportsMgr.cs (message texts),
   BMMSBAL/HTML_Report.cs (status line, draft note), Database/BMMS-Fix-ReportAccess-Step41.sql
 - To confirm: manual not written yet (WF2d1), except the section "MD Secretariat and Management" and the two
-  Dashboard sections of UN6b; the meaning of the Approved, Rejected and Pending counts is worded from the item
+  Dashboard sections of UN6b (the Alerts card and Action Items card text of UN6c1 was written from the code and not
+  compared with a screenshot; "the alerts of the Controller's own decisions" and "the Manager's own decisions" word the
+  rule that a Controller does not list the controller approved and rejected alerts and a Manager the manager approved
+  and rejected alerts: the owner confirms the wording); the meaning of the Approved, Rejected and Pending counts is worded from the item
   statuses in the code (the owner confirms the wording); the colour names on the status labels (blue, orange,
   green, red, grey) are taken from the code and are to be compared with the screenshots; what MD Secretariat uses beyond Followup and the dashboard; whether the owner wants the Management
   reports described only here (the rules give Management no manual of its own) or also as a short
@@ -144,13 +149,15 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
 - Title: BMMS User Manual
 - Audience: User role
 - Shipped: Yes (PDF export)
-- Applies to: UN6b (section "Screens", Dashboard only); the rest user-ud1a
-- Last updated by: UN6b, based on 0736c7f
+- Applies to: UN6c1 (section "Screens", Dashboard: Alerts card and Action Items card); UN6b (section "Screens", Dashboard only); the rest user-ud1a
+- Last updated by: UN6c1, based on e3bff6b
 - Status: Draft
-- Verified against: for UN6b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (role table, titles, columns, chips,
+- Verified against: for UN6c1: BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (links, headings, message texts),
+  BMMS/MasterPage/Main.Master.cs, Database/BMMS-Fix-DashboardAlerts-Step43.sql, Database/README.md (section Step UN6c1), the owner's
+  tests as given; for UN6b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (role table, titles, columns, chips,
   messages), BMMS/DashBoard/DashBoard.aspx (card titles and column headers), DashBoard.aspx.cs (diff), Database/README.md
   (section Step UN6b), the owner's test result as given; before: none yet
-- To confirm: manual not written yet (WF2d2), except the Dashboard screen; the Dashboard screen was written from the
+- To confirm: manual not written yet (WF2d2), except the Dashboard screen; the Dashboard screen (the Alerts and Action Items text of UN6c1 too) was written from the
   code and has not been compared with a screenshot; the meaning of "In progress" (items still waiting for approval) is
   worded from the code
 
@@ -159,14 +166,16 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
 - Title: BMMS Manager Manual
 - Audience: Manager role
 - Shipped: Yes (PDF export)
-- Applies to: UN6b (section "Screens", Dashboard only); the rest user-ud1a
-- Last updated by: UN6b, based on 0736c7f
+- Applies to: UN6c1 (section "Screens", Dashboard: Alerts card and Action Items card); UN6b (section "Screens", Dashboard only); the rest user-ud1a
+- Last updated by: UN6c1, based on e3bff6b
 - Status: Draft
-- Verified against: for UN6b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (role table, Department drop-down for two
+- Verified against: for UN6c1: BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (links, headings, message texts),
+  BMMS/MasterPage/Main.Master.cs, Database/BMMS-Fix-DashboardAlerts-Step43.sql, Database/README.md (section Step UN6c1), the owner's
+  tests as given; for UN6b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (role table, Department drop-down for two
   or more departments, titles, columns, chips, messages), BMMS/DashBoard/DashBoard.aspx (card titles and column headers),
   DashBoard.aspx.cs (diff), Database/README.md (section Step UN6b), the owner's test result as given; before: none yet
-- To confirm: manual not written yet (WF2d2), except the Dashboard screen; the Dashboard screen was written from the
-  code and has not been compared with a screenshot; the meaning of "Pending" (items waiting with the Manager or the
+- To confirm: manual not written yet (WF2d2), except the Dashboard screen; the Dashboard screen (the Alerts and Action Items text of UN6c1 too) was written from the
+  code and has not been compared with a screenshot; that the Alerts and Action Items cards do not follow the Department drop-down (read from the fact that the server rule takes the acting user only); the meaning of "Pending" (items waiting with the Manager or the
   Controller) is worded from the code; that the narrow-window panel layout (labels above the fields below about 720
   pixels) is described as the owner saw it, from Database/README.md
 
@@ -175,10 +184,12 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
 - Title: BMMS Controller Manual
 - Audience: Controller role
 - Shipped: Yes (PDF export)
-- Applies to: UN6b (section "Screens", Dashboard); the rest RA1c2
-- Last updated by: UN6b, based on 0736c7f
+- Applies to: UN6c1 (section "Screens", Dashboard: Alerts card and Action Items card); UN6b (section "Screens", Dashboard); the rest RA1c2
+- Last updated by: UN6c1, based on e3bff6b
 - Status: Draft
-- Verified against: for the Dashboard screen (UN6b): BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/DashBoard/DashBoard.aspx
+- Verified against: for UN6c1: BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (links, headings, message texts),
+  BMMS/MasterPage/Main.Master.cs, Database/BMMS-Fix-DashboardAlerts-Step43.sql, Database/README.md (section Step UN6c1), the owner's
+  tests as given; for the Dashboard screen (UN6b): BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/DashBoard/DashBoard.aspx
   (card titles and column headers), DashBoard.aspx.cs (diff), Database/README.md (section Step UN6b), the owner's test
   result as given; for "What you can and cannot do": BMMS/XML/PageAccess.xml, BMMS/UserControl/MenuUserControl.ascx,
   BMMS/Report/FollowupActionTaken.aspx(.cs) (Followup by Department, step RA1c2),
@@ -186,7 +197,8 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
   Database/BMMS-Fix-ReportAccess-Step41.sql, the owner's principle of 2026-11-10 (Admin superior for the
   technical items, Controller superior for the functional items)
 - To confirm: manual not written yet (WF2d3), except the first section in part and the Dashboard screen (written
-  from the code, not compared with a screenshot; "Pending" worded from the item statuses in the code); the wording of the
+  from the code, not compared with a screenshot; "Pending" worded from the item statuses in the code; the Alerts and
+  Action Items text of UN6c1 likewise); the wording of the
   owner's principle as the owner wants it in a shipped manual; the button names "View" and "Generate" as
   shown on the report page; the Followup by Department wording (the owner looks at the page's function in a
   later review), and that Export to Pdf cannot print Tamil or Hindi (taken from the step requirement)
@@ -196,10 +208,11 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
 - Title: BMMS Admin Manual
 - Audience: Admin role
 - Shipped: Yes (PDF export)
-- Applies to: UN6b (section "Screens", Dashboard); the rest RA1b (step 41)
-- Last updated by: UN6b, based on 0736c7f
+- Applies to: UN6c1 (section "Screens", Dashboard: no functional alerts, no Action Items card); UN6b (section "Screens", Dashboard); the rest RA1b (step 41)
+- Last updated by: UN6c1, based on e3bff6b
 - Status: Draft
-- Verified against: for the Dashboard screen (UN6b): BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/DashBoard/DashBoard.aspx
+- Verified against: for UN6c1: BMMS/DashBoard/DashBoard.aspx.cs (the card is hidden for the Admin), Database/BMMS-Fix-DashboardAlerts-Step43.sql
+  (the Admin gets no alerts, no mail, no Action Items card), Database/README.md (section Step UN6c1); for the Dashboard screen (UN6b): BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/DashBoard/DashBoard.aspx
   (card titles and column headers), DashBoard.aspx.cs (diff), Database/BMMS-Fix-DashboardMeetings-Step42.sql (the
   Admin gets no counts), Database/README.md (section Step UN6b); for "What you can and cannot do": BMMS/XML/PageAccess.xml,
   BMMS/UserControl/MenuUserControl.ascx (Master, Admin and Reports menus by role), the owner's principle of 2026-11-10

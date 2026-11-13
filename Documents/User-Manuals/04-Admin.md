@@ -24,8 +24,8 @@ not approve them, and you have no Reports menu.
 
 ### Dashboard
 
-Purpose: the first screen after you sign in. You view the meetings, your alerts and your action items. You
-do not approve agenda items.
+Purpose: the first screen after you sign in. You view the meetings. You have no functional alerts and no
+action items on it, and you do not approve agenda items.
 
 Fields and buttons, in the Meetings card:
 
@@ -53,9 +53,11 @@ Messages and what to do:
 - "The server is busy and the meeting list could not be loaded. Wait a moment, then reload the page."
 - "The meeting list is not available: your account is not active. Sign in again."
 
-Notes: in the Alerts card the "Alert" column holds the link, with the alert type, committee and
-department on a smaller line under it, and "Created on" holds the date and, under it, the time. On a
-window under about 1100 pixels the cards stack one under the other.
+Alerts and action items: as the Admin you have no functional alerts. The Alerts card says "No alerts.", the
+header reads "Alerts (0)" and BMMS sends you no mail about agenda items, meetings or committees. You have
+no Action Items card. The Committee drop-down narrows the Meetings card only.
+
+On a window under about 1100 pixels the cards stack one under the other.
 
 [Screenshot: Dashboard as the Admin - supplied by Gashpy Software]
 

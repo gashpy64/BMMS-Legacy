@@ -60,32 +60,48 @@ namespace BMMS.MasterPage
         }
         #endregion
 
-        #region AlertCount
-        // Number shown next to "Alerts" in the header: the unread alerts of the list the DashBoard shows
-        // (spr_GetAlertByUserId returns StatusId = 1 only; unread is ReadStatus = 0, step AL1). The Dashboard
-        // list itself still shows read and unread alerts.
-        protected int AlertCount
+        #region Alert count
+        // Step UN6c1: "Alerts (n)" in the header: the unread alerts of the signed-in user by the rule of the
+        // Dashboard's Alerts card (spr_GetAlertCount, step 43; the role is read from the database, not from the
+        // session). Read on every full page load. On an UpdatePanel postback the header is not redrawn, unless the
+        // page asks for it with RefreshAlertCount (the Dashboard does, after an action that can change the count).
+        protected override void OnPreRender(EventArgs e)
         {
-            get
+            base.OnPreRender(e);
+
+            ScriptManager sm = ScriptManager.GetCurrent(Page);
+            if (sm == null || !sm.IsInAsyncPostBack)
+                ShowAlertCount();
+        }
+
+        // Reads the count again and redraws it in the header. When it cannot be read the header shows "Alerts"
+        // without a number: the number shown before may be out of date after the action.
+        public void RefreshAlertCount()
+        {
+            ShowAlertCount();
+            upAlertCount.Update();
+        }
+
+        // A count that cannot be read shows "Alerts" without a number (never a misleading 0 or an old number)
+        private void ShowAlertCount()
+        {
+            try
             {
-                try
+                int userId;
+                if (Session["UserId"] == null || !int.TryParse(Session["UserId"].ToString(), out userId))
                 {
-                    if (Session["RoleCode"] == null || Session["UserId"] == null)
-                        return 0;
-
-                    // The header is not redrawn on UpdatePanel postbacks, so skip the query there.
-                    ScriptManager sm = ScriptManager.GetCurrent(Page);
-                    if (sm != null && sm.IsInAsyncPostBack)
-                        return 0;
-
-                    DataTable dtAlert = AlertMgr.GetAlertByUserId(Session["RoleCode"].ToString(), int.Parse(Session["UserId"].ToString()));
-                    return dtAlert.Select("ReadStatus = 0").Length;
+                    litAlertCount.Text = string.Empty;
+                    return;
                 }
-                catch (Exception ex)
-                {
-                    Utilities.WriteErrorLog("Main.Master", "AlertCount", ex.ToString());
-                    return 0;
-                }
+
+                int reason;
+                int count = AlertMgr.GetAlertCount(userId, out reason);
+                litAlertCount.Text = reason == 0 ? " (" + count + ")" : string.Empty;
+            }
+            catch (Exception ex)
+            {
+                Utilities.WriteErrorLog("Main.Master", "ShowAlertCount", ex.ToString());
+                litAlertCount.Text = string.Empty;
             }
         }
         #endregion

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Web;
 using System.Web.UI.WebControls;
 using BMMSBAL;
@@ -159,7 +158,7 @@ namespace BMMS.UserControl
             catch (Exception ex)
             {
                 Utilities.WriteErrorLog(className, "LoadMeetings", ex.ToString());
-                ShowFailure(IsServerBusy(ex) ? BusyMessage : FailedMessage);
+                ShowFailure(Common.IsServerBusy(ex) ? BusyMessage : FailedMessage);
             }
         }
         #endregion
@@ -175,27 +174,6 @@ namespace BMMS.UserControl
             pSubtitle.Visible = false;
             litMeetingsTitle.Text = "Meetings";
             ShowMessage(message);
-        }
-
-        // The server did not answer in time or had no memory: a SqlException -2 (command or connection timeout),
-        // 8645 (a wait for query memory that timed out) or 701 (not enough system memory on the database server);
-        // no free connection in the pool in time (InvalidOperationException "Timeout expired ..."); or no memory
-        // on the web server (OutOfMemoryException)
-        private static bool IsServerBusy(Exception ex)
-        {
-            SqlException sqlEx = ex as SqlException;
-            if (sqlEx != null)
-            {
-                foreach (SqlError error in sqlEx.Errors)
-                {
-                    if (error.Number == -2 || error.Number == 8645 || error.Number == 701)
-                        return true;
-                }
-                return false;
-            }
-            if (ex is OutOfMemoryException)
-                return true;
-            return ex is InvalidOperationException && ex.Message.StartsWith("Timeout expired", StringComparison.Ordinal);
         }
         #endregion
 

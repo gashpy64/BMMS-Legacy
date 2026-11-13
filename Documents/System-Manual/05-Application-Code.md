@@ -3,10 +3,12 @@
 - Title: Application Code
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
-- Last updated by: UN6b, based on 0736c7f
+- Applies to: UN6c1 (the Main.Master row and paragraph, "The Dashboard Alerts and Action Items cards (step UN6c1)"); UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
+- Last updated by: UN6c1, based on e3bff6b
 - Status: Draft
-- Verified against: for step UN6b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/DashBoard/DashBoard.aspx
+- Verified against: for step UN6c1: BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (read: the Alerts and Action Items regions, the message constants, lnkSource_Click),
+  BMMS/MasterPage/Main.Master.cs (alert count region), BMMSBAL/AlertMgr.cs, ActionItemMgr.cs and Common.cs (diff),
+  BMMSDAL/AlertDB.cs and ActionItemDB.cs (diff), Database/README.md (section Step UN6c1); for step UN6b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/DashBoard/DashBoard.aspx
   (headings and column headers by Grep), DashBoard.aspx.cs (diff), BMMSBAL/MeetingMgr.cs and DepartmentMgr.cs (diff),
   BMMSDAL/MeetingDB.cs and DepartmentDB.cs (diff), Grep of .cs files for GetScheduleMeet, Database/README.md (section
   Step UN6b); and: BMMS/**/*.aspx, BMMS/MasterPage/*.Master(.cs), BMMS/UserControl/*.ascx(.cs),
@@ -46,14 +48,17 @@ BMMS/MasterPage:
 
 | Master page | Used by | Contents |
 |---|---|---|
-| Main.Master | 40 pages (every page that names a master except ChangePasswordFirst) | Header with the logo, the menu (MenuUserControl), "Alerts ([n])" link to the Dashboard, the user's name and role (the login ID as tooltip), Change Password and Logout; the ScriptManager; the message bar for a failed UpdatePanel postback; the footer with the product line and, for Admin and Controller, "Database: [name]" |
+| Main.Master | 40 pages (every page that names a master except ChangePasswordFirst) | Header with the logo, the menu (MenuUserControl), "Alerts ([n])" link to the Dashboard (the number in its own UpdatePanel, step UN6c1; "Alerts" without a number when it cannot be read), the user's name and role (the login ID as tooltip), Change Password and Logout; the ScriptManager; the message bar for a failed UpdatePanel postback; the footer with the product line and, for Admin and Controller, "Database: [name]" |
 | MainNoMenu.Master | ChangePasswordFirst.aspx | The same header without the menu and without the Alerts link |
 
 Both masters set the page title from `Session["PageTitle"]` or, when it is not set, from the
 `PageTitle` setting of AppSettings.xml, build the footer with `Common.ProductFooter`, and handle
-`OnAsyncPostBackError` (see "Error handling"). Main.Master also computes the number in "Alerts ([n])":
-the unread alerts of the list the Dashboard shows (`AlertMgr.GetAlertByUserId`, rows with
-`ReadStatus = 0`); it asks nothing during an UpdatePanel postback. Three pages have no master page
+`OnAsyncPostBackError` (see "Error handling"). Since step UN6c1 Main.Master computes the number in "Alerts ([n])"
+with `AlertMgr.GetAlertCount` (spr_GetAlertCount: the unread alerts by the rule of the Dashboard's Alerts card,
+the role read from the database). The number sits in its own conditional UpdatePanel; it is read in `OnPreRender`
+on every full page load and not during an UpdatePanel postback, unless the page calls the public
+`RefreshAlertCount()`, which reads it again and redraws it. A count that cannot be read (an error, or a Reason
+other than 0) shows "Alerts" without a number and writes the error to the error log. Three pages have no master page
 (Default, Logout, ViewReport). The login page has its own footer and its own
 ScriptManager.
 
@@ -206,6 +211,53 @@ Drawn from: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/DashBoard/Da
 DashBoard.aspx.cs (diff), BMMSBAL/MeetingMgr.cs and DepartmentMgr.cs (diff), BMMSDAL/MeetingDB.cs and
 DepartmentDB.cs (diff), Database/README.md (section Step UN6b). The CSS file and DashBoard.aspx were not read in
 full for this section: the CSS and layout statements are from Database/README.md.
+
+### The Dashboard Alerts and Action Items cards (step UN6c1)
+
+DashBoard.aspx(.cs) changed in step UN6c1; the rules are on the server (database step 43) and the page sends the
+acting user id from `Session["UserId"]`, never a role.
+
+- Alerts card (`LoadAlertGRV`): `AlertMgr.GetDashboardAlerts(userId, mode, page, out reason, out totalRows, out
+  unreadCount, out pageShown)`. The three links Recent, Unread and All (`lnkRecent`, `lnkUnread`, `lnkAll`, all
+  `AlertMode_Click` with the CommandArgument R, U or A) set `AlertMode` (ViewState, R by default) and go to page 1.
+  The grid uses custom paging of 10 (`AllowCustomPaging`, `VirtualItemCount` from `totalRows`); only the page shown
+  is read and the list is no longer kept in ViewState. `MarkCurrent` sets the class `bmms-filter-current` (bold in
+  bmms-workbench.css) and `aria-current` on the link of the mode shown. Reason 8 gives "The alerts are not
+  available: your account is not active. Sign in again."; any other Reason or an exception gives "The alerts could
+  not be loaded. Reload the page to try again." (the exception is written to the error log; `Common.IsServerBusy`
+  gives "The server is busy and the alerts could not be loaded. Wait a moment, then reload the page."); the grid and
+  its pager are hidden then. The empty text is "No alerts.".
+- The muted line of an alert ends with "by [name]" (`ActorName`, a dash when empty; the login ID, `ActorLogin`, is
+  the tooltip); the second column is headed "Date" and shows `EventOn`, not the entry date.
+- Opening an alert (`lnkSource_Click`) still marks it read with `AlertMgr.UpdateAlertByUserId` and, in a finally
+  block, reloads the list in the mode chosen, so the header count follows.
+- "Remove from my list": the two buttons (`btnDeleteAlert`, `btnDeleteAgendaAlert`, text "Remove from my list") call
+  `AlertMgr.RemoveAlertForUser`; the row id comes from the hidden field `hdnAlertUserId`. Reason 4 gives "This alert
+  is not in your list."; an error gives "The alert could not be removed from your list. Try again."
+- Header count: after the list is reloaded on a postback (Approve, Reject, Remove, the three links, paging)
+  `RefreshHeaderCount` calls `Main.RefreshAlertCount()`.
+- Action Items card (`LoadActionItemGRV`): `ActionItemMgr.GetDashboardActionItems(userId, out reason)`. Reason 4
+  (MD Secretariat, Admin) hides the card (`cardActionItems`); Reason 8 and failures show a message in the card
+  ("The action items are not available: your account is not active. Sign in again." and the two "could not be
+  loaded" texts). The whole list is kept in ViewState and the three links Show All, Read and Unread filter it in the
+  page by `ActionMode` (A, R, U; ViewState); `LoadActionItemGRV` sets the mark from `ActionMode`, so the link
+  chosen stays chosen when an item is opened or the page is changed. New column "Due date" with a red "Overdue"
+  chip when `IsOverdue` is true; "Meeting Date" is shown as dd-MMM-yyyy.
+- Opening an item calls `ActionItemMgr.OpenDashboardActionItem` and Submit calls
+  `ActionItemMgr.SaveDashboardActionText`; the answer decides, whatever the page sent. Reason 4 gives "You cannot
+  change this action item: your role can only read it, or it is not an item of your department. Nothing was
+  saved."; Reason 8 "Your account is not active. Nothing was saved. Sign in again."; a failure "The action text
+  could not be saved. Nothing was saved. Try again." (busy: "The server is busy and the action text could not be
+  saved. Nothing was saved. Wait a moment, then try again."). The Submit button is still shown to Management.
+- `Common.IsServerBusy` (BMMSBAL/Common.cs) moved there from MeetingSummary.ascx.cs, which now calls it.
+- BAL and DAL: `AlertMgr` / `AlertDB` (`GetDashboardAlerts`, `GetAlertCount`, `RemoveAlertForUser`) and
+  `ActionItemMgr` / `ActionItemDB` (`GetDashboardActionItems`, `OpenDashboardActionItem`,
+  `SaveDashboardActionText`). The older `AlertMgr.GetAlertByUserId`, `UpdateAlertByAlertUserId` and
+  `ActionItemMgr.GetActionItemByUserId` have no caller any more.
+
+Drawn from: BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/MasterPage/Main.Master.cs, BMMSBAL/AlertMgr.cs,
+ActionItemMgr.cs and Common.cs (diff), BMMSDAL/AlertDB.cs and ActionItemDB.cs (diff), Database/README.md (section
+Step UN6c1).
 
 ### Pages in no menu and the unlisted page
 

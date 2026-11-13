@@ -33,8 +33,27 @@
        00002 submission date passed   agenda open, one item at AC
        00003 agenda finalised         meeting still to come, one approved item
        00004 minutes in Draft         meeting day passed, attendance entered
-       00005 minutes Finalised        one Followup decision (an action item)
-       00006 minutes Confirmed
+       00005 minutes Finalised        two Followup decisions (two action items)
+       00006 minutes Confirmed        one Followup decision (an action item)
+     Step UN6c1 (the Alerts card and the Action Items card):
+       - the three Followups get their due dates from BMMS-Quality-Fixture-Dates.sql
+         (QA1-00005-001 three days ago: overdue; QA1-00005-002 in five days;
+         QA1-00006-001 none);
+       - qa_user has READ three alerts: Agenda (QA1-00004-001), which the dates
+         script makes 12 days old, Agenda (QA1-00004-002), 2 days old, and
+         Committee (QA2), 10 days old. The other alerts stay unread;
+       - item QA1-00005-001 has no recorded approver (ControllerApprovedBy and
+         ControllerApprovedDate emptied, as an item approved before step 35), so
+         its alert names nobody.
+       - the scope of the Action Items card (by department and role, not by the
+         mapping rows): QA1-00006-001 keeps the mapping row of qa_user only (the
+         rows of everybody else are deleted, as when a minute becomes a Followup
+         after the minutes were finalised); QA2-00003-1 (Secretarial, minutes
+         Finalised) gets a Followup mapped to qa_ctrl only; QA2-00002-1 (Credit,
+         minutes still Draft) gets a Followup mapped to qa_user only. So:
+         Controller and Management see five items, qa_manager and qa_user the
+         three Credit items with finalised or confirmed minutes, qa_manager2
+         (HRD and Secretarial) the one Secretarial item, qa_user2 (HRD) none.
      Committee QA2 "QA Dashboard Committee" (step UN6b, for the Dashboard's
      meeting list), twelve meetings and twelve agenda items:
        00001 dated today, submission today, agenda open, no items
@@ -57,8 +76,8 @@
    again after every restore, relative to that day.
    The QA2 meetings and their items are direct rows as well (eleven meetings in
    the past; their minutes status is set directly). The QA2 items have no
-   minutes rows and no alerts, so the Minutes report and Followup are the same
-   as without QA2. Saving committee QA2 with spr_AddEditCommittee writes its
+   alerts, and no minutes rows but the two Followups of step UN6c1 (direct
+   rows as well). Saving committee QA2 with spr_AddEditCommittee writes its
    Committee alert, as for QA1: one more alert for every account except
    qa_ctrl, who saved it.
 
@@ -375,13 +394,14 @@ BEGIN TRY
             DELETE FROM @R1; INSERT INTO @R1 EXEC spr_UpdateAttendance @CommitteeId = @C, @MeetingId = @Mt, @MemberOf = 'C', @MemberId = @M2, @Attendance = 'P', @UpdatedBy = @QaController;
             IF NOT EXISTS (SELECT 1 FROM @R1 WHERE Result = 1) RAISERROR('refused (attendance)', 16, 1);
 
-            -- Update Minutes for every minute of the meeting. On meeting 00005 the first is a Followup.
+            -- Update Minutes for every minute of the meeting. On meetings 00005 and 00006 every minute is a Followup
+            -- (step UN6c1: three action items; before, only the first minute of 00005).
             SET @Min = (SELECT MIN(mi.MinutesId) FROM Minutes mi JOIN Agenda a ON a.AgendaId = mi.AgendaId WHERE a.MeetingId = @Mt);
             WHILE (@Min IS NOT NULL)
             BEGIN
                 SET @Step = 'meeting 0000' + CAST(@No AS VARCHAR(12)) + ': Update Minutes';
                 SET @Title = (SELECT a.ShortText FROM Minutes mi JOIN Agenda a ON a.AgendaId = mi.AgendaId WHERE mi.MinutesId = @Min);
-                IF (@No = 5 AND @Min = (SELECT MIN(mi.MinutesId) FROM Minutes mi JOIN Agenda a ON a.AgendaId = mi.AgendaId WHERE a.MeetingId = @Mt))
+                IF (@No >= 5)
                 BEGIN
                     DELETE FROM @R; INSERT INTO @R EXEC spr_UpdateMinutes @Code = 'All', @MinutesId = @Min, @DecisionTypeId = @DecisionFollowup,
                         @Directions = N'<p>QA directions (followup).</p>', @ActualResolution = N'<p>QA resolution as passed.</p>', @ShortText = @Title,
@@ -457,6 +477,51 @@ BEGIN TRY
           UNION ALL SELECT '00010', '1', 'C', 'ACA' UNION ALL SELECT '00011', '1', 'C', 'ACA' UNION ALL SELECT '00012', '1', 'C', 'ACA') x
     JOIN Meeting m ON m.CommitteeId = @C2 AND m.MeetingNo = x.MeetingNo;
     IF ((SELECT COUNT(*) FROM Agenda WHERE CommitteeId = @C2) <> 12) RAISERROR('not all twelve QA2 items were saved', 16, 1);
+
+    ---------------------------------------------------------------------------
+    -- Step UN6c1: the Alerts card. Three alerts qa_user has read (their age comes from the dates script), and one
+    -- item without a recorded approver. Direct rows: reading an alert in the application marks it the same way.
+    ---------------------------------------------------------------------------
+    SET @Step = 'UN6c1: three alerts read by qa_user';
+    UPDATE m SET ReadStatus = 1
+    FROM Alert_User_Map m JOIN Alert_Master am ON am.AlertId = m.AlertId
+    WHERE m.UserId = @QaUser AND am.DisplayText IN ('Agenda (QA1-00004-001)', 'Agenda (QA1-00004-002)', 'Committee (QA2)');
+    IF (@@ROWCOUNT <> 3) RAISERROR('not exactly three alerts of qa_user were marked read', 16, 1);
+
+    SET @Step = 'UN6c1: item QA1-00005-001 without a recorded approver';
+    UPDATE Agenda SET ControllerApprovedBy = NULL, ControllerApprovedDate = NULL WHERE CommitteeId = @C AND AgendaNo = 'QA1-00005-001';
+    IF (@@ROWCOUNT <> 1) RAISERROR('item QA1-00005-001 was not found', 16, 1);
+
+    ---------------------------------------------------------------------------
+    -- Step UN6c1: the scope of the Action Items card. Direct rows.
+    ---------------------------------------------------------------------------
+    SET @Step = 'UN6c1 scope: QA1-00006-001 mapped to qa_user only';
+    DELETE m
+    FROM ActionItem_User_Map m
+    JOIN Action_Item ai ON ai.ActionItemId = m.ActionItemId
+    JOIN Minutes mi ON mi.MinutesId = ai.MinutesId
+    JOIN Agenda a ON a.AgendaId = mi.AgendaId
+    WHERE a.CommitteeId = @C AND a.AgendaNo = 'QA1-00006-001' AND m.UserId <> @QaUser;
+    IF ((SELECT COUNT(*) FROM ActionItem_User_Map m JOIN Action_Item ai ON ai.ActionItemId = m.ActionItemId JOIN Minutes mi ON mi.MinutesId = ai.MinutesId
+         JOIN Agenda a ON a.AgendaId = mi.AgendaId WHERE a.CommitteeId = @C AND a.AgendaNo = 'QA1-00006-001' AND m.UserId = @QaUser) <> 1
+        OR EXISTS (SELECT 1 FROM ActionItem_User_Map m JOIN Action_Item ai ON ai.ActionItemId = m.ActionItemId JOIN Minutes mi ON mi.MinutesId = ai.MinutesId
+                   JOIN Agenda a ON a.AgendaId = mi.AgendaId WHERE a.CommitteeId = @C AND a.AgendaNo = 'QA1-00006-001' AND m.UserId <> @QaUser))
+        RAISERROR('the mapping rows of QA1-00006-001 are not as wanted', 16, 1);
+
+    SET @Step = 'UN6c1 scope: two Followups on QA2 (Secretarial with finalised minutes, Credit with draft minutes)';
+    INSERT INTO Minutes (AgendaId, DecisionTypeId, DueDate, Directions, ActualResolution, CreatedOn, CreatedBy)
+    SELECT a.AgendaId, @DecisionFollowup, NULL, N'<p>QA directions (followup).</p>', N'<p>QA resolution as passed.</p>', @Now, @QaController
+    FROM Agenda a WHERE a.CommitteeId = @C2 AND a.AgendaNo IN ('QA2-00003-1', 'QA2-00002-1');
+    IF (@@ROWCOUNT <> 2) RAISERROR('the two QA2 items were not found', 16, 1);
+    INSERT INTO Action_Item (MinutesId, Directions, ActionText, ActionStatus, UpdatedOn, UpdatedBy)
+    SELECT mi.MinutesId, N'<p>QA directions (followup).</p>', N'', '', @Now, @QaController
+    FROM Minutes mi JOIN Agenda a ON a.AgendaId = mi.AgendaId
+    WHERE a.CommitteeId = @C2 AND a.AgendaNo IN ('QA2-00003-1', 'QA2-00002-1');
+    INSERT INTO ActionItem_User_Map (ActionItemId, UserId, ReadStatus, StatusId)
+    SELECT ai.ActionItemId, CASE a.AgendaNo WHEN 'QA2-00003-1' THEN @QaController ELSE @QaUser END, 0, 1
+    FROM Action_Item ai JOIN Minutes mi ON mi.MinutesId = ai.MinutesId JOIN Agenda a ON a.AgendaId = mi.AgendaId
+    WHERE a.CommitteeId = @C2 AND a.AgendaNo IN ('QA2-00003-1', 'QA2-00002-1');
+    IF (@@ROWCOUNT <> 2) RAISERROR('the two QA2 action items were not mapped', 16, 1);
 
     COMMIT TRANSACTION;
     PRINT 'FIXTURE: DONE';

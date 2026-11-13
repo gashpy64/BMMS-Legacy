@@ -3,18 +3,23 @@
 - Title: Program to Program: Dashboard and Alerts
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6b (step 42): the Meetings card; the rest not written yet
-- Last updated by: UN6b, based on 0736c7f
+- Applies to: UN6c1 (step 43): the Alerts card, the header count and the Action Items card; UN6b (step 42): the Meetings card; the rest not written yet
+- Last updated by: UN6c1, based on e3bff6b
 - Status: Draft
-- Verified against: for the Meetings card (step UN6b): BMMS/UserControl/MeetingSummary.ascx, .ascx.cs, BMMS/DashBoard/DashBoard.aspx
+- Verified against: for the Alerts card, the header count and the Action Items card (step UN6c1): BMMS/DashBoard/DashBoard.aspx and
+  DashBoard.aspx.cs (the Alerts and Action Items regions, message constants, lnkActionItem_Click, lnkSource_Click),
+  BMMS/MasterPage/Main.Master.cs (alert count), BMMSBAL/AlertMgr.cs and ActionItemMgr.cs, BMMSDAL/AlertDB.cs and
+  ActionItemDB.cs (diff), Database/BMMS-Fix-DashboardAlerts-Step43.sql (all objects), BMMS-Rollback-DashboardAlerts-Step43.sql,
+  BMMS-Test-DashboardAlerts-Step43.sql (header), Database/README.md (section Step UN6c1), the owner's test result as given;
+  for the Meetings card (step UN6b): BMMS/UserControl/MeetingSummary.ascx, .ascx.cs, BMMS/DashBoard/DashBoard.aspx
   (card titles, grid headings), DashBoard.aspx.cs (diff: MeetingSummary1.Reload after Approve and Reject, FormatDate,
   FormatTimeOfDay, AlertDetails), BMMSBAL/MeetingMgr.cs and DepartmentMgr.cs (diff), BMMSDAL/MeetingDB.cs and
   DepartmentDB.cs (diff), Database/BMMS-Fix-DashboardMeetings-Step42.sql (all five objects),
   BMMS-Rollback-DashboardMeetings-Step42.sql, BMMS-Test-DashboardMeetings-Step42.sql (header), Database/README.md
   (section Step UN6b), the owner's test result as given for the step (71 of 71, not re-run)
-- To confirm: feature area not written yet except the Meetings card (WF2c3): the Alerts card, the Action Items card, the
-  panels and the approval flow of the Dashboard are still to be drawn; the BMMSBAL and BMMSDAL methods of the
-  Alerts card were not read for this file
+- To confirm: feature area not written yet except the Meetings card and, since UN6c1, the Alerts card, the header count and the
+  Action Items card (WF2c3): the Agenda Alert and Action Item Details panels and the approval flow of the Dashboard
+  are still to be drawn
 
 ## Scope
 
@@ -23,8 +28,11 @@ meeting list and the department list, what the procedures decide, and what happe
 shows the Scheduled and the Completed (last 10) meetings with a status label and, for four roles, four counts
 (Items, Approved, Rejected and Pending or In progress). Everything is read only: the card writes nothing.
 
-[[CONFIRM: the Alerts card, the Action Items card, the Agenda Alert and Action Item Details panels and the Approve
-and Reject flow of the Dashboard are not written yet (WF2c3)]]
+The Alerts card, the header count and the Action Items card (step UN6c1) are in the section "Alerts card, header
+count and Action Items card (step UN6c1)" below.
+
+[[CONFIRM: the Agenda Alert and Action Item Details panels and the Approve and Reject flow of the Dashboard are not
+written yet (WF2c3)]]
 
 ## Programs involved
 
@@ -138,6 +146,130 @@ Measured on BMMS_Test on 2026-11-12 (17 meetings, 66 items, warm runs): 373 logi
 for a Manager with one department, 613 for a Manager with two, 404 for a User, no physical reads, 7 to 33 ms
 elapsed. The Agenda table has only its primary key, so the counts scan it once per listed meeting; an index is a
 later step (UN6e; Database/README.md, "Known items for later steps").
+
+## Alerts card, header count and Action Items card (step UN6c1)
+
+Added in step UN6c1 (database step 43). Both cards and the header count read through the acting user id
+(`Session["UserId"]`); the page never sends a role. The procedures read the role from Users and Roles, so a changed
+page or a forged post-back cannot widen what a person sees.
+
+### Programs involved
+
+| Program | Kind | Part in the flow |
+|---|---|---|
+| DashBoard/DashBoard.aspx(.cs) | Page | Alerts card (`LoadAlertGRV`, the three links, paging, `lnkSource_Click`, Remove from my list), Action Items card (`LoadActionItemGRV`, open, Submit), `RefreshHeaderCount` |
+| MasterPage/Main.Master(.cs) | Master page | The header "Alerts (n)": `OnPreRender` on a full page load, `RefreshAlertCount()` when the Dashboard asks |
+| AlertMgr, AlertDB | BAL, DAL | GetDashboardAlerts, GetAlertCount, RemoveAlertForUser; UpdateAlertByUserId (marks an opened alert read, unchanged) |
+| ActionItemMgr, ActionItemDB | BAL, DAL | GetDashboardActionItems, OpenDashboardActionItem, SaveDashboardActionText |
+| spr_GetDashboardAlerts, spr_GetAlertCount, spr_RemoveAlertForUser | Procedures | One page of the alert list; the unread count; the removal of one row of the acting user |
+| spr_GetDashboardActionItems, spr_OpenDashboardActionItem, spr_SaveDashboardActionText | Procedures | The list, the opening (read row) and the save of the action text, each by the scope rule |
+| fn_DashboardAlerts, fn_DashboardActionItems | Inline table functions | The one listing rule of the alerts and the one scope rule of the action items |
+
+### Main flow
+
+```mermaid
+sequenceDiagram
+    participant U as Signed-in role
+    participant P as DashBoard.aspx.cs
+    participant M as Main.Master.cs
+    participant B as AlertMgr and ActionItemMgr
+    participant SA as spr_GetDashboardAlerts
+    participant SC as spr_GetAlertCount
+    participant SI as spr_GetDashboardActionItems
+    participant SO as spr_OpenDashboardActionItem
+    participant SS as spr_SaveDashboardActionText
+
+    U->>P: opens the Dashboard, or clicks Recent, Unread or All
+    P->>B: GetDashboardAlerts(acting user id, mode R/U/A, page)
+    B->>SA: ActingUserId, Mode, PageNo
+    SA-->>B: one page of 10 rows, TotalRows, UnreadCount, PageShown
+    B-->>P: table and Reason
+    P->>M: RefreshAlertCount() on a postback
+    M->>B: GetAlertCount(acting user id)
+    B->>SC: ActingUserId
+    SC-->>M: UnreadCount
+    M-->>U: header "Alerts (n)"
+    P->>B: GetDashboardActionItems(acting user id)
+    B->>SI: ActingUserId
+    SI-->>P: the whole list with ReadStatus and IsOverdue
+    P-->>U: Alerts card and Action Items card
+    U->>P: opens an action item
+    P->>B: OpenDashboardActionItem(acting user id, item id)
+    B->>SO: ActingUserId, ActionItemId
+    SO-->>P: the item row, the person's read row written
+    U->>P: Submit in the Action Item Details panel
+    P->>B: SaveDashboardActionText(acting user id, item id, text)
+    B->>SS: ActingUserId, ActionItemId, ActionText
+    alt Reason 4 - Management, MD Secretariat, Admin, or an item outside the scope
+        SS-->>P: nothing saved
+        P-->>U: "You cannot change this action item: your role can only read it, or it is not an item of your department. Nothing was saved."
+    else Reason 8 - acting user missing or inactive
+        SS-->>P: nothing saved
+        P-->>U: "Your account is not active. Nothing was saved. Sign in again."
+    end
+```
+
+| From | To | Data | Notes |
+|---|---|---|---|
+| Role (any) | DashBoard.aspx | Opens the page, or clicks Recent, Unread, All, a page number, an alert, an item, Remove from my list or Submit | The mode and the page number are kept in ViewState; the procedure checks both |
+| DashBoard.aspx | AlertMgr.GetDashboardAlerts | Acting user id, mode (R, U or A), page number | Only the page shown is read; Recent is the default |
+| AlertMgr / AlertDB | spr_GetDashboardAlerts | @ActingUserId, @Mode, @PageNo | Six OUTPUT values: @Result, @Reason, @TotalRows, @UnreadCount, @PageShown |
+| spr_GetDashboardAlerts | AlertDB | Rows with AlertUserId, AlertId, ReadStatus, SourceType, SourceTypeId, AlertTypeName, CommitteeName, DepartmentName, DisplayText, EventOn, ActorName, ActorLogin | Newest event first, 10 to a page (ROW_NUMBER, compatibility level 100) |
+| DashBoard.aspx | Main.Master.RefreshAlertCount | A call, after the alert list is reloaded on a postback (Approve, Reject, Remove, the links, paging) and after an alert was opened | Not on the first load of the page: the master reads the count in `OnPreRender` |
+| Main.Master | AlertMgr.GetAlertCount | Acting user id | A Reason other than 0 or an exception: the header shows "Alerts" without a number, and the error log holds the cause |
+| AlertMgr / AlertDB | spr_GetAlertCount | @ActingUserId | OUTPUT @Result, @Reason, @UnreadCount, by fn_DashboardAlerts |
+| DashBoard.aspx | AlertMgr.UpdateAlertByUserId | Acting user id, alert id | Marks the opened alert read; only the row of that user |
+| DashBoard.aspx | AlertMgr.RemoveAlertForUser | Acting user id, the alert row id from the hidden field | StatusId 0 on the person's own row, nothing deleted |
+| DashBoard.aspx | ActionItemMgr.GetDashboardActionItems | Acting user id | The whole list comes back and is kept in ViewState; the links Show All, Read and Unread filter it in the page |
+| ActionItemMgr / ActionItemDB | spr_GetDashboardActionItems | @ActingUserId | OUTPUT @Result, @Reason; rows newest meeting first |
+| DashBoard.aspx | ActionItemMgr.OpenDashboardActionItem | Acting user id, action item id | Writes the person's own read row (creates it when missing, never a second); nothing of the item changes |
+| DashBoard.aspx | ActionItemMgr.SaveDashboardActionText | Acting user id, action item id, the action text | Writes Action_Item.ActionText only, inside the scope |
+
+### Refusal paths
+
+| Reason | Raised by | Meaning | Message the page shows |
+|---|---|---|---|
+| 8 | spr_GetDashboardAlerts, spr_GetAlertCount, spr_RemoveAlertForUser, spr_GetDashboardActionItems, spr_OpenDashboardActionItem, spr_SaveDashboardActionText | The acting user is missing, 0 or inactive; no rows, nothing changes | Alerts: "The alerts are not available: your account is not active. Sign in again."; Action Items: "The action items are not available: your account is not active. Sign in again."; Submit: "Your account is not active. Nothing was saved. Sign in again."; the header: "Alerts" without a number |
+| 4 | spr_GetDashboardAlerts | A mode other than R, U or A, or a page number below 1 | "The alerts could not be loaded. Reload the page to try again." (the page only sends R, U or A) |
+| 4 | spr_RemoveAlertForUser | The alert row is another user's, or does not exist | "This alert is not in your list." |
+| 4 | spr_GetDashboardActionItems | A role without the card (MD Secretariat, Admin, the system account) | None: the page hides the Action Items card; the Alerts card, the Meetings card and the header are not touched |
+| 4 | spr_OpenDashboardActionItem | Such a role, or an item outside the acting user's scope, confirmed or unknown; no row, nothing written | "This item no longer exists." (`ShowItemGone`) |
+| 4 | spr_SaveDashboardActionText | Management, MD Secretariat or Admin, or an item outside the scope, confirmed or unknown; nothing saved | "You cannot change this action item: your role can only read it, or it is not an item of your department. Nothing was saved." |
+| (none) | The page | A database error, a timeout, no free connection or no memory | Alerts: "The alerts could not be loaded. Reload the page to try again." or, when the server is busy, "The server is busy and the alerts could not be loaded. Wait a moment, then reload the page."; the same two for the Action Items card ("The action items ..."); a failed Remove: "The alert could not be removed from your list. Try again."; a failed save: "The action text could not be saved. Nothing was saved. Try again." (busy: "The server is busy and the action text could not be saved. Nothing was saved. Wait a moment, then try again."). The grid and its pager are hidden |
+
+### Where each rule lives
+
+| Rule | C# | Procedure or function |
+|---|---|---|
+| Who sees which alert: the Admin role none of the eleven functional types; a Controller not ACA and ACR; a Manager not AMA and AMR; removed rows (StatusId 0) never | DashBoard.aspx.cs only displays | fn_DashboardAlerts |
+| Recent: every unread alert and the read ones whose event date is today or in the seven days before (database server date); Unread; All | AlertMode in ViewState (R by default), `AlertMode_Click` | spr_GetDashboardAlerts (@Mode, @From) |
+| Event date and person of an alert (entry, decision, edit more than one minute after a decision, or no recorded approver: a dash) | `ActorName` shows a dash when empty | fn_DashboardAlerts (EventOn, ActorUserId) |
+| A page of 10, the page after the last gives the last | `AllowCustomPaging`, `VirtualItemCount` | spr_GetDashboardAlerts (ROW_NUMBER, @PageShown) |
+| The header count | Main.Master.cs `ShowAlertCount`, `RefreshAlertCount`; DashBoard.aspx.cs `RefreshHeaderCount` | spr_GetAlertCount |
+| Remove from my list: only the person's own row | `hdnAlertUserId` carries the row id | spr_RemoveAlertForUser |
+| Action Items scope: not confirmed; Controller and Management every item; Manager and User the items of their departments whose minutes are finalised or confirmed; MD Secretariat and Admin none | `cardActionItems` hidden on Reason 4 | fn_DashboardActionItems, spr_GetDashboardActionItems |
+| Unread for a person without a read row; opening creates the row | `LoadActionItemGRV`, bold row | spr_OpenDashboardActionItem, fn_DashboardActionItems (ReadStatus) |
+| Overdue: due date before the database server's date and the item neither complied nor confirmed | `IsOverdue` shows the red chip | fn_DashboardActionItems (IsOverdue) |
+| Who may change the action text: Controller, Manager and User, inside the scope | `ActionItemNotSavedMessage` and the other save messages | spr_SaveDashboardActionText |
+| No functional mail for the Admin role | none | spr_GetAlertMailId, spr_GetAgendaUpdateMailId |
+
+### Tables read and written
+
+| Object | Reads | Writes |
+|---|---|---|
+| fn_DashboardAlerts | Alert_User_Map, Alert_Master, Users, Roles, Alert_Type, Committee, Department, Agenda | none |
+| spr_GetDashboardAlerts, spr_GetAlertCount | Users, and the rows of fn_DashboardAlerts | none |
+| spr_RemoveAlertForUser | Users, Alert_User_Map | Alert_User_Map (StatusId 0) |
+| fn_DashboardActionItems | Users, Roles, Action_Item, Minutes, Agenda, Decision_Type, Meeting, Committee, Department, ActionItem_User_Map, and User_Department through fn_UserDepartmentScope | none |
+| spr_GetDashboardActionItems | Users, Roles, and the rows of fn_DashboardActionItems | none |
+| spr_OpenDashboardActionItem | Users, Roles, and fn_DashboardActionItems | ActionItem_User_Map (the person's own row: ReadStatus 1, row created when missing) |
+| spr_SaveDashboardActionText | Users, Roles, and fn_DashboardActionItems | Action_Item (ActionText) |
+| spr_GetAlertMailId, spr_GetAgendaUpdateMailId | as before (the Admin role is left out of the addresses) | none |
+
+Drawn from (UN6c1): BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/MasterPage/Main.Master.cs, BMMSBAL/AlertMgr.cs
+and ActionItemMgr.cs (diff), BMMSDAL/AlertDB.cs and ActionItemDB.cs (diff), Database/BMMS-Fix-DashboardAlerts-Step43.sql
+(all objects), BMMS-Rollback-DashboardAlerts-Step43.sql, BMMS-Test-DashboardAlerts-Step43.sql (header), Database/README.md
+(section Step UN6c1), the owner's test result as given (128 numbered checks passed; owner's tests passed).
 
 ## Drawn from
 

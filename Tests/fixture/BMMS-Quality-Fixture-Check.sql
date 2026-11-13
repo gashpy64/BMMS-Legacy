@@ -127,9 +127,33 @@ SELECT 'Meeting 00004 workflow state (agenda finalised, attendance, minutes upda
                     + CAST(s.MinutesUpdated AS VARCHAR(12)) + '/' + CAST(s.MinutesTotal AS VARCHAR(12))
                FROM Meeting m CROSS APPLY dbo.fn_WorkflowState(m.MeetingId) s WHERE m.CommitteeId = @C AND m.MeetingNo = '00004'), 'no state');
 INSERT INTO @T (Name, Expected, Actual)
-SELECT 'Meeting 00005: Followup action items', '1',
+SELECT 'Meetings 00005 and 00006: Followup action items (step UN6c1: two and one)', '2, 1',
        CAST((SELECT COUNT(*) FROM Action_Item ai JOIN Minutes mi ON mi.MinutesId = ai.MinutesId JOIN Agenda a ON a.AgendaId = mi.AgendaId
-             JOIN Meeting m ON m.MeetingId = a.MeetingId WHERE m.CommitteeId = @C AND m.MeetingNo = '00005') AS VARCHAR(12));
+             JOIN Meeting m ON m.MeetingId = a.MeetingId WHERE m.CommitteeId = @C AND m.MeetingNo = '00005') AS VARCHAR(12)) + ', '
+     + CAST((SELECT COUNT(*) FROM Action_Item ai JOIN Minutes mi ON mi.MinutesId = ai.MinutesId JOIN Agenda a ON a.AgendaId = mi.AgendaId
+             JOIN Meeting m ON m.MeetingId = a.MeetingId WHERE m.CommitteeId = @C AND m.MeetingNo = '00006') AS VARCHAR(12));
+-- Step UN6c1: the scope of the Action Items card
+INSERT INTO @T (Name, Expected, Actual)
+SELECT 'Action items in all; who is mapped to QA1-00006-001; to QA2-00003-1; to QA2-00002-1', '5; qa_user; qa_ctrl; qa_user',
+       CAST((SELECT COUNT(*) FROM Action_Item) AS VARCHAR(12)) + '; '
+     + ISNULL(STUFF((SELECT ',' + u.LoginName FROM ActionItem_User_Map m JOIN Users u ON u.UserId = m.UserId JOIN Action_Item ai ON ai.ActionItemId = m.ActionItemId
+                     JOIN Minutes mi ON mi.MinutesId = ai.MinutesId JOIN Agenda a ON a.AgendaId = mi.AgendaId WHERE a.AgendaNo = 'QA1-00006-001' ORDER BY u.LoginName FOR XML PATH('')), 1, 1, ''), 'none') + '; '
+     + ISNULL(STUFF((SELECT ',' + u.LoginName FROM ActionItem_User_Map m JOIN Users u ON u.UserId = m.UserId JOIN Action_Item ai ON ai.ActionItemId = m.ActionItemId
+                     JOIN Minutes mi ON mi.MinutesId = ai.MinutesId JOIN Agenda a ON a.AgendaId = mi.AgendaId WHERE a.AgendaNo = 'QA2-00003-1' ORDER BY u.LoginName FOR XML PATH('')), 1, 1, ''), 'none') + '; '
+     + ISNULL(STUFF((SELECT ',' + u.LoginName FROM ActionItem_User_Map m JOIN Users u ON u.UserId = m.UserId JOIN Action_Item ai ON ai.ActionItemId = m.ActionItemId
+                     JOIN Minutes mi ON mi.MinutesId = ai.MinutesId JOIN Agenda a ON a.AgendaId = mi.AgendaId WHERE a.AgendaNo = 'QA2-00002-1' ORDER BY u.LoginName FOR XML PATH('')), 1, 1, ''), 'none');
+-- Step UN6c1: the Alerts card
+INSERT INTO @T (Name, Expected, Actual)
+SELECT 'qa_user: alerts in all, read (QA1-00004-001, QA1-00004-002, Committee (QA2))', '12, 3',
+       CAST((SELECT COUNT(*) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId WHERE u.LoginName = 'qa_user' AND m.StatusId = 1) AS VARCHAR(12)) + ', '
+     + CAST((SELECT COUNT(*) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId JOIN Alert_Master am ON am.AlertId = m.AlertId
+             WHERE u.LoginName = 'qa_user' AND m.StatusId = 1 AND m.ReadStatus = 1
+             AND am.DisplayText IN ('Agenda (QA1-00004-001)', 'Agenda (QA1-00004-002)', 'Committee (QA2)')) AS VARCHAR(12));
+INSERT INTO @T (Name, Expected, Actual)
+SELECT 'Item QA1-00005-001 has no recorded approver; qa_admin has alert rows (the listing rule hides them)', 'none, yes',
+       ISNULL((SELECT CASE WHEN a.ControllerApprovedBy IS NULL AND a.ControllerApprovedDate IS NULL THEN 'none' ELSE 'recorded' END
+               FROM Agenda a WHERE a.CommitteeId = @C AND a.AgendaNo = 'QA1-00005-001'), 'item missing') + ', '
+     + CASE WHEN EXISTS (SELECT 1 FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId WHERE u.LoginName = 'qa_admin' AND m.StatusId = 1) THEN 'yes' ELSE 'no' END;
 
 -- Committee QA2 (step UN6b): the Dashboard's meeting list
 INSERT INTO @T (Name, Expected, Actual)
@@ -144,7 +168,7 @@ SELECT 'Committee QA2: minutes Open, F, C', '2, 1, 9',
      + CAST((SELECT COUNT(*) FROM Meeting WHERE CommitteeId = @C2 AND MinutesStatus = 'F') AS VARCHAR(12)) + ', '
      + CAST((SELECT COUNT(*) FROM Meeting WHERE CommitteeId = @C2 AND MinutesStatus = 'C') AS VARCHAR(12));
 INSERT INTO @T (Name, Expected, Actual)
-SELECT 'Committee QA2 items: Credit ACA, Credit ACR, Secretarial ACA; minutes rows; alerts', '10, 1, 1; 0; 0',
+SELECT 'Committee QA2 items: Credit ACA, Credit ACR, Secretarial ACA; minutes rows (the two Followups of step UN6c1); alerts', '10, 1, 1; 2; 0',
        CAST((SELECT COUNT(*) FROM Agenda a JOIN Department d ON d.DepartmentId = a.DepartmentId WHERE a.CommitteeId = @C2 AND d.DepartmentCode = 'D004' AND a.AgendaStatusCode = 'ACA') AS VARCHAR(12)) + ', '
      + CAST((SELECT COUNT(*) FROM Agenda a JOIN Department d ON d.DepartmentId = a.DepartmentId WHERE a.CommitteeId = @C2 AND d.DepartmentCode = 'D004' AND a.AgendaStatusCode = 'ACR') AS VARCHAR(12)) + ', '
      + CAST((SELECT COUNT(*) FROM Agenda a JOIN Department d ON d.DepartmentId = a.DepartmentId WHERE a.CommitteeId = @C2 AND d.DepartmentCode = 'D002' AND a.AgendaStatusCode = 'ACA') AS VARCHAR(12)) + '; '

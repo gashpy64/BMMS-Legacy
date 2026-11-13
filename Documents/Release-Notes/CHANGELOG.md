@@ -3,10 +3,15 @@
 - Title: BMMS Change Log
 - Audience: Gashpy Software (internal)
 - Shipped: No
-- Applies to: UN6b
-- Last updated by: UN6b, based on 0736c7f
+- Applies to: UN6c1
+- Last updated by: UN6c1, based on e3bff6b
 - Status: Draft
-- Verified against: for UN6b: git diff against 0736c7f and the new files (BMMS/UserControl/MeetingSummary.ascx(.cs, .designer.cs),
+- Verified against: for UN6c1: git diff against e3bff6b and the new files (BMMS/DashBoard/DashBoard.aspx(.cs, .designer.cs),
+  BMMS/MasterPage/Main.Master(.cs, .designer.cs), BMMS/CSS/bmms-workbench.css, BMMS/UserControl/MeetingSummary.ascx.cs,
+  BMMSBAL/AlertMgr.cs, ActionItemMgr.cs and Common.cs, BMMSDAL/AlertDB.cs and ActionItemDB.cs,
+  Database/BMMS-Fix-DashboardAlerts-Step43.sql, BMMS-Rollback-DashboardAlerts-Step43.sql, BMMS-Test-DashboardAlerts-Step43.sql
+  (header), BMMS-Check-InstalledSteps.sql, Tests/packs/dashboard/*, Tests/fixture/*, Database/README.md section Step UN6c1
+  and Known items), the owner's tests and the tester run of 2026-11-13 as given; for UN6b: git diff against 0736c7f and the new files (BMMS/UserControl/MeetingSummary.ascx(.cs, .designer.cs),
   BMMS/DashBoard/DashBoard.aspx(.cs), BMMSBAL/MeetingMgr.cs and DepartmentMgr.cs, BMMSDAL/MeetingDB.cs and
   DepartmentDB.cs, Database/BMMS-Fix-DashboardMeetings-Step42.sql, BMMS-Rollback-DashboardMeetings-Step42.sql,
   BMMS-Test-DashboardMeetings-Step42.sql (header), BMMS-Check-InstalledSteps.sql, Tests/_runner/Run-Tests.ps1 and
@@ -29,6 +34,49 @@
 One entry per step, newest first. Each entry names the step, its tag and what changed for users,
 for installers and in the database. Release entries (tags vX.Y.Z) collect the steps since the
 previous release.
+
+## UN6c1 - Dashboard alert rules, Remove from my list, Action Items scope and Overdue, header count (tag not yet set, 2026-11-13; database step 43)
+
+- For users: the Alerts card has the links Recent | Unread | All (Recent, the default, is every unread alert plus the
+  read alerts of the last 7 days); the link you are on is bold; the card shows 10 alerts to a page. The muted line
+  reads "type | committee | department | by [Name]" with the login ID as tooltip (a dash where no approver is
+  recorded, for old approvals). The second column is "Date" (was "Created on") and shows the date of the event: the
+  decision date for an approval, the edit date for an edited item. The buttons "Delete" are now "Remove from my
+  list": the alert leaves only your list, an edit of the item brings it back unread, and an id that is not yours is
+  refused ("This alert is not in your list."). The header "Alerts (n)" follows Approve, Reject, Remove, opening an
+  alert and the three links, and reads "Alerts" without a number when it cannot be read. The Alerts and Action
+  Items cards have load-failure and server-busy messages. The Admin gets no functional alerts ("No alerts.",
+  "Alerts (0)") and no functional mail; the Controller still does not see ACA and ACR alerts and the Manager AMA
+  and AMR. The Action Items card has a "Due date" column with a red "Overdue" word (due date before today by the
+  database server's date, item neither complied nor confirmed), is ordered newest meeting first, has the links
+  Show All | Read | Unread (the current one bold and kept when an item is opened or the page is changed), and a bold
+  row means unread for you. Its scope is now decided on the server: the Controller and Management see every item
+  that is not confirmed; the Manager and the User see the items of their departments whose minutes are finalised or
+  confirmed; MD Secretariat and Admin have no card. Management can open an item but its Submit is refused ("You
+  cannot change this action item: your role can only read it, or it is not an item of your department. Nothing was
+  saved."; the button is still visible until step UN6d). What users will notice: items of another department are
+  gone, Users and Managers no longer see items of open (draft) minutes, a Controller sees each open item in bold once
+  after the update. The Committee drop-down narrows the Meetings card only; the Alerts and Action Items cards do not
+  follow it. Described in the Overall manual and the four role manuals (Dashboard).
+- For developers: DashBoard.aspx(.cs) reads the alerts a page of 10 at a time (custom paging, mode in ViewState) and
+  the action items through the new procedures; Main.Master(.cs) has the count in its own UpdatePanel and
+  `RefreshAlertCount()`; `Common.IsServerBusy` moved from MeetingSummary.ascx.cs to BMMSBAL/Common.cs; new
+  AlertMgr / AlertDB (GetDashboardAlerts, GetAlertCount, RemoveAlertForUser) and ActionItemMgr / ActionItemDB
+  (GetDashboardActionItems, OpenDashboardActionItem, SaveDashboardActionText); CSS for the bold current link, the
+  person tooltip and the Overdue chip. The role is read from the database; the page sends the acting user id only.
+- For installers: run BMMS-Fix-DashboardAlerts-Step43.sql (after step 42) before the new build, on BMMS_Test first,
+  then the Test script in a new query window. BMMS-Rollback-DashboardAlerts-Step43.sql drops the eight new objects
+  and restores the two mail procedures letter for letter (roll back the build first). The read rows that opening an
+  action item created stay after a rollback.
+- Database: step 43, ten objects (marker DashboardAlerts-Step43; 10 rows in BMMS-Check-InstalledSteps.sql): new
+  fn_DashboardAlerts, spr_GetDashboardAlerts, spr_GetAlertCount, spr_RemoveAlertForUser, fn_DashboardActionItems,
+  spr_GetDashboardActionItems, spr_OpenDashboardActionItem and spr_SaveDashboardActionText; replaced
+  spr_GetAlertMailId and spr_GetAgendaUpdateMailId (the Admin role left out). Compatibility level 100 (ROW_NUMBER
+  paging). Test script BMMS-Test-DashboardAlerts-Step43.sql. The tester's baseline was updated with
+  Update-Baseline.ps1, and BMMS_Quality rebuilt with the extended fixture (35 fixture checks).
+- Tests: Test script step 43, 128 numbered checks, all passed on BMMS_Test. Tester agent, run of 2026-11-13: PASSED,
+  702 checks (selftest 8, access-matrix 472, dashboard 225). The dashboard pack gained the alert, action item,
+  filter-kept and scope checks. The owner's tests on BMMS_Test passed.
 
 ## UN6b - Dashboard in cards; meeting list with status colours and counts by role (tag not yet set, 2026-11-12; database step 42)
 

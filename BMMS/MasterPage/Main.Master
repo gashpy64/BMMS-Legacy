@@ -41,7 +41,9 @@
                     <uc1:MenuUserControl ID="MenuUserControl1" runat="server"></uc1:MenuUserControl>
                 </div>
                 <div class="wb-user">
-                    <a href="../DashBoard/DashBoard.aspx">Alerts (<%: AlertCount %>)</a>
+                    <%-- Step UN6c1: the count in its own panel, so the Dashboard can refresh it after an action without a page
+                         reload (Main.Master.cs RefreshAlertCount). A count that could not be read shows "Alerts" alone. --%>
+                    <a href="../DashBoard/DashBoard.aspx">Alerts<asp:UpdatePanel ID="upAlertCount" runat="server" UpdateMode="Conditional" RenderMode="Inline" ChildrenAsTriggers="false"><ContentTemplate><asp:Literal ID="litAlertCount" runat="server" Mode="Encode" EnableViewState="false"></asp:Literal></ContentTemplate></asp:UpdatePanel></a>
                     <%-- Name | Role; the login ID as the tooltip (step UN2; a tooltip cannot be opened on a touch screen) --%>
                     <span class="wb-user-name" title="<%: Session["LoginName"] %>"><%: Session["UserName"] %> | <%: Session["RoleName"] %></span>
                     <a href="../Master/ChangePassword.aspx">Change Password</a>

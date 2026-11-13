@@ -20,31 +20,44 @@
                     <div class="wb-card-header wb-dash-card-header">
                         <h2 class="wb-dash-card-title">Alerts</h2>
                         <div class="wb-dash-links">
-                            <asp:LinkButton runat="server" ID="lnkShowAll" OnClick="lnkShowAll_Click">Show All</asp:LinkButton>
+                            <%-- Step UN6c1: Recent (the default: every unread alert and the read ones of the last 7 days),
+                                 Unread, All (everything that was not removed from the list; nothing is deleted) --%>
+                            <asp:LinkButton runat="server" ID="lnkRecent" OnClick="AlertMode_Click" CommandArgument="R"
+                                ToolTip="Unread alerts, and read alerts of the last 7 days">Recent</asp:LinkButton>
                             |
-                            <asp:LinkButton runat="server" ID="lnkRead" OnClick="lnkRead_Click">Read</asp:LinkButton>
+                            <asp:LinkButton runat="server" ID="lnkUnread" OnClick="AlertMode_Click" CommandArgument="U"
+                                ToolTip="Unread alerts only">Unread</asp:LinkButton>
                             |
-                            <asp:LinkButton runat="server" ID="lnkUnread" OnClick="lnkUnread_Click">Unread</asp:LinkButton>
+                            <asp:LinkButton runat="server" ID="lnkAll" OnClick="AlertMode_Click" CommandArgument="A"
+                                ToolTip="All alerts, also older ones you have read">All</asp:LinkButton>
                         </div>
                     </div>
                     <div class="wb-card-body">
                         <asp:HiddenField ID="hdnAlertUserId" runat="server" />
                         <asp:Button ID="btnShowPopup" runat="server" Style="display: none" />
+                        <div aria-live="polite">
+                            <p id="pAlertsMessage" runat="server" class="wb-dash-message" visible="false"></p>
+                        </div>
                         <div class="wb-table-scroll">
+                            <%-- Step UN6c1: a page of 10 comes from the server (spr_GetDashboardAlerts, step 43); the list
+                                 is not kept in ViewState --%>
                             <asp:GridView ID="grvAlert" runat="server" Width="100%" CellPadding="4" CssClass="contentTable1"
                                 AutoGenerateColumns="false" OnRowDataBound="grvAlert_RowDataBound" AllowPaging="True"
-                                OnPageIndexChanging="OnPaging" PageSize="10">
+                                AllowCustomPaging="True" OnPageIndexChanging="OnPaging" PageSize="10">
                                 <Columns>
                                     <%-- Step UN6b (Finding B): two columns in the narrow card. The first holds the Source
                                          link, the hidden values that lnkSource_Click reads, and one muted line with the
                                          alert type, committee and department; the second the date (dd-MMM-yyyy, the time
-                                         below it, neither wraps). --%>
+                                         below it, neither wraps).
+                                         Step UN6c1: the muted line ends with the person who caused the alert (entered,
+                                         approved, rejected, edited; the login ID as tooltip, as in the header; a dash when
+                                         nobody is recorded), and the date is that of this event. --%>
                                     <asp:TemplateField HeaderText="Alert">
                                         <ItemTemplate>
                                             <div class="wb-dash-alert">
                                                 <asp:LinkButton ID="lnkSource" runat="server" CssClass="wb-dash-alert-source" Text='<%# HttpUtility.HtmlEncode(Eval("DisplayText")) %>' OnClick="lnkSource_Click">
                                                 </asp:LinkButton>
-                                                <span class="wb-dash-alert-meta"><%# HttpUtility.HtmlEncode(AlertDetails(Eval("AlertTypeName"), Eval("CommitteeName"), Eval("DepartmentName"))) %></span>
+                                                <span class="wb-dash-alert-meta"><%# HttpUtility.HtmlEncode(AlertDetails(Eval("AlertTypeName"), Eval("CommitteeName"), Eval("DepartmentName"))) %> | by <span class="wb-dash-alert-actor" title='<%# HttpUtility.HtmlAttributeEncode(ActorLogin(Eval("ActorLogin"))) %>'><%# HttpUtility.HtmlEncode(ActorName(Eval("ActorName"))) %></span></span>
                                             </div>
                                             <asp:Label ID="lblSourceType" runat="server" Text='<%#Bind("SourceType") %>' Visible="false"></asp:Label>
                                             <asp:Label ID="lblSourceTypeId" runat="server" Text='<%#Bind("SourceTypeId") %>'
@@ -53,19 +66,17 @@
                                             <asp:Label ID="lblAlert" runat="server" Text='<%#Bind("AlertId") %>' Visible="false"></asp:Label>
                                         </ItemTemplate>
                                     </asp:TemplateField>
-                                    <asp:TemplateField HeaderText="Created on">
+                                    <asp:TemplateField HeaderText="Date">
                                         <ItemTemplate>
-                                            <span class="wb-dash-date"><%# HttpUtility.HtmlEncode(FormatDate(Eval("CreatedOn"))) %></span>
-                                            <span class="wb-dash-time"><%# HttpUtility.HtmlEncode(FormatTimeOfDay(Eval("CreatedOn"))) %></span>
+                                            <span class="wb-dash-date"><%# HttpUtility.HtmlEncode(FormatDate(Eval("EventOn"))) %></span>
+                                            <span class="wb-dash-time"><%# HttpUtility.HtmlEncode(FormatTimeOfDay(Eval("EventOn"))) %></span>
                                         </ItemTemplate>
                                         <ItemStyle CssClass="wb-dash-alert-when" />
                                         <HeaderStyle CssClass="wb-dash-alert-when" />
                                     </asp:TemplateField>
                                 </Columns>
                                 <EmptyDataTemplate>
-                                    <div class="divNoRecord">
-                                        <%#Session["NoRecord"].ToString()%>
-                                    </div>
+                                    <div class="divNoRecord">No alerts.</div>
                                 </EmptyDataTemplate>
                                 <HeaderStyle HorizontalAlign="Center" Font-Bold="True" CssClass="contentTableHeader" />
                                 <RowStyle CssClass="contentTabletd" Height="20px" />
@@ -74,7 +85,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="wb-card wb-dash-actions">
+                <%-- Step UN6c1: the card is hidden when the server answers that the role has no Action Items card
+                     (MD Secretariat, Admin; Reason 4 of spr_GetDashboardActionItems) --%>
+                <div id="cardActionItems" runat="server" class="wb-card wb-dash-actions">
                     <div class="wb-card-header wb-dash-card-header">
                         <h2 class="wb-dash-card-title">Action Items</h2>
                         <div class="wb-dash-links">
@@ -86,6 +99,9 @@
                         </div>
                     </div>
                     <div class="wb-card-body">
+                        <div aria-live="polite">
+                            <p id="pActionItemsMessage" runat="server" class="wb-dash-message" visible="false"></p>
+                        </div>
                         <div class="wb-table-scroll">
                             <asp:GridView ID="grvActionItem" runat="server" Width="100%" CellPadding="4" CssClass="contentTable1"
                                 AutoGenerateColumns="false" OnRowDataBound="grvActionItem_RowDataBound" OnPageIndexChanging="OnPagingAction"
@@ -115,7 +131,7 @@
                                     </asp:TemplateField>
                                     <asp:TemplateField HeaderText="Meeting Date" Visible="true">
                                         <ItemTemplate>
-                                            <asp:Label ID="lblMeetingDate" runat="server" Text='<%# HttpUtility.HtmlEncode(Eval("MeetingDate","{0:dd/MM/yyyy}")) %>'></asp:Label>
+                                            <asp:Label ID="lblMeetingDate" runat="server" CssClass="wb-dash-date" Text='<%# HttpUtility.HtmlEncode(FormatDate(Eval("MeetingDate"))) %>'></asp:Label>
                                         </ItemTemplate>
                                         <ItemStyle Width="100px" Height="35px" VerticalAlign="Middle" HorizontalAlign="Center" />
                                     </asp:TemplateField>
@@ -125,12 +141,16 @@
                                         </ItemTemplate>
                                         <ItemStyle VerticalAlign="Middle" HorizontalAlign="Center" />
                                     </asp:TemplateField>
-                                    <%--<asp:TemplateField HeaderText="DueDate" Visible="true">
+                                    <%-- Step UN6c1: the due date of a Followup (optional, step UN6a) and the word "Overdue" when
+                                         it has passed and the item is neither complied nor confirmed (IsOverdue of
+                                         spr_GetDashboardActionItems, by the database server's date). No due date: empty. --%>
+                                    <asp:TemplateField HeaderText="Due date">
                                         <ItemTemplate>
-                                            <asp:Label ID="lblDueDate" runat="server" Text='<%#Eval("DueDate","{0:dd/MM/yyyy}") %>'></asp:Label>
+                                            <span class="wb-dash-date"><%# HttpUtility.HtmlEncode(FormatDate(Eval("DueDate"))) %></span>
+                                            <asp:PlaceHolder ID="phOverdue" runat="server" Visible='<%# IsOverdue(Eval("IsOverdue")) %>'><span class="wb-chip wb-chip-red wb-dash-overdue">Overdue</span></asp:PlaceHolder>
                                         </ItemTemplate>
                                         <ItemStyle VerticalAlign="Middle" HorizontalAlign="Center" />
-                                    </asp:TemplateField>--%>
+                                    </asp:TemplateField>
                                     <asp:TemplateField HeaderText="Read" Visible="False">
                                         <ItemTemplate>
                                             <asp:Label ID="lblReadStatus" runat="server" Text='<%#Eval("ReadStatus") %>'></asp:Label>
@@ -272,7 +292,7 @@
                     <div style="float: left; width: 100%; height: 40px; text-align: center;">
                         <asp:Button ID="btnClose" runat="server" Text="Close" CssClass="button" Width="50px"
                             OnClick="btnClose_Click" />
-                        <asp:Button ID="btnDeleteAlert" runat="server" Text="Delete" CssClass="button" OnClick="btnDeleteAlert_Click" />
+                        <asp:Button ID="btnDeleteAlert" runat="server" Text="Remove from my list" CssClass="button" OnClick="btnDeleteAlert_Click" />
                     </div>
                 </div>
             </asp:Panel>
@@ -492,7 +512,7 @@
                                                 <asp:Button ID="btnReject" runat="server" Text="Reject" CssClass="button" OnClick="btnReject_Click" />
                                                 <asp:Button ID="btnAgendaClose" runat="server" Text="Close" CssClass="button" OnClick="btnAgendaClose_Click" />
                                                 <asp:Button ID="btnDeleteAgendaAlert" runat="server" CssClass="button" OnClick="btnDeleteAlert_Click"
-                                                    Text="Delete" />
+                                                    Text="Remove from my list" />
                                             </asp:Panel>
                                         </div>
                                     </div>

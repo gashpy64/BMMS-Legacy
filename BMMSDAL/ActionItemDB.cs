@@ -70,6 +70,82 @@ namespace BMMSDAL
         }
         #endregion
 
+        #region GetDashboardActionItems
+        // Step UN6c1 (BMMS-Fix-DashboardAlerts-Step43.sql): the Dashboard's Action Items card. The procedure reads the
+        // role from the acting user id: a Controller and Management get every item that is not confirmed, a Manager
+        // and a User those of their departments with finalised or confirmed minutes; each row with the person's own
+        // read state and IsOverdue (due date before the database server's date, not complied, not confirmed).
+        // Reason 0 when allowed; 8 (user missing or inactive) or 4 (a role without the card: MD Secretariat, Admin),
+        // and then no rows.
+        public static DataTable GetDashboardActionItems(int ActingUserId, out int Reason)
+        {
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+
+            SqlParameter[] parameter = new SqlParameter[3];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = result;
+            parameter[2] = reason;
+
+            DataTable dt = CommonDB.GetDataTable("spr_GetDashboardActionItems", parameter);
+            Reason = MinutesDB.RefusalReason(result, reason);
+            return dt;
+        }
+        #endregion
+
+        #region OpenDashboardActionItem
+        // Step UN6c1 (step 43): opening an item of the card. Only an item the acting user sees in the card; the
+        // procedure marks the person's own read row (and creates it when missing) and returns the item's row.
+        // Reason 0 when allowed; 8, or 4 (outside the person's scope, confirmed, unknown, or a role without the
+        // card), and then no row and nothing written.
+        public static DataTable OpenDashboardActionItem(int ActingUserId, int ActionItemId, out int Reason)
+        {
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+
+            SqlParameter[] parameter = new SqlParameter[4];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = new SqlParameter("@ActionItemId", ActionItemId);
+            parameter[2] = result;
+            parameter[3] = reason;
+
+            DataTable dt = CommonDB.GetDataTable("spr_OpenDashboardActionItem", parameter);
+            Reason = MinutesDB.RefusalReason(result, reason);
+            return dt;
+        }
+        #endregion
+
+        #region SaveDashboardActionText
+        // Step UN6c1 (step 43): the Submit of the Dashboard's Action Item Details panel. The procedure saves the
+        // action text only for a Controller, a Manager or a User and only for an item in the acting user's scope.
+        // Returns 0 when saved; 8, or 4 (Management, MD Secretariat, Admin, or an item outside the scope), and then
+        // nothing was saved.
+        public static int SaveDashboardActionText(int ActingUserId, int ActionItemId, string ActionText)
+        {
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+
+            SqlParameter text = new SqlParameter("@ActionText", SqlDbType.NVarChar, -1);
+            text.Value = (object)ActionText ?? DBNull.Value;
+
+            SqlParameter[] parameter = new SqlParameter[5];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = new SqlParameter("@ActionItemId", ActionItemId);
+            parameter[2] = text;
+            parameter[3] = result;
+            parameter[4] = reason;
+
+            CommonDB.ExecuteProcedure("spr_SaveDashboardActionText", parameter);
+            return MinutesDB.RefusalReason(result, reason);
+        }
+        #endregion
+
         #region GetActionItemByUserId
         public static DataTable GetActionItemByUserId(int UserId)
         {

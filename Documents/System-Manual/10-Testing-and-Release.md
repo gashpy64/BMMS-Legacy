@@ -3,10 +3,13 @@
 - Title: Testing and Release
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6b (the step 42 Test script section, the dashboard pack, the memory preflight, the fixture's committee QA2, the baseline upkeep note); the rest RA1c2
-- Last updated by: UN6b, based on 0736c7f
+- Applies to: UN6c1 (the step 43 Test script section, "The dashboard pack since step UN6c1", the fixture and baseline notes); UN6b (the step 42 Test script section, the dashboard pack, the memory preflight, the fixture's committee QA2, the baseline upkeep note); the rest RA1c2
+- Last updated by: UN6c1, based on e3bff6b
 - Status: Draft
-- Verified against: for step UN6b: Database/BMMS-Test-DashboardMeetings-Step42.sql (header, guards, part 1),
+- Verified against: for step UN6c1: Database/BMMS-Test-DashboardAlerts-Step43.sql (header), Tests/packs/dashboard/README.md,
+  expected.json and pack.js (diff), Tests/README.md (diff), Tests/fixture/BMMS-Quality-Fixture*.sql (diff),
+  Database/README.md (section Step UN6c1, Known items), the owner's test result and the tester run of 2026-11-13 as given
+  (702 checks PASSED); for step UN6b: Database/BMMS-Test-DashboardMeetings-Step42.sql (header, guards, part 1),
   Tests/packs/dashboard/README.md, expected.json (case names), pack.js (header), Tests/README.md (diff),
   Tests/_runner/Run-Tests.ps1, Tester.Common.ps1 and Setup-Quality.ps1 (diff), Tests/fixture/BMMS-Quality-Fixture-Check.sql
   (diff), Database/README.md (section Step UN6b, Known items), the owner's test result and the tester run of
@@ -116,6 +119,25 @@ test data now has CloseReason 'C'. The owner's other checks passed: all six role
 and 800 px, the Agenda Alert and Action Item Details panels, the counts after Approve and Reject, the compact
 Alerts card, the failure test and the timeout test. Step 42 replaces nothing, so no older Test script is changed.
 
+### Step 43 (UN6c1): Dashboard alerts and action items
+
+Database/BMMS-Test-DashboardAlerts-Step43.sql (BMMS_Test only; run it in a new query window). 128 numbered
+checks, all passed in the owner's run. It covers: every alert type with an old and a young read alert and the edge
+of the seven days; the person and event date per alert type, with an ordinary approval (30 seconds between the two
+dates) and an edit after the decision; Recent, Unread, All, paging and the header count; the role filters; the
+Admin and the system account (empty list, count 0); the mail recipient lists per branch (no Admin); Remove (own
+row, another user's, unknown); that spr_UpdateAlertByUserId marks one user's row only; the Action Items card on
+made-up rows per role (Controller, Management, a Manager with two departments, a Manager with one, a User, a User
+of a department without items, MD Secretariat and Admin refused with Reason 4, an inactive, a missing and an
+unknown acting user Reason 8; an item of a third department; an item with open minutes shown only to Controller and
+Management; a confirmed item gone; a stale mapping row that shows nothing); the read state per person and the four
+conditions of IsOverdue; opening an item (one row created, none at the second opening, an outside item Reason 4 and
+no row, Management's opening leaves the item unchanged); saving the action text (Controller, Manager and User
+inside their scope; Management, MD Secretariat, Admin, another department, open minutes for a User and a confirmed
+item refused; only the text is written); that every database user who can run the step 42 procedure can run the
+eight of step 43; and the Rollback's two texts installed inside the test's transaction and compared with the saved
+originals. The Fix, Rollback, Fix sequence was checked on BMMS_Test.
+
 ## The tester (steps WF3a1 and WF3a2)
 
 Step WF3a1 added the infrastructure of a tester. Step WF3a2 added the first real pack (the access
@@ -218,8 +240,13 @@ BMMS_Quality holds only the seed rows of Reset Database and the fixture (Tests/f
   fixture is not a numbered step and has no row in BMMS-Check-InstalledSteps.sql.
 - BMMS-Quality-Fixture-Dates.sql sets the two date columns of the meetings relative to today after every
   restore (since UN6b the QA2 meetings too).
-- BMMS-Quality-Fixture-Check.sql is read only: 29 checks before UN6b, with three more rows for QA2 since (not
-  recounted), ending "FIXTURE CHECK: PASS (n checks)".
+- BMMS-Quality-Fixture-Check.sql is read only: 29 checks before UN6b, 32 after it, 35 since step UN6c1, ending
+  "FIXTURE CHECK: PASS (n checks)".
+- Step UN6c1 extended the fixture: three Followups (two on QA1 00005, one on 00006; before, one), three alerts read
+  by qa_user, item QA1-00005-001 without a recorded approver; the dates script sets every alert date and the three
+  due dates relative to the day of the run; for the scope of the Action Items card QA1-00006-001 keeps the mapping
+  row of qa_user only and two Followups are added on QA2 (QA2-00003-1, Secretarial, minutes finalised, mapped to
+  qa_ctrl only; QA2-00002-1, Credit, minutes in draft, mapped to qa_user only).
 - The test account passwords are generated at setup, hashed with the application's own hash function and
   kept only in Tests/local/credentials.json (not committed).
 
@@ -236,7 +263,8 @@ login and the setup never drops the login (a second run only changes the passwor
 After a numbered database step (step 42 and on) the baseline is out of date and every run is refused
 ("out of date") until it is taken again; step 42 (UN6b) was the first such step: its Fix script was installed in
 the baseline with Update-Baseline.ps1, then BMMS_Quality was built afresh with the extended fixture
-(Setup-Quality.ps1, 2026-11-12). In the workflow this is done on the owner's approval of the
+(Setup-Quality.ps1, 2026-11-12). Step 43 (UN6c1) was done the same way: Update-Baseline.ps1 -FixScript, then
+Setup-Quality.ps1 with the extended fixture. In the workflow this is done on the owner's approval of the
 build, before the tester runs (CLAUDE.md, step 5):
 
 `pwsh -NoProfile -File Tests\_runner\Update-Baseline.ps1 -ConfirmDatabase BMMS_Quality -FixScript BMMS-Fix-[name]-Step[n].sql`
@@ -436,6 +464,36 @@ Result of the step (tester agent, run of 2026-11-12 21:46:42, Tests/_results/202
 and dashboard): PASSED, 649 checks, no new error-log line; memory at the start 1522 MB available of 7886 MB. The
 owner's tests of UN6b passed. The tester agent could not read its own result when the run moved to the background
 (a later step, WF3a3; Database/README.md, Known items).
+
+### The dashboard pack since step UN6c1
+
+The pack (Tests/packs/dashboard/README.md) gained checks 5 to 8 and 225 checks in all; expected.json gained
+`alertHeader` (the header count per account), `alertModes` (the three links for one account), `alertActors` (the
+person named on some alerts), `actionItemsDue` (the due dates), `alertActions` and `filterKept`, `actionScope` and
+`actionItemsList` (the Action Items card per account). The Alerts card heading is "Date" now.
+
+- Alerts card rules (qa_user): Recent, Unread and All with their row counts and the second page of All; the person
+  named on an alert with the login ID as tooltip and a dash where no approver is recorded; the header count unchanged
+  by the links and no page reload; the Admin: no rows, "No alerts." and "Alerts (0)".
+- Action Items card: the due date and the word "Overdue" on one item only; the items per account (Controller and
+  Management every item that is not confirmed; Manager and User the items of their departments with finalised or
+  confirmed minutes; MD Secretariat and Admin no card).
+- Actions (last, they change data; BMMS_Quality is restored before every run): opening an alert lowers the header
+  count by one; "Remove from my list" takes the row out, also under All; another user's row id put into the page is
+  refused with "This alert is not in your list."; the link chosen stays chosen on both cards when an item or an
+  alert is opened under Unread; an item with no mapping row is unread and read after opening, for that person only;
+  Management's Submit is refused; a Submit with another department's item id is refused.
+- Changed expected values, each with its cause: alertsFirstPage of the Admin 10 to 0 (no functional alerts for the
+  Admin role); alertHeadings "Alert, Created on" to "Alert, Date"; actionItemsFirstPage of all eight accounts was 1; it is now by the scope
+  rule (controller 5, manager 3, manager2 1, user 3, user2 0, mgmt 5; admin and mdsec: no card), and the fixture has
+  more Followups.
+- Not in the pack: Approve and Reject (they send mail; the tester has no mail server) and the "could not be
+  loaded" messages (a pack has no database access to deny EXECUTE); these are the owner's checks.
+
+Result of the step: tester agent, run of 2026-11-13: PASSED, 702 checks (selftest 8, access-matrix 472, dashboard
+225; fixture check 35). An earlier run of the same day was VOID: once, in the standing proof of the access matrix,
+Report/MeetingCalendar.aspx answered HTTP 500 to the User on the first requests after the site copy started; the
+repeat PASSED and it was not reproduced (Database/README.md, Known items). The owner's tests passed.
 
 ## Reviewer stage
 

@@ -31,13 +31,6 @@ namespace BMMS.DashBoard
 
             if (!IsPostBack)
             {
-                lnkActShowall.CssClass = "bmms-filter-current";
-                lnkActRead.CssClass = "";
-                lnkActUnRead.CssClass = "";
-                lnkShowAll.CssClass = "bmms-filter-current";
-                lnkRead.CssClass = "";
-                lnkUnread.CssClass = "";
-
                 LoadAlertGRV();
                 LoadActionItemGRV();
                 pnlAgenda.Visible = false;
@@ -47,161 +40,242 @@ namespace BMMS.DashBoard
         #endregion
 
         #region LoadAlertGRV
+        // Step UN6c1: the Alerts card from spr_GetDashboardAlerts (step 43). The procedure reads the role from the
+        // acting user id and lists by its one rule (an Admin gets no functional alerts); the page sends the acting
+        // user id, the mode chosen with the three links and the page number, and the procedure checks both. Only
+        // the page shown is read; nothing is kept in ViewState but the mode and the page number.
+        private const string AlertsFailedMessage = "The alerts could not be loaded. Reload the page to try again.";
+        private const string AlertsBusyMessage = "The server is busy and the alerts could not be loaded. Wait a moment, then reload the page.";
+        private const string AlertsInactiveMessage = "The alerts are not available: your account is not active. Sign in again.";
+        private const string AlertNotInListMessage = "This alert is not in your list.";
+        private const string AlertNotRemovedMessage = "The alert could not be removed from your list. Try again.";
+
+        // R recent (the default), U unread, A all
+        private string AlertMode
+        {
+            get
+            {
+                string mode = Convert.ToString(ViewState["AlertMode"]);
+                return mode == "U" || mode == "A" ? mode : "R";
+            }
+            set { ViewState["AlertMode"] = value; }
+        }
+
+        private int AlertPage
+        {
+            get
+            {
+                object page = ViewState["AlertPage"];
+                return page is int && (int)page > 0 ? (int)page : 1;
+            }
+            set { ViewState["AlertPage"] = value; }
+        }
+
         private void LoadAlertGRV()
         {
-            DataTable dtAlert = new DataTable();
-
             int UserId;
             string RoleName;
             if (!HasSessionUser(out UserId, out RoleName))
                 return;
 
-            dtAlert = AlertMgr.GetAlertByUserId(RoleName, UserId);
-            ViewState["dtAlert"] = dtAlert;
-            BindAlertGRV(dtAlert);
+            MarkCurrent(lnkRecent, AlertMode == "R");
+            MarkCurrent(lnkUnread, AlertMode == "U");
+            MarkCurrent(lnkAll, AlertMode == "A");
+
+            try
+            {
+                int reason, totalRows, unreadCount, pageShown;
+                DataTable dtAlert = AlertMgr.GetDashboardAlerts(UserId, AlertMode, AlertPage, out reason, out totalRows, out unreadCount, out pageShown);
+
+                if (reason != 0)
+                    ShowAlertsMessage(reason == 8 ? AlertsInactiveMessage : AlertsFailedMessage);
+                else
+                {
+                    AlertPage = pageShown;
+                    pAlertsMessage.Visible = false;
+                    grvAlert.Visible = true;
+                    grvAlert.VirtualItemCount = totalRows;
+                    grvAlert.PageIndex = pageShown - 1;
+                    grvAlert.DataSource = dtAlert;
+                    grvAlert.DataBind();
+                }
+            }
+            catch (Exception ex)
+            {
+                Utilities.WriteErrorLog(className, "LoadAlertGRV", ex.ToString());
+                ShowAlertsMessage(Common.IsServerBusy(ex) ? AlertsBusyMessage : AlertsFailedMessage);
+            }
+
+            // Every action of the page that can change the count reloads this list (Approve, Reject, Remove from my
+            // list, the three links): the header count follows, without a page reload
+            if (IsPostBack)
+                RefreshHeaderCount();
+        }
+
+        // The link of the list that is shown: the class (bold in the card, bmms-workbench.css) and aria-current
+        private static void MarkCurrent(LinkButton link, bool current)
+        {
+            link.CssClass = current ? "bmms-filter-current" : "";
+            if (current)
+                link.Attributes["aria-current"] = "true";
+            else
+                link.Attributes.Remove("aria-current");
+        }
+
+        // A failed load: the message instead of the list and its pager
+        private void ShowAlertsMessage(string message)
+        {
+            pAlertsMessage.InnerText = message;
+            pAlertsMessage.Visible = true;
+            grvAlert.Visible = false;
+        }
+
+        // "Alerts (n)" in the header (Main.Master), which UpdatePanel1 does not redraw
+        private void RefreshHeaderCount()
+        {
+            BMMS.MasterPage.Main master = Master as BMMS.MasterPage.Main;
+            if (master != null)
+                master.RefreshAlertCount();
         }
         #endregion
 
         #region LoadActionItemGRV
+        // Step UN6c1: the card from spr_GetDashboardActionItems (step 43). The procedure decides the rows from the
+        // acting user id and the role it reads from the database: a Controller and Management get every item that is
+        // not confirmed, a Manager and a User those of their departments with finalised or confirmed minutes, each
+        // with the person's own read state and IsOverdue. For a role without the card (MD Secretariat, Admin) it
+        // answers Reason 4 and the card is hidden. A failed load shows a message instead of the list.
+        private const string ActionItemNotSavedMessage = "You cannot change this action item: your role can only read it, or it is not an item of your department. Nothing was saved.";
+        private const string ActionItemInactiveMessage = "Your account is not active. Nothing was saved. Sign in again.";
+        private const string ActionItemSaveFailedMessage = "The action text could not be saved. Nothing was saved. Try again.";
+        private const string ActionItemSaveBusyMessage = "The server is busy and the action text could not be saved. Nothing was saved. Wait a moment, then try again.";
+        private const string ActionItemsFailedMessage = "The action items could not be loaded. Reload the page to try again.";
+        private const string ActionItemsBusyMessage = "The server is busy and the action items could not be loaded. Wait a moment, then reload the page.";
+        private const string ActionItemsInactiveMessage = "The action items are not available: your account is not active. Sign in again.";
+
+        // A all (Show All, the default), R read, U unread. The link chosen stays chosen until another is clicked:
+        // every load and every page of the list uses this mode, and the mark on the links is set from it in
+        // LoadActionItemGRV only (owner's test of UN6c1: after opening an item the mark said Unread and the list
+        // showed everything).
+        private string ActionMode
+        {
+            get
+            {
+                string mode = Convert.ToString(ViewState["ActionMode"]);
+                return mode == "R" || mode == "U" ? mode : "A";
+            }
+            set { ViewState["ActionMode"] = value; }
+        }
+
         private void LoadActionItemGRV()
         {
-            DataTable dtActionItem = new DataTable();
-
             int UserId;
             string RoleCode;
             if (!HasSessionUser(out UserId, out RoleCode))
                 return;
 
-            dtActionItem = ActionItemMgr.GetActionItemByUserId(UserId);
-            ViewState["dtActionItem"] = dtActionItem;
-            BindActionItemGRV(dtActionItem);
-        }
-        #endregion
+            MarkCurrent(lnkActShowall, ActionMode == "A");
+            MarkCurrent(lnkActRead, ActionMode == "R");
+            MarkCurrent(lnkActUnRead, ActionMode == "U");
 
-        #region BindAlertGRV
-        private void BindAlertGRV(DataTable dtAlert)
+            try
+            {
+                int reason;
+                DataTable dtActionItem = ActionItemMgr.GetDashboardActionItems(UserId, out reason);
+
+                if (reason == 4)
+                {
+                    // The server's answer, not the role in the session: this role has no Action Items card
+                    ViewState["dtActionItem"] = null;
+                    cardActionItems.Visible = false;
+                    return;
+                }
+
+                cardActionItems.Visible = true;
+
+                if (reason != 0)
+                {
+                    ViewState["dtActionItem"] = null;
+                    ShowActionItemsMessage(reason == 8 ? ActionItemsInactiveMessage : ActionItemsFailedMessage);
+                    return;
+                }
+
+                pActionItemsMessage.Visible = false;
+                grvActionItem.Visible = true;
+                ViewState["dtActionItem"] = dtActionItem;
+                BindActionItemGRV(dtActionItem);
+            }
+            catch (Exception ex)
+            {
+                Utilities.WriteErrorLog(className, "LoadActionItemGRV", ex.ToString());
+                ViewState["dtActionItem"] = null;
+                cardActionItems.Visible = true;
+                ShowActionItemsMessage(Common.IsServerBusy(ex) ? ActionItemsBusyMessage : ActionItemsFailedMessage);
+            }
+        }
+
+        private void ShowActionItemsMessage(string message)
         {
-            grvAlert.DataSource = dtAlert;
-            grvAlert.DataBind();
+            pActionItemsMessage.InnerText = message;
+            pActionItemsMessage.Visible = true;
+            grvActionItem.Visible = false;
         }
         #endregion
 
         #region BindActionItemGRV
+        // Binds the rows of the mode chosen (ActionMode) from the whole list
         private void BindActionItemGRV(DataTable dtActionItem)
         {
+            if (dtActionItem != null && ActionMode != "A")
+            {
+                DataView dv = new DataView(dtActionItem);
+                dv.RowFilter = ActionMode == "R" ? "ReadStatus = 1" : "ReadStatus = 0";
+                dtActionItem = dv.ToTable("dtActionItem");
+            }
+
+            // A page that no longer exists (the last row of the last page left the list): the last page there is
+            int rows = dtActionItem == null ? 0 : dtActionItem.Rows.Count;
+            int lastPage = rows == 0 ? 0 : (rows - 1) / grvActionItem.PageSize;
+            if (grvActionItem.PageIndex > lastPage)
+                grvActionItem.PageIndex = lastPage;
+
             grvActionItem.DataSource = dtActionItem;
             grvActionItem.DataBind();
         }
         #endregion
 
-        #region lnkShowAll_Click
-        protected void lnkShowAll_Click(object sender, EventArgs e)
+        #region AlertMode_Click
+        // Step UN6c1: Recent, Unread, All (the CommandArgument R, U, A); the list starts at its first page again
+        protected void AlertMode_Click(object sender, EventArgs e)
         {
-            lnkShowAll.CssClass = "bmms-filter-current";
-            lnkRead.CssClass = "";
-            lnkUnread.CssClass = "";
-
+            AlertMode = ((LinkButton)sender).CommandArgument;
+            AlertPage = 1;
             LoadAlertGRV();
         }
         #endregion
 
-        #region lnkActShowall_Click
+        #region Action Items: Show All, Read, Unread
         protected void lnkActShowall_Click(object sender, EventArgs e)
         {
-            lnkActShowall.CssClass = "bmms-filter-current";
-            lnkActRead.CssClass = "";
-            lnkActUnRead.CssClass = "";
-
-            LoadActionItemGRV();
+            ChooseActionMode("A");
         }
-        #endregion
 
-
-        #region lnkRead_Click
-        protected void lnkRead_Click(object sender, EventArgs e)
-        {
-            lnkShowAll.CssClass = "";
-            lnkRead.CssClass = "bmms-filter-current";
-            lnkUnread.CssClass = "";
-
-            LoadAlertGRV();
-            DataTable dtAlert = new DataTable();
-            dtAlert = (DataTable)ViewState["dtAlert"];
-            if (dtAlert != null)
-            {
-                DataView dv = new DataView(dtAlert);
-                dv.RowFilter = "ReadStatus = 1";
-
-                dtAlert = dv.ToTable("dtAlert");
-
-                BindAlertGRV(dtAlert);
-            }
-        }
-        #endregion
-
-        #region lnkActRead_Click
         protected void lnkActRead_Click(object sender, EventArgs e)
         {
-            lnkActShowall.CssClass = "";
-            lnkActRead.CssClass = "bmms-filter-current";
-            lnkActUnRead.CssClass = "";
-
-            LoadActionItemGRV();
-            DataTable dtActionItem = new DataTable();
-            dtActionItem = (DataTable)ViewState["dtActionItem"];
-            if (dtActionItem != null)
-            {
-                DataView dv = new DataView(dtActionItem);
-                dv.RowFilter = "ReadStatus = 1";
-
-                dtActionItem = dv.ToTable("dtActionItem");
-
-                BindActionItemGRV(dtActionItem);
-            }
+            ChooseActionMode("R");
         }
-        #endregion
 
-        #region lnkUnread_Click
-        protected void lnkUnread_Click(object sender, EventArgs e)
-        {
-            lnkShowAll.CssClass = "";
-            lnkRead.CssClass = "";
-            lnkUnread.CssClass = "bmms-filter-current";
-
-            LoadAlertGRV();
-            DataTable dtAlert = new DataTable();
-            dtAlert = (DataTable)ViewState["dtAlert"];
-            if (dtAlert != null)
-            {
-                DataView dv = new DataView(dtAlert);
-                dv.RowFilter = "ReadStatus = 0";
-
-                dtAlert = dv.ToTable("dtAlert");
-
-                BindAlertGRV(dtAlert);
-            }
-        }
-        #endregion
-
-        #region lnkActUnRead_Click
         protected void lnkActUnRead_Click(object sender, EventArgs e)
         {
-            lnkActShowall.CssClass = "";
-            lnkActRead.CssClass = "";
-            lnkActUnRead.CssClass = "bmms-filter-current";
+            ChooseActionMode("U");
+        }
 
+        // The list of the link clicked, from its first page
+        private void ChooseActionMode(string mode)
+        {
+            ActionMode = mode;
+            grvActionItem.PageIndex = 0;
             LoadActionItemGRV();
-            DataTable dtActionItem = new DataTable();
-            dtActionItem = (DataTable)ViewState["dtActionItem"];
-            if (dtActionItem != null)
-            {
-                DataView dv = new DataView(dtActionItem);
-                dv.RowFilter = "ReadStatus = 0";
-
-                dtActionItem = dv.ToTable("dtActionItem");
-
-                BindActionItemGRV(dtActionItem);
-            }
         }
         #endregion
 
@@ -270,9 +344,22 @@ namespace BMMS.DashBoard
             if (!found)
                 MsgDisplay("This item no longer exists.", MessageKind.Warning);
 
+            // The procedure marks the row of this alert that belongs to the session's user id, no other
             int AlertId;
             if (int.TryParse(lblAlert.Text.Trim(), out AlertId))
-                AlertMgr.UpdateAlertByUserId(UserId, AlertId);
+            {
+                try
+                {
+                    AlertMgr.UpdateAlertByUserId(UserId, AlertId);
+                }
+                finally
+                {
+                    // Step UN6c1: the alert is read now. The list is read again in the mode chosen (under Unread
+                    // the alert leaves the list; its panel stays open), and with it the header count
+                    // (LoadAlertGRV), also when the mark could not be written.
+                    LoadAlertGRV();
+                }
+            }
 
         }
 
@@ -280,7 +367,11 @@ namespace BMMS.DashBoard
 
         #region lnkActionItem_Click
         // Step F2: an action item whose id is unusable or that no longer exists shows a short warning instead of
-        // an error page; a valid id is still marked as read, as lnkSource_Click does for alerts (step F1)
+        // an error page.
+        // Step UN6c1: the item is opened through spr_OpenDashboardActionItem (step 43), which allows only an item
+        // the acting user sees in the card, marks the person's own read row (creating it when the person has
+        // none) and returns the item; an item outside the person's scope gets the same warning and nothing is
+        // written.
         protected void lnkActionItem_Click(object sender, EventArgs e)
         {
             MsgHide();
@@ -325,25 +416,38 @@ namespace BMMS.DashBoard
             int ActionItemId;
             if (int.TryParse(lblActionItemId.Text.Trim(), out ActionItemId))
             {
-                if (BindActionItemDetails(ActionItemId, UserId))
-                    pnlActionItemDetails.Visible = true;
-                else
-                    ShowItemGone();
-
-                ActionItemMgr.UpdateActionItemByUserId(UserId, ActionItemId);
+                try
+                {
+                    int reason;
+                    DataTable dtOpened = ActionItemMgr.OpenDashboardActionItem(UserId, ActionItemId, out reason);
+                    if (reason == 8)
+                    {
+                        pnlActionItemDetails.Visible = false;
+                        MsgDisplay(ActionItemsInactiveMessage);
+                    }
+                    else if (reason == 0 && BindActionItemDetails(dtOpened))
+                        pnlActionItemDetails.Visible = true;
+                    else
+                        ShowItemGone();
+                }
+                finally
+                {
+                    // The list again in the mode chosen, also when the item could not be opened
+                    LoadActionItemGRV();
+                }
             }
             else
+            {
                 ShowItemGone();
-
-            LoadActionItemGRV();
+                LoadActionItemGRV();
+            }
         }
         #endregion
 
         #region BindActionItemDetails
-        private bool BindActionItemDetails(int ActionItemId, int UserId)
+        // The row that spr_OpenDashboardActionItem returned (step UN6c1)
+        private bool BindActionItemDetails(DataTable dtActionItem)
         {
-            DataTable dtActionItem = new DataTable();
-            dtActionItem = ActionItemMgr.GetActionItemByActionItemIdUserId(ActionItemId, UserId);
             if (dtActionItem == null || dtActionItem.Rows.Count == 0)
                 return false;
 
@@ -622,22 +726,20 @@ namespace BMMS.DashBoard
         #endregion
 
         #region OnPaging
+        // Step UN6c1: the page asked is read from the server
         protected void OnPaging(object sender, GridViewPageEventArgs e)
         {
-            DataTable dtAlert = (DataTable)ViewState["dtAlert"];
-            grvAlert.DataSource = dtAlert;
-            grvAlert.PageIndex = e.NewPageIndex;
-            grvAlert.DataBind();
+            AlertPage = e.NewPageIndex + 1;
+            LoadAlertGRV();
         }
         #endregion
 
         #region OnPagingAction
         protected void OnPagingAction(object sender, GridViewPageEventArgs e)
         {
-            DataTable dtActionItem = (DataTable)ViewState["dtActionItem"];
-            grvActionItem.DataSource = dtActionItem;
+            // The page asked for, of the list in the mode chosen (not of the whole list)
             grvActionItem.PageIndex = e.NewPageIndex;
-            grvActionItem.DataBind();
+            BindActionItemGRV((DataTable)ViewState["dtActionItem"]);
         }
         #endregion
 
@@ -911,28 +1013,41 @@ namespace BMMS.DashBoard
             // Step A3: rich text over the limit (Web.config): nothing is saved, the panel stays open
             if (RichTextEditor.IsTooLong(this)) { MsgDisplay(RichTextLimits.TooLongMessage); return; }
 
-            // Step F2: the action item must still exist before it is saved
+            // Step F2: an unusable id shows the warning.
+            // Step UN6c1: the save goes through spr_SaveDashboardActionText (step 43), which decides on the server,
+            // from the acting user id and the role it reads from the database, whatever the page sent: only a
+            // Controller, a Manager or a User, and only an item in that person's scope. Management (which sees every
+            // item, read-only), MD Secretariat, Admin and an item of another department are refused; nothing is
+            // saved then. It writes the action text only, as before.
             int ActionItemId;
-            DataTable dtActionItem = int.TryParse(hdnActionItemId.Value.Trim(), out ActionItemId)
-                ? ActionItemMgr.GetActionItemByActionItemIdUserId(ActionItemId, UserId)
-                : null;
-            if (dtActionItem == null || dtActionItem.Rows.Count == 0)
+            if (!int.TryParse(hdnActionItemId.Value.Trim(), out ActionItemId))
             {
                 ShowItemGone();
                 return;
             }
 
-            string Code = "ActionText";
-            string Directions = string.Empty;
-            string ActualResolution = ftxtActualResolution.Text.Trim();
             string ActionText = ftxtActionText.Text.Trim();
-            int IsComplied = 0;
-            int IsConfirmed = 0;
 
-            ActionItemMgr.UpdateActionItem(Code, ActionItemId, Directions, ActionText, IsComplied, IsConfirmed);
+            int reason;
+            try
+            {
+                reason = ActionItemMgr.SaveDashboardActionText(UserId, ActionItemId, ActionText);
+            }
+            catch (Exception ex)
+            {
+                // A failed save: the panel stays open with the text typed, so the person can try again
+                Utilities.WriteErrorLog(className, "btnActionItemApprove_Click", ex.ToString());
+                MsgDisplay(Common.IsServerBusy(ex) ? ActionItemSaveBusyMessage : ActionItemSaveFailedMessage);
+                return;
+            }
 
             pnlActionItemDetails.Visible = false;
-            ClearActionItemEditors();   // step A3: saved, the panel closes
+            ClearActionItemEditors();   // step A3: saved or refused, the panel closes
+
+            if (reason == 8)
+                MsgDisplay(ActionItemInactiveMessage);
+            else if (reason != 0)
+                MsgDisplay(ActionItemNotSavedMessage);
         }
         #endregion
 
@@ -1012,11 +1127,20 @@ namespace BMMS.DashBoard
         #endregion
 
         #region btnDeleteAlert_Click
+        // "Remove from my list" (step UN6c1; the button was "Delete"). The id of the row comes back from the page in a
+        // hidden field, so the procedure (spr_RemoveAlertForUser, step 43) removes it only when it is the acting
+        // user's own row; another user's row or an unknown id changes nothing. Nothing is deleted: the alert leaves
+        // this person's list, and an edit of the item shows it again, unread (step 36).
         protected void btnDeleteAlert_Click(object sender, EventArgs e)
         {
             MsgHide();
 
-            // Step F2: int, not Int16 (AlertUserId passes 32767 in normal use); an unusable id deletes nothing
+            int UserId;
+            string RoleCode;
+            if (!HasSessionUser(out UserId, out RoleCode))
+                return;
+
+            // Step F2: int, not Int16 (AlertUserId passes 32767 in normal use); an unusable id removes nothing
             int AlertUserId;
             if (!int.TryParse(hdnAlertUserId.Value.Trim(), out AlertUserId) || AlertUserId <= 0)
             {
@@ -1025,9 +1149,23 @@ namespace BMMS.DashBoard
                 return;
             }
 
-            AlertMgr.UpdateAlertByAlertUserId(AlertUserId);
+            try
+            {
+                int reason = AlertMgr.RemoveAlertForUser(UserId, AlertUserId);
+                if (reason == 8)
+                    MsgDisplay(AlertsInactiveMessage, MessageKind.Warning);
+                else if (reason != 0)
+                    MsgDisplay(AlertNotInListMessage, MessageKind.Warning);
+            }
+            catch (Exception ex)
+            {
+                Utilities.WriteErrorLog(className, "btnDeleteAlert_Click", ex.ToString());
+                MsgDisplay(AlertNotRemovedMessage, MessageKind.Error);
+            }
+
+            hdnAlertUserId.Value = "0";
             pnlAgenda.Visible = false;
-            ClearAgendaEditors();   // step A3: alert deleted, the panel closes
+            ClearAgendaEditors();   // step A3: alert removed, the panel closes
             LoadAlertGRV();
         }
         #endregion
@@ -1104,6 +1242,25 @@ namespace BMMS.DashBoard
                 return string.Empty;
 
             return date.ToString("HH:mm");
+        }
+
+        // The person who caused the alert (step UN6c1): the name, or a dash when nobody is recorded (a decision made
+        // before the approver was stored); the login ID is the tooltip, empty with the dash
+        protected static string ActorName(object value)
+        {
+            string name = value == null || value == DBNull.Value ? string.Empty : value.ToString().Trim();
+            return name.Length == 0 ? "-" : name;
+        }
+
+        protected static string ActorLogin(object value)
+        {
+            return value == null || value == DBNull.Value ? string.Empty : value.ToString().Trim();
+        }
+
+        // The Action Items card (step UN6c1): IsOverdue of spr_GetDashboardActionItems
+        protected static bool IsOverdue(object value)
+        {
+            return value != null && value != DBNull.Value && Convert.ToInt32(value) == 1;
         }
 
         // The muted line under the Source link: alert type, committee and department, the empty ones left out.

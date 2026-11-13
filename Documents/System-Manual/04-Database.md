@@ -3,10 +3,13 @@
 - Title: Database
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6b (step 42: the Meeting, Alerts and the dashboard, functions, Reason codes and not-called tables); the rest RA1b (step 41)
-- Last updated by: UN6b, based on 0736c7f
+- Applies to: UN6c1 (step 43: Alerts and the dashboard, Action items and follow-up, the two mail procedures, functions, Reason 4 and 8, not-called procedures); UN6b (step 42: the Meeting, Alerts and the dashboard, functions, Reason codes and not-called tables); the rest RA1b (step 41)
+- Last updated by: UN6c1, based on e3bff6b
 - Status: Draft
-- Verified against: for step 42 (UN6b): Database/BMMS-Fix-DashboardMeetings-Step42.sql (all five objects),
+- Verified against: for step 43 (UN6c1): Database/BMMS-Fix-DashboardAlerts-Step43.sql (the procedures and the text read from the file: the listing and scope rules, parameters and Reasons), BMMS-Rollback-DashboardAlerts-Step43.sql (messages),
+  BMMS-Check-InstalledSteps.sql (diff), BMMSDAL/AlertDB.cs and ActionItemDB.cs (diff), BMMSBAL/AlertMgr.cs and ActionItemMgr.cs (diff),
+  BMMS/DashBoard/DashBoard.aspx.cs and BMMS/MasterPage/Main.Master.cs (message texts), Database/README.md (section Step UN6c1);
+  for step 42 (UN6b): Database/BMMS-Fix-DashboardMeetings-Step42.sql (all five objects),
   BMMS-Rollback-DashboardMeetings-Step42.sql, BMMS-Check-InstalledSteps.sql (diff), BMMSDAL/MeetingDB.cs and
   DepartmentDB.cs (diff), BMMSBAL/MeetingMgr.cs and DepartmentMgr.cs (diff), BMMS/UserControl/MeetingSummary.ascx.cs
   (message texts), Grep of BMMS, BMMSBAL and BMMSDAL for GetScheduleMeet, Database/README.md (section Step UN6b);
@@ -249,7 +252,7 @@ erDiagram
 |---|---|---|---|---|
 | Minutes | The minute of one agenda item: decision type, DueDate (optional, used for a Followup decision, step 38), Directions, ActualResolution | MinutesId | AgendaId to Agenda (ON DELETE CASCADE), DecisionTypeId to Decision_Type | Default StatusId 0. CreatedBy and UpdatedBy have no key |
 | Action_Item | A follow-up created when the minutes are finalized, for each minute whose DecisionTypeId is 1: ActionText, ActionStatus ('Pending' when created), IsComplied, IsConfirmed | ActionItemId | MinutesId to Minutes, UpdatedBy to Users | Defaults IsComplied 0 and IsConfirmed 0 |
-| ActionItem_User_Map | Which users see an action item, with ReadStatus and StatusId | ActionItemUserMapId (constraint named PK_Alert_ActionItem_Map) | ActionItemId to Action_Item (ON DELETE CASCADE), UserId to Users | |
+| ActionItem_User_Map | The read state of an action item per user (ReadStatus, StatusId). Since step 43 it no longer decides who sees an item; a person with no row sees the item unread, and opening it creates the row | ActionItemUserMapId (constraint named PK_Alert_ActionItem_Map) | ActionItemId to Action_Item (ON DELETE CASCADE), UserId to Users | |
 
 ### Alerts
 
@@ -764,7 +767,7 @@ built from the highest AgendaNo of the meeting). Which stage a new item starts a
 | spr_GetAgendaBySubjectNo | AgendaDB.GetAgendaBySubjectNo | none | No (View_Agenda) | baseline |
 | spr_GetAgendaLockByMeetingId | AgendaDB.GetAgendaLockByMeetingId (BMMSBAL AgendaMgr throws if no row comes back) | none | No (AllowChange, Reason, ReasonDetail, from fn_AgendaChangeRefusal with the bypass allowed) | 16 |
 | spr_GetAgendaCreationMailId | AgendaDB.GetAgendaCreationMailId (BMMSBAL AgendaMgr throws if no row comes back) | none | No (Route, ManagerName, ActiveControllers, EmailId; always at least one row) | 20 |
-| spr_GetAgendaUpdateMailId | AgendaDB.GetAgendaUpdateMailId | none | No (the addresses of the users the refreshed alert is shown to, active, not the system account, with an address) | 37 |
+| spr_GetAgendaUpdateMailId | AgendaDB.GetAgendaUpdateMailId | none | No (the addresses of the users the refreshed alert is shown to, active, not the system account, not the Admin role, with an address) | 37 (replaced in 43: the Admin role is left out) |
 | spr_RerouteWaitingAgendas | Not called from the code; run once by Database/BMMS-Fix-AgendaRouting-Step20.sql (INSERT ... EXEC) and by BMMS-Test-AgendaRouting-Step20.sql | Agenda, Alert_Master, Alert_User_Map, Audit_Trail_Master (items waiting at AC whose creator now goes straight to the Controllers move to AMA; one audit row per item, written for the system account) | No (one row, Rerouted, the count) | 20 |
 
 The agenda change refusal (fn_AgendaChangeRefusal) is the rule that the three save procedures, the
@@ -778,7 +781,7 @@ under "Views and functions of the areas in part 2".
 | spr_UpdateAgendaByAgendaId | AgendaDB.UpdateAgendaByAgendaId (a Manager or Controller approves or rejects) | Agenda (comments, approved status, who and when, AgendaStatusCode); Alert_Master (AlertTypeCode); Alert_User_Map (marked unread, the creator added); Audit_Trail_Master | Full | 35 |
 | spr_GetAgendaApprovedByMeetingId | AgendaDB.GetAgendaApprovedByMeetingId | none | No (View_Agenda) | baseline |
 | spr_GetMgrControllerByDeptId | UserDB.GetMgrControllerByDeptId (one overload with the department only, one with an extra user id passed as @IncludeUserId) | none | No (active Managers and Controllers of the department, plus the named user; View_Users columns and ManagerText) | 14 |
-| spr_GetAlertMailId | AlertDB.GetAlertMailId (BMMSBAL AlertMgr; the dashboard calls it for the approve and reject mails) | none | No (addresses, by @Code AMR, AMA or ACA/ACR) | 18 |
+| spr_GetAlertMailId | AlertDB.GetAlertMailId (BMMSBAL AlertMgr; the dashboard calls it for the approve and reject mails) | none | No (addresses, by @Code AMR, AMA or ACA/ACR; since step 43 the Admin role is left out in every branch: AMR the creator, AMA the Controllers and the creator, ACA and ACR the users of the item's alert) | 18 (replaced in 43) |
 
 Who may act at which stage is decided inside spr_UpdateAgendaByAgendaId (its header, step 20): a Manager
 approves or rejects at AC an item routed to them or of whom they are the creator's manager; a
@@ -909,6 +912,18 @@ step 38 still works.
 | spr_GetActionItemByActionItemIdUserId | ActionItemDB.GetActionItemByActionItemIdUserId | none | No (View_Action_Item_Users) | baseline |
 | spr_GetActionItemByMeetingId | ActionItemDB.GetActionItemByMeetingId (meeting, IsConfirmed) | none | No (View_Action_Item) | baseline |
 | spr_GetActionItemByMeetingIdDeptId | ActionItemDB.GetActionItemByMeetingIdDeptId (committee, meeting number from and to, department) | none | No (View_Action_Item) | baseline |
+| spr_GetDashboardActionItems | ActionItemDB.GetDashboardActionItems, through ActionItemMgr | none | The Dashboard's Action Items card: the rows of fn_DashboardActionItems for the acting user, newest meeting first (MeetingDate descending, AgendaNo, ActionItemId), with DueDate, ReadStatus, IsComplied, IsConfirmed and IsOverdue. Parameter @ActingUserId; OUTPUT @Result, @Reason (8 acting user missing, 0 or inactive; 4 role without the card; then no rows) | 43 |
+| spr_OpenDashboardActionItem | ActionItemDB.OpenDashboardActionItem, through ActionItemMgr | ActionItem_User_Map: the acting user's own row, ReadStatus 1; the row is created when the person has none (one statement under a held update lock, never a second row). Nothing of the action item is changed | The item's row (the columns of the list). Parameters @ActingUserId, @ActionItemId; OUTPUT @Result, @Reason (8; 4 role without the card, or an item outside the acting user's scope; then no row and nothing written) | 43 |
+| spr_SaveDashboardActionText | ActionItemDB.SaveDashboardActionText, through ActionItemMgr | Action_Item (ActionText only), only for an item in the acting user's scope (the scope is part of the UPDATE) | Parameters @ActingUserId, @ActionItemId, @ActionText; OUTPUT @Result, @Reason (8; 4 for Management, MD Secretariat, Admin, or an item outside the scope, confirmed or unknown). Only a Controller, a Manager and a User may save | 43 |
+
+Since step 43 (UN6c1) the Dashboard's Action Items card no longer lists the items mapped to the user. The scope
+is one rule on the server, fn_DashboardActionItems, from the acting user id alone (the role is read from Users
+and Roles, nothing comes from the page): an item is an Action_Item with IsConfirmed 0, tied to a department by
+its agenda item. A Controller and Management get all of them whatever the minutes status; a Manager and a User
+get those of their departments (fn_UserDepartmentScope as of today) whose minutes are finalised (F) or confirmed
+(C); MD Secretariat and Admin have no card. ActionItem_User_Map keeps each person's read state only; a person
+without a row sees the item unread. IsOverdue is 1 when the due date (Minutes.DueDate) is set, its date is
+before the database server's date and the item is neither complied (IsComplied 0) nor confirmed (IsConfirmed 0).
 
 The follow-up report page does not use a procedure; its query is in the code (see "Report queries built in
 the code").
@@ -917,10 +932,14 @@ the code").
 
 Alerts are rows of Alert_Master with one Alert_User_Map row per recipient. They are written by the save
 procedures of the other areas (agenda, meeting, committee and the approval procedure); the procedures
-below only read and mark them. The dashboard page (BMMS/DashBoard/DashBoard.aspx.cs) reads them with
-AlertMgr.GetAlertByUserId and ActionItemMgr.GetActionItemByUserId, marks them with AlertMgr.UpdateAlertByUserId,
-AlertMgr.UpdateAlertByAlertUserId and ActionItemMgr.UpdateActionItemByUserId, and makes the approval calls
-(AgendaMgr.UpdateAgendaByAgendaId, GenerateSubjectNoByMeetingId, AlertMgr.GetAlertMailId). The Meetings card
+below only read and mark them. Since step 43 (UN6c1) the dashboard page (BMMS/DashBoard/DashBoard.aspx.cs) reads
+the alerts with AlertMgr.GetDashboardAlerts, removes one with AlertMgr.RemoveAlertForUser, reads the action items
+with ActionItemMgr.GetDashboardActionItems, opens one with ActionItemMgr.OpenDashboardActionItem and saves its
+text with ActionItemMgr.SaveDashboardActionText; the header (BMMS/MasterPage/Main.Master.cs) reads the count with
+AlertMgr.GetAlertCount. The page still marks an opened alert read with AlertMgr.UpdateAlertByUserId and makes the
+approval calls (AgendaMgr.UpdateAgendaByAgendaId, GenerateSubjectNoByMeetingId, AlertMgr.GetAlertMailId). The
+older readers spr_GetAlertByUserId, spr_UpdateAlertByAlertUserId and spr_GetActionItemByUserId have no caller since
+step 43. The Meetings card
 of the Dashboard is a user control, BMMS/UserControl/MeetingSummary.ascx, that reads spr_GetDashboardMeetings and
 spr_GetDashboardDepartments since step 42 (listed in "Meeting"; the three functions they use are in "Views and
 functions of the areas in part 2"). Both read only.
@@ -931,7 +950,10 @@ functions of the areas in part 2"). Both read only.
 | spr_UpdateAlertByUserId | AlertDB.UpdateAlertByUserId (user, alert) | Alert_User_Map (ReadStatus 1) | No | baseline |
 | spr_UpdateAlertByAlertUserId | AlertDB.UpdateAlertByAlertUserId | Alert_User_Map (StatusId 0: the alert is no longer shown) | No | baseline |
 | spr_UpdateAlertByMeetingId | AlertDB.UpdateAlertByMeetingId (BMMS/Master/MinutesUpdate.aspx.cs calls the BAL method) | Alert_User_Map (StatusId 0 for the agenda alerts of the meeting) | No | baseline |
-| spr_GetAlertMailId | See "Approval (Manager, Controller)" | none | No | 18 |
+| spr_GetAlertMailId | See "Approval (Manager, Controller)" | none | No | 18 (replaced in 43: the Admin role is left out) |
+| spr_GetDashboardAlerts | AlertDB.GetDashboardAlerts, through AlertMgr | none | One page of 10 alerts of the acting user (ROW_NUMBER, compatibility level 100), newest event first, with EventOn, ActorUserId, ActorName and ActorLogin. Parameters @ActingUserId, @Mode (R recent, U unread, A all), @PageNo; OUTPUT @Result, @Reason (8 acting user missing or inactive; 4 another mode or a page number below 1), @TotalRows, @UnreadCount, @PageShown (a page after the last gives the last). Recent: every unread alert and the read ones whose event date is today or in the seven days before (database server date) | 43 |
+| spr_GetAlertCount | AlertDB.GetAlertCount, through AlertMgr (the header, Main.Master.cs) | none | The unread alerts of the acting user by fn_DashboardAlerts. OUTPUT @Result, @Reason (8), @UnreadCount | 43 |
+| spr_RemoveAlertForUser | AlertDB.RemoveAlertForUser, through AlertMgr | Alert_User_Map (StatusId 0 on one row, only when it is the acting user's own; nothing is deleted) | OUTPUT @Result, @Reason (8; 4 for another user's row or an unknown one). Step 36 shows a removed alert again, unread, on an edit | 43 |
 
 ### Reports
 
@@ -968,6 +990,8 @@ The agenda summary, full summary and details reports and the follow-up report ar
 | fn_MeetingDashboardState(@Today) | Inline table function: one row per meeting: MeetingId, IsScheduled, StateCode, StateLabel | IsScheduled is 1 when the meeting date is @Today or later, or there is no date. The state is the first rule that fits: grey "Minutes finalised" or "Minutes confirmed" (MinutesStatus F or C), red "Minutes pending" (the meeting date is before @Today), green "Agenda finalised" (AgendaStatus not Open; NULL counts as Open), orange "Submission closed" (the agenda submission date is before @Today), blue "Open for submission" | spr_GetDashboardMeetings | 42 |
 | fn_UserDepartmentScope(@UserId, @Today) | Inline table function: DepartmentId rows | The User_Department rows open on @Today (EffectiveFrom on or before it, EffectiveTo empty or after it) together with the home department Users.DepartmentId | spr_GetDashboardMeetings, spr_GetDashboardDepartments | 42 |
 | fn_AgendaStatusGroup() | Inline table function: every agenda item with AgendaId, MeetingId, CommitteeId, DepartmentId, AgendaStatusCode, StatusGroup | The one definition of the groups: approved ACA, rejected AMR and ACR, in progress AC and AMA, other (AF and any other code; counted in Items only). The summary cards planned for a later step (UN6c) are to use it too | spr_GetDashboardMeetings | 42 |
+| fn_DashboardAlerts(@UserId) | Inline table function: the alerts of one user | The one listing rule of the Alerts card and the header count, from the user id alone (the role is read from the database): rows of Alert_User_Map with StatusId 1 joined to Alert_Master, Committee and the agenda item (inner join on Committee, as View_Alert); a Controller does not get ACA and ACR, a Manager does not get AMA and AMR, the Admin role gets nothing. Adds EventOn and the person by type: CC, CU, MC, MU and an alert whose item is gone use Alert_Master.CreatedOn and CreatedBy; AC uses Agenda.UpdatedOn, else CreatedOn, and UpdatedBy, else CreatedBy; AMA and AMR use MgrApprovedDate and MgrApprovedBy; ACA and ACR use ControllerApprovedDate and ControllerApprovedBy; an approval edited more than one minute after the decision date uses UpdatedOn and UpdatedBy; an approval with no recorded approver (before step 35) uses UpdatedOn, else Alert_Master.CreatedOn, and no person | spr_GetDashboardAlerts, spr_GetAlertCount | 43 |
+| fn_DashboardActionItems(@UserId, @Today) | Inline table function: the action items of one user | The one scope rule of the Action Items card (see "Action items and follow-up"): the columns of the list plus ReadStatus (that of the user's own row, 0 for a person with no row), UserId (the acting user) and IsOverdue | spr_GetDashboardActionItems, spr_OpenDashboardActionItem, spr_SaveDashboardActionText | 43 |
 | fn_WorkflowState(@MeetingId) | Inline table function: one row, none when the meeting does not exist | IsNew (created on or after the setting WorkflowOrderFrom), AgendaFinalized, AttendanceRecorded (chairman set and one member present 'P'), MinutesTotal, MinutesUpdated (StatusId 1) | spr_GetMeetingWorkflowState, spr_MinutesFinalizeByMeetingId, spr_UpdateAgendaShortText, spr_UpdateAttendance, spr_UpdateMeetingChairman, spr_UpdateMinutes | 23 |
 | View_Agenda | View | Agenda joined to Committee, Meeting, Subject_Type, Agenda_Status and Department (left join) | spr_CheckAgendaApprovedByMeetingId, spr_GetAgendaApprovedByMeetingId, spr_GetAgendaByAgendaId, spr_GetAgendaByMeetingId, spr_GetAgendaByMeetingIdDeptId, spr_GetAgendaBySubjectNo; the report queries in ReportsMgr | 31 (refreshed) |
 | View_Minute | View | Minutes joined to Agenda, Decision_Type, Committee, Meeting and Department; carries DueDate | spr_AddEditAgenda, spr_AddEditAgendaByController, spr_AddEditAgendaByManager, spr_UpdateMinutes, the minutes readers, spr_GetMinutesReport | 31 (refreshed) |
@@ -1277,6 +1301,7 @@ Procedure families used in the table:
 | 4 | spr_AddEditMemberType; spr_DeleteMemberTypeByMemberTypeId | The acting user is not an Admin (an Admin or a Controller until step 40, RA1a) | 21, 40 | "Only an Admin can change member types." (BMMSBAL/MemberTypeMgr.cs; the text before step 40 was "Only an Admin or a Controller can change member types.") |
 | 4 | spr_GetMinutesReportMeetingsAllStatus; spr_GetMinutesReportAllStatus (not Controller or Management); spr_GetFollowupReportForManagement (not Management) | The acting user's role may not use the report procedure; no rows are returned (Reason 8 for a missing, 0 or inactive acting user, the same meaning as above) | 41 | "You are not allowed to see this report." (BMMSBAL/ReportsMgr.cs); Reason 8: "Your session is no longer valid. Please log in again." |
 | 4 | spr_GetDashboardMeetings; spr_GetDashboardDepartments | spr_GetDashboardMeetings: a role outside the six; a committee id that does not exist or is below 0; a department id that is below 0, is given for a role other than Manager and User, or is not one of the user's departments; spr_GetDashboardDepartments: the role is not Manager or User. No rows are returned | 42 | spr_GetDashboardMeetings: "The meeting list is not shown for this choice." followed by "Choose All committees or All my departments.", "Choose All committees." or "Choose All my departments." (by the filters shown), or "The meeting list is not shown for your role." when no filter is shown (BMMS/UserControl/MeetingSummary.ascx.cs). spr_GetDashboardDepartments: no message, the page does not use the list for the other roles |
+| 4 | spr_GetDashboardAlerts; spr_RemoveAlertForUser; spr_GetDashboardActionItems; spr_OpenDashboardActionItem; spr_SaveDashboardActionText | spr_GetDashboardAlerts: a mode other than R, U or A, or a page number below 1. spr_RemoveAlertForUser: the alert row is not the acting user's, or does not exist. spr_GetDashboardActionItems: a role without the Action Items card (MD Secretariat, Admin, with the system account). spr_OpenDashboardActionItem: such a role, or an item outside the acting user's scope, confirmed or unknown. spr_SaveDashboardActionText: Management, MD Secretariat or Admin, or an item outside the scope, confirmed or unknown. A refused call returns the same columns with no rows and changes nothing | 43 | Alerts: no message for mode or page (the page only sends R, U or A); Remove: "This alert is not in your list."; Action Items list: the card is hidden; Submit (save): "You cannot change this action item: your role can only read it, or it is not an item of your department. Nothing was saved." (BMMS/DashBoard/DashBoard.aspx.cs) |
 | 5 | Agenda lock; spr_UpdateAgendaByAgendaId | The agenda is finalized (ReasonDetail Finalized; BypassOff for a Controller when the option AgendaControllerBypass is off) | 16 | "The agenda for this meeting is finalized, so agenda items can no longer be added, changed or deleted." With BypassOff, the same text followed by " Controller changes after finalization are switched off in System Settings." |
 | 5 | spr_DeleteUserByUserId | Other users have this user as manager, creator or last updater (ReasonDetail the names) | 13 | "This user cannot be deleted: these users have them as reporting person, or were created or last updated by them: [names]." |
 | 5 | spr_AddEditMemberType; spr_DeleteMemberTypeByMemberTypeId | The type is in use (ReasonDetail "[n] committee, [m] meeting"); an edit that changes the scope, or a delete | 21 | Delete: "This member type is in use ([counts] member rows), so it cannot be deleted. You can make it inactive instead." Edit: "This member type is in use ([counts] member rows), so it cannot be moved to the other tagging page." |
@@ -1288,6 +1313,7 @@ Procedure families used in the table:
 | 7 | spr_AddEditMemberType; spr_DeleteMemberTypeByMemberTypeId | The type is reserved | 21 | "This member type is reserved: the application uses it for the minutes, the notices and their signer, so it cannot be changed or deleted." |
 | 8 | Agenda lock; spr_UpdateAgendaByAgendaId; User rules (also a NULL or 0 acting user in spr_AddEditUser, spr_DeleteUserByUserId, spr_SetUserStatusByUserId); Admin-only setting; spr_AddEditMemberType; spr_DeleteMemberTypeByMemberTypeId; spr_sys_ResetDatabase | The acting user is missing or inactive (same meaning in every family) | 13 (missing), 14 (inactive) for users; 16 agenda lock and settings; 19 organisation settings and logo; 20 approval; 21 member type; 29 reset; 39 department rule | "Your session is no longer valid. Please log in again." |
 | 8 | spr_GetDashboardMeetings; spr_GetDashboardDepartments | The acting user is missing, 0 or inactive; no rows are returned | 42 | "The meeting list is not available: your account is not active. Sign in again." |
+| 8 | spr_GetDashboardAlerts; spr_GetAlertCount; spr_RemoveAlertForUser; spr_GetDashboardActionItems; spr_OpenDashboardActionItem; spr_SaveDashboardActionText | The acting user is missing, 0 or inactive; no rows are returned and nothing changes | 43 | Alerts: "The alerts are not available: your account is not active. Sign in again."; Action Items list: "The action items are not available: your account is not active. Sign in again."; Submit (save): "Your account is not active. Nothing was saved. Sign in again."; the header count shows "Alerts" without a number (BMMS/DashBoard/DashBoard.aspx.cs, BMMS/MasterPage/Main.Master.cs) |
 | 9 | spr_UpdateMeetingChairman | The new chairman is not on the committee on the meeting date (ReasonDetail the member name) | 16 | "[member name] is not a member of this committee on the meeting date." |
 | 9 | spr_DeleteUserByUserId | A foreign key error (547) that the checks did not foresee; ReasonDetail the SQL Server message | 13 | "This user cannot be deleted because other data still refers to them. The details were written to the error log." (the detail is written to the error log and never shown) |
 | 10 | spr_AddEditMeeting | Agenda items exist and the committee changes | 16 | "Agenda items are recorded for this meeting, so its committee cannot be changed." |
