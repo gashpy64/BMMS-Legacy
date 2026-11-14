@@ -62,6 +62,35 @@ namespace BMMSBAL
         #endregion
 
         #region HTML_PageBreak
+        #region Minutes status mark (step RA1b)
+        // The minutes status of a meeting in the every-status reports of the Controller and Management
+        // (BMMS-Fix-ReportAccess-Step41.sql gives the mark: Draft (not finalised), Finalised or Confirmed). Plain
+        // text, and for a draft also a note in a one-cell table with a border: the PDF export (HTMLWorker) draws a
+        // table border but not a div border, so the mark and the note stay in Print, Export to Pdf and Export to
+        // Word. Black only, never colour alone.
+        public const string DraftMark = "Draft (not finalised)";
+        public const string DraftNoteText = "DRAFT - not finalised; this is not the approved text of the minutes.";
+
+        public static bool IsDraftMark(string Mark)
+        {
+            return Mark == DraftMark;
+        }
+
+        public static string MinutesStatusLine(string Mark)
+        {
+            return "<div style='float:left; width:100%; font-size:12pt; font-weight:bold; padding-top:5px; padding-bottom:5px;'>"
+                 + "Minutes status: " + HttpUtility.HtmlEncode(Mark) + "</div>";
+        }
+
+        public static string DraftNote()
+        {
+            return "<table width='100%' border='1' cellspacing='0' cellpadding='6' style='float:left; width:100%; border:2px solid #000000;"
+                 + " border-collapse:collapse; margin-top:6px; margin-bottom:6px;'><tr>"
+                 + "<td style='text-align:center; font-size:12pt; font-weight:bold;'>" + HttpUtility.HtmlEncode(DraftNoteText) + "</td>"
+                 + "</tr></table>";
+        }
+        #endregion
+
         public static string HTML_PageBreak()
         {
             //htmlTxt += "<divbreak style='color:white'>.</divbreak>";

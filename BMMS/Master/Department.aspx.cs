@@ -18,6 +18,9 @@ namespace BMMS.Master
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            // Step RA1a: Admin only (role read from the database; ends the request otherwise)
+            BMMS.Security.PageAccessModule.RequireRole("admin");
+
             Common.InitSetup(className);
 
             if (!IsPostBack)
@@ -205,7 +208,7 @@ namespace BMMS.Master
                     myDept = null;
                 }
 
-                MsgDisplay(sMsg);
+                MsgDisplay(sMsg, sMsg == "Successfully Saved" ? MessageKind.Success : sMsg == "Record Not Saved" ? MessageKind.Error : MessageKind.Warning);
 
                 pnlViewDept.Visible = true;
                 pnlEditDept.Visible = false;
@@ -225,9 +228,9 @@ namespace BMMS.Master
             dtDepartment.CaseSensitive = false;
 
             if (btnSave.Text == "Save")
-                dv.RowFilter = " DepartmentName = '" + txtDeptName.Text.Trim().ToLower() + "'";
+                dv.RowFilter = " DepartmentName = '" + txtDeptName.Text.Trim().ToLower().Replace("'", "''") + "'";
             if (btnSave.Text == "Update")
-                dv.RowFilter = " DepartmentName = '" + txtDeptName.Text.Trim().ToLower() + "' and DepartmentId <> " + hdnDeptId.Value;
+                dv.RowFilter = " DepartmentName = '" + txtDeptName.Text.Trim().ToLower().Replace("'", "''") + "' and DepartmentId <> " + hdnDeptId.Value;
 
 
             DataTable dtFilter = dv.ToTable("dtDepartment");
@@ -285,9 +288,13 @@ namespace BMMS.Master
 
                     try
                     {
-                        DepartmentMgr.DeleteDepartmentByDeptId(DeptId);
+                        // Step UD1a: a department mapped to users, or in their history, gets its own message
+                        string refusal = DepartmentMgr.DeleteDepartment(DeptId);
 
-                        MsgDisplay("Record Deleted Successfully");
+                        if (refusal == null)
+                            MsgDisplay("Record Deleted Successfully", MessageKind.Success);
+                        else
+                            MsgDisplay(refusal);
                     }
                     catch (Exception ex)
                     {
@@ -316,9 +323,9 @@ namespace BMMS.Master
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

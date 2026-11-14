@@ -59,7 +59,7 @@
                                             CommandArgument="CommitteeName"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblCommitteeName" SkinID="lblSkinGen" Text='<%#Eval("CommitteeName")%>'
+                                        <asp:Label ID="lblCommitteeName" SkinID="lblSkinGen" Text='<%# HttpUtility.HtmlEncode(Eval("CommitteeName")) %>'
                                             runat="server" />
                                         <asp:HiddenField ID="hdnCommitteeId" runat="server" Value='<%#Eval("CommitteeId")%>' />
                                     </ItemTemplate>
@@ -71,7 +71,7 @@
                                             CommandArgument="MeetingNo"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblMeetingNoe" SkinID="lblSkinGen" Text='<%#Eval("MeetingNo")%>' runat="server" />
+                                        <asp:Label ID="lblMeetingNoe" SkinID="lblSkinGen" Text='<%# HttpUtility.HtmlEncode(Eval("MeetingNo")) %>' runat="server" />
                                         <asp:HiddenField ID="hdnMeetingNo" runat="server" />
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
@@ -84,7 +84,7 @@
                                     <ItemTemplate>
                                         <asp:Label ID="lblMeetingDate" runat="server" SkinID="lblskingen" Text='<%#Eval("MeetingDate", "{0:dd-MMM-yyyy}")%>'></asp:Label>
                                         &nbsp; / &nbsp;
-                                        <asp:Label ID="lblMeetingTime" runat="server" SkinID="lblskingen" Text='<%#Eval("MeetingTime")%>'></asp:Label> Hrs.
+                                        <asp:Label ID="lblMeetingTime" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("MeetingTime")) %>'></asp:Label> Hrs.
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
                                 </asp:TemplateField>
@@ -94,7 +94,7 @@
                                             CommandArgument="MemberTypeName"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblMemberType" SkinID="lblSkinGen" Text='<%#Eval("MemberTypeName")%>'
+                                        <asp:Label ID="lblMemberType" SkinID="lblSkinGen" Text='<%# HttpUtility.HtmlEncode(Eval("MemberTypeName")) %>'
                                             runat="server" />
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
@@ -105,7 +105,7 @@
                                             CommandArgument="MemberName"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblMemberName" runat="server" SkinID="lblskingen" Text='<%#Eval("MemberName")%>'></asp:Label>
+                                        <asp:Label ID="lblMemberName" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("MemberName")) %>'></asp:Label>
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
                                 </asp:TemplateField>
@@ -115,7 +115,7 @@
                                             CommandArgument="DesignationName"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblDesignation" runat="server" SkinID="lblskingen" Text='<%#Eval("DesignationName")%>'></asp:Label>
+                                        <asp:Label ID="lblDesignation" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("DesignationName")) %>'></asp:Label>
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
                                 </asp:TemplateField>
@@ -125,7 +125,7 @@
                                             CommandArgument="Attendance"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblAttendance" runat="server" SkinID="lblskingen" Text='<%#Eval("Attendance")%>'></asp:Label>
+                                        <asp:Label ID="lblAttendance" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("Attendance")) %>'></asp:Label>
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
                                 </asp:TemplateField>
@@ -135,7 +135,7 @@
                                             CommandArgument="ApplicableFee"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblSittingFees" runat="server" SkinID="lblskingen" Text='<%#Eval("SittingFees") %>'></asp:Label>
+                                        <asp:Label ID="lblSittingFees" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("SittingFees")) %>'></asp:Label>
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
                                 </asp:TemplateField>

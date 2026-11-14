@@ -36,24 +36,42 @@ namespace BMMS.DashBoard {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::BMMS.UserControl.MeetingSummary MeetingSummary1;
-        
+
         /// <summary>
-        /// lnkShowAll control.
+        /// divErrLogin control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.LinkButton lnkShowAll;
-        
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl divErrLogin;
+
         /// <summary>
-        /// lnkRead control.
+        /// spanErrLogin control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.LinkButton lnkRead;
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl spanErrLogin;
+
+        /// <summary>
+        /// lnkRecent control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.LinkButton lnkRecent;
+        
+        /// <summary>
+        /// lnkAll control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.LinkButton lnkAll;
         
         /// <summary>
         /// lnkUnread control.
@@ -64,6 +82,42 @@ namespace BMMS.DashBoard {
         /// </remarks>
         protected global::System.Web.UI.WebControls.LinkButton lnkUnread;
         
+        /// <summary>
+        /// cardApprovals control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl cardApprovals;
+
+        /// <summary>
+        /// litApprovalCount control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Literal litApprovalCount;
+
+        /// <summary>
+        /// pApprovalsMessage control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl pApprovalsMessage;
+
+        /// <summary>
+        /// grvApprovals control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.GridView grvApprovals;
+
         /// <summary>
         /// hdnAlertUserId control.
         /// </summary>
@@ -126,6 +180,33 @@ namespace BMMS.DashBoard {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.GridView grvActionItem;
+        
+        /// <summary>
+        /// pAlertsMessage control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl pAlertsMessage;
+        
+        /// <summary>
+        /// cardActionItems control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl cardActionItems;
+
+        /// <summary>
+        /// pActionItemsMessage control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl pActionItemsMessage;
         
         /// <summary>
         /// MpCommittee control.
@@ -440,7 +521,7 @@ namespace BMMS.DashBoard {
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::FreeTextBoxControls.FreeTextBox ftxtAgendaText;
+        protected global::BMMS.Controls.RichTextEditor ftxtAgendaText;
         
         /// <summary>
         /// aAgendaText control.
@@ -458,7 +539,7 @@ namespace BMMS.DashBoard {
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::FreeTextBoxControls.FreeTextBox ftxtProposedResolution;
+        protected global::BMMS.Controls.RichTextEditor ftxtProposedResolution;
         
         /// <summary>
         /// grvAttachedFiles control.
@@ -470,13 +551,31 @@ namespace BMMS.DashBoard {
         protected global::System.Web.UI.WebControls.GridView grvAttachedFiles;
         
         /// <summary>
+        /// lblManagerCommentBy control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblManagerCommentBy;
+        
+        /// <summary>
         /// ftxtManagerComments control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::FreeTextBoxControls.FreeTextBox ftxtManagerComments;
+        protected global::BMMS.Controls.RichTextEditor ftxtManagerComments;
+        
+        /// <summary>
+        /// lblControllerCommentBy control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblControllerCommentBy;
         
         /// <summary>
         /// ftxtControllerComments control.
@@ -485,8 +584,17 @@ namespace BMMS.DashBoard {
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::FreeTextBoxControls.FreeTextBox ftxtControllerComments;
-        
+        protected global::BMMS.Controls.RichTextEditor ftxtControllerComments;
+
+        /// <summary>
+        /// pAgendaPanelMessage control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl pAgendaPanelMessage;
+
         /// <summary>
         /// pnlAgendaControls control.
         /// </summary>
@@ -611,7 +719,7 @@ namespace BMMS.DashBoard {
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::FreeTextBoxControls.FreeTextBox ftxtActualResolution;
+        protected global::BMMS.Controls.RichTextEditor ftxtActualResolution;
         
         /// <summary>
         /// ftxtActionText control.
@@ -620,7 +728,7 @@ namespace BMMS.DashBoard {
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::FreeTextBoxControls.FreeTextBox ftxtActionText;
+        protected global::BMMS.Controls.RichTextEditor ftxtActionText;
         
         /// <summary>
         /// Panel2 control.

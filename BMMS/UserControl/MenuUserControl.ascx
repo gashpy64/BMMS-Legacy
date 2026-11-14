@@ -27,7 +27,8 @@
         <li><a href="#" rel="ddsubmenu3">Minutes</a></li>
         <%
             } %>
-        <%if (Session["RoleCode"].ToString() == "admin" || Session["RoleCode"].ToString() == "controller")
+        <%-- Step RA1a: the Admin menu is for Admin only (Reset Password, Backup Database and Audit Trail are Admin tasks) --%>
+        <%if (Session["RoleCode"].ToString() == "admin")
           { %>
         <li><a href="#" rel="ddsubmenu2">Admin</a></li>
         <%
@@ -42,6 +43,10 @@
 </div>
 
 <script type="text/javascript">
+	// No arrow images (step B3): the script would request Images/arrow-down.gif relative to the page, which does
+	// not exist (404); the arrow is drawn in CSS (bmms-workbench.css). Set before setup(), which reads them in init().
+	ddlevelsmenu.arrowpointers.showarrow.toplevel = false;
+	ddlevelsmenu.arrowpointers.showarrow.sublevel = false;
 	ddlevelsmenu.setup("ddtopmenubar", "topbar") //ddlevelsmenu.setup("mainmenuid", "topbar|sidebar")
 </script>
 
@@ -50,16 +55,17 @@
 <!--A good location would be the end of the page (right above "</BODY>")-->
 <!--Top Drop Down Menu 1 HTML-->
 <ul id="ddsubmenu1" class="ddsubmenustyle">
-    <li><a href="../Master/Department.aspx">Department Master</a></li>
-    <li><a href="../Master/Designation.aspx">Designation Master</a></li>
+    <%-- Step RA1a: the code and user masters are for Admin only; the Controller keeps the committee and meeting masters --%>
     <%if (Session["RoleCode"].ToString() == "admin")
       { %>
+    <li><a href="../Master/Department.aspx">Department Master</a></li>
+    <li><a href="../Master/Designation.aspx">Designation Master</a></li>
     <li><a href="../Master/MemberType.aspx">Member Type</a></li>
-    <%
-        } %>
     <li><a href="../Master/SubjectType.aspx">Subject Type</a></li>
     <li><a href="../Master/DecisionType.aspx">Decision Type</a></li>
     <li><a href="../Master/User.aspx">User Master</a></li>
+    <%
+        } %>
     <li><a href="../Master/Member.aspx">Member Master</a></li>
     <li><a href="../Master/Committee.aspx">Committee Master</a></li>
     <li><a href="../Master/CommitteeMember.aspx">Committee Member Tag / UnTag</a></li>
@@ -74,13 +80,9 @@
     <li><a href="../Master/ResetPassword.aspx">Reset Password</a></li>
     <li><a href="../Master/BackupDatabase.aspx">Backup Database</a></li>
     <li><a href="../Master/SMTPServerConfig.aspx">SMTP Configuration</a></li>
+    <li><a href="../Master/SystemSettings.aspx">System Settings</a></li>
+    <li><a href="../Report/AuditTrail.aspx">Audit Trail</a></li>
     <li><a href="../Master/ResetDatabase.aspx">Reset Database</a></li>
-    <%
-        } %>
-    <%if (Session["RoleCode"].ToString() == "controller")
-      { %>
-    <li><a href="../Master/ResetPassword.aspx">Reset Password</a></li>
-    <li><a href="../Master/BackupDatabase.aspx">Backup Database</a></li>
     <%
         } %>
 </ul>
@@ -103,7 +105,8 @@
     <li><a href="../Report/Reports.aspx?rc=minutes_extract">Minutes Extract</a></li>
     <li><a href="../Report/Followup.aspx?fc=followup">Followup</a></li>
     <li><a href="../Report/Followup.aspx?fc=summary">Followup Summary</a></li>
-    <li><a href="../Report/AuditTrail.aspx">Audit Trail</a></li>
+    <%-- Step RA1c2: Followup by Department (Report/FollowupActionTaken.aspx), Controller only --%>
+    <li><a href="../Report/FollowupActionTaken.aspx">Followup by Department</a></li>
     <%
         } %>
     <%if (Session["RoleCode"].ToString() == "manager")
@@ -112,6 +115,14 @@
     <li><a href="../Report/Reports.aspx?rc=agenda_details">Agenda Details</a></li>
     <li><a href="../Report/Reports.aspx?rc=minutes">Minutes</a></li>
     <li><a href="../Report/Reports.aspx?rc=minutes_extract">Minutes Extract</a></li>
+    <%
+        } %>
+    <%-- Step RA1b: Management's reports (every minutes status, marked); no Minutes Extract --%>
+    <%if (Session["RoleCode"].ToString() == "mgmt")
+      { %>
+    <li><a href="../Report/Reports.aspx?rc=minutes">Minutes</a></li>
+    <li><a href="../Report/Followup.aspx?fc=followup">Followup</a></li>
+    <li><a href="../Report/Followup.aspx?fc=summary">Followup Summary</a></li>
     <%
         } %>
 </ul>

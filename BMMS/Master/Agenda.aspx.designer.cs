@@ -269,7 +269,7 @@ namespace BMMS.Master {
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::FreeTextBoxControls.FreeTextBox ftxtAgendaText;
+        protected global::BMMS.Controls.RichTextEditor ftxtAgendaText;
         
         /// <summary>
         /// btnAddAgentaText control.
@@ -296,7 +296,7 @@ namespace BMMS.Master {
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::FreeTextBoxControls.FreeTextBox ftxtProposedResolution;
+        protected global::BMMS.Controls.RichTextEditor ftxtProposedResolution;
         
         /// <summary>
         /// grvAttachedFiles control.
@@ -335,13 +335,22 @@ namespace BMMS.Master {
         protected global::System.Web.UI.WebControls.Panel pnlManagerComments;
         
         /// <summary>
+        /// lblManagerCommentBy control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblManagerCommentBy;
+        
+        /// <summary>
         /// ftxtManagerComments control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::FreeTextBoxControls.FreeTextBox ftxtManagerComments;
+        protected global::BMMS.Controls.RichTextEditor ftxtManagerComments;
         
         /// <summary>
         /// pnlControllerComments control.
@@ -353,13 +362,22 @@ namespace BMMS.Master {
         protected global::System.Web.UI.WebControls.Panel pnlControllerComments;
         
         /// <summary>
+        /// lblControllerCommentBy control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblControllerCommentBy;
+        
+        /// <summary>
         /// ftxtControllerComments control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::FreeTextBoxControls.FreeTextBox ftxtControllerComments;
+        protected global::BMMS.Controls.RichTextEditor ftxtControllerComments;
         
         /// <summary>
         /// btnSave control.

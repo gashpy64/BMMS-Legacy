@@ -236,8 +236,64 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region Comment captions (step UN4)
+        /// <summary>Caption of the Manager's comment (Agenda Entry, Dashboard).</summary>
+        public const string ManagerCommentLabel = "Manager's comment";
+
+        /// <summary>Caption of the Controller's comment (Agenda Entry, Dashboard).</summary>
+        public const string ControllerCommentLabel = "Controller's comment";
+
+        /// <summary>Date and time of a comment, as System Settings shows "Last changed by ... on ...".</summary>
+        public const string CommentDateFormat = "dd-MMM-yyyy HH:mm";
+
+        /// <summary>
+        /// Step UN4: who wrote an agenda comment and when, for its caption, for example "Venkat, 11-Oct-2026 16:49".
+        /// The values are Agenda.MgrApprovedBy / MgrApprovedDate or ControllerApprovedBy / ControllerApprovedDate:
+        /// whoever last saved the comment or recorded the decision (step 35). The name alone (Common.UserCaptionName),
+        /// " (inactive)" for an inactive account, "(unknown user)" for an id with no user row. Empty for a comment
+        /// saved before step 35 (no who and no when): the caption then shows its label alone. Plain text: the page
+        /// encodes it.
+        /// </summary>
+        public static string CommentAuthor(object ById, object On)
+        {
+            string who = string.Empty;
+            int userId;
+            if (ById != null && ById != DBNull.Value && int.TryParse(Convert.ToString(ById), out userId) && userId > 0)
+            {
+                DataTable dtUser = UserMgr.GetUserDataTableByUserId(userId);
+                if (dtUser.Rows.Count > 0)
+                {
+                    DataRow user = dtUser.Rows[0];
+                    // AccountStatus 1 = active (UserStatus-Stage2a); a row without the value counts as active
+                    bool isActive = !dtUser.Columns.Contains("AccountStatus") || user["AccountStatus"] == DBNull.Value
+                        || Convert.ToInt32(user["AccountStatus"]) == 1;
+                    who = Common.UserCaptionName(Convert.ToString(user["UserName"]), Convert.ToString(user["LoginName"]), isActive);
+                }
+
+                if (who.Trim().Length == 0)
+                    who = UserMgr.UnknownUserText;
+            }
+
+            string when = string.Empty;
+            if (On != null && On != DBNull.Value)
+                when = Convert.ToDateTime(On).ToString(CommentDateFormat, System.Globalization.CultureInfo.InvariantCulture);
+
+            if (who.Length > 0 && when.Length > 0)
+                return who + ", " + when;
+
+            return who + when;
+        }
+
+        /// <summary>Step UN4: the whole caption on one line, "Manager's comment: Venkat, 11-Oct-2026 16:49", or the label alone.</summary>
+        public static string CommentCaption(string Label, string Author)
+        {
+            return string.IsNullOrEmpty(Author) ? Label : Label + ": " + Author;
+        }
+        #endregion
+
         #region AddEditAgenda
-        public int AddEditAgenda(AgendaBAL agendaBAL)
+        // acting user = the logged-in user; the procedure reads the role from the database
+        public MeetingChangeResult AddEditAgenda(AgendaBAL agendaBAL, int ActingUserId)
         {
             AgendaDAL agendaDAL = new AgendaDAL();
             agendaDAL.Code = agendaBAL.Code;
@@ -249,12 +305,12 @@ namespace BMMSBAL
             agendaDAL.SubjectTypeId = agendaBAL.SubjectTypeId;
             agendaDAL.ShortText = agendaBAL.ShortText;
             agendaDAL.AgendaType = agendaBAL.AgendaType;
-            agendaDAL.AgendaText = agendaBAL.AgendaText;
+            agendaDAL.AgendaText = HtmlCleaner.Clean(agendaBAL.AgendaText);   // step A1a
             agendaDAL.AgendaTextPath = agendaBAL.AgendaTextPath;
-            agendaDAL.ProposedResolution = agendaBAL.ProposedResolution;
+            agendaDAL.ProposedResolution = HtmlCleaner.Clean(agendaBAL.ProposedResolution);   // step A1a
             agendaDAL.FilePath = agendaBAL.FilePath;
-            agendaDAL.MgrComments = agendaBAL.MgrComments;
-            agendaDAL.ControllerComments = agendaBAL.ControllerComments;
+            agendaDAL.MgrComments = HtmlCleaner.Clean(agendaBAL.MgrComments);   // step A1a
+            agendaDAL.ControllerComments = HtmlCleaner.Clean(agendaBAL.ControllerComments);   // step A1a
             agendaDAL.CurrentStatus = agendaBAL.CurrentStatus;
             agendaDAL.CreatedOn = agendaBAL.CreatedOn;
             agendaDAL.CreatedBy = agendaBAL.CreatedBy;
@@ -262,12 +318,13 @@ namespace BMMSBAL
             agendaDAL.UpdatedBy = agendaBAL.UpdatedBy;
             agendaDAL.SubjectNo = agendaBAL.SubjectNo;
 
-            return AgendaDB.AddEditAgenda(agendaDAL);
+            return MeetingChangeResult.FromTable(AgendaDB.AddEditAgenda(agendaDAL, ActingUserId));
         }
         #endregion
 
         #region AddEditAgendaByController
-        public int AddEditAgendaByController(AgendaBAL agendaBAL)
+        // acting user = the logged-in user; the procedure reads the role from the database
+        public MeetingChangeResult AddEditAgendaByController(AgendaBAL agendaBAL, int ActingUserId)
         {
             AgendaDAL agendaDAL = new AgendaDAL();
             agendaDAL.Code = agendaBAL.Code;
@@ -279,12 +336,12 @@ namespace BMMSBAL
             agendaDAL.SubjectTypeId = agendaBAL.SubjectTypeId;
             agendaDAL.ShortText = agendaBAL.ShortText;
             agendaDAL.AgendaType = agendaBAL.AgendaType;
-            agendaDAL.AgendaText = agendaBAL.AgendaText;
+            agendaDAL.AgendaText = HtmlCleaner.Clean(agendaBAL.AgendaText);   // step A1a
             agendaDAL.AgendaTextPath = agendaBAL.AgendaTextPath;
-            agendaDAL.ProposedResolution = agendaBAL.ProposedResolution;
+            agendaDAL.ProposedResolution = HtmlCleaner.Clean(agendaBAL.ProposedResolution);   // step A1a
             agendaDAL.FilePath = agendaBAL.FilePath;
-            agendaDAL.MgrComments = agendaBAL.MgrComments;
-            agendaDAL.ControllerComments = agendaBAL.ControllerComments;
+            agendaDAL.MgrComments = HtmlCleaner.Clean(agendaBAL.MgrComments);   // step A1a
+            agendaDAL.ControllerComments = HtmlCleaner.Clean(agendaBAL.ControllerComments);   // step A1a
             agendaDAL.CurrentStatus = agendaBAL.CurrentStatus;
             agendaDAL.CreatedOn = agendaBAL.CreatedOn;
             agendaDAL.CreatedBy = agendaBAL.CreatedBy;
@@ -292,12 +349,13 @@ namespace BMMSBAL
             agendaDAL.UpdatedBy = agendaBAL.UpdatedBy;
             agendaDAL.SubjectNo = agendaBAL.SubjectNo;
 
-            return AgendaDB.AddEditAgendaByController(agendaDAL);
+            return MeetingChangeResult.FromTable(AgendaDB.AddEditAgendaByController(agendaDAL, ActingUserId));
         }
         #endregion
 
         #region AddEditAgendaByManager
-        public int AddEditAgendaByManager(AgendaBAL agendaBAL)
+        // acting user = the logged-in user; the procedure reads the role from the database
+        public MeetingChangeResult AddEditAgendaByManager(AgendaBAL agendaBAL, int ActingUserId)
         {
             AgendaDAL agendaDAL = new AgendaDAL();
             agendaDAL.Code = agendaBAL.Code;
@@ -309,12 +367,12 @@ namespace BMMSBAL
             agendaDAL.SubjectTypeId = agendaBAL.SubjectTypeId;
             agendaDAL.ShortText = agendaBAL.ShortText;
             agendaDAL.AgendaType = agendaBAL.AgendaType;
-            agendaDAL.AgendaText = agendaBAL.AgendaText;
+            agendaDAL.AgendaText = HtmlCleaner.Clean(agendaBAL.AgendaText);   // step A1a
             agendaDAL.AgendaTextPath = agendaBAL.AgendaTextPath;
-            agendaDAL.ProposedResolution = agendaBAL.ProposedResolution;
+            agendaDAL.ProposedResolution = HtmlCleaner.Clean(agendaBAL.ProposedResolution);   // step A1a
             agendaDAL.FilePath = agendaBAL.FilePath;
-            agendaDAL.MgrComments = agendaBAL.MgrComments;
-            agendaDAL.ControllerComments = agendaBAL.ControllerComments;
+            agendaDAL.MgrComments = HtmlCleaner.Clean(agendaBAL.MgrComments);   // step A1a
+            agendaDAL.ControllerComments = HtmlCleaner.Clean(agendaBAL.ControllerComments);   // step A1a
             agendaDAL.CurrentStatus = agendaBAL.CurrentStatus;
             agendaDAL.CreatedOn = agendaBAL.CreatedOn;
             agendaDAL.CreatedBy = agendaBAL.CreatedBy;
@@ -322,51 +380,86 @@ namespace BMMSBAL
             agendaDAL.UpdatedBy = agendaBAL.UpdatedBy;
             agendaDAL.SubjectNo = agendaBAL.SubjectNo;
 
-            return AgendaDB.AddEditAgendaByManager(agendaDAL);
+            return MeetingChangeResult.FromTable(AgendaDB.AddEditAgendaByManager(agendaDAL, ActingUserId));
+        }
+        #endregion
+
+        #region GetAgendaUpdateMailId
+        // Step ML1: the addresses of the update mail, separated by ", " (empty when nobody has an address)
+        public static string GetAgendaUpdateMailId(int AgendaId, int ActingUserId)
+        {
+            DataTable dt = AgendaDB.GetAgendaUpdateMailId(AgendaId, ActingUserId);
+
+            string mailIds = string.Empty;
+            foreach (DataRow row in dt.Rows)
+            {
+                string emailId = row["EmailId"].ToString().Trim();
+                if (emailId != string.Empty)
+                    mailIds += (mailIds == string.Empty ? "" : ", ") + emailId;
+            }
+            return mailIds;
         }
         #endregion
 
         #region DeleteAgendaByAgendaId
-        public static int DeleteAgendaByAgendaId(int AgendaId)
+        public static MeetingChangeResult DeleteAgendaByAgendaId(int AgendaId, int ActingUserId)
         {
-            return AgendaDB.DeleteAgendaByAgendaId(AgendaId);
+            return MeetingChangeResult.FromTable(AgendaDB.DeleteAgendaByAgendaId(AgendaId, ActingUserId));
         }
         #endregion
 
         #region UpdateAgendaByAgendaId
-        public static int UpdateAgendaByAgendaId(AgendaBAL agendaBAL)
+        public static MeetingChangeResult UpdateAgendaByAgendaId(AgendaBAL agendaBAL)
         {
             AgendaDAL agendaDAL = new AgendaDAL();
             agendaDAL.AgendaId = agendaBAL.AgendaId;
             agendaDAL.ShortText = agendaBAL.ShortText;
-            agendaDAL.ProposedResolution = agendaBAL.ProposedResolution;
-            agendaDAL.MgrComments = agendaBAL.MgrComments;
-            agendaDAL.ControllerComments = agendaBAL.ControllerComments;
+            agendaDAL.ProposedResolution = HtmlCleaner.Clean(agendaBAL.ProposedResolution);   // step A1a
+            agendaDAL.MgrComments = HtmlCleaner.Clean(agendaBAL.MgrComments);   // step A1a
+            agendaDAL.ControllerComments = HtmlCleaner.Clean(agendaBAL.ControllerComments);   // step A1a
             agendaDAL.MgrApprovedStatus = agendaBAL.MgrApprovedStatus;
             agendaDAL.ControllerApprovedStatus = agendaBAL.ControllerApprovedStatus;
             agendaDAL.UpdatedBy = agendaBAL.UpdatedBy;
 
-            return AgendaDB.UpdateAgendaByAgendaId(agendaDAL);
+            return MeetingChangeResult.FromTable(AgendaDB.UpdateAgendaByAgendaId(agendaDAL));
             //return AgendaDB.UpdateAgendaByAgendaId(AgendaId, MgrComments, ControllerComments, MgrApprovedStatus, ControllerApprovedStatus, UpdatedBy);
         }
         #endregion
 
         #region UpdateAgendaShortText
-        public static int UpdateAgendaShortText(AgendaBAL agendaBAL)
+        public static MeetingChangeResult UpdateAgendaShortText(AgendaBAL agendaBAL)
         {
             AgendaDAL agendaDAL = new AgendaDAL();
             agendaDAL.AgendaId = agendaBAL.AgendaId;
             agendaDAL.ShortText = agendaBAL.ShortText;
             agendaDAL.UpdatedBy = agendaBAL.UpdatedBy;
 
-            return AgendaDB.UpdateAgendaShortText(agendaDAL);
+            return MeetingChangeResult.FromTable(AgendaDB.UpdateAgendaShortText(agendaDAL));
         }
         #endregion
 
         #region AgendaFinalizeByMeetingId
-        public static int AgendaFinalizeByMeetingId(int MeetingId)
+        public static MeetingChangeResult AgendaFinalizeByMeetingId(int MeetingId)
         {
-            return AgendaDB.AgendaFinalizeByMeetingId(MeetingId);
+            return MeetingChangeResult.FromTable(AgendaDB.AgendaFinalizeByMeetingId(MeetingId));
+        }
+        #endregion
+
+        #region GetAgendaApprovalState
+        // Step UN6c2a (step 44): see AgendaDB
+        public static int GetAgendaApprovalState(int ActingUserId, int AgendaId, out bool CanApprove, out bool CanReject,
+            out bool AgendaOpen, out bool DateOpen)
+        {
+            return AgendaDB.GetAgendaApprovalState(ActingUserId, AgendaId, out CanApprove, out CanReject, out AgendaOpen, out DateOpen);
+        }
+        #endregion
+
+        #region GetDashboardApprovals
+        // Step UN6c2a (step 44): see AgendaDB
+        public static DataTable GetDashboardApprovals(int ActingUserId, int CommitteeId, int DepartmentId, int PageNo,
+            out int Reason, out int TotalRows, out int PageShown)
+        {
+            return AgendaDB.GetDashboardApprovals(ActingUserId, CommitteeId, DepartmentId, PageNo, out Reason, out TotalRows, out PageShown);
         }
         #endregion
 
@@ -378,24 +471,56 @@ namespace BMMSBAL
         #endregion
 
         #region UpdateSubjectNoByAgendaId
-        public static int UpdateSubjectNoByAgendaId(int AgendaId, int SubjectNo)
+        public static MeetingChangeResult UpdateSubjectNoByAgendaId(int AgendaId, int SubjectNo, int ActingUserId)
         {
-            return AgendaDB.UpdateSubjectNoByAgendaId(AgendaId, SubjectNo);
+            return MeetingChangeResult.FromTable(AgendaDB.UpdateSubjectNoByAgendaId(AgendaId, SubjectNo, ActingUserId));
+        }
+        #endregion
+
+        #region GetAgendaCreationMailId
+        // Route M (the manager step), C (straight to the Controllers) or I (manager inactive: refused),
+        // with the Bcc addresses of the "agenda created" mail (BMMS-Fix-AgendaRouting-Step20.sql)
+        public static DataTable GetAgendaCreationMailId(int UserId)
+        {
+            DataTable dt = AgendaDB.GetAgendaCreationMailId(UserId);
+
+            if (dt == null || dt.Rows.Count == 0 || !dt.Columns.Contains("Route"))
+                throw new InvalidOperationException("spr_GetAgendaCreationMailId returned no row. Run Database/BMMS-Fix-AgendaRouting-Step20.sql.");
+
+            return dt;
+        }
+        #endregion
+
+        #region GetAgendaLock
+        // May the acting user add / edit / delete agenda items of this meeting? Result 1 = yes;
+        // otherwise Reason / ReasonDetail as the agenda procedures would refuse (BMMS-Fix-MeetingLocks-Step16.sql)
+        public static MeetingChangeResult GetAgendaLock(int MeetingId, int ActingUserId)
+        {
+            DataTable dt = AgendaDB.GetAgendaLockByMeetingId(MeetingId, ActingUserId);
+
+            if (dt == null || dt.Rows.Count == 0 || !dt.Columns.Contains("AllowChange"))
+                throw new InvalidOperationException("spr_GetAgendaLockByMeetingId returned no row. Run Database/BMMS-Fix-MeetingLocks-Step16.sql.");
+
+            MeetingChangeResult r = new MeetingChangeResult();
+            r.Result = Convert.ToInt32(dt.Rows[0]["AllowChange"]);
+            r.Reason = Convert.ToInt32(dt.Rows[0]["Reason"]);
+            r.ReasonDetail = dt.Rows[0]["ReasonDetail"].ToString();
+            return r;
         }
         #endregion
 
 
         #region MinutesFinalizeByMeetingId
-        public static int MinutesFinalizeByMeetingId(int MeetingId, int UserId)
+        public static MeetingChangeResult MinutesFinalizeByMeetingId(int MeetingId, int UserId)
         {
-            return AgendaDB.MinutesFinalizeByMeetingId(MeetingId, UserId);
+            return MeetingChangeResult.FromTable(AgendaDB.MinutesFinalizeByMeetingId(MeetingId, UserId));
         }
         #endregion
 
         #region MinutesConfirmByMeetingId
-        public static int MinutesConfirmByMeetingId(int MeetingId, int UserId)
+        public static MeetingChangeResult MinutesConfirmByMeetingId(int MeetingId, int UserId)
         {
-            return AgendaDB.MinutesConfirmByMeetingId(MeetingId, UserId);
+            return MeetingChangeResult.FromTable(AgendaDB.MinutesConfirmByMeetingId(MeetingId, UserId));
         }
         #endregion
 

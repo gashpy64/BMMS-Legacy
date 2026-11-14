@@ -18,6 +18,9 @@ namespace BMMS.Master
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            // Step RA1a: Admin only (role read from the database; ends the request otherwise)
+            BMMS.Security.PageAccessModule.RequireRole("admin");
+
             Common.InitSetup(className);
 
             if (!IsPostBack)
@@ -195,7 +198,7 @@ namespace BMMS.Master
                     mySubjectType = null;
                 }
 
-                MsgDisplay(sMsg);
+                MsgDisplay(sMsg, sMsg == "Successfully Saved" ? MessageKind.Success : sMsg == "Record Not Saved" ? MessageKind.Error : MessageKind.Warning);
 
                 pnlViewSubjectType.Visible = true;
                 pnlEditSubjectType.Visible = false;
@@ -215,9 +218,9 @@ namespace BMMS.Master
             dtSubjectType.CaseSensitive = false;
 
             if (btnSave.Text == "Save")
-                dv.RowFilter = " SubjectTypeName = '" + txtSubjectTypeName.Text.Trim().ToLower() + "'";
+                dv.RowFilter = " SubjectTypeName = '" + txtSubjectTypeName.Text.Trim().ToLower().Replace("'", "''") + "'";
             if (btnSave.Text == "Update")
-                dv.RowFilter = " SubjectTypeName = '" + txtSubjectTypeName.Text.Trim().ToLower() + "' and SubjectTypeId <> " + hdnSubjectTypeId.Value;
+                dv.RowFilter = " SubjectTypeName = '" + txtSubjectTypeName.Text.Trim().ToLower().Replace("'", "''") + "' and SubjectTypeId <> " + hdnSubjectTypeId.Value;
 
 
             DataTable dtFilter = dv.ToTable("dtSubjectType");
@@ -275,9 +278,12 @@ namespace BMMS.Master
                     
                     try
                     {
-                        SubjectTypeMgr.DeleteSubjectTypeBySubjectTypeId(SubjectTypeId);
+                        int Result = SubjectTypeMgr.DeleteSubjectTypeBySubjectTypeId(SubjectTypeId);
 
-                        MsgDisplay("Record Deleted Successfully");
+                        if (Result == 1)
+                            MsgDisplay("Record Deleted Successfully", MessageKind.Success);
+                        else
+                            MsgDisplay(Common.GetAppSetting("delete_reference"));
                     }
                     catch (Exception ex)
                     {
@@ -305,9 +311,9 @@ namespace BMMS.Master
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

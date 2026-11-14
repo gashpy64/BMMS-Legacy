@@ -31,6 +31,30 @@ namespace BMMSBAL
     public class ActionItemMgr
     {
 
+        #region GetDashboardActionItems
+        // Step UN6c1 (step 43): see ActionItemDB
+        public static DataTable GetDashboardActionItems(int ActingUserId, out int Reason)
+        {
+            return ActionItemDB.GetDashboardActionItems(ActingUserId, out Reason);
+        }
+        #endregion
+
+        #region OpenDashboardActionItem
+        // Step UN6c1 (step 43): see ActionItemDB
+        public static DataTable OpenDashboardActionItem(int ActingUserId, int ActionItemId, out int Reason)
+        {
+            return ActionItemDB.OpenDashboardActionItem(ActingUserId, ActionItemId, out Reason);
+        }
+        #endregion
+
+        #region SaveDashboardActionText
+        // Step UN6c1 (step 43): see ActionItemDB
+        public static int SaveDashboardActionText(int ActingUserId, int ActionItemId, string ActionText)
+        {
+            return ActionItemDB.SaveDashboardActionText(ActingUserId, ActionItemId, ActionText);
+        }
+        #endregion
+
         #region GetActionItemByUserId
         public static DataTable GetActionItemByUserId(int UserId)
         {
@@ -69,7 +93,8 @@ namespace BMMSBAL
         #region UpdateActionItem
         public static void UpdateActionItem(string Code, int ActionItemId, string ActualResolution, string ActionText, int IsComplied, int IsConfirmed)
         {
-            ActionItemDB.UpdateActionItem(Code, ActionItemId, ActualResolution, ActionText, IsComplied, IsConfirmed);
+            // Rich text cleaned before it is stored (step A1a)
+            ActionItemDB.UpdateActionItem(Code, ActionItemId, HtmlCleaner.Clean(ActualResolution), HtmlCleaner.Clean(ActionText), IsComplied, IsConfirmed);
         }
         #endregion
 

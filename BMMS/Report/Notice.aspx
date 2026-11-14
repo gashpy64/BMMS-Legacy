@@ -84,7 +84,7 @@
                                     &nbsp;</td>
                                 <td>
                                     <asp:Panel ID="pnlNoticeDownload" runat="server" Visible="false">
-                                        <a href="../Files/PDF/Notice.pdf" target="_blank">Download Notice</a>
+                                        The notice opened in a new window; allow pop-ups if it did not.
                                     </asp:Panel>
                                 </td>
                             </tr>

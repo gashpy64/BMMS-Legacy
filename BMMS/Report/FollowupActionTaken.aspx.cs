@@ -9,12 +9,14 @@ using System.Web.UI.WebControls;
 using System.Web.UI.WebControls.WebParts;
 using System.Web.UI.HtmlControls;
 using BMMSBAL;
-using iTextSharp.text;
-using iTextSharp.text.pdf;
-using System.IO;
 
 namespace BMMS.Report
 {
+    // Step RA1c2: "Followup by Department" (the Controller's Reports menu, after Followup Summary). The follow-up
+    // items of one committee, a meeting or a range of meetings, all departments or one, and all subjects or a
+    // range; View shows the grid, Print builds the report for ViewReport.aspx (Print, Export to Pdf, Export to Word).
+    // Controller only, checked with the role read from the database (as RA1a and RA1b). The Send Mail code, whose
+    // button was commented out, was removed in RA1c2.
     public partial class FollowupActionTaken : System.Web.UI.Page
     {
         private string className = "FollowupActionTaken";
@@ -22,6 +24,9 @@ namespace BMMS.Report
         #region Page_Load
         protected void Page_Load(object sender, EventArgs e)
         {
+            // Step RA1c2: Controller only (role read from the database; ends the request otherwise)
+            BMMS.Security.PageAccessModule.RequireRole("controller");
+
             Common.InitSetup(className);
 
             if (!IsPostBack)
@@ -38,221 +43,34 @@ namespace BMMS.Report
         }
         #endregion
 
-        #region btnSendMail_Click
-        protected void btnSendMail_Click(object sender, EventArgs e)
-        {
-            MsgHide();
-            DataTable dtFollowup = new DataTable();
-            dtFollowup = GetFollowup();
-
-            if (dtFollowup.Rows.Count <= 0)
-            {
-                MsgDisplay(Session["NoRecord"].ToString());
-                ScriptManager.GetCurrent(this).SetFocus(ddlMeetingNoFrom.ClientID);
-            }
-            else
-            {
-                CreatePDF(dtFollowup);
-                pnlFollowupDownload.Visible = true;
-                CreateBodyText();
-                MsgDisplay("Mail was sent to all members.");
-            }
-        }
-        #endregion
-
-        #region CreateBodyText
-        private void CreateBodyText()
-        {
-            int CommitteeId = int.Parse(ddlCommittee.SelectedValue);
-            int MeetingId = int.Parse(ddlMeetingNoFrom.SelectedValue);
-
-            DataTable dtCommitteeMember = new DataTable();
-            dtCommitteeMember = CommitteeMemberMgr.GetCommitteeMemberByCommitteeId(CommitteeId, MeetingId);
-
-            DataTable dtCompanySecretary = UserMgr.GetCompanySecretary(int.Parse(ddlMeetingNoFrom.SelectedValue.ToString()));
-            string CompanySecretary = string.Empty;
-            string CompanySecretaryDesign = string.Empty;
-
-            if (dtCompanySecretary.Rows.Count > 0)
-            {
-                CompanySecretary = dtCompanySecretary.Rows[0]["CompanySecretary"].ToString();
-                CompanySecretaryDesign = dtCompanySecretary.Rows[0]["DesignationName"].ToString();
-            }
-
-            if (dtCommitteeMember.Rows.Count <= 0)
-            {
-                ScriptManager.RegisterStartupScript(this, this.GetType(), "msg", "alert('No Committee-Member or Meeting-Members Available');", true);
-                ScriptManager.GetCurrent(this).SetFocus(ddlMeetingNoFrom.ClientID);
-            }
-            else
-            {
-                try
-                {
-                    string ToMailId = string.Empty;
-
-                    int UserId = Convert.ToInt16(Session["UserId"].ToString());
-                    UserBAL userBal = UserMgr.GetUserByUserId(UserId);
-                    ToMailId = userBal.EmailId.ToString();
-
-                    string Bcc = string.Empty;
-
-                    for (int i = 0; i < dtCommitteeMember.Rows.Count; i++)
-                    {
-                        if (i == dtCommitteeMember.Rows.Count - 1)
-                            Bcc += dtCommitteeMember.Rows[i]["EmailId"].ToString();
-                        else
-                            Bcc += dtCommitteeMember.Rows[i]["EmailId"].ToString() + ", ";
-                    }
-
-                    string BodyText = string.Empty;
-
-
-                    //pdfDocument.Add((PDFUtilities.PrintCompanyLogo()));
-
-                    BodyText += "<table>";
-
-                    BodyText += "<tr>";
-                    BodyText += "<td colspan='2' style='text-align:center; font-weight:bold;'>";
-                    BodyText += "LAKSHMI VILAS BANK <br />";
-                    BodyText += "REGD & ADMIN OFFICE, KARUR";
-                    BodyText += "</td>";
-                    BodyText += "</tr>";
-
-                    BodyText += "<tr>";
-                    BodyText += "<td colspan='2' style='text-align:right'>";
-                    BodyText += "Date : " + System.DateTime.Now.ToString("dd-MM-yyyy");
-                    BodyText += "</td>";
-                    BodyText += "</tr>";
-
-                    BodyText += "<tr>";
-                    BodyText += "<td colspan='2' style='text-align:left'>";
-                    BodyText += "Dear Sir/Madam,<br />";
-                    BodyText += "<br />";
-                    BodyText += "<b>Subject : " + ViewState["MailSubject"].ToString() + "</b><br />";
-                    BodyText += "<br />";
-                    BodyText += "Please find attached the Followup for the meeting as given below.";
-                    BodyText += "<br />";
-                    BodyText += "<br />";
-                    BodyText += "Committee Name : " + ddlCommittee.SelectedItem.Text.Trim();
-                    BodyText += "<br />";
-
-                    if (rdoMeatingNoSearch.SelectedValue.ToString() == "0")
-                    {
-                        BodyText += "Meeting No : " + ddlMeetingNoFrom.SelectedItem.Text.Trim();
-                        BodyText += "<br />";
-                        if (rdoSubjectNoSearch.SelectedValue.ToString() == "1")
-                        {
-                            BodyText += "Subject No : " + ddlSubjectNoFrom.SelectedItem.Text.Trim();
-                            BodyText += " to " + ddlSubjectNoTo.SelectedItem.Text.Trim();
-                            BodyText += "<br />";
-                        }
-                    }
-                    if (rdoMeatingNoSearch.SelectedValue.ToString() == "1")
-                    {
-                        BodyText += "Meeting No : " + ddlMeetingNoFrom.SelectedItem.Text.Trim();
-                        BodyText += " to " + ddlMeetingNoTo.SelectedItem.Text.Trim();
-                        BodyText += "<br />";
-                    }
-                    BodyText += "<br />";
-                    BodyText += "<br />";
-                    BodyText += "Thanking You,<br />";
-                    BodyText += "<br />";
-                    BodyText += "Yours faithfully,<br />";
-                    BodyText += "<br />";
-                    BodyText += "<br />";
-                    BodyText += "<br />";
-
-                    if (CompanySecretary != string.Empty)
-                    {
-                        BodyText += "<b>(" + CompanySecretary + ")</b><br />";
-                        BodyText += "<b>" + CompanySecretaryDesign + "</b>";
-                    }
-                    else
-                    {
-                        BodyText += "<b>Authorized Signatory</b>";
-                    }
-
-                    BodyText += "<br />";
-                    BodyText += "</td>";
-                    BodyText += "</tr>";
-                    BodyText += "</table>";
-
-                    string Subject = ViewState["MailSubject"].ToString();
-                    string AttachFileName = Server.MapPath("~/Files/PDF") + "\\Followup.pdf";
-                    Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, AttachFileName, Bcc);
-
-                    
-                }
-                catch (Exception ex)
-                {
-                    throw ex;
-                }
-                finally
-                {
-
-                }
-            }
-        }
-        #endregion
-
-        #region CreatePDF
-        protected void CreatePDF(DataTable dtFollowup)
-        {
-            string sFilePDF = Server.MapPath("~/Files/PDF") + "\\Followup.pdf";
-
-            Document pdfDocument = new Document(PageSize.A4, 100f, 75f, 50f, 50f);
-
-            try
-            {
-
-                PdfWriter writer = PdfWriter.GetInstance(pdfDocument, new
-                    FileStream(sFilePDF, FileMode.Create));
-
-                pdfDocument.Open();
-
-                string htmlTxt = string.Empty;
-
-                Paragraph paragraph = new Paragraph(" ");
-                pdfDocument.Add(paragraph);
-
-                PDFUtilities.AddHTMLText(pdfDocument, Session["FollowupHTML"].ToString());
-
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-            finally
-            {
-                pdfDocument.Close();
-            }
-
-            ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(825,500,'" + sFilePDF + "','Followup Report');", true);
-
-        }
-        #endregion
-
         #region btnCreatePDF_Click
+        // "Generate Report": the report HTML for ViewReport.aspx
         protected void btnCreatePDF_Click(object sender, EventArgs e)
         {
+            // Step RA1c2: checked again before the action
+            BMMS.Security.PageAccessModule.RequireRole("controller");
+
             try
             {
                 MsgHide();
-                DataTable dtFollowup = new DataTable();
-                dtFollowup = GetFollowup();
+                // Step RA1c2 (security review): the same checks as Submit (committee, meeting, ranges)
+                if (!CheckValidataion())
+                    return;
+
+                DataTable dtFollowup = GetFollowup();
 
                 if (dtFollowup.Rows.Count <= 0)
                 {
-                    MsgDisplay(Session["NoRecord"].ToString());
+                    MsgDisplay(Convert.ToString(Session["NoRecord"]));
                     ScriptManager.GetCurrent(this).SetFocus(ddlMeetingNoFrom.ClientID);
                 }
                 else
                 {
-
+                    // Step RA1c2: no report kind of an earlier Minutes or Followup report stays behind (RA1b review)
+                    Session.Remove("ViewReportKind");
                     Session["ViewReport"] = CreateReportHTML(dtFollowup);
-                    pnlFollowupDownload.Visible = true;
-                    //CreatePDF(dtFollowup);
-                    ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(825,500,'ViewReport.aspx','Followup Report');", true);
+                    Session["ViewReportName"] = "FollowupByDepartment";   // ViewReport.aspx, Export to Pdf (step 25)
+                    ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(825,500,'ViewReport.aspx','Followup by Department');", true);
                 }
             }
             catch (Exception ex)
@@ -263,119 +81,79 @@ namespace BMMS.Report
         #endregion
 
         #region CreateReportHTML
+        // The report of the rows given (the same rows as the grid: committee, meetings, department and subjects)
         private string CreateReportHTML(DataTable dtFollowup)
         {
-            int MeetingNoFrom = int.Parse(ddlMeetingNoFrom.SelectedItem.Text.Trim());
-            int MeetingNoTo = MeetingNoFrom;
-
-            if (rdoMeatingNoSearch.SelectedValue.ToString() == "1")
-                MeetingNoTo = int.Parse(ddlMeetingNoTo.SelectedItem.Text.Trim());
-
-            int CommitteeId = int.Parse(ddlCommittee.SelectedValue);
-
-            CommitteeBAL commiteeBal = CommitteeMgr.GetCommitteeByCommitteeId(CommitteeId);
-            bool IsBoard = false;
-            if (commiteeBal.Board == 1)
-                IsBoard = true;
-
             string htmlTxt = string.Empty;
 
-            try
+            DataTable dtMeeting = MeetingMgr.GetMeetingList();
+
+            htmlTxt += "<div style='float:left; width: 650px;'>";
+
+            htmlTxt += OrganisationDetails.ReportBannerHtml();
+
+            if (OrganisationDetails.Current.HeaderLine != string.Empty)
+                htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:13pt; padding-top:10px;'>" + OrganisationDetails.Html(OrganisationDetails.Current.HeaderLine) + "</div>";
+
+            htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:11pt;'><br /></div>";
+
+            // border='1', not '1px': the PDF export (HTMLWorker) reads the border as a number and fails on a unit
+            htmlTxt += "<table cellpadding='0' cellspacing='0' border='1' style='float:left; width:100%;'>";
+
+            htmlTxt += "<tr>";
+            htmlTxt += "<th style='width:10%'>M.No.";
+            htmlTxt += "</th>";
+            htmlTxt += "<th style='width:10%'>Date";
+            htmlTxt += "</th>";
+            htmlTxt += "<th style='width:10%'>Sub.No";
+            htmlTxt += "</th>";
+            htmlTxt += "<th style='width:70%'>Subject";
+            htmlTxt += "</th>";
+            htmlTxt += "</tr>";
+
+            for (int i = 0; i < dtMeeting.Rows.Count; i++)
             {
-                DataTable dtMeeting = MeetingMgr.GetMeetingList();
+                DataView dv = new DataView(dtFollowup);
+                dv.RowFilter = "MeetingId = " + int.Parse(dtMeeting.Rows[i]["MeetingId"].ToString());
+                DataTable dtFollowupFilter = dv.ToTable("dtFollowup");
 
-                htmlTxt += "<style>";
-                htmlTxt += "@media print";
-                htmlTxt += "{";
-                htmlTxt += "spana {page-break-after:always}";
-                htmlTxt += "}";
-                htmlTxt += "</style>";
-                
-                htmlTxt += "<div style='float:left; width: 650px;'>";
-
-                htmlTxt += "<div style='float:left; width:100%; text-align:center;'><img src='../Images/report_banner-top.jpg' /></div>";
-                //htmlTxt += "<div style='float:left; width:100%; text-align:center;'><img src='" + strReportBanner.ToString() + "' /></div>";
-
-                htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:13pt; padding-top:10px;'>THE LAKSHMI VILAS BANK LIMITED., REGD & ADMIN OFFICE, KARUR - 6</div>";
-
-                htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:11pt;'><br /></div>";
-
-                htmlTxt += "<table cellpadding='0' cellspacing='0' border='1px' style='float:left; width:100%;'>";
-
-                htmlTxt += "<tr>";
-                htmlTxt += "<th style='width:10%'>M.No.";
-                htmlTxt += "</th>";
-                htmlTxt += "<th style='width:10%'>&Date";
-                htmlTxt += "</th>";
-                htmlTxt += "<th style='width:10%'>Sub.No";
-                htmlTxt += "</th>";
-                htmlTxt += "<th style='width:70%'>Subject";
-                htmlTxt += "</th>";
-                htmlTxt += "</tr>";
-
-                for (int i = 0; i < dtMeeting.Rows.Count; i++)
+                if (dtFollowupFilter.Rows.Count > 0)
                 {
+                    htmlTxt += "<tr>";
+                    htmlTxt += "<td>";
+                    htmlTxt += HttpUtility.HtmlEncode(dtFollowupFilter.Rows[0]["MeetingNo"].ToString());
+                    htmlTxt += "</td>";
+                    htmlTxt += "<td>";
+                    htmlTxt += Convert.ToDateTime(dtFollowupFilter.Rows[0]["MeetingDate"].ToString()).ToString("dd/MM/yyyy");
+                    htmlTxt += "</td>";
+                    htmlTxt += "<td>";
+                    htmlTxt += "</td>";
+                    htmlTxt += "<td>";
+                    htmlTxt += "</td>";
+                    htmlTxt += "</tr>";
 
-
-                    dtFollowup = (DataTable)ViewState["dtFollowup"];
-                    DataTable dtFollowupFilter = new DataTable();
-
-                    DataView dv = new DataView(dtFollowup);
-
-                    dv.RowFilter = "MeetingId = " + int.Parse(dtMeeting.Rows[i]["MeetingId"].ToString());
-
-                    dtFollowupFilter = dv.ToTable("dtFollowup");
-
-
-                    if (dtFollowupFilter.Rows.Count > 0)
+                    for (int j = 0; j < dtFollowupFilter.Rows.Count; j++)
                     {
                         htmlTxt += "<tr>";
                         htmlTxt += "<td>";
-                        htmlTxt += dtFollowupFilter.Rows[0]["MeetingNo"].ToString();
-                        htmlTxt += "</td>";
-                        htmlTxt += "<td>";
-                        htmlTxt += Convert.ToDateTime(dtFollowupFilter.Rows[0]["MeetingDate"].ToString()).ToString("dd/MM/yyyy");
                         htmlTxt += "</td>";
                         htmlTxt += "<td>";
                         htmlTxt += "</td>";
                         htmlTxt += "<td>";
+                        htmlTxt += HttpUtility.HtmlEncode(dtFollowupFilter.Rows[j]["SubjectNo"].ToString());
+                        htmlTxt += "</td>";
+                        htmlTxt += "<td>";
+                        htmlTxt += HttpUtility.HtmlEncode(dtFollowupFilter.Rows[j]["ShortText"].ToString());
                         htmlTxt += "</td>";
                         htmlTxt += "</tr>";
-
-                        for (int j = 0; j < dtFollowupFilter.Rows.Count; j++)
-                        {
-
-                            htmlTxt += "<tr>";
-                            htmlTxt += "<td>";
-                            htmlTxt += "</td>";
-                            htmlTxt += "<td>";
-                            htmlTxt += "</td>";
-                            htmlTxt += "<td>";
-                            htmlTxt += dtFollowupFilter.Rows[j]["SubjectNo"].ToString();
-                            htmlTxt += "</td>";
-                            htmlTxt += "<td>";
-                            htmlTxt += dtFollowupFilter.Rows[j]["ShortText"].ToString();
-                            htmlTxt += "</td>";
-                            htmlTxt += "</tr>";                            
-                        }
                     }
                 }
-                htmlTxt += "</table><br />";
-                htmlTxt += "<spana style='color:white'>.</spana>";
-                htmlTxt += "</div>";
-
             }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-            finally
-            {
-
-            }
+            htmlTxt += "</table><br />";
+            htmlTxt += "<spana style='color:white'>.</spana>";
+            htmlTxt += "</div>";
 
             return htmlTxt;
-
         }
         #endregion
 
@@ -394,8 +172,6 @@ namespace BMMS.Report
             {
                 Common.LoadDropdownlist(ddlMeetingNoFrom, dtMeeting, "MeetingNo", "MeetingId", true);
                 Common.LoadDropdownlist(ddlMeetingNoTo, dtMeeting, "MeetingNo", "MeetingId", true);
-                //ddlMeetingNoFrom.SelectedIndex = ddlMeetingNoFrom.Items.Count - 1;
-                //ddlMeetingNoTo.SelectedIndex = ddlMeetingNoTo.Items.Count - 1;
             }
         }
         #endregion
@@ -413,19 +189,10 @@ namespace BMMS.Report
 
             Common.LoadDDLwithAll(ddlDeparment, dtDepartment, "DepartmentName", "DepartmentId", true);
 
-            UserBAL userBal = new UserBAL();
-            userBal = UserMgr.GetUserByUserId(int.Parse(Session["UserId"].ToString()));
-
-            if (Session["RoleCode"].ToString() == "manager")
-            {
-                ddlDeparment.Text = userBal.DepartmentId.ToString();
-                ddlDeparment.Enabled = false;
-            }
-            else
-            {
-                ddlDeparment.Text = "All";
-                ddlDeparment.Enabled = true;
-            }
+            // Step RA1c2: Controller only, so every department can be chosen (the Manager's fixed home department
+            // of the baseline is gone with the Manager's access)
+            ddlDeparment.Text = "All";
+            ddlDeparment.Enabled = true;
         }
         #endregion
 
@@ -433,21 +200,14 @@ namespace BMMS.Report
         protected void ddlCommittee_SelectedIndexChanged(object sender, EventArgs e)
         {
             MsgHide();
-            if (ddlCommittee.SelectedIndex <= 0)
-            {
-                ddlMeetingNoFrom.Items.Clear();
-                ddlMeetingNoTo.Items.Clear();
-                pnlPrintReport.Visible = false;
-                pnlViewReport.Visible = false;
-                pnlFollowupDownload.Visible = false;
-            }
+            ddlMeetingNoFrom.Items.Clear();
+            ddlMeetingNoTo.Items.Clear();
+            ClearSubjectNo();
+            pnlPrintReport.Visible = false;
+            pnlViewReport.Visible = false;
+
             if (ddlCommittee.SelectedIndex > 0)
-            {
                 LoadMeeting(Convert.ToInt32(ddlCommittee.SelectedValue));
-                pnlPrintReport.Visible = false;
-                pnlViewReport.Visible = false;
-                pnlFollowupDownload.Visible = false;
-            }
         }
         #endregion
 
@@ -465,45 +225,6 @@ namespace BMMS.Report
         }
         #endregion
 
-        #region MeetingNoChanged
-        private bool MeetingNoChanged()
-        {
-            bool result = false;
-            MsgHide();
-            if (ddlMeetingNoFrom.SelectedIndex <= 0 || ddlMeetingNoTo.SelectedIndex <= 0)
-            {
-                pnlPrintReport.Visible = false;
-                pnlViewReport.Visible = false;
-                pnlFollowupDownload.Visible = false;
-                result = false;
-            }
-            //else
-            //{
-            //if (CheckFollowup())
-            //{
-            //    pnlPrintReport.Visible = true;
-            //    pnlViewReport.Visible = false;
-            //    pnlFollowupDownload.Visible = false;
-
-            //    int MeetingNoFrom = int.Parse(ddlMeetingNoFrom.SelectedItem.Text.Trim());
-            //    int MeetingNoTo = int.Parse(ddlMeetingNoTo.SelectedItem.Text.Trim());
-
-            //    DataTable dtMeeting = new DataTable();
-            //    dtMeeting = MeetingMgr.GetMeetingByMeetingNoFromTo(MeetingNoFrom, MeetingNoTo);
-
-            //    ViewState["dtMeeting"] = dtMeeting;
-
-            //    txtMeetingVenue.Text = dtMeeting.Rows[0]["Venue"].ToString();
-            //    txtMeetingDate.Text = Convert.ToDateTime(dtMeeting.Rows[0]["MeetingDate"].ToString()).ToString("dd-MMM-yyyy");
-            //    txtMeetingTime.Text = dtMeeting.Rows[0]["MeetingTime"].ToString();
-
-            //    result = true;
-            //}
-            //}
-            return result;
-        }
-        #endregion
-
         #region ddlDeparment_SelectedIndexChanged
         protected void ddlDeparment_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -511,52 +232,95 @@ namespace BMMS.Report
         }
         #endregion
 
-        #region BindSubjectNo
+        #region GetCommitteeFollowupRows
+        // Step RA1c2: the follow-up rows of the chosen committee, meeting (or range of meetings) and department
+        // (-1: all departments), or an empty table while no committee or meeting is chosen.
+        // spr_GetActionItemByMeetingIdDeptId selects by meeting number and department only (it does not use
+        // @CommitteeId), and meeting numbers start again in every committee, so the rows of the other committees
+        // are left out here (no database step).
+        private DataTable GetCommitteeFollowupRows(int DepartmentId)
+        {
+            int committeeId, meetingNoFrom, meetingNoTo;
+
+            if (!int.TryParse(ddlCommittee.SelectedValue, out committeeId) || committeeId <= 0)
+                return new DataTable();
+            if (ddlMeetingNoFrom.SelectedIndex <= 0 || !int.TryParse(ddlMeetingNoFrom.SelectedItem.Text.Trim(), out meetingNoFrom))
+                return new DataTable();
+
+            meetingNoTo = meetingNoFrom;
+            if (rdoMeatingNoSearch.SelectedValue == "1")
+            {
+                if (ddlMeetingNoTo.SelectedIndex <= 0 || !int.TryParse(ddlMeetingNoTo.SelectedItem.Text.Trim(), out meetingNoTo))
+                    return new DataTable();
+            }
+
+            DataTable dt = ActionItemMgr.GetActionItemByMeetingIdDeptId(committeeId, meetingNoFrom, meetingNoTo, DepartmentId);
+
+            DataView dv = new DataView(dt);
+            dv.RowFilter = "CommitteeId = " + committeeId;
+            return dv.ToTable("dtFollowup");
+        }
+
+        // A number shown in a list (meeting number "00001", subject number); -1 when it is not a number
+        private static int SelectedNumber(string text)
+        {
+            int n;
+            return int.TryParse((text ?? string.Empty).Trim(), out n) ? n : -1;
+        }
+
+        // The department chosen in the list: -1 for "- All -"
+        private int SelectedDepartmentId()
+        {
+            int departmentId;
+            if (ddlDeparment.SelectedValue != "All" && int.TryParse(ddlDeparment.SelectedValue, out departmentId))
+                return departmentId;
+            return -1;
+        }
+        #endregion
+
+        #region BindSubjectNo, ClearSubjectNo
+        // Step RA1c2: the Subject No lists offer exactly the subjects of the rows the grid and the report show for
+        // the chosen committee, meetings and department (before RA1c2 they came from another query, which got the
+        // department id as its "confirmed" filter)
         private void BindSubjectNo()
         {
             MsgHide();
+            ClearSubjectNo();
+            // Step RA1c2 (UX review): a grid or Print panel of earlier choices is not left on the page
+            pnlViewReport.Visible = false;
+            pnlPrintReport.Visible = false;
 
+            DataTable dtRows = GetCommitteeFollowupRows(SelectedDepartmentId());
+
+            if (dtRows.Rows.Count <= 0)
+            {
+                ddlSubjectNoFrom.Enabled = false;
+                ddlSubjectNoTo.Enabled = false;
+                return;
+            }
+
+            DataView dv = new DataView(dtRows);
+            dv.Sort = "SubjectNo";
+            DataTable dtSubjects = dv.ToTable("dtSubjectNo", true, "SubjectNo");
+
+            ddlSubjectNoFrom.DataSource = dtSubjects;
+            ddlSubjectNoFrom.DataBind();
+
+            ddlSubjectNoTo.DataSource = dtSubjects;
+            ddlSubjectNoTo.DataBind();
+
+            ddlSubjectNoFrom.SelectedIndex = 0;
+            ddlSubjectNoTo.SelectedIndex = ddlSubjectNoTo.Items.Count - 1;
+
+            bool between = rdoMeatingNoSearch.SelectedValue == "0" && rdoSubjectNoSearch.SelectedValue == "1";
+            ddlSubjectNoFrom.Enabled = between;
+            ddlSubjectNoTo.Enabled = between;
+        }
+
+        private void ClearSubjectNo()
+        {
             ddlSubjectNoFrom.Items.Clear();
             ddlSubjectNoTo.Items.Clear();
-
-            if (rdoMeatingNoSearch.SelectedValue.ToString() == "0")
-            {
-
-                int MeetingNoFrom = int.Parse(ddlMeetingNoFrom.SelectedValue.ToString().Trim());
-
-                int DepartmentId = -1;
-                if (ddlDeparment.SelectedValue != "All")
-                    DepartmentId = int.Parse(ddlDeparment.SelectedValue.ToString());
-
-                DataTable dtFollowup = new DataTable();
-
-                dtFollowup = ActionItemMgr.GetActionItemByMeetingId(MeetingNoFrom, DepartmentId);
-
-                ViewState["dtFollowup"] = dtFollowup;
-
-                if (dtFollowup.Rows.Count <= 0)
-                {
-                    ddlSubjectNoFrom.Enabled = false;
-                    ddlSubjectNoTo.Enabled = false;
-                }
-                else
-                {
-                    ddlSubjectNoFrom.Enabled = true;
-                    ddlSubjectNoTo.Enabled = true;
-
-                    ddlSubjectNoFrom.DataSource = dtFollowup;
-                    ddlSubjectNoFrom.DataBind();
-
-                    ddlSubjectNoTo.DataSource = dtFollowup;
-                    ddlSubjectNoTo.DataBind();
-
-                    ddlSubjectNoFrom.SelectedIndex = 0;
-                    ddlSubjectNoTo.SelectedIndex = ddlSubjectNoTo.Items.Count - 1;
-
-                    ddlSubjectNoFrom.Enabled = false;
-                    ddlSubjectNoTo.Enabled = false;
-                }
-            }
         }
         #endregion
 
@@ -569,38 +333,24 @@ namespace BMMS.Report
                 ddlMeetingNoTo.Visible = false;
                 rdoSubjectNoSearch.SelectedIndex = 0;
                 rdoSubjectNoSearch.Enabled = true;
-                ddlSubjectNoFrom.Enabled = false;
-                ddlSubjectNoTo.Enabled = false;
             }
-            if (rdoMeatingNoSearch.SelectedValue == "1")  // 1 for Between 
+            if (rdoMeatingNoSearch.SelectedValue == "1")  // 1 for Between
             {
                 lblMeetingNo.Visible = true;
                 ddlMeetingNoTo.Visible = true;
                 rdoSubjectNoSearch.SelectedIndex = 0;
                 rdoSubjectNoSearch.Enabled = false;
-                ddlSubjectNoFrom.Enabled = false;
-                ddlSubjectNoTo.Enabled = false;
             }
+            BindSubjectNo();
         }
         #endregion
 
         #region rdoSubjectNoSearch_SelectedIndexChanged
         protected void rdoSubjectNoSearch_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (rdoSubjectNoSearch.SelectedValue == "0")  // 0 for All
-            {
-                ddlSubjectNoFrom.Enabled = false;
-                ddlSubjectNoTo.Enabled = false;
-                BindSubjectNo();
-            }
-            if (rdoSubjectNoSearch.SelectedValue == "1")  // 1 for Between 
-            {
-                ddlSubjectNoFrom.Enabled = true;
-                ddlSubjectNoTo.Enabled = true;
-            }
+            BindSubjectNo();
         }
         #endregion
-
 
         #region CheckValidataion
         private bool CheckValidataion()
@@ -615,38 +365,39 @@ namespace BMMS.Report
                     ScriptManager.GetCurrent(this).SetFocus(ddlCommittee.ClientID);
                     result = false;
                 }
-                else if (rdoMeatingNoSearch.SelectedValue.ToString() == "0")
+                else if (ddlMeetingNoFrom.SelectedIndex <= 0 || (rdoMeatingNoSearch.SelectedValue == "1" && ddlMeetingNoTo.SelectedIndex <= 0))
                 {
-                    int MeetingId = int.Parse(ddlMeetingNoFrom.SelectedValue.ToString().Trim());
-
-                    DataTable dtFollowup = ActionItemMgr.GetActionItemByMeetingId(MeetingId, 0);
-
-                    if (dtFollowup.Rows.Count <= 0)
-                    {
-                        MsgDisplay("Followup not generated for this meeting.");
-                        ScriptManager.GetCurrent(this).SetFocus(ddlMeetingNoFrom.ClientID);
-                        result = false;
-                    }
+                    MsgDisplay("Select meeting no.");
+                    ScriptManager.GetCurrent(this).SetFocus(ddlMeetingNoFrom.ClientID);
+                    result = false;
                 }
-                else if (rdoMeatingNoSearch.SelectedValue.ToString() == "1")
+                // Step RA1c2 (UX review): a range the wrong way round gives a message, not an empty result
+                else if (rdoMeatingNoSearch.SelectedValue == "1" && SelectedNumber(ddlMeetingNoFrom.SelectedItem.Text) > SelectedNumber(ddlMeetingNoTo.SelectedItem.Text))
                 {
-                    int CommitteeId = int.Parse(ddlCommittee.SelectedValue.ToString().Trim());
-                    int MeetingNoFrom = int.Parse(ddlMeetingNoFrom.SelectedItem.Text.Trim());
-                    int MeetingNoTo = int.Parse(ddlMeetingNoTo.SelectedItem.Text.Trim());
-
-                    DataTable dtFollowup = ActionItemMgr.GetActionItemByMeetingIdDeptId(CommitteeId, MeetingNoFrom, MeetingNoTo, -1);
-
-                    if (dtFollowup.Rows.Count <= 0)
-                    {
-                        MsgDisplay("Followup not generated for this meeting.");
-                        ScriptManager.GetCurrent(this).SetFocus(ddlMeetingNoFrom.ClientID);
-                        result = false;
-                    }
+                    MsgDisplay("Meeting No. From must not be greater than To.");
+                    ScriptManager.GetCurrent(this).SetFocus(ddlMeetingNoFrom.ClientID);
+                    result = false;
+                }
+                else if (rdoMeatingNoSearch.SelectedValue == "0" && rdoSubjectNoSearch.SelectedValue == "1" && ddlSubjectNoFrom.Items.Count > 0
+                    && SelectedNumber(ddlSubjectNoFrom.SelectedValue) > SelectedNumber(ddlSubjectNoTo.SelectedValue))
+                {
+                    MsgDisplay("Subject No. From must not be greater than To.");
+                    ScriptManager.GetCurrent(this).SetFocus(ddlSubjectNoFrom.ClientID);
+                    result = false;
+                }
+                // Step RA1c2: the committee's own follow-up items in all departments (before RA1c2: one meeting counted
+                // only unconfirmed items, and a range counted the items of every committee)
+                else if (GetCommitteeFollowupRows(-1).Rows.Count <= 0)
+                {
+                    MsgDisplay("Followup not generated for this meeting.");
+                    ScriptManager.GetCurrent(this).SetFocus(ddlMeetingNoFrom.ClientID);
+                    result = false;
                 }
             }
             catch (Exception ex)
             {
                 Utilities.WriteErrorLog(className, "CheckValidataion", ex.ToString());
+                result = false;
             }
             return result;
         }
@@ -655,7 +406,6 @@ namespace BMMS.Report
         #region btnSubmit_Click
         protected void btnSubmit_Click(object sender, EventArgs e)
         {
-            pnlFollowupDownload.Visible = false;
             pnlViewReport.Visible = false;
             pnlPrintReport.Visible = false;
 
@@ -666,22 +416,20 @@ namespace BMMS.Report
                     pnlViewReport.Visible = true;
                     pnlPrintReport.Visible = false;
 
-                    DataTable dtFollowup = new DataTable();
-                    dtFollowup = GetFollowup();
-                    //ViewState["dtFollowup"] = dtFollowup;
-
+                    DataTable dtFollowup = GetFollowup();
                     grvFollowup.DataSource = dtFollowup;
                     grvFollowup.DataBind();
 
+                    // Step RA1c2 (UX review): a department with no items for these meetings gets the no-record message
+                    if (dtFollowup.Rows.Count <= 0)
+                        MsgDisplay(Convert.ToString(Session["NoRecord"]));
                 }
                 if (rdoViewFormat.Text == "Print")
                 {
-                    pnlFollowupDownload.Visible = false;
                     pnlViewReport.Visible = false;
                     pnlPrintReport.Visible = true;
                 }
             }
-
         }
         #endregion
 
@@ -708,62 +456,34 @@ namespace BMMS.Report
 
             grvFollowup.DataSource = dtFollowup;
             grvFollowup.DataBind();
-
         }
         #endregion
 
         #region GetFollowup
+        // The rows of the grid and of the report: the committee's follow-up items of the chosen meetings and
+        // department, and with "Between" the chosen subject range. Kept in ViewState for the grid's sorting.
         private DataTable GetFollowup()
         {
-            DataTable dtFollowup = new DataTable();
-            DataTable dtFollowup1 = new DataTable();
+            DataTable dtFollowup = GetCommitteeFollowupRows(SelectedDepartmentId());
 
-            int CommitteeId = int.Parse(ddlCommittee.SelectedValue.ToString());
-
-            int DepartmentId = -1;
-            if (ddlDeparment.SelectedValue != "All")
-                DepartmentId = int.Parse(ddlDeparment.SelectedValue.ToString());
-
-            int MeetingNoFrom = int.Parse(ddlMeetingNoFrom.SelectedItem.Text.Trim());
-            int MeetingNoTo = int.Parse(ddlMeetingNoFrom.SelectedItem.Text.Trim());
-
-            if (rdoMeatingNoSearch.SelectedValue.ToString() == "1")
-                MeetingNoTo = int.Parse(ddlMeetingNoTo.SelectedItem.Text.Trim());
-
-            dtFollowup = ActionItemMgr.GetActionItemByMeetingIdDeptId(CommitteeId, MeetingNoFrom, MeetingNoTo, DepartmentId);
-
-            ViewState["dtFollowup"] = dtFollowup;
-
-            try
+            int subjectFrom, subjectTo;
+            if (rdoMeatingNoSearch.SelectedValue == "0" && rdoSubjectNoSearch.SelectedValue == "1" && dtFollowup.Rows.Count > 0
+                && int.TryParse(ddlSubjectNoFrom.SelectedValue, out subjectFrom) && int.TryParse(ddlSubjectNoTo.SelectedValue, out subjectTo))
             {
                 DataView dv = new DataView(dtFollowup);
-
-                if (rdoSubjectNoSearch.SelectedIndex.ToString() == "1")
-                {
-                    if (dtFollowup.Rows.Count > 0)
-                    {
-                        dv.RowFilter = "SubjectNo >= " + ddlSubjectNoFrom.SelectedValue
-                            + " AND SubjectNo <= " + ddlSubjectNoTo.SelectedValue;
-                    }
-                }
-
-                dtFollowup1 = dv.ToTable("dtFollowup");
-
-            }
-            catch (Exception ex)
-            {
-                Utilities.WriteErrorLog(className, "CheckValidataion", ex.ToString());
+                dv.RowFilter = "SubjectNo >= " + subjectFrom + " AND SubjectNo <= " + subjectTo;
+                dtFollowup = dv.ToTable("dtFollowup");
             }
 
-            return dtFollowup1;
-
+            ViewState["dtFollowup"] = dtFollowup;
+            return dtFollowup;
         }
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

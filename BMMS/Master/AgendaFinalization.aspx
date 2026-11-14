@@ -2,7 +2,6 @@
     Codebehind="AgendaFinalization.aspx.cs" Inherits="BMMS.Master.AgendaFinalization"
     Title="Untitled Page" ValidateRequest="false" %>
 
-<%@ Register Assembly="FreeTextBox" Namespace="FreeTextBoxControls" TagPrefix="FTB" %>
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="cc1" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
@@ -125,7 +124,7 @@
                                                                 CommandArgument="ShortText"></asp:LinkButton>
                                                         </HeaderTemplate>
                                                         <ItemTemplate>
-                                                            <asp:Label ID="lblShortText" runat="server" SkinID="lblskingen" Text='<%#Eval("ShortText") %>'></asp:Label>
+                                                            <asp:Label ID="lblShortText" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("ShortText")) %>'></asp:Label>
                                                         </ItemTemplate>
                                                         <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Justify" />
                                                     </asp:TemplateField>

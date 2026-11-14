@@ -99,7 +99,27 @@ namespace BMMS.Master {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.DropDownList ddlDepartment;
-        
+
+        /// <summary>
+        /// litDepartmentLabel control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Literal litDepartmentLabel;
+
+        /// <summary>
+        /// pnlDepartments control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Panel pnlDepartments;
+
+        /// <summary>
+        /// cblDepartments control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.CheckBoxList cblDepartments;
+
+        /// <summary>
+        /// litDepartmentsNote control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Literal litDepartmentsNote;
+
         /// <summary>
         /// ddlRole control.
         /// </summary>

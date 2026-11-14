@@ -266,10 +266,62 @@ namespace BMMSDAL
         }
         #endregion
 
-        #region AddEditAgenda
-        public static int AddEditAgenda(AgendaDAL AgendaDAL)
+        #region SaveAgendaRow
+        // Step ML1 (BMMS-Fix-UpdateMail-Step37.sql): an Update also asks the procedure for @ChangedFields, the
+        // fields it changed. The returned row gets a column ChangedFields: the list ("" when nothing changed), or
+        // DBNull for a new item (Save) and when step 37 is not installed (the procedure has no such parameter;
+        // the Update is then saved as before and the page reports that the mail could not be sent).
+        private static DataTable SaveAgendaRow(string ProcedureName, SqlParameter[] Parameters, string Code)
         {
-            SqlParameter[] parameter = new SqlParameter[21];
+            SqlParameter changedFields = null;
+            if (Code == "Update" && HasChangedFieldsParameter(ProcedureName))
+            {
+                changedFields = new SqlParameter("@ChangedFields", SqlDbType.VarChar, 400);
+                changedFields.Direction = ParameterDirection.Output;
+
+                SqlParameter[] withOutput = new SqlParameter[Parameters.Length + 1];
+                Parameters.CopyTo(withOutput, 0);
+                withOutput[Parameters.Length] = changedFields;
+                Parameters = withOutput;
+            }
+
+            DataTable dt = CommonDB.GetDataTable(ProcedureName, Parameters);
+
+            dt.Columns.Add("ChangedFields", typeof(string));
+            if (dt.Rows.Count > 0)
+                dt.Rows[0]["ChangedFields"] = changedFields == null || changedFields.Value == null || changedFields.Value == DBNull.Value
+                    ? (object)DBNull.Value : changedFields.Value.ToString();
+
+            return dt;
+        }
+
+        // Step ML1: true when the procedure has the step 37 parameter @ChangedFields (ProcedureName is one of the
+        // three fixed agenda procedure names, never user input)
+        private static bool HasChangedFieldsParameter(string ProcedureName)
+        {
+            DataTable dt = CommonDB.GetDataTableFromQuery(
+                "SELECT COUNT(*) AS n FROM sys.parameters WHERE object_id = OBJECT_ID('dbo." + ProcedureName + "') AND name = '@ChangedFields'");
+            return dt.Rows.Count > 0 && Convert.ToInt32(dt.Rows[0]["n"]) > 0;
+        }
+        #endregion
+
+        #region GetAgendaUpdateMailId
+        // Step ML1: the addresses of the update mail (spr_GetAgendaUpdateMailId, step 37): the users the
+        // refreshed alert is shown to, except the acting user; one column EmailId
+        public static DataTable GetAgendaUpdateMailId(int AgendaId, int ActingUserId)
+        {
+            SqlParameter[] parameter = new SqlParameter[2];
+            parameter[0] = new SqlParameter("@AgendaId", AgendaId);
+            parameter[1] = new SqlParameter("@ActingUserId", ActingUserId);
+
+            return CommonDB.GetDataTable("spr_GetAgendaUpdateMailId", parameter);
+        }
+        #endregion
+
+        #region AddEditAgenda
+        public static DataTable AddEditAgenda(AgendaDAL AgendaDAL, int ActingUserId)
+        {
+            SqlParameter[] parameter = new SqlParameter[22];
             parameter[0] = new SqlParameter("@Code", AgendaDAL.Code);
             parameter[1] = new SqlParameter("@AgendaId", AgendaDAL.AgendaId);
             parameter[2] = new SqlParameter("@AgendaNo", AgendaDAL.AgendaNo);
@@ -290,16 +342,21 @@ namespace BMMSDAL
             parameter[17] = new SqlParameter("@CreatedBy", AgendaDAL.CreatedBy);
             parameter[18] = new SqlParameter("@UpdatedOn", AgendaDAL.UpdatedOn);
             parameter[19] = new SqlParameter("@UpdatedBy", AgendaDAL.UpdatedBy);
-            parameter[20] = new SqlParameter("@SubjectNo", AgendaDAL.SubjectNo);
+            // Step N5: an empty Subject No is NULL, not '' (which the INT parameter turned into 0)
+            parameter[20] = new SqlParameter("@SubjectNo", string.IsNullOrEmpty(AgendaDAL.SubjectNo) ? (object)DBNull.Value : AgendaDAL.SubjectNo);
 
-            return CommonDB.ExecuteProcedure("spr_AddEditAgenda", parameter);
+            parameter[21] = new SqlParameter("@ActingUserId", ActingUserId);
+
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks-Step16.sql)
+            // Step ML1: plus ChangedFields on an Update (SaveAgendaRow)
+            return SaveAgendaRow("spr_AddEditAgenda", parameter, AgendaDAL.Code);
         }
         #endregion
 
         #region AddEditAgendaByController
-        public static int AddEditAgendaByController(AgendaDAL AgendaDAL)
+        public static DataTable AddEditAgendaByController(AgendaDAL AgendaDAL, int ActingUserId)
         {
-            SqlParameter[] parameter = new SqlParameter[21];
+            SqlParameter[] parameter = new SqlParameter[22];
             parameter[0] = new SqlParameter("@Code", AgendaDAL.Code);
             parameter[1] = new SqlParameter("@AgendaId", AgendaDAL.AgendaId);
             parameter[2] = new SqlParameter("@AgendaNo", AgendaDAL.AgendaNo);
@@ -320,16 +377,21 @@ namespace BMMSDAL
             parameter[17] = new SqlParameter("@CreatedBy", AgendaDAL.CreatedBy);
             parameter[18] = new SqlParameter("@UpdatedOn", AgendaDAL.UpdatedOn);
             parameter[19] = new SqlParameter("@UpdatedBy", AgendaDAL.UpdatedBy);
-            parameter[20] = new SqlParameter("@SubjectNo", AgendaDAL.SubjectNo);
+            // Step N5: an empty Subject No is NULL, not '' (which the INT parameter turned into 0)
+            parameter[20] = new SqlParameter("@SubjectNo", string.IsNullOrEmpty(AgendaDAL.SubjectNo) ? (object)DBNull.Value : AgendaDAL.SubjectNo);
 
-            return CommonDB.ExecuteProcedure("spr_AddEditAgendaByController", parameter);
+            parameter[21] = new SqlParameter("@ActingUserId", ActingUserId);
+
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks-Step16.sql)
+            // Step ML1: plus ChangedFields on an Update (SaveAgendaRow)
+            return SaveAgendaRow("spr_AddEditAgendaByController", parameter, AgendaDAL.Code);
         }
         #endregion
 
         #region AddEditAgendaByManager
-        public static int AddEditAgendaByManager(AgendaDAL AgendaDAL)
+        public static DataTable AddEditAgendaByManager(AgendaDAL AgendaDAL, int ActingUserId)
         {
-            SqlParameter[] parameter = new SqlParameter[21];
+            SqlParameter[] parameter = new SqlParameter[22];
             parameter[0] = new SqlParameter("@Code", AgendaDAL.Code);
             parameter[1] = new SqlParameter("@AgendaId", AgendaDAL.AgendaId);
             parameter[2] = new SqlParameter("@AgendaNo", AgendaDAL.AgendaNo);
@@ -350,24 +412,31 @@ namespace BMMSDAL
             parameter[17] = new SqlParameter("@CreatedBy", AgendaDAL.CreatedBy);
             parameter[18] = new SqlParameter("@UpdatedOn", AgendaDAL.UpdatedOn);
             parameter[19] = new SqlParameter("@UpdatedBy", AgendaDAL.UpdatedBy);
-            parameter[20] = new SqlParameter("@SubjectNo", AgendaDAL.SubjectNo);
+            // Step N5: an empty Subject No is NULL, not '' (which the INT parameter turned into 0)
+            parameter[20] = new SqlParameter("@SubjectNo", string.IsNullOrEmpty(AgendaDAL.SubjectNo) ? (object)DBNull.Value : AgendaDAL.SubjectNo);
 
-            return CommonDB.ExecuteProcedure("spr_AddEditAgendaByManager", parameter);
+            parameter[21] = new SqlParameter("@ActingUserId", ActingUserId);
+
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks-Step16.sql)
+            // Step ML1: plus ChangedFields on an Update (SaveAgendaRow)
+            return SaveAgendaRow("spr_AddEditAgendaByManager", parameter, AgendaDAL.Code);
         }
         #endregion
 
         #region DeleteAgendaByAgendaId
-        public static int DeleteAgendaByAgendaId(int AgendaId)
+        public static DataTable DeleteAgendaByAgendaId(int AgendaId, int ActingUserId)
         {
-            SqlParameter[] parameter = new SqlParameter[1];
+            SqlParameter[] parameter = new SqlParameter[2];
             parameter[0] = new SqlParameter("@AgendaId", AgendaId);
+            parameter[1] = new SqlParameter("@ActingUserId", ActingUserId);
 
-            return CommonDB.ExecuteProcedure("spr_DeleteAgendaByAgendaId", parameter); ;
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks-Step16.sql)
+            return CommonDB.GetDataTable("spr_DeleteAgendaByAgendaId", parameter);
         }
         #endregion
 
         #region UpdateAgendaByAgendaId
-        public static int UpdateAgendaByAgendaId(AgendaDAL AgendaDAL)  //int AgendaId, string MgrComments, string ControllerComments, string MgrApprovedStatus, string ControllerApprovedStatus, int UpdatedBy)
+        public static DataTable UpdateAgendaByAgendaId(AgendaDAL AgendaDAL)  //int AgendaId, string MgrComments, string ControllerComments, string MgrApprovedStatus, string ControllerApprovedStatus, int UpdatedBy)
         {
             SqlParameter[] parameter = new SqlParameter[8];
             parameter[0] = new SqlParameter("@AgendaId", AgendaDAL.AgendaId);
@@ -379,29 +448,115 @@ namespace BMMSDAL
             parameter[6] = new SqlParameter("@ControllerApprovedStatus", AgendaDAL.ControllerApprovedStatus);
             parameter[7] = new SqlParameter("@UpdatedBy", AgendaDAL.UpdatedBy);
 
-            return CommonDB.ExecuteProcedure("spr_UpdateAgendaByAgendaId", parameter); ;
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks-Step16.sql)
+            return CommonDB.GetDataTable("spr_UpdateAgendaByAgendaId", parameter);
+        }
+        #endregion
+
+        #region GetAgendaApprovalState
+        // Step UN6c2a (BMMS-Fix-AgendaWaitingFor-Step44.sql): what the acting user may do with one agenda item, from
+        // the one rule of the database (fn_AgendaWaitingFor): the Agenda Alert panel shows Approve and Reject from this
+        // answer. AgendaOpen: the meeting's agenda is still Open. DateOpen: the meeting date has not passed, by the
+        // DATABASE server's date. Reason 0 when answered; 12 (the system account), 8 (user missing or inactive) or 4
+        // (the item does not exist), and then every flag is false.
+        public static int GetAgendaApprovalState(int ActingUserId, int AgendaId, out bool CanApprove, out bool CanReject,
+            out bool AgendaOpen, out bool DateOpen)
+        {
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+            SqlParameter canApprove = new SqlParameter("@CanApprove", SqlDbType.Int);
+            canApprove.Direction = ParameterDirection.Output;
+            SqlParameter canReject = new SqlParameter("@CanReject", SqlDbType.Int);
+            canReject.Direction = ParameterDirection.Output;
+            SqlParameter agendaOpen = new SqlParameter("@AgendaOpen", SqlDbType.Int);
+            agendaOpen.Direction = ParameterDirection.Output;
+            SqlParameter dateOpen = new SqlParameter("@DateOpen", SqlDbType.Int);
+            dateOpen.Direction = ParameterDirection.Output;
+
+            SqlParameter[] parameter = new SqlParameter[8];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = new SqlParameter("@AgendaId", AgendaId);
+            parameter[2] = result;
+            parameter[3] = reason;
+            parameter[4] = canApprove;
+            parameter[5] = canReject;
+            parameter[6] = agendaOpen;
+            parameter[7] = dateOpen;
+
+            CommonDB.ExecuteProcedure("spr_GetAgendaApprovalState", parameter);
+            int Reason = MinutesDB.RefusalReason(result, reason);
+            CanApprove = Reason == 0 && IsOne(canApprove);
+            CanReject = Reason == 0 && IsOne(canReject);
+            AgendaOpen = Reason == 0 && IsOne(agendaOpen);
+            DateOpen = Reason == 0 && IsOne(dateOpen);
+            return Reason;
+        }
+
+        private static bool IsOne(SqlParameter Parameter)
+        {
+            return Parameter.Value != null && Parameter.Value != DBNull.Value && Convert.ToInt32(Parameter.Value) == 1;
+        }
+        #endregion
+
+        #region GetDashboardApprovals
+        // Step UN6c2a (step 44): the Dashboard's My approvals panel: the items that wait for the acting user's approval
+        // (a Controller: at AMA; a Manager: at AC and routed to him), of meetings whose agenda is open and whose date
+        // has not passed, newest meeting first, one page of 10. CommitteeId 0 = every committee, DepartmentId 0 = no
+        // department filter (a Manager's own department otherwise). Reason 0 when allowed; 12, 8 or 4 (a role without
+        // the panel, a filter that is not allowed, a page below 1), and then no rows.
+        public static DataTable GetDashboardApprovals(int ActingUserId, int CommitteeId, int DepartmentId, int PageNo,
+            out int Reason, out int TotalRows, out int PageShown)
+        {
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+            SqlParameter total = new SqlParameter("@TotalRows", SqlDbType.Int);
+            total.Direction = ParameterDirection.Output;
+            SqlParameter page = new SqlParameter("@PageShown", SqlDbType.Int);
+            page.Direction = ParameterDirection.Output;
+
+            SqlParameter[] parameter = new SqlParameter[8];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = new SqlParameter("@CommitteeId", CommitteeId);
+            parameter[2] = new SqlParameter("@DepartmentId", DepartmentId);
+            parameter[3] = new SqlParameter("@PageNo", PageNo);
+            parameter[4] = result;
+            parameter[5] = reason;
+            parameter[6] = total;
+            parameter[7] = page;
+
+            DataTable dt = CommonDB.GetDataTable("spr_GetDashboardApprovals", parameter);
+            Reason = MinutesDB.RefusalReason(result, reason);
+            TotalRows = total.Value == null || total.Value == DBNull.Value ? 0 : Convert.ToInt32(total.Value);
+            PageShown = page.Value == null || page.Value == DBNull.Value ? 1 : Convert.ToInt32(page.Value);
+            return dt;
         }
         #endregion
 
         #region UpdateAgendaShortText
-        public static int UpdateAgendaShortText(AgendaDAL AgendaDAL)
+        public static DataTable UpdateAgendaShortText(AgendaDAL AgendaDAL)
         {
             SqlParameter[] parameter = new SqlParameter[3];
             parameter[0] = new SqlParameter("@AgendaId", AgendaDAL.AgendaId);
             parameter[1] = new SqlParameter("@ShortText", AgendaDAL.ShortText);
             parameter[2] = new SqlParameter("@UpdatedBy", AgendaDAL.UpdatedBy);
 
-            return CommonDB.ExecuteProcedure("spr_UpdateAgendaShortText", parameter);
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks-Step16.sql)
+            return CommonDB.GetDataTable("spr_UpdateAgendaShortText", parameter);
         }
         #endregion
 
         #region AgendaFinalizeByMeetingId
-        public static int AgendaFinalizeByMeetingId(int MeetingId)
+        public static DataTable AgendaFinalizeByMeetingId(int MeetingId)
         {
             SqlParameter[] parameter = new SqlParameter[1];
             parameter[0] = new SqlParameter("@MeetingId", MeetingId);
 
-            return CommonDB.ExecuteProcedure("spr_AgendaFinalizeByMeetingId", parameter); ;
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks.sql)
+            return CommonDB.GetDataTable("spr_AgendaFinalizeByMeetingId", parameter);
         }
         #endregion
 
@@ -417,35 +572,64 @@ namespace BMMSDAL
         #endregion
 
         #region UpdateSubjectNoByAgendaId
-        public static int UpdateSubjectNoByAgendaId(int AgendaId, int SubjectNo)
+        public static DataTable UpdateSubjectNoByAgendaId(int AgendaId, int SubjectNo, int ActingUserId)
         {
-            SqlParameter[] parameter = new SqlParameter[2];
+            SqlParameter[] parameter = new SqlParameter[3];
             parameter[0] = new SqlParameter("@AgendaId", AgendaId);
             parameter[1] = new SqlParameter("@SubjectNo", SubjectNo);
+            parameter[2] = new SqlParameter("@ActingUserId", ActingUserId);
 
-            return CommonDB.ExecuteProcedure("spr_UpdateSubjectNoByAgendaId", parameter); ;
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks-Step16.sql)
+            return CommonDB.GetDataTable("spr_UpdateSubjectNoByAgendaId", parameter);
+        }
+        #endregion
+
+        #region GetAgendaCreationMailId
+        // The creator's route and the Bcc of the "agenda created" mail: Route, ManagerName,
+        // ActiveControllers, EmailId; at least one row (BMMS-Fix-AgendaRouting-Step20.sql)
+        public static DataTable GetAgendaCreationMailId(int UserId)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@UserId", UserId);
+
+            return CommonDB.GetDataTable("spr_GetAgendaCreationMailId", parameter);
+        }
+        #endregion
+
+        #region GetAgendaLockByMeetingId
+        // One row: AllowChange, Reason, ReasonDetail - may the acting user add / edit / delete
+        // agenda items of the meeting (BMMS-Fix-MeetingLocks-Step16.sql)
+        public static DataTable GetAgendaLockByMeetingId(int MeetingId, int ActingUserId)
+        {
+            SqlParameter[] parameter = new SqlParameter[2];
+            parameter[0] = new SqlParameter("@MeetingId", MeetingId);
+            parameter[1] = new SqlParameter("@ActingUserId", ActingUserId);
+
+            return CommonDB.GetDataTable("spr_GetAgendaLockByMeetingId", parameter);
         }
         #endregion
 
         #region MinutesFinalizeByMeetingId
-        public static int MinutesFinalizeByMeetingId(int MeetingId, int UserId)
+        public static DataTable MinutesFinalizeByMeetingId(int MeetingId, int UserId)
         {
             SqlParameter[] parameter = new SqlParameter[2];
             parameter[0] = new SqlParameter("@MeetingId", MeetingId);
             parameter[1] = new SqlParameter("@UserId", UserId);
 
-            return CommonDB.ExecuteProcedure("spr_MinutesFinalizeByMeetingId", parameter); ;
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks.sql)
+            return CommonDB.GetDataTable("spr_MinutesFinalizeByMeetingId", parameter);
         }
         #endregion
 
         #region MinutesConfirmByMeetingId
-        public static int MinutesConfirmByMeetingId(int MeetingId, int UserId)
+        public static DataTable MinutesConfirmByMeetingId(int MeetingId, int UserId)
         {
             SqlParameter[] parameter = new SqlParameter[2];
             parameter[0] = new SqlParameter("@MeetingId", MeetingId);
             parameter[1] = new SqlParameter("@UserId", UserId);
 
-            return CommonDB.ExecuteProcedure("spr_MinutesConfirmByMeetingId", parameter); ;
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks.sql)
+            return CommonDB.GetDataTable("spr_MinutesConfirmByMeetingId", parameter);
         }
         #endregion
 

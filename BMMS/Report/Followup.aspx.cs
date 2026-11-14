@@ -20,12 +20,29 @@ namespace BMMS.Report
         private string className = "followup_report";
         private string reportCode = string.Empty;
 
+        // Step RA1b: Management's path (role read from the database in Page_Load for every request)
+        private bool forManagement = false;
+        private int managementReason = 0;
+
         #region Page_Load
         protected void Page_Load(object sender, EventArgs e)
         {
 
-            ViewState["reportCode"] = Request.QueryString.Get("fc").ToString();
-            reportCode = Request.QueryString.Get("fc").ToString();
+            // Step RA1b: Followup and Followup Summary for the Controller and Management, checked on the server with the
+            // role read from the database; any other report code (or none) is refused. Management reads its rows
+            // through spr_GetFollowupReportForManagement (with the minutes status); the Controller's path is unchanged.
+            string fc = Request.QueryString["fc"];
+            if (fc != "followup" && fc != "summary")
+                BMMS.Security.PageAccessModule.RefuseRequest("unknown report code");
+            BMMS.Security.PageAccessModule.RequireRole("controller", "mgmt");
+            forManagement = BMMS.Security.PageAccessModule.HasRole("mgmt");
+            // Step RA1b: a Management session whose role could not be read from the database here (a database error)
+            // is refused, rather than given the Controller's path without the minutes status
+            if (!forManagement && (Session["RoleCode"] as string) == "mgmt")
+                BMMS.Security.PageAccessModule.RefuseRequest("role could not be read for the Management path");
+
+            ViewState["reportCode"] = fc;
+            reportCode = fc;
 
             Common.InitSetup(className);
 
@@ -199,7 +216,8 @@ namespace BMMS.Report
         protected void btnCancel_Click(object sender, EventArgs e)
         {
             MsgHide();
-            Response.Redirect("~/Report/Followup.aspx");
+            // Step RA1b: back to the same report (the page needs fc; without it the page is refused)
+            Response.Redirect("~/Report/Followup.aspx?fc=" + HttpUtility.UrlEncode(reportCode));
         }
         #endregion
 
@@ -212,6 +230,16 @@ namespace BMMS.Report
             {
                 GetReportDetails();
 
+                // Step RA1b: the Management procedure refused (Reason 8 or 4): its message, no grid
+                if (forManagement && managementReason != 0)
+                {
+                    pnlViewFollowup.Visible = false;
+                    MsgDisplay(ReportsMgr.ReportRefusedMessage(managementReason));
+                    return;
+                }
+
+                // Step RA1b: the Minutes status column (last) only for Management
+                grvFollowup.Columns[grvFollowup.Columns.Count - 1].Visible = forManagement;
                 BindGridView();
 
             }
@@ -223,6 +251,15 @@ namespace BMMS.Report
         }
         #endregion
 
+
+        #region StatusMarkText
+        // Step RA1b: the Minutes status column of the grid (Management only)
+        protected string StatusMarkText(object DataItem)
+        {
+            DataRowView row = DataItem as DataRowView;
+            return row == null ? string.Empty : HttpUtility.HtmlEncode(ReportsMgr.StatusMarkOf(row.Row));
+        }
+        #endregion
 
         #region BindGridView
         private void BindGridView()
@@ -248,7 +285,12 @@ namespace BMMS.Report
                     DataTable dtReportsDetails = new DataTable();
                     dtReportsDetails = GetReportDetails();
 
-                    if (dtReportsDetails.Rows.Count <= 0)
+                    if (forManagement && managementReason != 0)
+                    {
+                        // Step RA1b: the Management procedure refused (Reason 8 or 4)
+                        MsgDisplay(ReportsMgr.ReportRefusedMessage(managementReason));
+                    }
+                    else if (dtReportsDetails.Rows.Count <= 0)
                     {
                         MsgDisplay(Session["NoRecord"].ToString());
                         ScriptManager.GetCurrent(this).SetFocus(ddlMeetingNoFrom.ClientID);
@@ -271,18 +313,26 @@ namespace BMMS.Report
         {
             reportCode = ViewState["reportCode"].ToString();
 
+            // Step RA1b: which report ViewReport.aspx shows; it lets Management open only its own report kinds. Cleared
+            // first and set again only once the report is stored below, so a failed build leaves no kind (refused)
+            Session.Remove("ViewReportKind");
+
             switch (reportCode)
             {
                 case "followup":
                     Session["ViewReport"] = CreateFollowupReportHTML(dtReportsDetails);
+                    Session["ViewReportName"] = "Followup";   // ViewReport.aspx, Export to Pdf (step 25)
                     ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(" + Common.GetReportSettings("FollowupReport_Width") + ",500,'ViewReport.aspx','Followup Report');", true);
                     break;
                 case "summary":
                     Session["ViewReport"] = CreateFollowupSummaryReportHTML(dtReportsDetails);
+                    Session["ViewReportName"] = "FollowupSummary";   // ViewReport.aspx, Export to Pdf (step 25)
                     ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(" + Common.GetReportSettings("FollowupReport_Width") + ",500,'ViewReport.aspx','Followup Summary Report');", true);
                     break;
             }
 
+            // Step RA1b: the report is stored; now ViewReport.aspx may show it (see above)
+            Session["ViewReportKind"] = reportCode;
         }
         #endregion
 
@@ -338,8 +388,15 @@ namespace BMMS.Report
             int DepartmentId = int.Parse(ddlDepartment.SelectedValue.ToString().Trim());
             int ConfirmStatus = int.Parse(rdoConfirmStatus.SelectedValue.ToString().Trim());
 
-            DataTable dtFollowup = ReportsMgr.GetFollowupReport(FromMeetingDate, ToMeetingDate, CommitteeId,
-                MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId, DepartmentId, ConfirmStatus);
+            DataTable dtFollowup;
+            if (forManagement)
+                // Step RA1b: Management, with the minutes status (BMMS-Fix-ReportAccess-Step41.sql); the From and To
+                // dates are not used, as in the Controller's query
+                dtFollowup = ReportsMgr.GetFollowupReportForManagement(CommitteeId, MeetingNoSearch, MeetingId, FromMeetingId,
+                    ToMeetingId, DepartmentId, ConfirmStatus, int.Parse(Session["UserId"].ToString()), out managementReason);
+            else
+                dtFollowup = ReportsMgr.GetFollowupReport(FromMeetingDate, ToMeetingDate, CommitteeId,
+                    MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId, DepartmentId, ConfirmStatus);
 
             ViewState["dtFollowup"] = dtFollowup;
 
@@ -375,26 +432,35 @@ namespace BMMS.Report
                     htmlTxt += "<div style='font-size:12pt; font-family: Times New Roman; width: " + Common.GetReportSettings("FollowupReport_Width") + "px;'>";
 
                     htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:13pt; font-weight:bold'>";
-                    htmlTxt += "DEPARTMENT : " + dtDepartment.Rows[i]["DepartmentName"].ToString() + "<br /><br /></div>";
+                    htmlTxt += "DEPARTMENT : " + HttpUtility.HtmlEncode(dtDepartment.Rows[i]["DepartmentName"].ToString()) + "<br /><br /></div>";
 
                     for (int j = 0; j < dtFollowupFilter.Rows.Count; j++)
                     {
                         htmlTxt += "<div style='float:left; width:100%;'>";
-                        htmlTxt += "<b>" + dtFollowupFilter.Rows[j]["SubjectNo"].ToString();
+                        htmlTxt += "<b>" + HttpUtility.HtmlEncode(dtFollowupFilter.Rows[j]["SubjectNo"].ToString());
                         htmlTxt += "   (" + Convert.ToDateTime(dtFollowupFilter.Rows[j]["MeetingDate"].ToString()).ToString("dd-MMM-yyyy") + ")";
                         htmlTxt += "</b><br /><br /></div>";
 
+                        // Step RA1b: Management's Followup shows the minutes status of each item; a draft also the bordered note
+                        string statusMark = ReportsMgr.StatusMarkOf(dtFollowupFilter.Rows[j]);
+                        if (statusMark.Length > 0)
+                        {
+                            htmlTxt += HTML_Report.MinutesStatusLine(statusMark);
+                            if (HTML_Report.IsDraftMark(statusMark))
+                                htmlTxt += HTML_Report.DraftNote();
+                        }
+
                         htmlTxt += "<div style='float:left; width:100%;text-aligh:justify;'>";
-                        htmlTxt += "<b>" + dtFollowupFilter.Rows[j]["ShortText"].ToString() + "</b>";
+                        htmlTxt += "<b>" + HttpUtility.HtmlEncode(dtFollowupFilter.Rows[j]["ShortText"].ToString()) + "</b>";
                         htmlTxt += "<br /><br /></div>";
 
                         htmlTxt += "<div style='float:left; width:100%;text-aligh:justify;'>";
-                        htmlTxt += HTML_Report.ReplaceRichTextFont(dtFollowupFilter.Rows[j]["ProposedResolution"].ToString());
+                        htmlTxt += HTML_Report.ReplaceRichTextFont(HtmlCleaner.Clean(dtFollowupFilter.Rows[j]["ProposedResolution"].ToString()));
                         htmlTxt += "<br /><br /></div>";
 
                         htmlTxt += "<div style='float:left; width:100%;text-aligh:justify;font-weight:bold;'>";
                         htmlTxt += "ACTION TAKEN";
-                        htmlTxt += "<br />" + HTML_Report.ReplaceRichTextFont(dtFollowupFilter.Rows[j]["ActionText"].ToString());
+                        htmlTxt += "<br />" + HTML_Report.ReplaceRichTextFont(HtmlCleaner.Clean(dtFollowupFilter.Rows[j]["ActionText"].ToString()));
                         htmlTxt += "<br /><br /><br /></div>";
 
                     }
@@ -446,7 +512,7 @@ namespace BMMS.Report
                     htmlTxt += "<div style='font-size:12pt; font-family: Times New Roman; width: " + Common.GetReportSettings("FollowupReport_Width") + "px;'>";
 
                     htmlTxt += "<div style='float:left; width:100%; text-align:center; font-size:12pt; font-weight:bold'>";
-                    htmlTxt += "DEPARTMENT : " + dtDepartment.Rows[i]["DepartmentName"].ToString() + "<br /><br /></div>";
+                    htmlTxt += "DEPARTMENT : " + HttpUtility.HtmlEncode(dtDepartment.Rows[i]["DepartmentName"].ToString()) + "<br /><br /></div>";
 
 
                     htmlTxt += "<div style='float:left; width:100%;'>";
@@ -460,6 +526,13 @@ namespace BMMS.Report
                     htmlTxt += "</td>";
                     htmlTxt += "<td style='text-align:center; font-weight:bold;'>Subject";
                     htmlTxt += "</td>";
+                    // Step RA1b: Management's Followup Summary has a Minutes status column
+                    bool withStatus = dtFollowupFilter.Columns.Contains("MinutesStatusMark");
+                    if (withStatus)
+                    {
+                        htmlTxt += "<td style='text-align:center; font-weight:bold;'>Minutes status";
+                        htmlTxt += "</td>";
+                    }
                     htmlTxt += "</tr>";
 
                     string PrevMeetingNo = string.Empty;
@@ -478,7 +551,7 @@ namespace BMMS.Report
                         }
                         else
                         {
-                            htmlTxt += "<td style='text-align:center;'>" + dtFollowupFilter.Rows[j]["MeetingNo"].ToString();
+                            htmlTxt += "<td style='text-align:center;'>" + HttpUtility.HtmlEncode(dtFollowupFilter.Rows[j]["MeetingNo"].ToString());
                             htmlTxt += "</td>";
                             htmlTxt += "<td style='text-align:center;'>" + Convert.ToDateTime(dtFollowupFilter.Rows[j]["MeetingDate"].ToString()).ToString("dd-MMM-yyyy");
                             htmlTxt += "</td>";                          
@@ -486,10 +559,17 @@ namespace BMMS.Report
                             PrevMeetingNo = currentMeetingNo;
                         }
                         
-                        htmlTxt += "<td style='text-align:center;'>" + dtFollowupFilter.Rows[j]["SubjectNo"].ToString();
+                        htmlTxt += "<td style='text-align:center;'>" + HttpUtility.HtmlEncode(dtFollowupFilter.Rows[j]["SubjectNo"].ToString());
                         htmlTxt += "</td>";
-                        htmlTxt += "<td style='text-align:left;'>" + dtFollowupFilter.Rows[j]["ShortText"].ToString();
+                        htmlTxt += "<td style='text-align:left;'>" + HttpUtility.HtmlEncode(dtFollowupFilter.Rows[j]["ShortText"].ToString());
                         htmlTxt += "</td>";
+                        if (withStatus)
+                        {
+                            // Step RA1b: the mark as plain bold text in the bordered cell
+                            htmlTxt += "<td style='text-align:left; font-weight:bold;'>"
+                                     + HttpUtility.HtmlEncode(ReportsMgr.StatusMarkOf(dtFollowupFilter.Rows[j]));
+                            htmlTxt += "</td>";
+                        }
                         htmlTxt += "</tr>";
                     }
 
@@ -533,7 +613,7 @@ namespace BMMS.Report
             else
             {
                 CreateBodyText();
-                MsgDisplay("Mail was sent to all members.");
+                MsgDisplay("Mail was sent to all members.", MessageKind.Success);
             }
         }
         #endregion
@@ -589,12 +669,7 @@ namespace BMMS.Report
 
                     BodyText += "<table>";
 
-                    BodyText += "<tr>";
-                    BodyText += "<td colspan='2' style='text-align:center; font-weight:bold;'>";
-                    BodyText += "LAKSHMI VILAS BANK <br />";
-                    BodyText += "REGD & ADMIN OFFICE, KARUR";
-                    BodyText += "</td>";
-                    BodyText += "</tr>";
+                    BodyText += OrganisationDetails.Current.MailHeaderRowHtml();
 
                     BodyText += "<tr>";
                     BodyText += "<td colspan='2' style='text-align:right'>";
@@ -606,23 +681,23 @@ namespace BMMS.Report
                     BodyText += "<td colspan='2' style='text-align:left'>";
                     BodyText += "Dear Sir/Madam,<br />";
                     BodyText += "<br />";
-                    BodyText += "<b>Subject : " + ViewState["MailSubject"].ToString() + "</b><br />";
+                    BodyText += "<b>Subject : " + HttpUtility.HtmlEncode(ViewState["MailSubject"].ToString()) + "</b><br />";
                     BodyText += "<br />";
                     BodyText += "Please find attached the Followup for the meeting as given below.";
                     BodyText += "<br />";
                     BodyText += "<br />";
-                    BodyText += "Committee Name : " + ddlCommittee.SelectedItem.Text.Trim();
+                    BodyText += "Committee Name : " + HttpUtility.HtmlEncode(ddlCommittee.SelectedItem.Text.Trim());
                     BodyText += "<br />";
 
                     if (rdoMeatingNoSearch.SelectedValue.ToString() == "0")
                     {
-                        BodyText += "Meeting No : " + ddlMeetingNoFrom.SelectedItem.Text.Trim();
+                        BodyText += "Meeting No : " + HttpUtility.HtmlEncode(ddlMeetingNoFrom.SelectedItem.Text.Trim());
                         BodyText += "<br />";
                     }
                     if (rdoMeatingNoSearch.SelectedValue.ToString() == "1")
                     {
-                        BodyText += "Meeting No : " + ddlMeetingNoFrom.SelectedItem.Text.Trim();
-                        BodyText += " to " + ddlMeetingNoTo.SelectedItem.Text.Trim();
+                        BodyText += "Meeting No : " + HttpUtility.HtmlEncode(ddlMeetingNoFrom.SelectedItem.Text.Trim());
+                        BodyText += " to " + HttpUtility.HtmlEncode(ddlMeetingNoTo.SelectedItem.Text.Trim());
                         BodyText += "<br />";
                     }
                     BodyText += "<br />";
@@ -636,8 +711,8 @@ namespace BMMS.Report
 
                     if (CompanySecretary != string.Empty)
                     {
-                        BodyText += "<b>(" + CompanySecretary + ")</b><br />";
-                        BodyText += "<b>" + CompanySecretaryDesign + "</b>";
+                        BodyText += "<b>(" + HttpUtility.HtmlEncode(CompanySecretary) + ")</b><br />";
+                        BodyText += "<b>" + HttpUtility.HtmlEncode(CompanySecretaryDesign) + "</b>";
                     }
                     else
                     {
@@ -686,9 +761,9 @@ namespace BMMS.Report
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

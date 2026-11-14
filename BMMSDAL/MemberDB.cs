@@ -239,7 +239,7 @@ namespace BMMSDAL
             MemberDAL.Address2 = dt.Rows[0]["Address2"].ToString();
             MemberDAL.Address3 = dt.Rows[0]["Address3"].ToString();
             MemberDAL.CityName = dt.Rows[0]["CityName"].ToString();
-            MemberDAL.State_Id = Convert.ToInt16(dt.Rows[0]["State_Id"].ToString());
+            MemberDAL.State_Id = dt.Rows[0]["State_Id"] == DBNull.Value ? 0 : Convert.ToInt16(dt.Rows[0]["State_Id"].ToString());
             MemberDAL.PinCode = dt.Rows[0]["PinCode"].ToString();
             MemberDAL.DOJ = dt.Rows[0]["DOJ"].ToString();
             MemberDAL.EmailId = dt.Rows[0]["EmailId"].ToString();

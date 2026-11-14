@@ -161,17 +161,17 @@
                                                         Style="color: White" CommandArgument="CommitteeName"></asp:LinkButton>
                                                 </HeaderTemplate>
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblCommitteeName" SkinID="lblSkinGen" Text='<%#Eval("CommitteeName")%>' runat="server" />
+                                                    <asp:Label ID="lblCommitteeName" SkinID="lblSkinGen" Text='<%# HttpUtility.HtmlEncode(Eval("CommitteeName")) %>' runat="server" />
                                                 </ItemTemplate>
                                                 <ItemStyle Width="100px" CssClass="contentTabletd" VerticalAlign="Top" HorizontalAlign="Left" />
                                             </asp:TemplateField>
                                             <asp:TemplateField SortExpression="MeetingNo">
                                                 <HeaderTemplate>
-                                                    <asp:LinkButton ID="LinkButton1" runat="server" Text="Meeting No" CommandName="Sort"
+                                                    <asp:LinkButton ID="LinkButton7" runat="server" Text="Meeting No" CommandName="Sort"
                                                         Style="color: White" CommandArgument="MeetingNo"></asp:LinkButton>
                                                 </HeaderTemplate>
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblMeetingNoe" SkinID="lblSkinGen" Text='<%#Eval("MeetingNo")%>' runat="server" />
+                                                    <asp:Label ID="lblMeetingNoe" SkinID="lblSkinGen" Text='<%# HttpUtility.HtmlEncode(Eval("MeetingNo")) %>' runat="server" />
                                                     <asp:HiddenField ID="hdnMeetingNo" runat="server" />
                                                 </ItemTemplate>
                                                 <ItemStyle Width="70px" CssClass="contentTabletd" VerticalAlign="Top" HorizontalAlign="Center" />
@@ -195,7 +195,7 @@
                                                         Style="color: White" CommandArgument="AgendaNo"></asp:LinkButton>
                                                 </HeaderTemplate>
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblAgendaNo" runat="server" SkinID="lblskingen" Text='<%#Eval("AgendaNo")%>'></asp:Label>
+                                                    <asp:Label ID="lblAgendaNo" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("AgendaNo")) %>'></asp:Label>
                                                 </ItemTemplate>
                                                 <ItemStyle Width="100px" CssClass="contentTabletd" VerticalAlign="Top" HorizontalAlign="Center" />
                                             </asp:TemplateField>
@@ -205,7 +205,7 @@
                                                         Style="color: White" CommandArgument="SubjectNo"></asp:LinkButton>
                                                 </HeaderTemplate>
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblSubjectNo" runat="server" SkinID="lblskingen" Text='<%#Eval("SubjectNo")%>'></asp:Label>
+                                                    <asp:Label ID="lblSubjectNo" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("SubjectNo")) %>'></asp:Label>
                                                 </ItemTemplate>
                                                 <ItemStyle Width="50px" CssClass="contentTabletd" VerticalAlign="Top" HorizontalAlign="Center" />
                                             </asp:TemplateField>
@@ -215,7 +215,7 @@
                                                         CommandName="Sort" Style="color: White" Text="Dept. Name"></asp:LinkButton>
                                                 </HeaderTemplate>
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblDepartmentName" runat="server" SkinID="lblskingen" Text='<%#Eval("DepartmentName")%>'></asp:Label>
+                                                    <asp:Label ID="lblDepartmentName" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("DepartmentName")) %>'></asp:Label>
                                                 </ItemTemplate>
                                                 <ItemStyle Width="100px" CssClass="contentTabletd" HorizontalAlign="Left" VerticalAlign="Top" />
                                             </asp:TemplateField>
@@ -225,9 +225,16 @@
                                                         Style="color: White" Text="Agenda Short Text"></asp:LinkButton>
                                                 </HeaderTemplate>
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblShortText" runat="server" SkinID="lblskingen" Text='<%#Eval("ShortText")%>'></asp:Label>
+                                                    <asp:Label ID="lblShortText" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("ShortText")) %>'></asp:Label>
                                                 </ItemTemplate>
                                                 <ItemStyle CssClass="contentTabletd" HorizontalAlign="justify" VerticalAlign="Top" />
+                                            </asp:TemplateField>
+                                            <%-- Step RA1b: shown only in Management's Followup (the minutes status of the item) --%>
+                                            <asp:TemplateField HeaderText="Minutes status" Visible="false">
+                                                <ItemTemplate>
+                                                    <asp:Label ID="lblMinutesStatus" runat="server" SkinID="lblskingen" Text='<%# StatusMarkText(Container.DataItem) %>'></asp:Label>
+                                                </ItemTemplate>
+                                                <ItemStyle Width="150px" CssClass="contentTabletd" HorizontalAlign="Left" VerticalAlign="Top" />
                                             </asp:TemplateField>
                                         </Columns>
                                         <EmptyDataTemplate>

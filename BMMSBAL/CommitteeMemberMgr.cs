@@ -161,7 +161,7 @@ namespace BMMSBAL
         #endregion
 
         #region AddEditCommitteeMember
-        public int AddEditCommitteeMember(CommitteeMemberBAL CommitteeMemberBAL)
+        public MeetingChangeResult AddEditCommitteeMember(CommitteeMemberBAL CommitteeMemberBAL)
         {
             CommitteeMemberDAL CommitteeMemberDAL = new CommitteeMemberDAL();
             CommitteeMemberDAL.Code = CommitteeMemberBAL.Code;
@@ -178,7 +178,12 @@ namespace BMMSBAL
             CommitteeMemberDAL.UpdatedOn = CommitteeMemberBAL.UpdatedOn;
             CommitteeMemberDAL.UpdatedBy = CommitteeMemberBAL.UpdatedBy;
 
-            return CommitteeMemberDB.AddEditCommitteeMember(CommitteeMemberDAL);
+            // Refused when the member type is not an active committee type (BMMS-Fix-MemberTypes-Step21.sql)
+            DataTable dt = CommitteeMemberDB.AddEditCommitteeMember(CommitteeMemberDAL);
+            if (dt == null || !dt.Columns.Contains("Reason"))
+                throw new InvalidOperationException("spr_AddEditCommitteeMember returned no Reason. Run Database/BMMS-Fix-MemberTypes-Step21.sql.");
+
+            return MeetingChangeResult.FromTable(dt);
         }
         #endregion
 

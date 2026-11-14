@@ -1,0 +1,273 @@
+{
+  "about": "Dashboard pack (step UN6b). What each fixture account sees in the Meetings card of the Dashboard. A row is 'committee | No meeting number | colour | label | Items Approved Rejected Pending' (the counts only where statistics are shown). Scheduled rows by meeting date, oldest first; Completed rows newest first, at most 10 for every role. The owner (or Claude on the owner's instruction) changes this file; never the tester.",
+  "rowsScheduledAll": [
+    "QA Dashboard Committee | No 00001 | blue | Open for submission | 2 0 0 2",
+    "QA Test Committee | No 00003 | green | Agenda finalised | 1 1 0 0",
+    "QA Test Committee | No 00002 | orange | Submission closed | 1 0 0 1",
+    "QA Test Committee | No 00001 | blue | Open for submission | 6 1 2 3"
+  ],
+  "rowsCompletedAll": [
+    "QA Dashboard Committee | No 00002 | red | Minutes pending | 2 1 1 0",
+    "QA Dashboard Committee | No 00003 | grey | Minutes finalised | 1 1 0 0",
+    "QA Dashboard Committee | No 00004 | grey | Minutes confirmed | 1 1 0 0",
+    "QA Dashboard Committee | No 00005 | grey | Minutes confirmed | 1 1 0 0",
+    "QA Dashboard Committee | No 00006 | grey | Minutes confirmed | 1 1 0 0",
+    "QA Dashboard Committee | No 00007 | grey | Minutes confirmed | 1 1 0 0",
+    "QA Dashboard Committee | No 00008 | grey | Minutes confirmed | 1 1 0 0",
+    "QA Dashboard Committee | No 00009 | grey | Minutes confirmed | 1 1 0 0",
+    "QA Dashboard Committee | No 00010 | grey | Minutes confirmed | 1 1 0 0",
+    "QA Test Committee | No 00004 | red | Minutes pending | 2 2 0 0"
+  ],
+  "cases": [
+    {
+      "name": "Controller, all committees",
+      "account": "controller",
+      "committee": "", "department": "",
+      "committeeFilter": true, "departmentOptions": null,
+      "subtitle": null, "title": "Meetings", "lastHeader": "Pending", "statistics": true, "waiting": {"QA Dashboard Committee | No 00001": "1", "QA Test Committee | No 00001": "1"},
+      "scheduled": "rowsScheduledAll", "completed": "rowsCompletedAll"
+    },
+    {
+      "name": "Controller, committee QA Dashboard Committee (12 completed meetings: exactly 10 shown)",
+      "account": "controller",
+      "committee": "QA Dashboard Committee", "department": "",
+      "committeeFilter": true, "departmentOptions": null,
+      "subtitle": null, "title": "Meetings", "lastHeader": "Pending", "statistics": true, "waiting": {"QA Dashboard Committee | No 00001": "1"},
+      "scheduled": [
+        "QA Dashboard Committee | No 00001 | blue | Open for submission | 2 0 0 2"
+      ],
+      "completed": [
+        "QA Dashboard Committee | No 00002 | red | Minutes pending | 2 1 1 0",
+        "QA Dashboard Committee | No 00003 | grey | Minutes finalised | 1 1 0 0",
+        "QA Dashboard Committee | No 00004 | grey | Minutes confirmed | 1 1 0 0",
+        "QA Dashboard Committee | No 00005 | grey | Minutes confirmed | 1 1 0 0",
+        "QA Dashboard Committee | No 00006 | grey | Minutes confirmed | 1 1 0 0",
+        "QA Dashboard Committee | No 00007 | grey | Minutes confirmed | 1 1 0 0",
+        "QA Dashboard Committee | No 00008 | grey | Minutes confirmed | 1 1 0 0",
+        "QA Dashboard Committee | No 00009 | grey | Minutes confirmed | 1 1 0 0",
+        "QA Dashboard Committee | No 00010 | grey | Minutes confirmed | 1 1 0 0",
+        "QA Dashboard Committee | No 00011 | grey | Minutes confirmed | 1 1 0 0"
+      ]
+    },
+    {
+      "name": "Controller, committee QA Test Committee",
+      "account": "controller",
+      "committee": "QA Test Committee", "department": "",
+      "committeeFilter": true, "departmentOptions": null,
+      "subtitle": null, "title": "Meetings", "lastHeader": "Pending", "statistics": true, "waiting": {"QA Test Committee | No 00001": "1"},
+      "scheduled": [
+        "QA Test Committee | No 00003 | green | Agenda finalised | 1 1 0 0",
+        "QA Test Committee | No 00002 | orange | Submission closed | 1 0 0 1",
+        "QA Test Committee | No 00001 | blue | Open for submission | 6 1 2 3"
+      ],
+      "completed": [
+        "QA Test Committee | No 00004 | red | Minutes pending | 2 2 0 0",
+        "QA Test Committee | No 00005 | grey | Minutes finalised | 2 2 0 0",
+        "QA Test Committee | No 00006 | grey | Minutes confirmed | 1 1 0 0"
+      ]
+    },
+    {
+      "name": "Management, all committees (statistics, read-only)",
+      "account": "mgmt",
+      "committee": "", "department": "",
+      "committeeFilter": true, "departmentOptions": null,
+      "subtitle": null, "title": "Meetings", "lastHeader": "Pending", "statistics": true,
+      "scheduled": "rowsScheduledAll", "completed": "rowsCompletedAll"
+    },
+    {
+      "name": "MD Secretariat, all committees (colours, no statistics)",
+      "account": "mdsec",
+      "committee": "", "department": "",
+      "committeeFilter": true, "departmentOptions": null,
+      "subtitle": null, "title": "Meetings", "lastHeader": null, "statistics": false,
+      "scheduled": "rowsScheduledAll", "completed": "rowsCompletedAll"
+    },
+    {
+      "name": "Admin, all committees (colours, no statistics)",
+      "account": "admin",
+      "committee": "", "department": "",
+      "committeeFilter": true, "departmentOptions": null,
+      "subtitle": null, "title": "Meetings", "lastHeader": null, "statistics": false,
+      "scheduled": "rowsScheduledAll", "completed": "rowsCompletedAll"
+    },
+    {
+      "name": "Manager with one department (Credit)",
+      "account": "manager",
+      "committee": "", "department": "",
+      "committeeFilter": true, "departmentOptions": null,
+      "subtitle": "Department: Credit", "title": "Meetings, Credit items", "lastHeader": "Pending", "statistics": true, "waiting": {"QA Test Committee | No 00002": "1", "QA Test Committee | No 00001": "1"},
+      "scheduled": [
+        "QA Dashboard Committee | No 00001 | blue | Open for submission | 1 0 0 1",
+        "QA Test Committee | No 00003 | green | Agenda finalised | 1 1 0 0",
+        "QA Test Committee | No 00002 | orange | Submission closed | 1 0 0 1",
+        "QA Test Committee | No 00001 | blue | Open for submission | 5 1 2 2"
+      ],
+      "completed": [
+        "QA Dashboard Committee | No 00002 | red | Minutes pending | 2 1 1 0",
+        "QA Dashboard Committee | No 00004 | grey | Minutes confirmed | 1 1 0 0",
+        "QA Dashboard Committee | No 00005 | grey | Minutes confirmed | 1 1 0 0",
+        "QA Dashboard Committee | No 00006 | grey | Minutes confirmed | 1 1 0 0",
+        "QA Dashboard Committee | No 00007 | grey | Minutes confirmed | 1 1 0 0",
+        "QA Dashboard Committee | No 00008 | grey | Minutes confirmed | 1 1 0 0",
+        "QA Dashboard Committee | No 00009 | grey | Minutes confirmed | 1 1 0 0",
+        "QA Dashboard Committee | No 00010 | grey | Minutes confirmed | 1 1 0 0",
+        "QA Test Committee | No 00004 | red | Minutes pending | 2 2 0 0",
+        "QA Dashboard Committee | No 00011 | grey | Minutes confirmed | 1 1 0 0"
+      ]
+    },
+    {
+      "name": "Manager with two departments (HRD, Secretarial), all his departments",
+      "account": "manager2",
+      "committee": "", "department": "",
+      "committeeFilter": true, "departmentOptions": ["All my departments", "HRD", "Secretarial"],
+      "subtitle": "Departments: HRD, Secretarial", "title": "Meetings, items of my departments", "lastHeader": "Pending", "statistics": true, "waiting": {"QA Test Committee | No 00001": "1"},
+      "scheduled": [
+        "QA Dashboard Committee | No 00001 | blue | Open for submission | 1 0 0 1",
+        "QA Test Committee | No 00003 | green | Agenda finalised | 0 0 0 0",
+        "QA Test Committee | No 00002 | orange | Submission closed | 0 0 0 0",
+        "QA Test Committee | No 00001 | blue | Open for submission | 1 0 0 1"
+      ],
+      "completed": [
+        "QA Dashboard Committee | No 00003 | grey | Minutes finalised | 1 1 0 0"
+      ]
+    },
+    {
+      "name": "Manager with two departments, HRD chosen",
+      "account": "manager2",
+      "committee": "", "department": "HRD",
+      "committeeFilter": true, "departmentOptions": ["All my departments", "HRD", "Secretarial"],
+      "subtitle": "Departments: HRD, Secretarial", "title": "Meetings, HRD items", "lastHeader": "Pending", "statistics": true, "waiting": {"QA Test Committee | No 00001": "1"},
+      "scheduled": [
+        "QA Dashboard Committee | No 00001 | blue | Open for submission | 0 0 0 0",
+        "QA Test Committee | No 00003 | green | Agenda finalised | 0 0 0 0",
+        "QA Test Committee | No 00002 | orange | Submission closed | 0 0 0 0",
+        "QA Test Committee | No 00001 | blue | Open for submission | 1 0 0 1"
+      ],
+      "completed": []
+    },
+    {
+      "name": "Manager with two departments, Secretarial chosen",
+      "account": "manager2",
+      "committee": "", "department": "Secretarial",
+      "committeeFilter": true, "departmentOptions": ["All my departments", "HRD", "Secretarial"],
+      "subtitle": "Departments: HRD, Secretarial", "title": "Meetings, Secretarial items", "lastHeader": "Pending", "statistics": true, "waiting": {},
+      "scheduled": [
+        "QA Dashboard Committee | No 00001 | blue | Open for submission | 1 0 0 1",
+        "QA Test Committee | No 00003 | green | Agenda finalised | 0 0 0 0",
+        "QA Test Committee | No 00002 | orange | Submission closed | 0 0 0 0",
+        "QA Test Committee | No 00001 | blue | Open for submission | 0 0 0 0"
+      ],
+      "completed": [
+        "QA Dashboard Committee | No 00003 | grey | Minutes finalised | 1 1 0 0"
+      ]
+    },
+    {
+      "name": "User (Credit)",
+      "account": "user",
+      "committee": "", "department": "",
+      "committeeFilter": false, "departmentOptions": null,
+      "subtitle": "Department: Credit", "title": "Meetings, Credit items", "lastHeader": "In progress", "statistics": true,
+      "scheduled": [
+        "QA Dashboard Committee | No 00001 | blue | Open for submission | 1 0 0 1",
+        "QA Test Committee | No 00003 | green | Agenda finalised | 1 1 0 0",
+        "QA Test Committee | No 00002 | orange | Submission closed | 1 0 0 1",
+        "QA Test Committee | No 00001 | blue | Open for submission | 5 1 2 2"
+      ],
+      "completed": [
+        "QA Dashboard Committee | No 00002 | red | Minutes pending | 2 1 1 0",
+        "QA Dashboard Committee | No 00004 | grey | Minutes confirmed | 1 1 0 0",
+        "QA Dashboard Committee | No 00005 | grey | Minutes confirmed | 1 1 0 0",
+        "QA Dashboard Committee | No 00006 | grey | Minutes confirmed | 1 1 0 0",
+        "QA Dashboard Committee | No 00007 | grey | Minutes confirmed | 1 1 0 0",
+        "QA Dashboard Committee | No 00008 | grey | Minutes confirmed | 1 1 0 0",
+        "QA Dashboard Committee | No 00009 | grey | Minutes confirmed | 1 1 0 0",
+        "QA Dashboard Committee | No 00010 | grey | Minutes confirmed | 1 1 0 0",
+        "QA Test Committee | No 00004 | red | Minutes pending | 2 2 0 0",
+        "QA Dashboard Committee | No 00011 | grey | Minutes confirmed | 1 1 0 0"
+      ]
+    },
+    {
+      "name": "User (HRD)",
+      "account": "user2",
+      "committee": "", "department": "",
+      "committeeFilter": false, "departmentOptions": null,
+      "subtitle": "Department: HRD", "title": "Meetings, HRD items", "lastHeader": "In progress", "statistics": true,
+      "scheduled": [
+        "QA Dashboard Committee | No 00001 | blue | Open for submission | 0 0 0 0",
+        "QA Test Committee | No 00003 | green | Agenda finalised | 0 0 0 0",
+        "QA Test Committee | No 00002 | orange | Submission closed | 0 0 0 0",
+        "QA Test Committee | No 00001 | blue | Open for submission | 1 0 0 1"
+      ],
+      "completed": []
+    }
+  ],
+  "alertsFirstPage": { "admin": 0, "controller": 1, "manager": 10, "manager2": 3, "user": 10, "user2": 2, "mgmt": 2, "mdsec": 2 },
+  "alertHeader": { "admin": 0, "controller": 1, "manager": 12, "manager2": 3, "user": 9, "user2": 2, "mgmt": 2, "mdsec": 2 },
+  "alertModes": { "account": "user", "recent": 10, "recentLast": "Agenda (QA1-00004-002)", "unread": 9,
+                  "allPage2": ["Committee (QA2)", "Agenda (QA1-00004-001)"] },
+  "alertActors": {
+    "Agenda (QA1-00001-003)": { "name": "QA Controller", "tooltip": "qa_ctrl" },
+    "Agenda (QA1-00001-004)": { "name": "QA Manager", "tooltip": "qa_manager" },
+    "Committee (QA1)": { "name": "QA Controller", "tooltip": "qa_ctrl" },
+    "Agenda (QA1-00005-001)": { "name": "-", "tooltip": "" }
+  },
+  "actionItemsDue": { "QA1-00005-001": "date Overdue", "QA1-00005-002": "date", "QA1-00006-001": "none" },
+  "alertActions": {
+    "account": "user2", "unread": 2, "otherAccount": "mgmt"
+  },
+  "filterKept": { "account": "manager2", "alerts": 3, "actionAccount": "manager", "actionItems": 3 },
+  "actionItemsList": {
+    "admin": "no card",
+    "controller": ["QA2-00002-1", "QA2-00003-1", "QA1-00005-001", "QA1-00005-002", "QA1-00006-001"],
+    "manager": ["QA1-00005-001", "QA1-00005-002", "QA1-00006-001"],
+    "manager2": ["QA2-00003-1"],
+    "user": ["QA1-00005-001", "QA1-00005-002", "QA1-00006-001"],
+    "user2": [],
+    "mgmt": ["QA2-00002-1", "QA2-00003-1", "QA1-00005-001", "QA1-00005-002", "QA1-00006-001"],
+    "mdsec": "no card"
+  },
+  "actionScope": {
+    "opener": "controller", "unmappedItem": "QA1-00006-001", "readOnly": "mgmt",
+    "account": "manager2", "ownItem": "QA2-00003-1", "otherAccount": "user", "otherItem": "QA1-00005-002"
+  },
+  "approvals": {
+    "admin": "no panel",
+    "controller": { "title": "My approvals (2)", "rows": ["QA1-00001-002 | QA Test Committee | No 00001 | Credit", "QA2-00001-1 | QA Dashboard Committee | No 00001 | Credit"] },
+    "manager": { "title": "My approvals (2)", "rows": ["QA1-00001-001 | QA Test Committee | No 00001 | Credit", "QA1-00002-001 | QA Test Committee | No 00002 | Credit"] },
+    "manager2": { "title": "My approvals (1)", "rows": ["QA1-00001-006 | QA Test Committee | No 00001 | HRD"] },
+    "user": "no panel",
+    "user2": "no panel",
+    "mgmt": "no panel",
+    "mdsec": "no panel"
+  },
+  "approvalFilters": [
+    { "account": "controller", "committee": "QA Dashboard Committee", "department": "", "title": "My approvals (1)", "rows": ["QA2-00001-1 | QA Dashboard Committee | No 00001 | Credit"] },
+    { "account": "manager2", "committee": "", "department": "HRD", "title": "My approvals (1)", "rows": ["QA1-00001-006 | QA Test Committee | No 00001 | HRD"] },
+    { "account": "manager2", "committee": "", "department": "Secretarial", "title": "My approvals (0)", "rows": [] }
+  ],
+  "approvalOpen": {
+    "account": "controller", "item": "QA1-00001-002", "headerBefore": "Alerts (1)", "headerAfter": "Alerts (0)",
+    "viewer": "user", "viewerAlert": "Agenda (QA1-00001-003)"
+  },
+  "alertHeadings": ["Alert", "Date"],
+  "actionItemsFirstPage": { "admin": "no card", "controller": 5, "manager": 3, "manager2": 1, "user": 3, "user2": 0, "mgmt": 5, "mdsec": "no card" },
+  "widths": [
+    { "width": 1366, "height": 768, "layout": "side by side" },
+    { "width": 1241, "height": 768, "layout": "side by side" },
+    { "width": 1240, "height": 768, "layout": "stacked" },
+    { "width": 1024, "height": 768, "layout": "stacked" },
+    { "width": 800, "height": 600, "layout": "stacked" }
+  ],
+  "meetingsFit": [
+    { "account": "controller", "width": 1366, "columns": 9 },
+    { "account": "controller", "width": 1600, "columns": 9 },
+    { "account": "manager", "width": 1366, "columns": 9 },
+    { "account": "manager", "width": 1600, "columns": 9 },
+    { "account": "mgmt", "width": 1366, "columns": 8 }
+  ],
+  "pastItem": {
+    "account": "manager", "alert": "Agenda (QA2-00013-1)", "item": "QA2-00013-1",
+    "message": "The meeting date has passed, so this item can no longer be approved or rejected. It will be rejected when the agenda is finalized.",
+    "decidableItem": "QA1-00001-001"
+  }
+}

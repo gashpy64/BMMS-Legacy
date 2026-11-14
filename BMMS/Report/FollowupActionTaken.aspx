@@ -1,5 +1,5 @@
 <%@ Page Language="C#" MasterPageFile="~/MasterPage/Main.Master" AutoEventWireup="true"
-    Codebehind="FollowupActionTaken.aspx.cs" Inherits="BMMS.Report.FollowupActionTaken" Title="Untitled Page" %>
+    Codebehind="FollowupActionTaken.aspx.cs" Inherits="BMMS.Report.FollowupActionTaken" Title="Followup by Department" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
@@ -18,7 +18,7 @@
                 <div class="formContent">
                     <div class="formPanel">
                         <div class="divHeader">
-                            :: Followup Action Taken Report</div>
+                            :: Followup by Department</div>
                         <div class="divRowFixed">
                         </div>
                         <div class="divRow" style="height: 25px">
@@ -112,18 +112,12 @@
                                         <td colspan="2" style="text-align:center;">
                                             <asp:Button ID="btnCreatePDF" runat="server" Text="Generate Report" OnClick="btnCreatePDF_Click"
                                                 CssClass="button" />
-                                            <%--<asp:Button ID="btnSendMail" runat="server" Text="Send Mail" OnClick="btnSendMail_Click"
-                                                CssClass="button" />--%>
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>
                                             &nbsp;</td>
                                         <td style="">
-                                            <asp:Panel ID="pnlFollowupDownload" runat="server" Visible="false">
-                                                <%--<a href="../Files/PDF/Followup.pdf" target="_blank">Download Followup</a>--%>
-                                                <%--<a href="FollowupReport.aspx" target="_blank">Followup Report</a>--%>
-                                            </asp:Panel>
                                             <br />
                                             <br />
                                         </td>
@@ -151,7 +145,7 @@
                                                         Style="color: White" CommandArgument="MeetingNo"></asp:LinkButton>
                                                 </HeaderTemplate>
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblMeetingNoe" SkinID="lblSkinGen" Text='<%#Eval("MeetingNo")%>' runat="server" />
+                                                    <asp:Label ID="lblMeetingNoe" SkinID="lblSkinGen" Text='<%# HttpUtility.HtmlEncode(Eval("MeetingNo")) %>' runat="server" />
                                                     <asp:HiddenField ID="hdnMeetingNo" runat="server" />
                                                 </ItemTemplate>
                                                 <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
@@ -164,7 +158,7 @@
                                                 <ItemTemplate>
                                                     <asp:Label ID="lblMeetingDate" runat="server" SkinID="lblskingen" Text='<%#Eval("MeetingDate", "{0:dd-MMM-yyyy}")%>'></asp:Label>
                                                     &nbsp; / &nbsp;
-                                                    <asp:Label ID="lblMeetingTime" runat="server" SkinID="lblskingen" Text='<%#Eval("MeetingTime")%>'></asp:Label>
+                                                    <asp:Label ID="lblMeetingTime" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("MeetingTime")) %>'></asp:Label>
                                                     Hrs.
                                                 </ItemTemplate>
                                                 <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
@@ -175,7 +169,7 @@
                                                         Style="color: White" CommandArgument="AgendaNo"></asp:LinkButton>
                                                 </HeaderTemplate>
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblAgendaNo" runat="server" SkinID="lblskingen" Text='<%#Eval("AgendaNo")%>'></asp:Label>
+                                                    <asp:Label ID="lblAgendaNo" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("AgendaNo")) %>'></asp:Label>
                                                 </ItemTemplate>
                                                 <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
                                             </asp:TemplateField>
@@ -185,7 +179,7 @@
                                                         Style="color: White" CommandArgument="SubjectNo"></asp:LinkButton>
                                                 </HeaderTemplate>
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblSubjectNo" runat="server" SkinID="lblskingen" Text='<%#Eval("SubjectNo")%>'></asp:Label>
+                                                    <asp:Label ID="lblSubjectNo" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("SubjectNo")) %>'></asp:Label>
                                                 </ItemTemplate>
                                                 <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Left" />
                                             </asp:TemplateField>
@@ -195,7 +189,7 @@
                                                         CommandName="Sort" Style="color: White" Text="Department Name"></asp:LinkButton>
                                                 </HeaderTemplate>
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblDepartmentName" runat="server" SkinID="lblskingen" Text='<%#Eval("DepartmentName")%>'></asp:Label>
+                                                    <asp:Label ID="lblDepartmentName" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("DepartmentName")) %>'></asp:Label>
                                                 </ItemTemplate>
                                                 <ItemStyle CssClass="contentTabletd" HorizontalAlign="Left" VerticalAlign="Middle" />
                                             </asp:TemplateField>
@@ -205,7 +199,7 @@
                                                         Style="color: White" Text="Agenda Short Text"></asp:LinkButton>
                                                 </HeaderTemplate>
                                                 <ItemTemplate>
-                                                    <asp:Label ID="lblShortText" runat="server" SkinID="lblskingen" Text='<%#Eval("ShortText")%>'></asp:Label>
+                                                    <asp:Label ID="lblShortText" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("ShortText")) %>'></asp:Label>
                                                 </ItemTemplate>
                                                 <ItemStyle CssClass="contentTabletd" HorizontalAlign="Left" VerticalAlign="Middle" />
                                             </asp:TemplateField>

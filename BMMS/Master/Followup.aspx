@@ -1,8 +1,7 @@
 <%@ Page Language="C#" MasterPageFile="~/MasterPage/Main.Master" AutoEventWireup="true"
     Codebehind="Followup.aspx.cs" Inherits="BMMS.Master.Followup" Title="Followup"
-    ValidateRequest="false" MaintainScrollPositionOnPostback="true" %>
+    MaintainScrollPositionOnPostback="true" %>
 
-<%@ Register Assembly="FreeTextBox" Namespace="FreeTextBoxControls" TagPrefix="FTB" %>
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="cc1" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
@@ -246,13 +245,9 @@
                         <div class="MyPopupContentInner">
                             <div class="formPanel">
                                 <div class="divHeader">
-                                    :: Edit Minute Actual Resolution</div>
+                                    :: View Minute Actual Resolution</div>
                                 <div class="divRow" style="text-align: center;">
-                                    <FTB:FreeTextBox ID="ftxtActualResolution" runat="server" Width="600px" Height="200px"
-                                        AllowHtmlMode="false" ShowTagPath="false" AutoGenerateToolbarsFromString="True"
-                                        ButtonSet="Office2003" ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                        ToolbarStyleConfiguration="Office2003">
-                                    </FTB:FreeTextBox>
+                                    <bmms:RichTextEditor ID="ftxtActualResolution" runat="server" Width="600px" Height="200px" ReadOnly="true" Label="Actual Resolution" />
                                 </div>
                                 <div class="divRow" style="text-align: center;">
                                     <asp:Button ID="btnActualResolutionCancel" runat="server" CssClass="button" Text="Cancel"
@@ -271,11 +266,7 @@
                                 <div class="divHeader">
                                     :: Edit Action Text</div>
                                 <div class="divRow" style="text-align: center;">
-                                    <FTB:FreeTextBox ID="ftxtActionText" runat="server" Width="600px" Height="200px"
-                                        AllowHtmlMode="false" ShowTagPath="false" AutoGenerateToolbarsFromString="True"
-                                        ButtonSet="Office2003" ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                        ToolbarStyleConfiguration="Office2003">
-                                    </FTB:FreeTextBox>
+                                    <bmms:RichTextEditor ID="ftxtActionText" runat="server" Width="600px" Height="200px" Label="Action Text" />
                                 </div>
                                 <div class="divRow" style="text-align: center;">
                                     <asp:Button ID="btnActionTextSave" runat="server" CssClass="button" Text="Save" OnClick="btnActionTextSave_Click" />

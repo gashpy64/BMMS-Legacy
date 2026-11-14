@@ -1,0 +1,7 @@
+{
+  "note": "The standing proof that the access matrix catches a wrong PageAccess.xml. Run-Tests.ps1 adds the role below to the page's entry in Tests\\_site\\XML\\PageAccess.xml only (never in the working tree), runs the rows below for every column, and puts the working tree's file back in a finally block. Exactly the one cell must fail; any other result makes the run VOID.",
+  "page": "Report/MeetingCalendar.aspx",
+  "addRole": "user",
+  "cell": { "address": "Report/MeetingCalendar.aspx", "column": "user" },
+  "rows": ["Report/MeetingCalendar.aspx", "Report/MeetingMaster.aspx"]
+}

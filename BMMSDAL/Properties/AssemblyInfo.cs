@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("BMMSDAL")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Reaal")]
-[assembly: AssemblyProduct("BMMSDAL")]
-[assembly: AssemblyCopyright("Copyright © Reaal 2010")]
+[assembly: AssemblyCompany("Gashpy Software")]
+[assembly: AssemblyProduct("Board Minutes and Meeting Software")]
+[assembly: AssemblyCopyright("Copyright © 2026 Gashpy Software. All Rights Reserved.")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -31,5 +31,5 @@ using System.Runtime.InteropServices;
 //
 // You can specify all the values or you can default the Revision and Build Numbers 
 // by using the '*' as shown below:
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.1.0.0")]
+[assembly: AssemblyFileVersion("1.1.0.0")]
