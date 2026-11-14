@@ -19,8 +19,29 @@
         </div>
     </div>
 </div>
-<%-- Summary cards: step UN6c. Empty until then; it takes no space while empty. --%>
-<div class="wb-dash-summary" id="divSummaryCards"></div>
+<%-- Step UN6c2b: the summary cards (spr_GetDashboardSummary, step 45). Items in progress and rejected of the scheduled
+     meetings, for the filters chosen (the server checks them); Unread alerts is the person's own count (the rule of
+     the Alerts card) and follows no filter. Shown for the Controller, Management, the Manager and the User, from the
+     server's answer; a count that could not be read shows a dash, never 0. --%>
+<div id="divSummaryCards" runat="server" class="wb-dash-summary" visible="false">
+    <div class="wb-card wb-dash-stat">
+        <p class="wb-dash-stat-value"><asp:Literal ID="litInProgress" runat="server" Mode="Encode" /><span id="spanInProgressUnknown" runat="server" class="wb-visually-hidden" visible="false">count not available</span></p>
+        <p class="wb-dash-stat-label"><asp:Literal ID="litInProgressLabel" runat="server" Mode="Encode" /></p>
+        <p class="wb-dash-stat-scope"><asp:Literal ID="litInProgressScope" runat="server" Mode="Encode" /></p>
+        <p class="wb-dash-stat-note"><asp:Literal ID="litInProgressNote" runat="server" Mode="Encode" /></p>
+    </div>
+    <div class="wb-card wb-dash-stat">
+        <p class="wb-dash-stat-value"><asp:Literal ID="litRejected" runat="server" Mode="Encode" /><span id="spanRejectedUnknown" runat="server" class="wb-visually-hidden" visible="false">count not available</span></p>
+        <p class="wb-dash-stat-label"><asp:Literal ID="litRejectedLabel" runat="server" Mode="Encode" /></p>
+        <p class="wb-dash-stat-scope"><asp:Literal ID="litRejectedScope" runat="server" Mode="Encode" /></p>
+    </div>
+    <div class="wb-card wb-dash-stat">
+        <p class="wb-dash-stat-value"><asp:Literal ID="litUnread" runat="server" Mode="Encode" /><span id="spanUnreadUnknown" runat="server" class="wb-visually-hidden" visible="false">count not available</span></p>
+        <p class="wb-dash-stat-label">Unread alerts</p>
+        <p class="wb-dash-stat-scope">Your alerts, not filtered</p>
+    </div>
+    <p id="pSummaryMessage" runat="server" class="wb-dash-stat-message" role="status" visible="false"></p>
+</div>
 <div class="wb-card wb-dash-meetings">
     <div class="wb-card-header">
         <h2 class="wb-dash-card-title"><asp:Literal ID="litMeetingsTitle" runat="server" Mode="Encode" Text="Meetings" /></h2>
@@ -69,7 +90,7 @@
                             <ItemStyle CssClass="wb-dash-num" />
                             <HeaderStyle CssClass="wb-dash-num" />
                         </asp:BoundField>
-                        <asp:BoundField DataField="Pending" HeaderText="Pending" HtmlEncode="true">
+                        <asp:BoundField DataField="Pending" HeaderText="In progress" HtmlEncode="true">
                             <ItemStyle CssClass="wb-dash-num" />
                             <HeaderStyle CssClass="wb-dash-num" />
                         </asp:BoundField>
@@ -124,13 +145,16 @@
                             <ItemStyle CssClass="wb-dash-num" />
                             <HeaderStyle CssClass="wb-dash-num" />
                         </asp:BoundField>
-                        <asp:BoundField DataField="Pending" HeaderText="Pending" HtmlEncode="true">
+                        <asp:BoundField DataField="Pending" HeaderText="In progress" HtmlEncode="true">
                             <ItemStyle CssClass="wb-dash-num" />
                             <HeaderStyle CssClass="wb-dash-num" />
                         </asp:BoundField>
                     </Columns>
                 </asp:GridView>
             </div>
+            <%-- Step UN6c2b: the meaning of "In progress", visible, where no summary card shows it (the MD
+                 Secretariat has the statistics but no cards; or the cards could not be shown) --%>
+            <p id="pInProgressNote" runat="server" class="wb-dash-note" visible="false"></p>
         </asp:Panel>
     </div>
 </div>

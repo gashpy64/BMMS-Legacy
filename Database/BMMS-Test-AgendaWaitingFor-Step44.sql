@@ -19,6 +19,14 @@
    the objects step 44 does not change carry no marker; that every database
    user who can run step 42's procedure can run the procedures of this step.
 
+   Step 45 (step UN6c2b) replaced spr_GetDashboardMeetings again: the MD
+   Secretariat gets the statistics. The comparison of the meeting list with
+   the earlier text (the eleven calls and every active user) follows that:
+   with step 45 installed an MD Secretariat user must have StatisticsShown 1
+   and the counts of Management; those are then compared as "no
+   statistics". Every
+   other check is as it was (the step 44 markers stay in the step 45 texts).
+
    Part 2:
      - on the data of the database, read only: for every active user and every
        agenda item, fn_AgendaWaitingFor gives what the rule of step 20 gives;
@@ -215,6 +223,11 @@ GO
 -- Part 2
 -------------------------------------------------------------------------------
 DECLARE @T TABLE (TestNo INT IDENTITY(1,1), Test VARCHAR(300), Expected VARCHAR(1000), Actual VARCHAR(1000));
+-- Step 45: the meeting list of the made-up Management user, for the MD Secretariat comparison
+DECLARE @MG45 TABLE (MeetingId INT, CommitteeId INT, CommitteeCode VARCHAR(50), CommitteeName NVARCHAR(200), MeetingNo VARCHAR(50),
+                     MeetingDate DATETIME, MeetingTime VARCHAR(50), AgendaSubmissionDate DATETIME, ListCode CHAR(1), StateCode VARCHAR(50),
+                     StateLabel VARCHAR(100), Items INT, Approved INT, Rejected INT, Pending INT, WaitingForMe INT);
+DECLARE @Res45 INT, @Rsn45 INT, @Shown45 INT, @Wait45 INT, @Role45 VARCHAR(50);
 DECLARE @R TABLE (Result INT, Reason INT, ReasonDetail NVARCHAR(2000));
 DECLARE @Actors TABLE (Label VARCHAR(20) PRIMARY KEY, UserId INT NULL);
 DECLARE @Items TABLE (Label VARCHAR(20) PRIMARY KEY, AgendaId INT);
@@ -1368,6 +1381,24 @@ END');
         INSERT INTO #MO EXEC dbo.spr_ZZ44_MeetingsOld @ActingUserId = @cUser, @CommitteeId = @Id, @DepartmentId = @N, @Result = @Res OUTPUT, @Reason = @Rsn OUTPUT,
             @StatisticsShown = @Shown OUTPUT, @ActingRoleCode = @Role OUTPUT;
         SET @NewRR = 'Result ' + ISNULL(CAST(@Res AS VARCHAR(2)), '-') + ', Reason ' + ISNULL(CAST(@Rsn AS VARCHAR(3)), '-') + ', statistics ' + ISNULL(CAST(@Shown AS VARCHAR(2)), '-') + ', role ' + ISNULL(@Role, '-');
+        -- Replaced by step 45 (step UN6c2b): with step 45 installed the MD Secretariat has the statistics. They must be
+        -- those of Management (the made-up Management user, same filters); then they are compared with the earlier
+        -- text as "no statistics", as in the comparison for every active user below.
+        IF (@cUser = @Mds AND ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetDashboardMeetings')), '') LIKE '%DashboardSummary-Step45%')
+        BEGIN
+            DELETE FROM @MG45;
+            INSERT INTO @MG45 EXEC spr_GetDashboardMeetings @ActingUserId = @Gmt, @CommitteeId = @Id, @DepartmentId = @N, @Result = @Res45 OUTPUT, @Reason = @Rsn45 OUTPUT,
+                @StatisticsShown = @Shown45 OUTPUT, @ActingRoleCode = @Role45 OUTPUT, @WaitingShown = @Wait45 OUTPUT;
+            IF (@OldRR = 'Result 1, Reason 0, statistics 1, role md_sect'
+                AND NOT EXISTS (SELECT MeetingId, ListCode, Items, Approved, Rejected, Pending FROM #MT
+                                EXCEPT SELECT MeetingId, ListCode, Items, Approved, Rejected, Pending FROM @MG45)
+                AND NOT EXISTS (SELECT MeetingId, ListCode, Items, Approved, Rejected, Pending FROM @MG45
+                                EXCEPT SELECT MeetingId, ListCode, Items, Approved, Rejected, Pending FROM #MT))
+            BEGIN
+                SET @OldRR = 'Result 1, Reason 0, statistics 0, role md_sect';
+                UPDATE #MT SET Items = NULL, Approved = NULL, Rejected = NULL, Pending = NULL;
+            END
+        END
         IF (@OldRR <> @NewRR
             OR (SELECT COUNT(*) FROM #MT) <> (SELECT COUNT(*) FROM #MO)
             OR EXISTS (SELECT MeetingId, CommitteeId, CommitteeCode, CommitteeName, MeetingNo, MeetingDate, MeetingTime, AgendaSubmissionDate, ListCode, StateCode, StateLabel, Items, Approved, Rejected, Pending FROM #MT
@@ -1396,6 +1427,24 @@ END');
         INSERT INTO #MO EXEC dbo.spr_ZZ44_MeetingsOld @ActingUserId = @cUser, @CommitteeId = 0, @DepartmentId = 0, @Result = @Res OUTPUT, @Reason = @Rsn OUTPUT,
             @StatisticsShown = @Shown OUTPUT, @ActingRoleCode = @Role OUTPUT;
         SET @NewRR = ISNULL(CAST(@Res AS VARCHAR(2)), '-') + ISNULL(CAST(@Rsn AS VARCHAR(3)), '-') + ISNULL(CAST(@Shown AS VARCHAR(2)), '-') + ISNULL(@Role, '-');
+        -- Replaced by step 45 (step UN6c2b): with step 45 installed the MD Secretariat has the statistics. They must be
+        -- those of Management (the made-up Management user, same filters); then they are compared with the earlier
+        -- text as "no statistics" (StatisticsShown 0, counts NULL). Every other role is compared as before.
+        IF (@Role = 'md_sect' AND ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetDashboardMeetings')), '') LIKE '%DashboardSummary-Step45%')
+        BEGIN
+            DELETE FROM @MG45;
+            INSERT INTO @MG45 EXEC spr_GetDashboardMeetings @ActingUserId = @Gmt, @CommitteeId = 0, @DepartmentId = 0, @Result = @Res45 OUTPUT, @Reason = @Rsn45 OUTPUT,
+                @StatisticsShown = @Shown45 OUTPUT, @ActingRoleCode = @Role45 OUTPUT, @WaitingShown = @Wait45 OUTPUT;
+            IF (@OldRR = '101md_sect'
+                AND NOT EXISTS (SELECT MeetingId, ListCode, Items, Approved, Rejected, Pending FROM #MT
+                                EXCEPT SELECT MeetingId, ListCode, Items, Approved, Rejected, Pending FROM @MG45)
+                AND NOT EXISTS (SELECT MeetingId, ListCode, Items, Approved, Rejected, Pending FROM @MG45
+                                EXCEPT SELECT MeetingId, ListCode, Items, Approved, Rejected, Pending FROM #MT))
+            BEGIN
+                SET @OldRR = '100md_sect';
+                UPDATE #MT SET Items = NULL, Approved = NULL, Rejected = NULL, Pending = NULL;
+            END
+        END
         IF (@OldRR <> @NewRR
             OR (SELECT COUNT(*) FROM #MT) <> (SELECT COUNT(*) FROM #MO)
             OR EXISTS (SELECT MeetingId, ListCode, StateCode, StateLabel, Items, Approved, Rejected, Pending, MeetingDate, MeetingNo FROM #MT

@@ -18,6 +18,13 @@
    script grants nothing, as step 42; the application login holds EXECUTE on
    the schema).
 
+   Step 45 (step UN6c2b) replaced spr_GetDashboardActionItems: two more
+   parameters, last and optional (@CommitteeId, @DepartmentId). The
+   parameter check of Part 1 follows that: with step 45 installed it expects
+   5 parameters (2 OUTPUT) for the action items procedure, without it 3 (2).
+   Every other check is as it was (called without the two parameters, the
+   procedure gives the rows of step 43).
+
    Part 2 works inside ONE transaction that is rolled back, with made-up data
    (names beginning ZZ43):
      - every alert type (CC, CU, MC, MU, AF, MF, AC, AMA, AMR, ACA, ACR) with
@@ -123,7 +130,11 @@ INSERT INTO #T SELECT 'Marker DashboardAlerts-Step43 in the eight new objects an
                                           ('spr_SaveDashboardActionText'), ('spr_GetAlertMailId'), ('spr_GetAgendaUpdateMailId')) o(Name)
              WHERE OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)) LIKE '%DashboardAlerts-Step43%') AS VARCHAR(12));
 
-INSERT INTO #T SELECT 'Parameters (all, OUTPUT): alerts 8 5, count 4 3, remove 4 2, action items 3 2, alert function 1 0, open 4 2, save 5 2, action item function 2 0', '8 5, 4 3, 4 2, 3 2, 1 0, 4 2, 5 2, 2 0',
+-- Replaced by step 45 (step UN6c2b): with step 45 installed spr_GetDashboardActionItems has two more parameters
+-- (@CommitteeId, @DepartmentId, both optional): 5 parameters, 2 OUTPUT
+INSERT INTO #T SELECT 'Parameters (all, OUTPUT): alerts 8 5, count 4 3, remove 4 2, action items 3 2 (with step 45 installed 5 2), alert function 1 0, open 4 2, save 5 2, action item function 2 0',
+       CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetDashboardActionItems')), '') LIKE '%DashboardSummary-Step45%'
+            THEN '8 5, 4 3, 4 2, 5 2, 1 0, 4 2, 5 2, 2 0' ELSE '8 5, 4 3, 4 2, 3 2, 1 0, 4 2, 5 2, 2 0' END,
        STUFF((SELECT ', ' + CAST((SELECT COUNT(*) FROM sys.parameters p WHERE p.object_id = OBJECT_ID('dbo.' + o.Name) AND p.parameter_id > 0) AS VARCHAR(12))
                      + ' ' + CAST((SELECT COUNT(*) FROM sys.parameters p WHERE p.object_id = OBJECT_ID('dbo.' + o.Name) AND p.is_output = 1 AND p.parameter_id > 0) AS VARCHAR(12))
               FROM (VALUES (1, 'spr_GetDashboardAlerts'), (2, 'spr_GetAlertCount'), (3, 'spr_RemoveAlertForUser'), (4, 'spr_GetDashboardActionItems'),

@@ -37,6 +37,12 @@ namespace BMMSBAL
         {
             return ActionItemDB.GetDashboardActionItems(ActingUserId, out Reason);
         }
+
+        // Step UN6c2b (step 45): with the Committee and Department filters of the Dashboard; see ActionItemDB
+        public static DataTable GetDashboardActionItems(int ActingUserId, int CommitteeId, int DepartmentId, out int Reason)
+        {
+            return ActionItemDB.GetDashboardActionItems(ActingUserId, CommitteeId, DepartmentId, out Reason);
+        }
         #endregion
 
         #region OpenDashboardActionItem

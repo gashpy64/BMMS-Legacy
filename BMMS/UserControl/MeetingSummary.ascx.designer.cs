@@ -53,6 +53,71 @@ namespace BMMS.UserControl {
         protected global::System.Web.UI.WebControls.DropDownList ddlCommittee;
 
         /// <summary>
+        /// divSummaryCards control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl divSummaryCards;
+
+        /// <summary>
+        /// litInProgress control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Literal litInProgress;
+
+        /// <summary>
+        /// spanInProgressUnknown control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl spanInProgressUnknown;
+
+        /// <summary>
+        /// litInProgressLabel control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Literal litInProgressLabel;
+
+        /// <summary>
+        /// litInProgressScope control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Literal litInProgressScope;
+
+        /// <summary>
+        /// litInProgressNote control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Literal litInProgressNote;
+
+        /// <summary>
+        /// litRejected control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Literal litRejected;
+
+        /// <summary>
+        /// spanRejectedUnknown control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl spanRejectedUnknown;
+
+        /// <summary>
+        /// litRejectedLabel control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Literal litRejectedLabel;
+
+        /// <summary>
+        /// litRejectedScope control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Literal litRejectedScope;
+
+        /// <summary>
+        /// litUnread control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Literal litUnread;
+
+        /// <summary>
+        /// spanUnreadUnknown control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl spanUnreadUnknown;
+
+        /// <summary>
+        /// pSummaryMessage control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl pSummaryMessage;
+
+        /// <summary>
         /// litMeetingsTitle control.
         /// </summary>
         protected global::System.Web.UI.WebControls.Literal litMeetingsTitle;
@@ -76,5 +141,10 @@ namespace BMMS.UserControl {
         /// grvCompleted control.
         /// </summary>
         protected global::System.Web.UI.WebControls.GridView grvCompleted;
+
+        /// <summary>
+        /// pInProgressNote control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl pInProgressNote;
     }
 }

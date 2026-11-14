@@ -1,4 +1,4 @@
-# Dashboard pack (steps UN6b, UN6c1 and UN6c2a)
+# Dashboard pack (steps UN6b, UN6c1, UN6c2a and UN6c2b)
 
 The pack proves on every run that the Dashboard's Meetings card shows each role the meetings, colours and
 statistics of the owner's rules (Database\README.md, section "Step UN6b"), that the Alert and Action Item lists
@@ -8,7 +8,7 @@ still show what they showed, and that the page fits the window.
 
 | File | What | Who changes it |
 |---|---|---|
-| `expected.json` | The cases (account, filter chosen, drop-downs, subtitle, card title, last column header, statistics shown, the Scheduled and Completed rows), the first-page row counts of the Alert and Action Item lists, the two headings of the Alerts card, the window widths. Step UN6c1: the header count per account (`alertHeader`), the three links for one account (`alertModes`), the person named on some alerts (`alertActors`), the due dates of the action items (`actionItemsDue`), the accounts of the action checks (`alertActions`). Step UN6c2a: `meetingsFit` (account, window width and number of columns of the fit check of the Scheduled list) and `pastItem` (the account, the alert and item of the passed meeting, the meeting-date message as the page shows it, and an item the account can decide). | The owner, or Claude on the owner's instruction (the build report lists it under "expectations changed"). Never the tester. |
+| `expected.json` | The cases (account, filter chosen, drop-downs, subtitle, card title, last column header, statistics shown, the Scheduled and Completed rows), the first-page row counts of the Alert and Action Item lists, the two headings of the Alerts card, the window widths. Step UN6c1: the header count per account (`alertHeader`), the three links for one account (`alertModes`), the person named on some alerts (`alertActors`), the due dates of the action items (`actionItemsDue`), the accounts of the action checks (`alertActions`). Step UN6c2a: `meetingsFit` (account, window width and number of columns of the fit check of the Scheduled list) and `pastItem` (the account, the alert and item of the passed meeting, the meeting-date message as the page shows it, and an item the account can decide). Step UN6c2b: `inProgressMeaning` and `inProgressMeaningWaiting` (the meaning of "In progress": the first half, and the whole sentence for the accounts of `inProgressWaitingAccounts`, the Controller and the Managers), `summary` (the summary cards per account), `summaryFilters` (one filter chosen, and what every card shows then), `alertsNote`, `inactiveCommittee`, `summaryWidths`, `approvalsHeadingKept`, `tableFit`. | The owner, or Claude on the owner's instruction (the build report lists it under "expectations changed"). Never the tester. |
 | `pack.js` | The checks. | Claude, in a reviewed step. |
 
 ## A row
@@ -44,6 +44,8 @@ the run):
   UN6c2a) lies 40 days back with its agenda still open and one Credit item at AC (QA2-00013-1, saved by qa_user,
   so routed to qa_manager) and its alert, read by qa_manager only: older than every other meeting, so it is below
   the ten Completed rows of every list and changes no row of check 1.
+- Step UN6c2b: committee QA9 "QA Inactive Committee", inactive, a direct row without members, meetings or alert
+  (so no account's alerts change). It must not be offered in any Committee drop-down (check 15).
 
 ## Checks
 
@@ -98,6 +100,48 @@ the run):
    longer be approved or rejected. It will be rejected when the agenda is finalized." inside the panel, at most
    40 px above the buttons and not covered by anything; then QA1-00001-001 from My approvals: Approve and Reject
    and no message in the panel.
+12. The summary cards (step UN6c2b, `summary`): per account the In progress and Rejected cards (value, label, the
+   scope line "Scheduled meetings, all committees"), the meaning of "In progress" on the In progress card, Unread
+   alerts equal to the header count, no message; qa_mdsec and qa_admin have no cards. The note of the Alerts card
+   ("Your own alerts, for every committee. The filters at the top do not apply."). The meaning of "In progress" as a
+   visible line under the lists only for qa_mdsec (statistics, no cards; `inProgressLine`). In check 1 the In progress header of
+   every list with statistics has the same sentence as its tooltip.
+13. The filters reach every card (step UN6c2b, `summaryFilters`): one committee or one department chosen, then the
+   two item cards (with the committee in the scope line), the My approvals heading with its count, the Action Items
+   card's items; the Alerts card's first-page rows and Unread alerts are as before the choice.
+14. The heading "My approvals (n)" keeps its count (step UN6c2b, `approvalsHeadingKept`): qa_ctrl, qa_manager and
+   qa_manager2, after Recent, Unread and All of the Alerts card, Unread and Show All of the Action Items card,
+   opening and closing an action item and an alert. (Last: opening marks an alert and an item read.) Before the
+   fix of step UN6c2b each of these lost the count (run 2026-11-14_221927: 21 checks failed).
+15. The inactive committee (step UN6c2b, `inactiveCommittee`): it is not in the Committee drop-down of any of the
+   eight accounts. A value put into the drop-down by hand is refused by ASP.NET's event validation before the page
+   runs, which writes the error log and fails the run; the server's refusal of an inactive or unknown committee
+   (Reason 4, in all four Dashboard procedures) is proven by the step 45 Test script instead.
+16. The summary cards at 1366, 1280, 1097, 960 and 640 px (step UN6c2b, `summaryWidths`; qa_ctrl and qa_manager2,
+   whose labels are the longest): the page no wider than the window, every card inside the row, no text cut; the
+   number of rows of cards is shown in the check title.
+17. The Meetings tables at narrow widths (step UN6c2b, owner's tests at 200 % zoom, `tableFit`): qa_manager and qa_ctrl
+   with a classic vertical scrollbar (Windows Edge, 17 px; the window is made 17 px narrower, since headless Chrome
+   draws none) at 1280 px (fits), 1097, 960 and 768 px (fits with at least 24 px to spare: the table's narrowest
+   width, measured with the table set to 1 px, at least 24 px below its box), and without the scrollbar at 800 px
+   (fits): the nine-column Scheduled list and the Completed list no wider than their scroll box (no column cut off,
+   no scroll inside the card) and the page not scrolling sideways. 768 px is the window of Edge at 200 % on a
+   desktop of 1536 px (1920 px at 125 %), where the owner saw "Waiting for me" cut off by a few pixels: before the
+   second fix the list needed 707 px in a 685 px box there; after it 644 px (41 px to spare). Measured before the fix (Edge, device
+   scale 2): the Scheduled list needed at least 794 px and scrolled inside its card below about 860 px wide; after
+   the fix (tighter cells and a status chip that may wrap at 1240 px and below) it fits down to about 770 px, and
+   below that it scrolls inside the card with the Meeting column kept in view.
+
+The summary values were worked out from the fixture by an independent count (status codes and departments read from
+the tables, not by the step 45 objects): scheduled meetings QA1 00001 to 00003 and QA2 00001.
+
+| Account | In progress | Rejected |
+|---|---|---|
+| qa_ctrl, qa_mgmt | 6 (QA1: 4, QA2: 2) | 2 (QA1: 2, QA2: 0) |
+| qa_manager, qa_user (Credit) | 4 (QA1: 3) | 2 |
+| qa_manager2 (HRD, Secretarial) | 2 (HRD 1, Secretarial 1; QA2: 1) | 0 |
+| qa_user2 (HRD) | 1 | 0 |
+| qa_mdsec, qa_admin | no cards | no cards |
 
 My approvals per account, by the rule "Controller: items approved by the Manager; Manager: items waiting for the
 Manager that are routed to him; meetings with an open agenda whose date has not passed":

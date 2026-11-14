@@ -14,7 +14,11 @@
                     the Action Items card per account (actionItemsList) and the accounts and items of the
                     scope checks (actionScope);
                     step UN6c2a: the accounts and widths of the fit check of the Scheduled list (meetingsFit) and
-                    the item of a passed meeting with its alert and message (pastItem)
+                    the item of a passed meeting with its alert and message (pastItem);
+                    step UN6c2b: the meaning of "In progress" (inProgressMeaning), the summary cards per account
+                    (summary) and with one filter chosen (summaryFilters), the note of the Alerts card (alertsNote),
+                    the inactive committee (inactiveCommittee), the widths of the card checks (summaryWidths), the
+                    accounts of the heading check (approvalsHeadingKept)
 
   What it checks
     1. Every case of expected.json: the rows in order, with colour class and label, the counts or no counts at
@@ -52,6 +56,25 @@
        alert read): qa_manager opens the read alert of QA2-00013-1 (meeting 40 days ago, agenda open, routed to
        him) on the last page of All: no Approve or Reject, the message inside the panel just above the buttons and
        not covered; an item he can decide, opened from My approvals, shows the buttons and no message.
+   12. The summary cards (step UN6c2b): per account the In progress and Rejected cards (value, label, scope line), the
+       meaning of "In progress" on the In progress card, Unread alerts equal to the header count, no message; no cards
+       for the MD Secretariat and the Admin; the note of the Alerts card. In check 1 the In progress header has the
+       same sentence as its tooltip.
+   13. The filters reach every card (step UN6c2b): per case of summaryFilters, after the choice: the two item cards,
+       My approvals (heading with its count), the Action Items card; the Alerts card's rows and Unread alerts as before.
+   14. The heading "My approvals (n)" keeps its count through the postbacks of the other cards (step UN6c2b).
+   15. The inactive committee is offered to nobody (step UN6c2b): it is not in the Committee drop-down of any account.
+       (A value put into the drop-down by hand is refused by ASP.NET's event validation before the page sees it, and
+       that writes the error log; the server's own refusal of an inactive committee is in the step 45 Test script.)
+   16. The summary cards at each width of summaryWidths (step UN6c2b): the page no wider than the window, every card
+       inside the row and none of its text cut.
+   17. The Meetings tables fit their card at narrow widths (step UN6c2b, owner's tests at 200 % zoom; tableFit): per
+       account and width, the Scheduled list with its columns and the Completed list no wider than their scroll box
+       (table and box scrollWidth not above the box's clientWidth), the page not scrolling sideways, and where
+       minSlack is given each list's narrowest width (the table set to 1 px for the measurement and put back) at
+       least minSlack px below the box's clientWidth. A classic vertical scrollbar (Windows Edge, about 17 px) is
+       taken into account by a window narrower by `scrollbar` px: headless Chrome draws no classic scrollbar, and a
+       table that fits is as wide as its box, so its scrollWidth alone cannot show the room to spare.
     7. The link chosen stays chosen (step UN6c1, owner's test): on both cards, with Unread chosen, opening an item
        or an alert leaves the mark on Unread and the list holds unread rows only; Read, Show All and Recent then
        show the rest with their own mark.
@@ -102,10 +125,13 @@ async function readCard(page) {
     const options = (sel) => { const s = q(sel); return s ? Array.from(s.options).map((o) => o.text.trim()) : null; };
     const grid = (suffix) => {
       const table = q('table[id$="' + suffix + '"]');
-      if (!table) return { present: false, head: [], rows: [], empty: null, dates: [], waiting: {} };
+      if (!table) return { present: false, head: [], rows: [], empty: null, dates: [], waiting: {}, tip: null };
       const trs = Array.from(table.querySelectorAll(':scope > tbody > tr'));
-      if (trs.length && !trs[0].querySelector('th')) return { present: true, head: [], rows: [], empty: txt(trs[0]), dates: [], waiting: {} };
+      if (trs.length && !trs[0].querySelector('th')) return { present: true, head: [], rows: [], empty: txt(trs[0]), dates: [], waiting: {}, tip: null };
       const head = trs.length ? Array.from(trs[0].querySelectorAll(':scope > th')).map(txt) : [];
+      // Step UN6c2b: the tooltip of the In progress header (the eighth column, Items Approved Rejected In progress)
+      const ths = trs.length ? Array.from(trs[0].querySelectorAll(':scope > th')) : [];
+      const tip = ths[7] ? ths[7].getAttribute('title') : null;
       const dates = [];
       const waiting = {};
       const rows = trs.slice(1).map((tr) => {
@@ -121,7 +147,7 @@ async function readCard(page) {
         if (wcell && txt(wcell)) waiting[parts[0] + ' | ' + parts[1]] = txt(wcell);
         return parts.join(' | ');
       });
-      return { present: true, head, rows, empty: null, dates, waiting };
+      return { present: true, head, rows, empty: null, dates, waiting, tip };
     };
     const card = q('.wb-dash-meetings');
     return {
@@ -138,7 +164,11 @@ async function readCard(page) {
 }
 
 
-async function runCase(t, c) {
+// Step UN6c2b (owner, 2026-11-14): the meaning of "In progress" in full for the Controller and the Managers (the roles
+// with "Waiting for me"), the first half for every other role
+const meaningFor = (data, account) => (data.inProgressWaitingAccounts.includes(account) ? data.inProgressMeaningWaiting : data.inProgressMeaning);
+
+async function runCase(t, c, data) {
   const page = await t.session(c.account);
   const seen0 = await t.visit(page, DASHBOARD);
   if (seen0.kind !== 'opens') {
@@ -173,6 +203,12 @@ async function runCase(t, c) {
   for (const [label, g] of [['Scheduled', card.scheduled], ['Completed (last 10)', card.completed]]) {
     const want = label === 'Scheduled' && hasWaiting ? wantHead.concat(['Waiting for me']) : wantHead;
     if (g.head.length || g.rows.length) rec(label + ': column headers', want, g.head);
+  }
+  // Step UN6c2b: the In progress header carries the meaning of "In progress" as its tooltip
+  if (c.statistics) {
+    for (const [label, g] of [['Scheduled', card.scheduled], ['Completed (last 10)', card.completed]]) {
+      if (g.head.length) rec(label + ': the In progress header has the meaning of "In progress" (for this role) as its tooltip', meaningFor(data, c.account), g.tip);
+    }
   }
   if (hasWaiting) rec('Waiting for me: the meetings with items waiting for this person, and how many', c.waiting, card.scheduled.waiting);
   else rec('no Waiting for me column', false, card.scheduled.head.includes('Waiting for me') || card.completed.head.includes('Waiting for me'));
@@ -791,6 +827,222 @@ async function pastItemChecks(t, data) {
   await t.visit(page, DASHBOARD);
 }
 
+// ----- Step UN6c2b: the summary cards and the filters on every card -----
+
+// The summary cards as shown: 'no cards', or per card its value (the hidden "count not available" text left out),
+// label, scope line and note; the message under the cards
+async function readSummary(page) {
+  return page.evaluate(() => {
+    const txt = (el) => (el ? el.textContent.replace(/\s+/g, ' ').trim() : '');
+    const box = document.querySelector('.wb-dash-summary');
+    if (!box) return 'no cards';
+    const value = (p) => {
+      if (!p) return '';
+      const c = p.cloneNode(true);
+      c.querySelectorAll('.wb-visually-hidden').forEach((h) => h.remove());
+      return txt(c);
+    };
+    const cards = Array.from(box.querySelectorAll('.wb-dash-stat')).map((s) => ({
+      value: value(s.querySelector('.wb-dash-stat-value')), label: txt(s.querySelector('.wb-dash-stat-label')),
+      scope: txt(s.querySelector('.wb-dash-stat-scope')), note: txt(s.querySelector('.wb-dash-stat-note')),
+    }));
+    return { cards, message: txt(box.querySelector('.wb-dash-stat-message')) };
+  });
+}
+
+// The two item cards as 'value, label, scope' x 2 (the form of expected.json)
+const itemCards = (s) => (s === 'no cards' ? s : s.cards.slice(0, 2).reduce((a, c) => a.concat([c.value, c.label, c.scope]), []));
+
+// 12. Per account: the cards, Unread alerts = the header count, the meaning on the In progress card, the Alerts note
+async function summaryChecks(t, data) {
+  for (const [account, want] of Object.entries(data.summary)) {
+    const page = await t.session(account);
+    await page.setViewportSize({ width: 1366, height: 768 });
+    await t.visit(page, DASHBOARD);
+    const s = await readSummary(page);
+    const header = await headerText(page);
+    const unread = data.alertHeader[account];
+    const e = want === 'no cards' ? 'no cards' : { items: want, unread: [String(unread), 'Unread alerts', 'Your alerts, not filtered'], note: meaningFor(data, account), message: '' };
+    const seen = s === 'no cards' ? s : { items: itemCards(s), unread: s.cards[2] ? [s.cards[2].value, s.cards[2].label, s.cards[2].scope] : 'no card',
+      note: s.cards[0] ? s.cards[0].note : '', message: s.message };
+    const ej = JSON.stringify(e), sj = JSON.stringify(seen);
+    t.record({ title: 'Summary cards of ' + account + (want === 'no cards' ? ': none' : ': In progress and Rejected (value, label, scope), Unread alerts, the meaning of In progress'),
+      role: account, address: DASHBOARD, expected: ej, seen: sj, pass: ej === sj, screenshot: ej === sj ? '' : await t.shot(page, 'summary-' + account) });
+    if (want !== 'no cards') {
+      const same = s.cards[2] && header === 'Alerts (' + s.cards[2].value + ')';
+      t.record({ title: 'Summary cards of ' + account + ': Unread alerts equals the header count', role: account, address: DASHBOARD,
+        expected: 'Alerts (' + unread + ')', seen: (s.cards[2] ? 'card ' + s.cards[2].value + ', ' : 'no card, ') + 'header ' + String(header), pass: !!same && header === 'Alerts (' + unread + ')' });
+    }
+    // The meaning of "In progress" as a visible line under the lists: only where the statistics are shown and no card
+    // carries it (the MD Secretariat)
+    const line = await page.evaluate(() => { const n = document.querySelector('[id$="_pInProgressNote"]'); return n ? n.textContent.replace(/\s+/g, ' ').trim() : 'no line'; });
+    const wantLine = data.inProgressLine.includes(account) ? 'In progress: ' + meaningFor(data, account) : 'no line';
+    t.record({ title: 'Meetings card of ' + account + ': the meaning of In progress as a visible line ' + (wantLine === 'no line' ? 'not shown (a card carries it, or no statistics)' : 'under the lists'),
+      role: account, address: DASHBOARD, expected: wantLine, seen: line, pass: line === wantLine });
+    const note = await page.evaluate(() => { const n = document.querySelector('.wb-dash-alerts .wb-dash-note'); return n ? n.textContent.replace(/\s+/g, ' ').trim() : 'no note'; });
+    t.record({ title: 'Alerts card of ' + account + ': the note that the filters do not apply', role: account, address: DASHBOARD, expected: data.alertsNote, seen: note, pass: note === data.alertsNote });
+  }
+}
+
+// 13. One filter chosen: every card that follows it, and the Alerts card and Unread alerts that do not
+async function filterAllCardsChecks(t, data) {
+  for (const f of data.summaryFilters) {
+    const page = await t.session(f.account);
+    await page.setViewportSize({ width: 1366, height: 768 });
+    await t.visit(page, DASHBOARD);
+    const alertsBefore = await alertRowCount(page);
+    const before = await readSummary(page);
+    const unreadBefore = before === 'no cards' || !before.cards[2] ? 'no card' : before.cards[2].value;
+    if (f.committee) await postBack(page, () => page.selectOption('select[id$="_ddlCommittee"]', { label: f.committee }));
+    if (f.department) await postBack(page, () => page.selectOption('select[id$="_ddlDepartment"]', { label: f.department }));
+    const s = await readSummary(page);
+    const a = await readApprovals(page);
+    const hasCard = await page.locator('.wb-dash-actions').count() > 0;
+    const ai = hasCard ? await readActionItems(page) : null;
+    const want = { cards: f.cards, message: '', approvals: f.approvals, actionItems: f.actionItems, alertRows: alertsBefore, unread: unreadBefore };
+    const seen = { cards: itemCards(s), message: s === 'no cards' ? '' : s.message, approvals: a === 'no panel' ? a : a.title,
+      actionItems: ai ? Object.keys(ai.rows) : 'no card', alertRows: await alertRowCount(page),
+      unread: s === 'no cards' || !s.cards[2] ? 'no card' : s.cards[2].value };
+    const ej = JSON.stringify(want), sj = JSON.stringify(seen);
+    t.record({ title: f.account + ' with ' + (f.committee ? 'committee ' + f.committee : 'department ' + f.department)
+        + ' chosen: the item cards, My approvals and Action Items follow it; the Alerts card and Unread alerts do not',
+      role: f.account, address: DASHBOARD, expected: ej, seen: sj, pass: ej === sj, screenshot: ej === sj ? '' : await t.shot(page, 'filters-' + f.account) });
+    await t.visit(page, DASHBOARD);
+  }
+}
+
+// 15. The inactive committee is not offered in the Committee drop-down of any account
+async function inactiveCommitteeChecks(t, data) {
+  for (const account of Object.keys(data.alertsFirstPage)) {
+    const page = await t.session(account);
+    await t.visit(page, DASHBOARD);
+    const options = await page.evaluate(() => { const s = document.querySelector('select[id$="_ddlCommittee"]'); return s ? Array.from(s.options).map((o) => o.text.trim()) : null; });
+    const seen = options === null ? 'no drop-down' : (options.includes(data.inactiveCommittee) ? 'listed' : 'not listed');
+    t.record({ title: 'Committee drop-down of ' + account + ': the inactive committee "' + data.inactiveCommittee + '" is not offered', role: account, address: DASHBOARD,
+      expected: 'not listed', seen, pass: seen === 'not listed' });
+  }
+}
+
+// 16. The summary cards at each width: the page no wider than the window, every card inside the row, no text cut
+async function summaryWidthChecks(t, data) {
+  for (const account of ['controller', 'manager2']) {
+    const page = await t.session(account);
+    for (const width of data.summaryWidths) {
+      await page.setViewportSize({ width, height: 768 });
+      await t.visit(page, DASHBOARD);
+      const m = await measure(page);
+      const notes = widthVerdict(m);
+      const c = await page.evaluate(() => {
+        const box = document.querySelector('.wb-dash-summary');
+        if (!box) return null;
+        const b = box.getBoundingClientRect();
+        const cards = Array.from(box.querySelectorAll('.wb-dash-stat'));
+        const out = cards.filter((s) => { const r = s.getBoundingClientRect(); return r.left < b.left - 1 || r.right > b.right + 1; }).length;
+        const cut = cards.filter((s) => s.scrollWidth > s.clientWidth + 1).length
+          + Array.from(box.querySelectorAll('.wb-dash-stat p')).filter((p) => p.scrollWidth > p.clientWidth + 1).length;
+        const rows = new Set(cards.map((s) => Math.round(s.getBoundingClientRect().top))).size;
+        return { cards: cards.length, out, cut, rows };
+      });
+      if (!c) notes.push('no summary cards');
+      else {
+        if (c.cards !== 3) notes.push(c.cards + ' cards');
+        if (c.out) notes.push(c.out + ' card(s) outside the row');
+        if (c.cut) notes.push(c.cut + ' card or text box(es) cut');
+      }
+      t.record({ title: 'Width ' + width + ' px, ' + account + ': the summary cards fit (no sideways scroll, every card inside the row, no text cut)'
+          + (c ? ' (' + c.rows + ' row(s) of cards)' : ''),
+        role: account, address: DASHBOARD, expected: 'fits', seen: notes.length ? notes.join('; ') : 'fits', pass: notes.length === 0,
+        screenshot: notes.length ? await t.shot(page, 'summary-width-' + account + '-' + width) : '' });
+    }
+    await page.setViewportSize({ width: 1366, height: 768 });
+  }
+}
+
+// 17. The Meetings tables at narrow widths: no column cut off, no scroll inside the card, no page sideways scroll
+async function tableFitChecks(t, data) {
+  for (const f of data.tableFit) {
+    const page = await t.session(f.account);
+    const scrollbar = f.scrollbar || 0;
+    const minSlack = f.minSlack || 0;
+    await page.setViewportSize({ width: f.width - scrollbar, height: 900 });
+    await t.visit(page, DASHBOARD);
+    const m = await page.evaluate(() => {
+      const one = (suffix) => {
+        const table = document.querySelector('table[id$="' + suffix + '"]');
+        const box = table ? table.closest('.wb-table-scroll') : null;
+        if (!table || !box) return null;
+        const columns = Array.from(table.querySelectorAll('tr:first-child th')).filter((th) => th.offsetParent !== null).length;
+        const r = { columns, table: table.scrollWidth, box: box.scrollWidth, client: box.clientWidth };
+        const keep = table.style.width;
+        table.style.width = '1px';
+        r.narrowest = Math.ceil(table.getBoundingClientRect().width);
+        table.style.width = keep;
+        return r;
+      };
+      return { s: one('_grvScheduled'), c: one('_grvCompleted'), doc: document.documentElement.scrollWidth, win: window.innerWidth };
+    });
+    const notes = [];
+    if (!m.s || !m.c) notes.push('a Meetings table is missing');
+    else {
+      if (m.s.columns !== f.columns) notes.push('Scheduled has ' + m.s.columns + ' columns');
+      for (const [name, g] of [['Scheduled', m.s], ['Completed', m.c]]) {
+        if (g.table > g.client || g.box > g.client) notes.push(name + ' ' + Math.max(g.table, g.box) + ' px in a ' + g.client + ' px box');
+        else if (minSlack && g.narrowest + minSlack > g.client) notes.push(name + ' only ' + (g.client - g.narrowest) + ' px to spare (narrowest ' + g.narrowest + ' px, box ' + g.client + ' px; ' + minSlack + ' wanted)');
+      }
+    }
+    if (m.doc > m.win) notes.push('page ' + m.doc + ' px in a ' + m.win + ' px window');
+    t.record({ title: 'Width ' + f.width + ' px' + (scrollbar ? ' with a ' + scrollbar + ' px scrollbar' : '') + ', ' + f.account + ': the Scheduled list (' + f.columns + ' columns) and the Completed list fit their card'
+        + (minSlack ? ' with at least ' + minSlack + ' px to spare' : '') + ', no page sideways scroll'
+        + (m.s ? ' (Scheduled narrowest ' + m.s.narrowest + ' px, box ' + m.s.client + ' px)' : ''),
+      role: f.account, address: DASHBOARD, expected: 'fits', seen: notes.length ? notes.join('; ') : 'fits', pass: notes.length === 0,
+      screenshot: notes.length ? await t.shot(page, 'table-fit-' + f.account + '-' + f.width) : '' });
+    await page.setViewportSize({ width: 1366, height: 768 });
+  }
+}
+
+// 14. Step UN6c2b: the heading "My approvals (n)" keeps its count through the postbacks of the other cards (a heading
+//     without a count was seen once). Per account of approvalsHeadingKept, after each action the heading is the one of
+//     approvals (the count does not change: nothing is decided). Last, because opening an alert or an action item
+//     marks it read.
+async function approvalsHeadingChecks(t, data) {
+  for (const account of data.approvalsHeadingKept.accounts) {
+    const want = data.approvals[account].title;
+    const page = await t.session(account);
+    await page.setViewportSize({ width: 1366, height: 768 });
+    await t.visit(page, DASHBOARD);
+    const title = async () => { const a = await readApprovals(page); return a === 'no panel' ? a : a.title; };
+    const closePanel = async () => {
+      const button = page.locator('input[type="submit"][value="X"]:visible, input[type="submit"][value="Close"]:visible').first();
+      if (await button.count()) await postBack(page, () => button.click());
+    };
+    const rec = (after, seen) => t.record({ title: 'My approvals heading of ' + account + ' after ' + after + ': the count is shown', role: account, address: DASHBOARD,
+      expected: want, seen: String(seen), pass: seen === want });
+    rec('opening the Dashboard', await title());
+    const steps = [
+      ['Alerts: Unread', () => chooseAlertMode(page, 'Unread')],
+      ['Alerts: All', () => chooseAlertMode(page, 'All')],
+      ['Alerts: Recent', () => chooseAlertMode(page, 'Recent')],
+      ['Action Items: Unread', () => chooseActionMode(page, 'Unread')],
+      ['Action Items: Show All', () => chooseActionMode(page, 'Show All')],
+      ['opening an action item and closing it', async () => {
+        const link = page.locator('a[id*="lnkActionItem"]').first();
+        if (await link.count()) { await postBack(page, () => link.click()); await closePanel(); }
+      }],
+      ['opening an alert and closing it', async () => {
+        const link = page.locator('a[id*="lnkSource"]').first();
+        if (await link.count()) { await postBack(page, () => link.click()); await closePanel(); }
+      }],
+    ];
+    for (const [after, act] of steps) {
+      await act();
+      const seen = await title();
+      rec(after, seen);
+      if (seen !== want) await t.shot(page, 'approvals-heading-' + account + '-' + after.replace(/[^A-Za-z]+/g, '-'));
+    }
+    await t.visit(page, DASHBOARD);
+  }
+}
+
 module.exports = {
   title: 'Dashboard: meetings, colours and statistics per role; layout widths',
   async run(t) {
@@ -825,7 +1077,12 @@ module.exports = {
       }
     }
 
-    for (const c of data.cases) await runCase(t, c);
+    for (const c of data.cases) await runCase(t, c, data);
+
+    // 12, 13, 15. Step UN6c2b: the summary cards, the filters on every card, the inactive committee (they change no data)
+    await summaryChecks(t, data);
+    await filterAllCardsChecks(t, data);
+    await inactiveCommitteeChecks(t, data);
 
     // 3. The inactive account and a visitor
     const s = await t.signIn('inactive');
@@ -842,6 +1099,10 @@ module.exports = {
     await widthChecks(t, data);
     // 10. Step UN6c2a: the Scheduled list fits its card beside Alerts
     await meetingsFitChecks(t, data);
+    // 16. Step UN6c2b: the summary cards at each width
+    await summaryWidthChecks(t, data);
+    // 17. Step UN6c2b: the Meetings tables fit their card at 960 and 800 px
+    await tableFitChecks(t, data);
 
     // 6. The actions of the Alerts card, last: they change data
     await alertActionChecks(t, data);
@@ -851,5 +1112,7 @@ module.exports = {
     // 11. Step UN6c2a: the meeting-date message in the Agenda Alert panel (last: opening the item from My approvals
     //     marks qa_manager's own alert of it read)
     await pastItemChecks(t, data);
+    // 14. Step UN6c2b: the My approvals heading keeps its count (last: it opens alerts and action items)
+    await approvalsHeadingChecks(t, data);
   },
 };

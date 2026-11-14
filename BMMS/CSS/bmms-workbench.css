@@ -1103,10 +1103,71 @@ body.wb .bmms-comment-by-line
 {
 	vertical-align: top;
 }
-/* UN6c fills it; until then it takes no space */
+/* The summary cards (step UN6c2b) are not rendered at all for a role without cards; this rule only guards an empty box */
 .wb-dash-summary:empty
 {
 	display: none;
+}
+/* The summary cards (step UN6c2b): three cards of equal width in one row; on a narrow window they wrap (two and
+   one, then one per row), never wider than the content area. Each is a .wb-card: the number, the label, the scope
+   line; the In progress card also the meaning of "In progress" (the header tooltip is not reachable by keyboard
+   or touch). */
+.wb-dash-summary
+{
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--wb-space-4);
+	margin-bottom: var(--wb-space-4);
+	min-width: 0;
+}
+.wb-dash-summary > .wb-dash-stat
+{
+	flex: 1 1 200px;
+	min-width: 0;
+	margin: 0;
+	padding: var(--wb-space-3) var(--wb-space-4);
+}
+.wb-dash-stat p
+{
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+.wb-dash-stat .wb-dash-stat-value
+{
+	font-size: 28px;
+	font-weight: 700;
+	line-height: 1.15;
+	font-variant-numeric: tabular-nums;
+}
+.wb-dash-stat .wb-dash-stat-label
+{
+	font-weight: 700;
+}
+.wb-dash-stat .wb-dash-stat-scope,
+.wb-dash-stat .wb-dash-stat-note
+{
+	color: var(--wb-text-muted);
+	font-size: 13px;
+}
+.wb-dash-stat .wb-dash-stat-note
+{
+	margin-top: var(--wb-space-1);
+}
+.wb-dash-summary > .wb-dash-stat-message
+{
+	flex: 1 1 100%;
+	margin: 0;
+	padding: var(--wb-space-2) var(--wb-space-3);
+	background: var(--wb-notice-bg);
+	border: 1px solid var(--bmms-warning-border);
+	border-radius: var(--wb-radius);
+}
+/* The note of the Alerts card (step UN6c2b): the filters at the top do not apply to it */
+.wb-dash-note
+{
+	margin: 0 0 var(--wb-space-2);
+	color: var(--wb-text-muted);
+	font-size: 13px;
 }
 .wb-dash-head
 {
@@ -1296,6 +1357,63 @@ body.wb .bmms-comment-by-line
 {
 	padding-left: 4px;
 	padding-right: 4px;
+}
+/* Step UN6c2b (owner's test at 200 % zoom): at 1240 px and below the Meetings card has the full width but the
+   window is narrow, so the cells are tighter and the status chip may wrap ("Open for / submission"); the dates
+   stay on one line and no column is hidden. The nine-column Scheduled list then fits its card down to 800 px;
+   narrower, it scrolls inside .wb-table-scroll (the page never scrolls sideways). */
+@media (max-width: 1240px)
+{
+	.wb-dash-table > tbody > tr > th,
+	.wb-dash-table > tbody > tr > td,
+	.wb-table.wb-dash-table > tbody > tr > th.wb-dash-num,
+	.wb-table.wb-dash-table > tbody > tr > td.wb-dash-num,
+	.wb-dash-table > tbody > tr > th:nth-child(4),
+	.wb-dash-table > tbody > tr > td:nth-child(4)
+	{
+		padding: 6px 3px;
+	}
+	/* Owner's second test (Edge at 200 %, a classic vertical scrollbar of about 17 px): the headings a little smaller,
+	   a narrower committee minimum and a smaller chip, so the list fits with room to spare at 768 px with the
+	   scrollbar (1536 px of desktop at 200 %) */
+	.wb-dash-table > tbody > tr > th
+	{
+		font-size: 13px;
+	}
+	.wb-dash-table .wb-dash-committee
+	{
+		min-width: 6em;
+	}
+	.wb-dash-table .wb-chip
+	{
+		padding: 2px 5px;
+		white-space: normal;
+	}
+	.wb-dash-table .wb-chip::before
+	{
+		margin-right: 4px;
+	}
+}
+/* Below 960 px a list that is still wider than its card scrolls inside .wb-table-scroll; the Meeting column stays
+   in view while it scrolls */
+@media (max-width: 959px)
+{
+	.wb-dash-table > tbody > tr > th:first-child,
+	.wb-dash-table > tbody > tr > td:first-child
+	{
+		position: sticky;
+		left: 0;
+		z-index: 1;
+		background: var(--wb-surface);
+	}
+	.wb-dash-table > tbody > tr > th:first-child
+	{
+		background: var(--wb-table-head);
+	}
+	.wb-dash-table > tbody > tr:hover > td:first-child
+	{
+		background: var(--bmms-table-row-hover);
+	}
 }
 /* Meeting status: a tinted chip with its label (the colour is never the only sign) */
 .wb-chip

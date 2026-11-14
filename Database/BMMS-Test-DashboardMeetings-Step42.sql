@@ -13,6 +13,12 @@
    with step 44 installed they expect the step 44 shape, without it the
    shape of step 42. Every other check is as it was.
 
+   Step 45 (step UN6c2b) replaced spr_GetDashboardMeetings again: the MD
+   Secretariat gets the statistics (as Management). Two cases of Part 2
+   follow that: with step 45 installed "MD Secretariat, Z42: allowed"
+   expects Shown 1 (not 0) and "MD Secretariat, Z42: every count NULL"
+   expects all 15 rows with counts (not 0). Every other check is as it was.
+
    Part 1, read only: the five markers, the parameters, the result columns
    of spr_GetDashboardMeetings, spr_GetScheduleMeet unchanged, and on this
    database every agenda item in one of the groups approved, rejected or in
@@ -380,6 +386,15 @@ BEGIN TRY
     ('Inactive Controller: Reason 8', @CtlOff, 0, 0, 'call', '', 'Result 0, Reason 8, Shown 0, Role -, S 0, C 0'),
     ('Acting user 0: Reason 8', 0, 0, 0, 'call', '', 'Result 0, Reason 8, Shown 0, Role -, S 0, C 0'),
     ('No acting user: Reason 8', NULL, 0, 0, 'call', '', 'Result 0, Reason 8, Shown 0, Role -, S 0, C 0');
+
+    -- Replaced by step 45: with step 45 installed the MD Secretariat has the statistics (5 scheduled + 10 completed rows)
+    IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetDashboardMeetings')), '') LIKE '%DashboardSummary-Step45%')
+    BEGIN
+        UPDATE @Cases SET Expected = 'Result 1, Reason 0, Shown 1, Role md_sect, S 5, C 10' WHERE Label = 'MD Secretariat, Z42: allowed, no statistics, 5 and 10';
+        UPDATE @Cases SET Label = 'MD Secretariat, Z42: allowed, statistics (step 45), 5 and 10' WHERE Label = 'MD Secretariat, Z42: allowed, no statistics, 5 and 10';
+        UPDATE @Cases SET Expected = '15' WHERE Label = 'MD Secretariat, Z42: every count NULL';
+        UPDATE @Cases SET Label = 'MD Secretariat, Z42: no count NULL (step 45: every row has its counts)' WHERE Label = 'MD Secretariat, Z42: every count NULL';
+    END
 
     SET @Seq = 1;
     WHILE (@Seq <= (SELECT COUNT(*) FROM @Cases))

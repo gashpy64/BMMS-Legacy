@@ -80,6 +80,15 @@ SELECT 'Committee QA1: active, committee members', '1, 2',
        ISNULL((SELECT CAST(c.StatusId AS VARCHAR(2)) + ', ' + CAST((SELECT COUNT(*) FROM Committee_Member cm WHERE cm.CommitteeId = c.CommitteeId) AS VARCHAR(12))
                FROM Committee c WHERE c.CommitteeId = @C), 'committee missing');
 
+-- Step UN6c2b: the inactive committee QA9, refused by the Dashboard's filters
+INSERT INTO @T (Name, Expected, Actual)
+SELECT 'Committee QA9 (QA Inactive Committee): inactive; members, meetings, alerts', '0; 0, 0, 0',
+       ISNULL((SELECT CAST(c.StatusId AS VARCHAR(2)) + '; '
+                    + CAST((SELECT COUNT(*) FROM Committee_Member cm WHERE cm.CommitteeId = c.CommitteeId) AS VARCHAR(12)) + ', '
+                    + CAST((SELECT COUNT(*) FROM Meeting m WHERE m.CommitteeId = c.CommitteeId) AS VARCHAR(12)) + ', '
+                    + CAST((SELECT COUNT(*) FROM Alert_Master am WHERE am.CommitteeId = c.CommitteeId) AS VARCHAR(12))
+               FROM Committee c WHERE c.CommitteeCode = 'QA9'), 'committee missing');
+
 -- Meetings: agenda status, minutes status, minutes rows, where the dates lie
 INSERT INTO @T (Name, Expected, Actual)
 SELECT 'Meeting ' + x.MeetingNo + ' (' + x.What + '): agenda, minutes, minutes rows, meeting date, submission date',

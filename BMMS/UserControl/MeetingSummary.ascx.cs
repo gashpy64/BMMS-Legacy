@@ -22,6 +22,23 @@ namespace BMMS.UserControl
         private const string FailedMessage = "The meeting list could not be loaded. Reload the page to try again.";
         private const string BusyMessage = "The server is busy and the meeting list could not be loaded. Wait a moment, then reload the page.";
 
+        // Step UN6c2b: the meaning of "In progress" (the column header's tooltip, and shown on the In progress card,
+        // which keyboard and touch users reach too). Owner, 2026-11-14: the second half only for the Controller and
+        // the Manager, the roles that have the "Waiting for me" column; every other role the first half only.
+        public const string InProgressMeaning = "Items not yet approved or rejected.";
+        public const string InProgressMeaningWaiting = "Items not yet approved or rejected. For a Manager this includes items waiting for someone else; 'Waiting for me' is the part waiting for you.";
+
+        // The sentence for this role (the role the server returned with the meeting list, read from the database)
+        private static string InProgressMeaningFor(string roleCode)
+        {
+            return roleCode == "controller" || roleCode == "manager" ? InProgressMeaningWaiting : InProgressMeaning;
+        }
+        // Step UN6c2b: a summary count that could not be read (a dash, never 0)
+        private const string NoCount = "\u2013";
+        private const string SummaryChoiceMessage = "The counts cannot be shown for this choice.";
+        private const string SummaryFailedMessage = "The counts could not be loaded. Reload the page to try again.";
+        private const string SummaryBusyMessage = "The server is busy and the counts could not be loaded. Wait a moment, then reload the page.";
+
         // Index of the four statistics columns in both grids (Items, Approved, Rejected, last column)
         private const int FirstStatisticsColumn = 4;
         private const int LastStatisticsColumn = 7;
@@ -29,7 +46,8 @@ namespace BMMS.UserControl
         private const int WaitingColumn = 8;
 
         #region Role table
-        // What the page shows per role (owner, UN6b addendum 1, 2026-11-12). The one place to change it.
+        // What the page shows per role (owner, UN6b addendum 1, 2026-11-12; step UN6c2b, 2026-11-14: the User has the
+        // Committee drop-down, and the last column says "In progress" for every role). The one place to change it.
         //   CommitteeFilter   the Committee drop-down ("All committees" first)
         //   DepartmentFilter  the Department drop-down, shown only when the user has two or more departments
         //   DepartmentTitles  the subtitle "Department: x" / "Departments: x, y" and the card titles with the department
@@ -52,16 +70,21 @@ namespace BMMS.UserControl
 
         private static readonly Dictionary<string, RoleView> RoleViews = new Dictionary<string, RoleView>(StringComparer.Ordinal)
         {
-            { "controller", new RoleView(true, false, false, "Pending") },
-            { "manager", new RoleView(true, true, true, "Pending") },
-            { "user", new RoleView(false, false, true, "In progress") },
-            // Not decided yet (mock-up screens to come): Committee drop-down only, title "Meetings", "Pending"
-            { "mgmt", new RoleView(true, false, false, "Pending") },
-            { "md_sect", new RoleView(true, false, false, "Pending") },
-            { "admin", new RoleView(true, false, false, "Pending") },
+            { "controller", new RoleView(true, false, false, "In progress") },
+            { "manager", new RoleView(true, true, true, "In progress") },
+            { "user", new RoleView(true, false, true, "In progress") },
+            // Committee drop-down only, title "Meetings"; the statistics come from the server (step UN6c2b: the MD
+            // Secretariat has them, read-only, as Management; the Admin has none)
+            { "mgmt", new RoleView(true, false, false, "In progress") },
+            { "md_sect", new RoleView(true, false, false, "In progress") },
+            { "admin", new RoleView(true, false, false, "In progress") },
         };
 
-        private static readonly RoleView NoView = new RoleView(false, false, false, "Pending");
+        private static readonly RoleView NoView = new RoleView(false, false, false, "In progress");
+
+        // Step UN6c2b: the roles the server gives summary cards (spr_GetDashboardSummary); used only to show dashes
+        // when the counts could not be read at all, never to decide what is counted
+        private static readonly HashSet<string> SummaryRoles = new HashSet<string>(StringComparer.Ordinal) { "controller", "mgmt", "manager", "user" };
         #endregion
 
         #region Page_Load
@@ -98,6 +121,112 @@ namespace BMMS.UserControl
         {
             get { object value = ViewState["DepartmentId"]; return value is int ? (int)value : 0; }
             private set { ViewState["DepartmentId"] = value; }
+        }
+
+        // Step UN6c2b (owner, 2026-11-15): the hint of a refused choice names only the drop-downs on the page:
+        // "Choose All committees." for every role, "... or All my departments." only where the Department
+        // drop-down is shown (a Manager with two or more departments)
+        public string ChoiceHint
+        {
+            get { return divDepartmentFilter.Visible ? " Choose All committees or All my departments." : " Choose All committees."; }
+        }
+        #endregion
+
+        #region Summary cards (step UN6c2b)
+        // True once the server has answered that this person has the cards (kept so that a refused filter shows dashes
+        // and a message instead of hiding the cards)
+        private bool HasSummaryCards
+        {
+            get { return ViewState["HasSummaryCards"] is bool && (bool)ViewState["HasSummaryCards"]; }
+            set { ViewState["HasSummaryCards"] = value; }
+        }
+
+        // The Unread alerts card: the unread count the Dashboard's Alerts card read (spr_GetDashboardAlerts, the rule of
+        // the header count); null when it could not be read
+        public void SetUnreadAlerts(int? count)
+        {
+            SetCount(litUnread, spanUnreadUnknown, count);
+        }
+
+        private static void SetCount(Literal value, System.Web.UI.HtmlControls.HtmlGenericControl unknown, int? count)
+        {
+            value.Text = count.HasValue ? count.Value.ToString() : NoCount;
+            unknown.Visible = !count.HasValue;
+        }
+
+        // The two item cards for the filters of this load. itemsOf: "Items", "Credit items", "Items of my departments".
+        private void LoadSummary(int actingUserId, int committeeId, int departmentId, string roleCode, string itemsOf, string meaning)
+        {
+            // Unread alerts comes from the Alerts card's load; when it has not been set (no load ran), a dash
+            if (string.IsNullOrEmpty(litUnread.Text))
+                SetCount(litUnread, spanUnreadUnknown, null);
+
+            litInProgressLabel.Text = itemsOf + " in progress";
+            litRejectedLabel.Text = itemsOf + " rejected";
+            string scope = "Scheduled meetings, " + (committeeId > 0 && ddlCommittee.SelectedItem != null ? ddlCommittee.SelectedItem.Text : "all committees");
+            litInProgressScope.Text = scope;
+            litRejectedScope.Text = scope;
+            litInProgressNote.Text = meaning;
+
+            try
+            {
+                int? inProgress, rejected;
+                int reason = AgendaMgr.GetDashboardSummary(actingUserId, committeeId, departmentId, out inProgress, out rejected);
+
+                if (reason == 0)
+                {
+                    HasSummaryCards = true;
+                    divSummaryCards.Visible = true;
+                    pSummaryMessage.Visible = false;
+                    SetCount(litInProgress, spanInProgressUnknown, inProgress);
+                    SetCount(litRejected, spanRejectedUnknown, rejected);
+                }
+                else if (reason == 4 && HasSummaryCards)
+                    ShowSummaryDashes(SummaryChoiceMessage + ChoiceHint);
+                else
+                    divSummaryCards.Visible = false;   // no cards for this role (4), the system account (12), inactive (8)
+            }
+            catch (Exception ex)
+            {
+                Utilities.WriteErrorLog(className, "LoadSummary", ex.ToString());
+                if (HasSummaryCards || SummaryRoles.Contains(roleCode ?? string.Empty))
+                    ShowSummaryDashes(Common.IsServerBusy(ex) ? SummaryBusyMessage : SummaryFailedMessage);
+                else
+                    divSummaryCards.Visible = false;
+            }
+        }
+
+        private void ShowSummaryDashes(string message)
+        {
+            divSummaryCards.Visible = true;
+            if (string.IsNullOrEmpty(litUnread.Text))
+                SetCount(litUnread, spanUnreadUnknown, null);
+            SetCount(litInProgress, spanInProgressUnknown, null);
+            SetCount(litRejected, spanRejectedUnknown, null);
+            pSummaryMessage.InnerText = message;
+            pSummaryMessage.Visible = true;
+        }
+
+        // The header of the last statistics column: the meaning of "In progress" as its tooltip
+        private static void SetInProgressTip(GridView grid, string meaning)
+        {
+            if (grid.HeaderRow != null && grid.HeaderRow.Cells.Count > LastStatisticsColumn)
+                grid.HeaderRow.Cells[LastStatisticsColumn].ToolTip = meaning;
+        }
+
+        // Who the item cards count, worded as the card titles of the meeting list
+        private static string ItemsOf(RoleView view, DataTable dtDepartments, int chosenDepartmentId)
+        {
+            if (!view.DepartmentTitles || dtDepartments == null || dtDepartments.Rows.Count == 0)
+                return "Items";
+            if (dtDepartments.Rows.Count == 1)
+                return Convert.ToString(dtDepartments.Rows[0]["DepartmentName"]) + " items";
+            foreach (DataRow row in dtDepartments.Rows)
+            {
+                if (Convert.ToInt32(row["DepartmentId"]) == chosenDepartmentId)
+                    return Convert.ToString(row["DepartmentName"]) + " items";
+            }
+            return "Items of my departments";
         }
         #endregion
 
@@ -163,6 +292,10 @@ namespace BMMS.UserControl
 
                 ShowTitles(view, dtDepartments, departmentFilter ? departmentId : 0);
 
+                // Step UN6c2b: the summary cards, with the same filters (the server decides who has them)
+                string meaning = InProgressMeaningFor(roleCode);
+                LoadSummary(actingUserId, committeeId, departmentId, roleCode, ItemsOf(view, dtDepartments, departmentFilter ? departmentId : 0), meaning);
+
                 if (reason != 0)
                 {
                     ShowMessage(reason == 8 ? InactiveMessage : RefusedText(view.CommitteeFilter, departmentFilter));
@@ -178,11 +311,17 @@ namespace BMMS.UserControl
                 grvScheduled.Columns[LastStatisticsColumn].HeaderText = view.LastColumn;
                 grvCompleted.Columns[LastStatisticsColumn].HeaderText = view.LastColumn;
                 grvScheduled.Columns[WaitingColumn].Visible = waitingShown;   // step UN6c2a: from the server's answer
+                // Step UN6c2b: the meaning of "In progress" in a visible line when the statistics are shown and no
+                // summary card carries it (the header tooltip is not reachable by keyboard or touch)
+                pInProgressNote.InnerText = "In progress: " + meaning;
+                pInProgressNote.Visible = statisticsShown && !divSummaryCards.Visible;
 
                 grvScheduled.DataSource = Rows(dtMeetings, "S");
                 grvScheduled.DataBind();
                 grvCompleted.DataSource = Rows(dtMeetings, "C");
                 grvCompleted.DataBind();
+                SetInProgressTip(grvScheduled, meaning);
+                SetInProgressTip(grvCompleted, meaning);
             }
             catch (Exception ex)
             {
@@ -203,6 +342,11 @@ namespace BMMS.UserControl
             pSubtitle.Visible = false;
             litMeetingsTitle.Text = "Meetings";
             ShowMessage(message);
+            // Step UN6c2b: cards that were shown keep their place with dashes (the counts are not known)
+            if (HasSummaryCards)
+                ShowSummaryDashes(SummaryFailedMessage);
+            else
+                divSummaryCards.Visible = false;
         }
         #endregion
 

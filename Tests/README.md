@@ -30,10 +30,10 @@ pwsh -NoProfile -File Tests/_runner/Run-Tests.ps1 -Pack access-matrix
   files and cells: `Tests\packs\access-matrix\README.md`. It starts with its standing proof (below)
   and takes about three minutes in all (measured on this laptop: 2 min 40 s to 3 min 40 s; most of
   it is the site's first requests, which compile the pages).
-- `-Pack dashboard` (steps UN6b, UN6c1 and UN6c2a): the Dashboard's Meetings card per role (meetings, colours,
+- `-Pack dashboard` (steps UN6b, UN6c1, UN6c2a and UN6c2b): the Dashboard's Meetings card per role (meetings, colours,
   statistics, filters, titles), the Alert and Action Item lists, the page width at 1366, 1241, 1240, 1024 and 800 px, and
   (UN6c1) the Alerts card rules: the header count, Recent / Unread / All, the person named, "Overdue", opening and
-  removing an alert, another user's row id refused, the link chosen kept on both cards, the items of the Action Items card per account and role, the read state per person, Management's Submit and a Submit for another department's item refused; (UN6c2a) the My approvals panel per account and with the filters, opening a row, the Approve and Reject buttons, the Waiting for me column, the Scheduled list fitting its card beside Alerts at 1366 and 1600 px, the meeting-date message inside the Agenda Alert panel. It does not drive Approve or Reject (they send mail). Its
+  removing an alert, another user's row id refused, the link chosen kept on both cards, the items of the Action Items card per account and role, the read state per person, Management's Submit and a Submit for another department's item refused; (UN6c2a) the My approvals panel per account and with the filters, opening a row, the Approve and Reject buttons, the Waiting for me column, the Scheduled list fitting its card beside Alerts at 1366 and 1600 px, the meeting-date message inside the Agenda Alert panel; (UN6c2b) the summary cards per account, the Committee and Department filters on every card, the My approvals heading keeping its count, the inactive committee offered to nobody, the cards at 1366, 1280, 1097, 960 and 640 px. It does not drive Approve or Reject (they send mail). Its
   rules, files and rows: `Tests\packs\dashboard\README.md`. About two and a half minutes.
 - `-Pack access-matrix -ProofFullMatrix` (you only; the tester agent cannot use it): the standing
   proof over every row instead of two. Exactly one cell must change. Use it when the pack itself
@@ -176,6 +176,9 @@ item QA1-00005-001 has no recorded approver.
 Step UN6c2a: committee QA2 also has meeting 00013, 40 days back with its agenda still open, and its item
 QA2-00013-1 at AC (Credit, saved by qa_user, so routed to qa_manager), with an alert read by qa_manager only:
 the item of a passed meeting that its Manager could have decided (the meeting-date message).
+
+Step UN6c2b: committee QA9 "QA Inactive Committee", inactive (a direct row: no members, meetings or alert, so no
+account gets a Committee alert from it); the Dashboard must not offer it (fixture check 39).
 
 The dates are set again at the start of every run, relative to that day
 (`BMMS-Quality-Fixture-Dates.sql`): the meeting dates, and since step UN6c1 every alert date and the three

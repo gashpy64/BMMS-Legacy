@@ -24,7 +24,7 @@
                      buttons and the approval itself. Hidden when the server answers that the role has no panel. --%>
                 <div id="cardApprovals" runat="server" class="wb-card wb-dash-approvals" visible="false">
                     <div class="wb-card-header wb-dash-card-header">
-                        <h2 class="wb-dash-card-title">My approvals<asp:Literal ID="litApprovalCount" runat="server" Mode="Encode" EnableViewState="false" /></h2>
+                        <h2 class="wb-dash-card-title">My approvals<asp:Literal ID="litApprovalCount" runat="server" Mode="Encode" /><span id="spanApprovalCountUnknown" runat="server" class="wb-visually-hidden" visible="false">count not available</span></h2>
                     </div>
                     <div class="wb-card-body">
                         <div aria-live="polite">
@@ -86,6 +86,8 @@
                         </div>
                     </div>
                     <div class="wb-card-body">
+                        <%-- Step UN6c2b: the Alerts card is the person's own inbox; the filters at the top do not apply --%>
+                        <p class="wb-dash-note">Your own alerts, for every committee. The filters at the top do not apply.</p>
                         <asp:HiddenField ID="hdnAlertUserId" runat="server" />
                         <asp:Button ID="btnShowPopup" runat="server" Style="display: none" />
                         <div aria-live="polite">

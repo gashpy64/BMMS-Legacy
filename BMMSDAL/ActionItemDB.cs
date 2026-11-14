@@ -79,15 +79,26 @@ namespace BMMSDAL
         // and then no rows.
         public static DataTable GetDashboardActionItems(int ActingUserId, out int Reason)
         {
+            return GetDashboardActionItems(ActingUserId, 0, 0, out Reason);
+        }
+
+        // Step UN6c2b (BMMS-Fix-DashboardSummary-Step45.sql): the filters at the top of the Dashboard. CommitteeId 0 =
+        // every committee, otherwise an active committee; DepartmentId 0 = no department filter, otherwise one of a
+        // Manager's or a User's own departments. The procedure checks both against the acting user (Reason 4 when
+        // not allowed, and then no rows).
+        public static DataTable GetDashboardActionItems(int ActingUserId, int CommitteeId, int DepartmentId, out int Reason)
+        {
             SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
             result.Direction = ParameterDirection.Output;
             SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
             reason.Direction = ParameterDirection.Output;
 
-            SqlParameter[] parameter = new SqlParameter[3];
+            SqlParameter[] parameter = new SqlParameter[5];
             parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
             parameter[1] = result;
             parameter[2] = reason;
+            parameter[3] = new SqlParameter("@CommitteeId", CommitteeId);
+            parameter[4] = new SqlParameter("@DepartmentId", DepartmentId);
 
             DataTable dt = CommonDB.GetDataTable("spr_GetDashboardActionItems", parameter);
             Reason = MinutesDB.RefusalReason(result, reason);

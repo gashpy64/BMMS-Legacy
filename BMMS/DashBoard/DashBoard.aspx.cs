@@ -92,9 +92,14 @@ namespace BMMS.DashBoard
                 DataTable dtAlert = AlertMgr.GetDashboardAlerts(UserId, AlertMode, AlertPage, out reason, out totalRows, out unreadCount, out pageShown);
 
                 if (reason != 0)
+                {
                     ShowAlertsMessage(reason == 8 ? AlertsInactiveMessage : AlertsFailedMessage);
+                    MeetingSummary1.SetUnreadAlerts(null);
+                }
                 else
                 {
+                    // Step UN6c2b: the Unread alerts card shows the unread count of this list's rule (not filtered)
+                    MeetingSummary1.SetUnreadAlerts(unreadCount);
                     AlertPage = pageShown;
                     pAlertsMessage.Visible = false;
                     grvAlert.Visible = true;
@@ -108,6 +113,7 @@ namespace BMMS.DashBoard
             {
                 Utilities.WriteErrorLog(className, "LoadAlertGRV", ex.ToString());
                 ShowAlertsMessage(Common.IsServerBusy(ex) ? AlertsBusyMessage : AlertsFailedMessage);
+                MeetingSummary1.SetUnreadAlerts(null);
             }
 
             // Every action of the page that can change the count reloads this list (Approve, Reject, Remove from my
@@ -152,7 +158,8 @@ namespace BMMS.DashBoard
         private const string ApprovalsFailedMessage = "The approvals could not be loaded. Reload the page to try again.";
         private const string ApprovalsBusyMessage = "The server is busy and the approvals could not be loaded. Wait a moment, then reload the page.";
         private const string ApprovalsInactiveMessage = "The approvals are not available: your account is not active. Sign in again.";
-        private const string ApprovalsFilterMessage = "The approvals cannot be shown for this choice. Choose All committees or All my departments.";
+        // Step UN6c2b: followed by MeetingSummary1.ChoiceHint ("or All my departments" only where that drop-down is shown)
+        private const string ApprovalsFilterMessage = "The approvals cannot be shown for this choice.";
         private const string ApprovalCheckFailedMessage = "The item could not be checked, so nothing was changed. Try again.";
         private const string ApprovalStateUnknownMessage = "Whether you may approve this item could not be checked, so it is shown read-only. Close it and open it again.";
 
@@ -193,7 +200,11 @@ namespace BMMS.DashBoard
                     ApprovalPage = pageShown;
                     cardApprovals.Visible = true;
                     pApprovalsMessage.Visible = false;
+                    // Step UN6c2b: the literal keeps its text in ViewState, so the heading keeps its count through
+                    // the postbacks that do not reload this panel (the Alerts and Action Items links, opening and
+                    // closing an alert or an item); before, it lost the count there
                     litApprovalCount.Text = " (" + totalRows + ")";
+                    spanApprovalCountUnknown.Visible = false;
                     grvApprovals.Visible = true;
                     grvApprovals.VirtualItemCount = totalRows;
                     grvApprovals.PageIndex = pageShown - 1;
@@ -203,7 +214,7 @@ namespace BMMS.DashBoard
                 else if (reason == 8)
                     ShowApprovalsMessage(ApprovalsInactiveMessage);
                 else if (reason == 4 && HasApprovalsPanel)
-                    ShowApprovalsMessage(ApprovalsFilterMessage);   // the role has the panel: the choice was refused
+                    ShowApprovalsMessage(ApprovalsFilterMessage + MeetingSummary1.ChoiceHint);   // the role has the panel: the choice was refused
                 else
                     cardApprovals.Visible = false;   // no panel for this role (Reason 4) or the system account (12)
             }
@@ -214,11 +225,14 @@ namespace BMMS.DashBoard
             }
         }
 
-        // A failed load: the message instead of the list; the count is not shown (never a misleading number)
+        // A failed load: the message instead of the list; a dash instead of the count (never a misleading number)
         private void ShowApprovalsMessage(string message)
         {
             cardApprovals.Visible = true;
-            litApprovalCount.Text = string.Empty;
+            // Owner, 2026-11-14: never an empty heading; the dash of the summary cards, with "count not available"
+            // for a screen reader (never a number that might mislead)
+            litApprovalCount.Text = " (\u2013)";
+            spanApprovalCountUnknown.Visible = true;
             pApprovalsMessage.InnerText = message;
             pApprovalsMessage.Visible = true;
             grvApprovals.Visible = false;
@@ -230,11 +244,14 @@ namespace BMMS.DashBoard
             LoadApprovals();
         }
 
-        // A filter at the top changed: the panel from its first page
+        // A filter at the top changed: the panel from its first page; step UN6c2b: the Action Items card follows both
+        // filters too, from its first page
         private void MeetingSummary1_FiltersChanged(object sender, EventArgs e)
         {
             ApprovalPage = 1;
             LoadApprovals();
+            grvActionItem.PageIndex = 0;
+            LoadActionItemGRV();
         }
 
         // A row of the panel: the Agenda Alert panel of the item, as an alert of the item opens it. The person's own
@@ -318,6 +335,16 @@ namespace BMMS.DashBoard
         private const string ActionItemsFailedMessage = "The action items could not be loaded. Reload the page to try again.";
         private const string ActionItemsBusyMessage = "The server is busy and the action items could not be loaded. Wait a moment, then reload the page.";
         private const string ActionItemsInactiveMessage = "The action items are not available: your account is not active. Sign in again.";
+        // Step UN6c2b: followed by MeetingSummary1.ChoiceHint ("or All my departments" only where that drop-down is shown)
+        private const string ActionItemsFilterMessage = "The action items cannot be shown for this choice.";
+
+        // Step UN6c2b: true once the server has answered that this person has the card (kept so that a refused filter
+        // shows a message in the card instead of hiding it), as HasApprovalsPanel
+        private bool HasActionItemsCard
+        {
+            get { return ViewState["HasActionItemsCard"] is bool && (bool)ViewState["HasActionItemsCard"]; }
+            set { ViewState["HasActionItemsCard"] = value; }
+        }
 
         // A all (Show All, the default), R read, U unread. The link chosen stays chosen until another is clicked:
         // every load and every page of the list uses this mode, and the mark on the links is set from it in
@@ -346,8 +373,18 @@ namespace BMMS.DashBoard
 
             try
             {
+                // Step UN6c2b: the Committee and Department filters at the top; the procedure checks them again
                 int reason;
-                DataTable dtActionItem = ActionItemMgr.GetDashboardActionItems(UserId, out reason);
+                DataTable dtActionItem = ActionItemMgr.GetDashboardActionItems(UserId, MeetingSummary1.CommitteeId, MeetingSummary1.DepartmentId, out reason);
+
+                if (reason == 4 && HasActionItemsCard)
+                {
+                    // The role has the card: the choice of the filters was refused
+                    ViewState["dtActionItem"] = null;
+                    cardActionItems.Visible = true;
+                    ShowActionItemsMessage(ActionItemsFilterMessage + MeetingSummary1.ChoiceHint);
+                    return;
+                }
 
                 if (reason == 4)
                 {
@@ -358,6 +395,8 @@ namespace BMMS.DashBoard
                 }
 
                 cardActionItems.Visible = true;
+                if (reason == 0)
+                    HasActionItemsCard = true;
 
                 if (reason != 0)
                 {

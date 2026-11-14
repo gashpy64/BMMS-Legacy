@@ -536,6 +536,39 @@ namespace BMMSDAL
         }
         #endregion
 
+        #region GetDashboardSummary
+        // Step UN6c2b (BMMS-Fix-DashboardSummary-Step45.sql): the two summary cards of the Dashboard, the items of
+        // scheduled meetings in progress and rejected (fn_AgendaStatusGroup), for the Committee and Department filters
+        // chosen. Reason 0 when allowed, with both counts; 12, 8 or 4 (a role without the cards: MD Secretariat, Admin;
+        // a committee that is not active; a department outside the scope), and then both counts null.
+        public static int GetDashboardSummary(int ActingUserId, int CommitteeId, int DepartmentId, out int? InProgress, out int? Rejected)
+        {
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+            SqlParameter inProgress = new SqlParameter("@InProgress", SqlDbType.Int);
+            inProgress.Direction = ParameterDirection.Output;
+            SqlParameter rejected = new SqlParameter("@Rejected", SqlDbType.Int);
+            rejected.Direction = ParameterDirection.Output;
+
+            SqlParameter[] parameter = new SqlParameter[7];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = new SqlParameter("@CommitteeId", CommitteeId);
+            parameter[2] = new SqlParameter("@DepartmentId", DepartmentId);
+            parameter[3] = result;
+            parameter[4] = reason;
+            parameter[5] = inProgress;
+            parameter[6] = rejected;
+
+            CommonDB.ExecuteProcedure("spr_GetDashboardSummary", parameter);
+            int Reason = MinutesDB.RefusalReason(result, reason);
+            InProgress = Reason == 0 && inProgress.Value != null && inProgress.Value != DBNull.Value ? (int?)Convert.ToInt32(inProgress.Value) : null;
+            Rejected = Reason == 0 && rejected.Value != null && rejected.Value != DBNull.Value ? (int?)Convert.ToInt32(rejected.Value) : null;
+            return Reason;
+        }
+        #endregion
+
         #region UpdateAgendaShortText
         public static DataTable UpdateAgendaShortText(AgendaDAL AgendaDAL)
         {

@@ -101,6 +101,11 @@ namespace BMMS.DashBoard {
         protected global::System.Web.UI.WebControls.Literal litApprovalCount;
 
         /// <summary>
+        /// spanApprovalCountUnknown control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl spanApprovalCountUnknown;
+
+        /// <summary>
         /// pApprovalsMessage control.
         /// </summary>
         /// <remarks>

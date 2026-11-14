@@ -93,6 +93,11 @@
    rows as well). Saving committee QA2 with spr_AddEditCommittee writes its
    Committee alert, as for QA1: one more alert for every account except
    qa_ctrl, who saved it.
+   Committee QA9 "QA Inactive Committee" (step UN6c2b) is a direct row,
+   inactive (StatusId 0), without members, meetings or alert: the Dashboard
+   must refuse its id when it is put into the page (it is not in the
+   Committee drop-down). A direct row, so that no account gets a Committee
+   alert from it and every other expected value stays as it was.
 
    Compatibility level 100. Plain ASCII. Safe to run once only (the guard
    refuses a second run).
@@ -456,6 +461,12 @@ BEGIN TRY
         @CreatedOn = @Now, @CreatedBy = @QaController, @UpdatedOn = @Now, @UpdatedBy = @QaController;
     SET @C2 = (SELECT CommitteeId FROM Committee WHERE CommitteeCode = 'QA2');
     IF (@C2 IS NULL) RAISERROR('not saved', 16, 1);
+
+    -- Committee QA9 (step UN6c2b): inactive, nothing else; a direct row (no Committee alert)
+    SET @Step = 'committee QA9 (inactive)';
+    INSERT INTO Committee (CommitteeCode, CommitteeName, Board, IncorporationDate, MeetingStartNo, CommitteeColorCode, CessationDate, StatusId, CreatedOn, CreatedBy)
+    VALUES ('QA9', 'QA Inactive Committee', 0, '20200101', 1, '', NULL, 0, @Now, @QaController);
+    IF NOT EXISTS (SELECT 1 FROM Committee WHERE CommitteeCode = 'QA9' AND StatusId = 0) RAISERROR('not saved', 16, 1);
 
     SET @Step = 'QA2 meetings';
     INSERT INTO Meeting (MeetingNo, CommitteeId, Place, Venue, MeetingDate, MeetingTime, AgendaSubmissionDate, MeetingColorCode, AgendaStatus, MinutesStatus, CreatedOn, CreatedBy)

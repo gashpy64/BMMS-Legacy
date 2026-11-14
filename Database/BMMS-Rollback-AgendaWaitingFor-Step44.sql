@@ -24,7 +24,9 @@
    step 44 Missing; steps 16 to 43 stay Installed.
 
    It has no USE line: select the database in SSMS first. It stops if the
-   current database name does not start with "BMMS", and when step 44 is not
+   current database name does not start with "BMMS", while step 45 is
+   installed (run BMMS-Rollback-DashboardSummary-Step45.sql first; added in
+   step UN6c2b), and when step 44 is not
    installed (nothing to roll back). Plain ASCII. From the command line use
    sqlcmd -I.
    ============================================================================ */
@@ -38,6 +40,18 @@ DECLARE @CurrentDatabase SYSNAME = DB_NAME();
 IF (@CurrentDatabase NOT LIKE 'BMMS%')
 BEGIN
     RAISERROR('Current database is "%s". Select the BMMS database (or its test copy) and run again. Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
+-- Step 45 (step UN6c2b) replaced spr_GetDashboardMeetings and spr_GetDashboardApprovals again (their step 45 texts
+-- read fn_DashboardCommitteeFilter): its Rollback comes first, or this script would put back the step 42 meeting list
+-- under step 45 and drop the approvals procedure step 45 replaced
+ELSE IF (OBJECT_ID('dbo.fn_DashboardCommitteeFilter') IS NOT NULL
+         OR OBJECT_ID('dbo.spr_GetDashboardSummary') IS NOT NULL
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetDashboardMeetings')), '') LIKE '%DashboardSummary-Step45%'
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetDashboardApprovals')), '') LIKE '%DashboardSummary-Step45%'
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetDashboardActionItems')), '') LIKE '%DashboardSummary-Step45%')
+BEGIN
+    RAISERROR('Step 45 is installed in "%s". Run the step 45 Rollback (BMMS-Rollback-DashboardSummary-Step45.sql) first, then this script. Nothing was changed.', 16, 1, @CurrentDatabase);
     SET NOEXEC ON;
 END
 ELSE IF (OBJECT_ID('dbo.fn_AgendaWaitingFor', 'IF') IS NULL

@@ -463,6 +463,14 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region GetDashboardSummary
+        // Step UN6c2b (step 45): see AgendaDB
+        public static int GetDashboardSummary(int ActingUserId, int CommitteeId, int DepartmentId, out int? InProgress, out int? Rejected)
+        {
+            return AgendaDB.GetDashboardSummary(ActingUserId, CommitteeId, DepartmentId, out InProgress, out Rejected);
+        }
+        #endregion
+
         #region GenerateSubjectNoByMeetingId
         public static int GenerateSubjectNoByMeetingId(int MeetingId, int AgendaId)
         {
