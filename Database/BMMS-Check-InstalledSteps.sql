@@ -136,6 +136,14 @@
    37): 10 markers. Re-running step 17, 18 or 37 afterwards brings back an
    older text: step 43 reads Partly; run step 43 again. After
    BMMS-Rollback-DashboardAlerts-Step43.sql it reads Missing.
+   Step 44 (step UN6c2a) adds one read-only function (fn_AgendaWaitingFor)
+   and two procedures (spr_GetAgendaApprovalState,
+   spr_GetDashboardApprovals) and replaces spr_UpdateAgendaByAgendaId
+   (steps 16 to 35) and spr_GetDashboardMeetings (step 42), which keep the
+   markers of their earlier steps: 5 markers. Re-running step 16, 17, 18,
+   20, 31, 35 or 42 afterwards brings back an older text: step 44 reads
+   Partly; run step 44 again. After
+   BMMS-Rollback-AgendaWaitingFor-Step44.sql it reads Missing.
    Step 32 is reserved and not built; it has no row.
    Step D1 (shown as step 100) replaces spr_DeleteMeetingByMeetingId, which
    no numbered script contains: it reads Missing only on a database restored
@@ -436,6 +444,12 @@ FROM (VALUES ('fn_DashboardAlerts'), ('spr_GetDashboardAlerts'), ('spr_GetAlertC
              ('fn_DashboardActionItems'), ('spr_OpenDashboardActionItem'), ('spr_SaveDashboardActionText'),
              ('spr_GetAlertMailId'), ('spr_GetAgendaUpdateMailId')) o(Name);
 
+-- 44. BMMS-Fix-AgendaWaitingFor-Step44.sql, installed after step 43 (three new objects; spr_UpdateAgendaByAgendaId and spr_GetDashboardMeetings replaced)
+INSERT INTO @M
+SELECT 44, o.Name + ' (AgendaWaitingFor-Step44)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%AgendaWaitingFor-Step44%' THEN 1 ELSE 0 END
+FROM (VALUES ('fn_AgendaWaitingFor'), ('spr_GetAgendaApprovalState'), ('spr_GetDashboardApprovals'),
+             ('spr_UpdateAgendaByAgendaId'), ('spr_GetDashboardMeetings')) o(Name);
+
 -- D1 (shown as step 100). BMMS-Fix-MeetingDelete-D1.sql; no numbered script contains spr_DeleteMeetingByMeetingId
 INSERT INTO @M VALUES
 (100, 'spr_DeleteMeetingByMeetingId (MeetingDelete-D1)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_DeleteMeetingByMeetingId')), '') LIKE '%MeetingDelete-D1%' THEN 1 ELSE 0 END);
@@ -480,6 +494,7 @@ INSERT INTO @Steps VALUES
 (41, 'BMMS-Fix-ReportAccess-Step41.sql', 'a procedure is missing: run step 41 again (after step 40)'),
 (42, 'BMMS-Fix-DashboardMeetings-Step42.sql', 'an object is missing: run step 42 again (after step 41)'),
 (43, 'BMMS-Fix-DashboardAlerts-Step43.sql', 'step 17, 18 or 37 was re-run after step 43 (8 of 10), or an object is missing: run step 43 again (after step 42)'),
+(44, 'BMMS-Fix-AgendaWaitingFor-Step44.sql', 'step 16, 17, 18, 20, 31, 35 or 42 was re-run after step 44 (3 or 4 of 5), or an object is missing: run step 44 again (after step 43)'),
 (100, 'BMMS-Fix-MeetingDelete-D1.sql (step D1)', '');
 
 SELECT s.Step, s.Script,

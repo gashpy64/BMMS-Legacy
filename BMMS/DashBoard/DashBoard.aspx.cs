@@ -29,8 +29,12 @@ namespace BMMS.DashBoard
         {
             Common.InitSetup(className);
 
+            // Step UN6c2a: the blocks that follow the Committee and Department filters are loaded again when one changes
+            MeetingSummary1.FiltersChanged += MeetingSummary1_FiltersChanged;
+
             if (!IsPostBack)
             {
+                LoadApprovals();
                 LoadAlertGRV();
                 LoadActionItemGRV();
                 pnlAgenda.Visible = false;
@@ -136,6 +140,168 @@ namespace BMMS.DashBoard
             BMMS.MasterPage.Main master = Master as BMMS.MasterPage.Main;
             if (master != null)
                 master.RefreshAlertCount();
+        }
+        #endregion
+
+        #region My approvals (step UN6c2a)
+        // The panel from spr_GetDashboardApprovals (step 44). The procedure decides from the acting user id (the role
+        // is read from the database): a Controller gets the items at AMA, a Manager the items routed to him at AC,
+        // of meetings whose agenda is open and whose date has not passed by the database server's date; every other
+        // role and the system account are refused and the panel is hidden from that answer. The page sends the
+        // filters chosen at the top and the page number; the procedure checks them.
+        private const string ApprovalsFailedMessage = "The approvals could not be loaded. Reload the page to try again.";
+        private const string ApprovalsBusyMessage = "The server is busy and the approvals could not be loaded. Wait a moment, then reload the page.";
+        private const string ApprovalsInactiveMessage = "The approvals are not available: your account is not active. Sign in again.";
+        private const string ApprovalsFilterMessage = "The approvals cannot be shown for this choice. Choose All committees or All my departments.";
+        private const string ApprovalCheckFailedMessage = "The item could not be checked, so nothing was changed. Try again.";
+        private const string ApprovalStateUnknownMessage = "Whether you may approve this item could not be checked, so it is shown read-only. Close it and open it again.";
+
+        private int ApprovalPage
+        {
+            get
+            {
+                object page = ViewState["ApprovalPage"];
+                return page is int && (int)page > 0 ? (int)page : 1;
+            }
+            set { ViewState["ApprovalPage"] = value; }
+        }
+
+        // True once the server has answered that this person has the panel (kept so that a refused filter shows a
+        // message in the panel instead of hiding it)
+        private bool HasApprovalsPanel
+        {
+            get { return ViewState["HasApprovalsPanel"] is bool && (bool)ViewState["HasApprovalsPanel"]; }
+            set { ViewState["HasApprovalsPanel"] = value; }
+        }
+
+        private void LoadApprovals()
+        {
+            int UserId;
+            string RoleCode;
+            if (!HasSessionUser(out UserId, out RoleCode))
+                return;
+
+            try
+            {
+                int reason, totalRows, pageShown;
+                DataTable dtApprovals = AgendaMgr.GetDashboardApprovals(UserId, MeetingSummary1.CommitteeId, MeetingSummary1.DepartmentId,
+                    ApprovalPage, out reason, out totalRows, out pageShown);
+
+                if (reason == 0)
+                {
+                    HasApprovalsPanel = true;
+                    ApprovalPage = pageShown;
+                    cardApprovals.Visible = true;
+                    pApprovalsMessage.Visible = false;
+                    litApprovalCount.Text = " (" + totalRows + ")";
+                    grvApprovals.Visible = true;
+                    grvApprovals.VirtualItemCount = totalRows;
+                    grvApprovals.PageIndex = pageShown - 1;
+                    grvApprovals.DataSource = dtApprovals;
+                    grvApprovals.DataBind();
+                }
+                else if (reason == 8)
+                    ShowApprovalsMessage(ApprovalsInactiveMessage);
+                else if (reason == 4 && HasApprovalsPanel)
+                    ShowApprovalsMessage(ApprovalsFilterMessage);   // the role has the panel: the choice was refused
+                else
+                    cardApprovals.Visible = false;   // no panel for this role (Reason 4) or the system account (12)
+            }
+            catch (Exception ex)
+            {
+                Utilities.WriteErrorLog(className, "LoadApprovals", ex.ToString());
+                ShowApprovalsMessage(Common.IsServerBusy(ex) ? ApprovalsBusyMessage : ApprovalsFailedMessage);
+            }
+        }
+
+        // A failed load: the message instead of the list; the count is not shown (never a misleading number)
+        private void ShowApprovalsMessage(string message)
+        {
+            cardApprovals.Visible = true;
+            litApprovalCount.Text = string.Empty;
+            pApprovalsMessage.InnerText = message;
+            pApprovalsMessage.Visible = true;
+            grvApprovals.Visible = false;
+        }
+
+        protected void OnPagingApprovals(object sender, GridViewPageEventArgs e)
+        {
+            ApprovalPage = e.NewPageIndex + 1;
+            LoadApprovals();
+        }
+
+        // A filter at the top changed: the panel from its first page
+        private void MeetingSummary1_FiltersChanged(object sender, EventArgs e)
+        {
+            ApprovalPage = 1;
+            LoadApprovals();
+        }
+
+        // A row of the panel: the Agenda Alert panel of the item, as an alert of the item opens it. The person's own
+        // alert of the item, when he has one, is marked read (spr_UpdateAlertByUserId marks the acting user's row
+        // only), and the Alerts card and the header count follow.
+        protected void lnkApproval_Click(object sender, EventArgs e)
+        {
+            MsgHide();
+
+            pnlAgenda.Visible = false;
+            pnlMeeting.Visible = false;
+            pnlCommittee.Visible = false;
+
+            int UserId;
+            string RoleCode;
+            if (!HasSessionUser(out UserId, out RoleCode))
+                return;
+
+            hdnAlertUserId.Value = "0";   // opened from the panel, not from an alert row: nothing to remove from a list
+
+            GridViewRow row = (GridViewRow)((LinkButton)sender).NamingContainer;
+            Label lblAgendaId = (Label)row.FindControl("lblApprovalAgendaId");
+            Label lblAlertId = (Label)row.FindControl("lblApprovalAlertId");
+
+            int AgendaId;
+            if (int.TryParse(lblAgendaId.Text.Trim(), out AgendaId) && BindAgendaDetails(AgendaId))
+                pnlAgenda.Visible = true;
+            else
+                ShowItemGone();
+
+            int AlertId;
+            if (int.TryParse(lblAlertId.Text.Trim(), out AlertId) && AlertId > 0)
+            {
+                try
+                {
+                    AlertMgr.UpdateAlertByUserId(UserId, AlertId);
+                }
+                finally
+                {
+                    LoadAlertGRV();
+                }
+            }
+
+            LoadApprovals();
+        }
+
+        // What the acting user may do with the item, from the server (spr_GetAgendaApprovalState, step 44): the buttons
+        // of the Agenda Alert panel and the check before Approve and Reject use this answer, never a rule of the page.
+        // DateOpen is the database server's view of the meeting date (step M6a; before step UN6c2a the page compared
+        // the date with the web server's date). False when the answer could not be read: then nothing may be decided.
+        private bool TryGetApprovalState(int UserId, int AgendaId, out bool canApprove, out bool canReject, out bool agendaOpen, out bool dateOpen)
+        {
+            canApprove = false;
+            canReject = false;
+            agendaOpen = false;
+            dateOpen = false;
+            try
+            {
+                return AgendaMgr.GetAgendaApprovalState(UserId, AgendaId, out canApprove, out canReject, out agendaOpen, out dateOpen) == 0;
+            }
+            catch (Exception ex)
+            {
+                Utilities.WriteErrorLog(className, "TryGetApprovalState", ex.ToString());
+                canApprove = false;
+                canReject = false;
+                return false;
+            }
         }
         #endregion
 
@@ -549,6 +715,8 @@ namespace BMMS.DashBoard
         #region BindAgendaDetails
         private bool BindAgendaDetails(int AgendaId)
         {
+            pAgendaPanelMessage.Visible = false;   // step UN6c2a: set again below for this item
+
             DataTable dtAgendaEdit = new DataTable();
             dtAgendaEdit = AgendaMgr.GetAgendaByAgendaId(AgendaId);
             if (dtAgendaEdit == null || dtAgendaEdit.Rows.Count == 0)
@@ -616,6 +784,17 @@ namespace BMMS.DashBoard
             // pnlAgenda is still hidden (lnkSource_Click shows it only after this method returns)
             bool canDecide = false;
 
+            // Step UN6c2a: may this person approve the item, and is the meeting date still open: asked of the server
+            // (the rule of the approval itself), not decided here from the role and the status. Before, every Manager
+            // saw Approve on every item at AC and the server refused the ones not routed to him.
+            bool mayApprove = false, mayReject = false, stateAgendaOpen = false, stateDateOpen = false;
+            bool stateRead = false;
+            int stateUserId;
+            if (Session["UserId"] != null && int.TryParse(Session["UserId"].ToString(), out stateUserId))
+                stateRead = TryGetApprovalState(stateUserId, AgendaId, out mayApprove, out mayReject, out stateAgendaOpen, out stateDateOpen);
+            // As My approvals and Waiting for me: only while the agenda is open (a finalised agenda is read-only below too)
+            mayApprove = mayApprove && stateAgendaOpen;
+
             if (dtAgenda.Rows.Count <= 0)
             {
                 txtShortText.ReadOnly = true;
@@ -647,7 +826,7 @@ namespace BMMS.DashBoard
                         ftxtManagerComments.ReadOnly = true;
                         ftxtControllerComments.ReadOnly = false;
 
-                        if (dtAgendaEdit.Rows[0]["AgendaStatusCode"].ToString() == "AMA")
+                        if (mayApprove)   // step UN6c2a: was "the item is at AMA"
                         {
                             btnApprove.Visible = true;
                             btnReject.Visible = true;
@@ -659,7 +838,7 @@ namespace BMMS.DashBoard
                     case "manager":
                         ftxtManagerComments.ReadOnly = true;
                         ftxtControllerComments.ReadOnly = true;
-                        if (dtAgendaEdit.Rows[0]["AgendaStatusCode"].ToString() == "AC")
+                        if (mayApprove)   // step UN6c2a: was "the item is at AC" (for every Manager)
                         {
                             ftxtManagerComments.ReadOnly = false;
                             btnApprove.Visible = true;
@@ -701,7 +880,15 @@ namespace BMMS.DashBoard
 
                 // An item the user could decide, of a meeting whose date has passed: shown read-only with the
                 // message (step M6a); Approve and Reject check again
-                if (btnApprove.Visible && !MeetingMgr.IsMeetingOpenForChange(dtAgendaEdit.Rows[0]["MeetingDate"], DateTime.Today))
+                // Step UN6c2a: the answer could not be read (logged): the item is shown read-only, and the person who
+                // could have decided it is told why there are no buttons
+                string stateRole = Convert.ToString(Session["RoleCode"]);
+                if (!stateRead && (stateRole == "controller" || stateRole == "manager") && !Common.IsSystemAccountSession())
+                    ShowAgendaPanelMessage(ApprovalStateUnknownMessage);
+
+                // Step UN6c2a: the date is judged by the server (the database server's date), as the My approvals
+                // panel and the Waiting for me column judge it
+                if (canDecide && !stateDateOpen)
                 {
                     txtShortText.ReadOnly = true;
                     ftxtProposedResolution.ReadOnly = true;
@@ -711,7 +898,7 @@ namespace BMMS.DashBoard
                     btnReject.Visible = false;
                     canDecide = false;
                     btnDeleteAgendaAlert.Visible = true;
-                    MsgDisplay(MeetingDatePassedMessage, MessageKind.Warning);
+                    ShowAgendaPanelMessage(MeetingDatePassedMessage);
                 }
 
                 // Step C1: a comment is editable only for the role that writes it, and only while Approve / Reject
@@ -764,6 +951,7 @@ namespace BMMS.DashBoard
             {
                 ShowItemGone();
                 LoadAlertGRV();
+                LoadApprovals();
                 return;
             }
 
@@ -783,15 +971,28 @@ namespace BMMS.DashBoard
                 ShowAlert(MeetingChangeReason.AgendaFinalizedMessage);
                 pnlAgenda.Visible = false;
                 LoadAlertGRV();
+                LoadApprovals();
                 return;
             }
 
-            // The item's own saved meeting date (step M6a): nothing changes, no subject number, no mail
-            if (!MeetingMgr.IsMeetingOpenForChange(MeetingDate, DateTime.Today))
+            // The meeting date (step M6a): nothing changes, no subject number, no mail. Step UN6c2a: judged by the server
+            // (spr_GetAgendaApprovalState, the database server's date), as the panel and the buttons are; who may decide
+            // is checked by the procedure that saves, below.
+            bool stateApprove, stateReject, stateAgendaOpen, stateDateOpen;
+            if (!TryGetApprovalState(UserId, AgendaId, out stateApprove, out stateReject, out stateAgendaOpen, out stateDateOpen))
+            {
+                MsgDisplay(ApprovalCheckFailedMessage, MessageKind.Warning);
+                pnlAgenda.Visible = false;
+                LoadAlertGRV();
+                LoadApprovals();
+                return;
+            }
+            if (!stateDateOpen)
             {
                 MsgDisplay(MeetingDatePassedMessage, MessageKind.Warning);
                 pnlAgenda.Visible = false;
                 LoadAlertGRV();
+                LoadApprovals();
                 return;
             }
 
@@ -833,6 +1034,7 @@ namespace BMMS.DashBoard
             pnlAgenda.Visible = false;
 
             LoadAlertGRV();
+            LoadApprovals();   // step UN6c2a
         }
         #endregion
 
@@ -857,6 +1059,7 @@ namespace BMMS.DashBoard
             {
                 ShowItemGone();
                 LoadAlertGRV();
+                LoadApprovals();
                 return;
             }
 
@@ -876,15 +1079,28 @@ namespace BMMS.DashBoard
                 ShowAlert(MeetingChangeReason.AgendaFinalizedMessage);
                 pnlAgenda.Visible = false;
                 LoadAlertGRV();
+                LoadApprovals();
                 return;
             }
 
-            // The item's own saved meeting date (step M6a): nothing changes, no subject number, no mail
-            if (!MeetingMgr.IsMeetingOpenForChange(MeetingDate, DateTime.Today))
+            // The meeting date (step M6a): nothing changes, no subject number, no mail. Step UN6c2a: judged by the server
+            // (spr_GetAgendaApprovalState, the database server's date), as the panel and the buttons are; who may decide
+            // is checked by the procedure that saves, below.
+            bool stateApprove, stateReject, stateAgendaOpen, stateDateOpen;
+            if (!TryGetApprovalState(UserId, AgendaId, out stateApprove, out stateReject, out stateAgendaOpen, out stateDateOpen))
+            {
+                MsgDisplay(ApprovalCheckFailedMessage, MessageKind.Warning);
+                pnlAgenda.Visible = false;
+                LoadAlertGRV();
+                LoadApprovals();
+                return;
+            }
+            if (!stateDateOpen)
             {
                 MsgDisplay(MeetingDatePassedMessage, MessageKind.Warning);
                 pnlAgenda.Visible = false;
                 LoadAlertGRV();
+                LoadApprovals();
                 return;
             }
 
@@ -922,6 +1138,7 @@ namespace BMMS.DashBoard
 
             pnlAgenda.Visible = false;
             LoadAlertGRV();
+            LoadApprovals();   // step UN6c2a
         }
         #endregion
 
@@ -1175,6 +1392,16 @@ namespace BMMS.DashBoard
         {
             divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
+        }
+        #endregion
+
+        #region ShowAgendaPanelMessage
+        // Step UN6c2a: a message about the open item, inside the Agenda Alert panel above its buttons (divErrLogin lies
+        // under the panel and cannot be seen while it is open)
+        private void ShowAgendaPanelMessage(string message)
+        {
+            pAgendaPanelMessage.InnerText = message;
+            pAgendaPanelMessage.Visible = true;
         }
         #endregion
 

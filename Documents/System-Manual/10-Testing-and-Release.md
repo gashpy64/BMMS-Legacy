@@ -3,10 +3,10 @@
 - Title: Testing and Release
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6c1 (the step 43 Test script section, "The dashboard pack since step UN6c1", the fixture and baseline notes); UN6b (the step 42 Test script section, the dashboard pack, the memory preflight, the fixture's committee QA2, the baseline upkeep note); the rest RA1c2
-- Last updated by: UN6c1, based on e3bff6b
+- Applies to: UN6c2a (the step 44 Test script section, "The dashboard pack since step UN6c2a", check 4 of the dashboard pack, the fixture and baseline notes); UN6c1 (the step 43 Test script section, "The dashboard pack since step UN6c1", the fixture and baseline notes); UN6b (the step 42 Test script section, the dashboard pack, the memory preflight, the fixture's committee QA2, the baseline upkeep note); the rest RA1c2
+- Last updated by: UN6c2a, based on 493cb45
 - Status: Draft
-- Verified against: for step UN6c1: Database/BMMS-Test-DashboardAlerts-Step43.sql (header), Tests/packs/dashboard/README.md,
+- Verified against: for step UN6c2a: Database/BMMS-Test-AgendaWaitingFor-Step44.sql (header, parts 1 and 2 up to the comparison and the named cases; the 1352 cases counted from its actor, item and action lists), Tests/packs/dashboard/README.md, expected.json and pack.js (diff), Tests/README.md (diff), Tests/fixture/BMMS-Quality-Fixture*.sql (diff), Database/README.md (section Step UN6c2a, Known items), the tester run of 2026-11-14 07:52:25 and the owner's tests as given; for step UN6c1: Database/BMMS-Test-DashboardAlerts-Step43.sql (header), Tests/packs/dashboard/README.md,
   expected.json and pack.js (diff), Tests/README.md (diff), Tests/fixture/BMMS-Quality-Fixture*.sql (diff),
   Database/README.md (section Step UN6c1, Known items), the owner's test result and the tester run of 2026-11-13 as given
   (702 checks PASSED); for step UN6b: Database/BMMS-Test-DashboardMeetings-Step42.sql (header, guards, part 1),
@@ -240,8 +240,14 @@ BMMS_Quality holds only the seed rows of Reset Database and the fixture (Tests/f
   fixture is not a numbered step and has no row in BMMS-Check-InstalledSteps.sql.
 - BMMS-Quality-Fixture-Dates.sql sets the two date columns of the meetings relative to today after every
   restore (since UN6b the QA2 meetings too).
-- BMMS-Quality-Fixture-Check.sql is read only: 29 checks before UN6b, 32 after it, 35 since step UN6c1, ending
-  "FIXTURE CHECK: PASS (n checks)".
+- BMMS-Quality-Fixture-Check.sql is read only: 29 checks before UN6b, 32 after it, 35 since step UN6c1, 38 since
+  step UN6c2a, ending "FIXTURE CHECK: PASS (n checks)".
+- Step UN6c2a extended the fixture again: two items on QA2 00001 as direct rows with no alerts (QA2-00001-1, Credit,
+  at AMA, which waits for the Controller; QA2-00001-2, Secretarial, at AC, saved by qa_ctrl, so not routed to
+  anybody), and the meeting QA2 00013, 40 days back with its agenda still open, with its item QA2-00013-1 (Credit, at
+  AC, saved by qa_user, so routed to qa_manager) and its Agenda alert for qa_manager only, already read (the
+  item of a passed meeting that its Manager could have decided). QA2 now has thirteen meetings and fifteen items;
+  Tests/_runner/Setup-Quality.ps1 still prints the older "twelve meetings and twelve agenda items" in its closing summary.
 - Step UN6c1 extended the fixture: three Followups (two on QA1 00005, one on 00006; before, one), three alerts read
   by qa_user, item QA1-00005-001 without a recorded approver; the dates script sets every alert date and the three
   due dates relative to the day of the run; for the scope of the Action Items card QA1-00006-001 keeps the mapping
@@ -264,7 +270,8 @@ After a numbered database step (step 42 and on) the baseline is out of date and 
 ("out of date") until it is taken again; step 42 (UN6b) was the first such step: its Fix script was installed in
 the baseline with Update-Baseline.ps1, then BMMS_Quality was built afresh with the extended fixture
 (Setup-Quality.ps1, 2026-11-12). Step 43 (UN6c1) was done the same way: Update-Baseline.ps1 -FixScript, then
-Setup-Quality.ps1 with the extended fixture. In the workflow this is done on the owner's approval of the
+Setup-Quality.ps1 with the extended fixture. Step 44 (UN6c2a) likewise: the tester run of 2026-11-14 ran on the
+baseline with step 44 and the extended fixture. In the workflow this is done on the owner's approval of the
 build, before the tester runs (CLAUDE.md, step 5):
 
 `pwsh -NoProfile -File Tests\_runner\Update-Baseline.ps1 -ConfirmDatabase BMMS_Quality -FixScript BMMS-Fix-[name]-Step[n].sql`
@@ -449,8 +456,9 @@ What the pack checks, in order:
 2. The Alert and Action Item lists: the number of rows on their first page per account (an Alerts row is a compact
    row: the Source link with the alert type, committee and department below it).
 3. The inactive account is refused at sign-in; a visitor who opens the Dashboard ends on the sign-in page.
-4. At 1366, 1024 and 800 px (qa_manager): the page is no wider than the window and the content area does not scroll
-   sideways; the Meetings and Alerts cards side by side at 1366 px and stacked below 1100 px; the same width check
+4. At 1366, 1241, 1240, 1024 and 800 px (qa_manager; 1241 and 1240 since step UN6c2a): the page is no wider than
+   the window and the content area does not scroll sideways; the Meetings and Alerts cards side by side at 1366 and
+   1241 px and stacked at 1240 px and below (the breakpoint was 1100 px until step UN6c2a); the same width check
    with the Agenda Alert panel open (qa_manager) and the Action Item Details panel open (qa_user). At each width the
    Alerts card (qa_manager): the headings "Alert" and "Created on" whole and the grid no wider than its card; every
    date dd-MMM-yyyy with HH:mm below it, on at most two lines.
@@ -494,6 +502,67 @@ Result of the step: tester agent, run of 2026-11-13: PASSED, 702 checks (selftes
 225; fixture check 35). An earlier run of the same day was VOID: once, in the standing proof of the access matrix,
 Report/MeetingCalendar.aspx answered HTTP 500 to the User on the first requests after the site copy started; the
 repeat PASSED and it was not reproduced (Database/README.md, Known items). The owner's tests passed.
+
+### The dashboard pack since step UN6c2a
+
+The pack (Tests/packs/dashboard/README.md) gained checks 9 to 11 and 274 checks in all; expected.json gained
+`approvals`, `approvalFilters` and `approvalOpen` (My approvals), `waiting` in the cases of qa_ctrl, qa_manager and
+qa_manager2 (the Waiting for me column), `meetingsFit` (account, window width and number of columns of the fit check)
+and `pastItem` (the meeting-date message).
+
+- My approvals (check 9): the panel per account and its rows, newest meeting first; no panel for qa_user, qa_user2,
+  qa_mgmt, qa_mdsec and qa_admin. With committee QA Dashboard Committee chosen qa_ctrl sees QA2-00001-1 only; qa_manager2
+  with HRD chosen sees his item, with Secretarial chosen "Nothing is waiting for your approval." (QA2-00001-2 is
+  Secretarial and at AC but not routed to him). qa_ctrl opens QA1-00001-002 from the panel: the Agenda Alert panel
+  with Approve and Reject, his alert of that item read (header from 1 to 0, no page reload), the row still in the
+  panel. qa_user opens his alert of QA1-00001-003: no Approve and no Reject. Check 1 also checks the Waiting for me
+  column for qa_ctrl, qa_manager and qa_manager2, and that the column is not there for the other cases.
+- The Scheduled list fits its card (check 10): qa_ctrl and qa_manager (nine columns) at 1366 and 1600 px, qa_mgmt
+  (eight columns) at 1366 px: the cards side by side, the number of columns, the table no wider than its scroll box,
+  no empty gap at its right (1 px allowed), and the heading "Waiting for me" on at most two lines.
+- The meeting-date message (check 11, last, because opening an item from My approvals marks qa_manager's alert of it
+  read): qa_manager opens the alert of QA2-00013-1 (on the last page of All): no Approve and no Reject, the message
+  "The meeting date has passed, so this item can no longer be approved or rejected. It will be rejected when the
+  agenda is finalized." inside the panel at most 40 px above the buttons and not covered; then QA1-00001-001 from My
+  approvals: Approve and Reject and no message.
+- The fixture grew (see "The fixture and the baseline"): two items on QA2 00001 and the passed meeting QA2 00013.
+  Fixture check 38 of 38. Statistics of QA2 00001 follow the new items (2 0 0 2 for all departments).
+- Not in the pack: Approve and Reject themselves (mail), the "could not be loaded" messages (no database access).
+
+Result of the step: tester agent, run of 2026-11-14 07:52:25 (Tests/_results/2026-11-14_075225): PASSED, all 751
+checks (selftest 8, access-matrix 472 with 440 cells ok, dashboard 274); fixture check 38 of 38; the baseline was
+the one with step 44. New checks passed: the cards side by side at 1241 px and stacked at 1240 px; the Scheduled list
+fits its card for the Controller and the Manager (nine columns) at 1366 and 1600 px and for Management (eight columns)
+at 1366 px; qa_manager opening the item of a passed meeting (QA2-00013-1) gets no buttons and the message inside the
+panel; an item he can decide shows the buttons and no message. Measured: the Meetings card 864 px wide, its table
+needs 793 px with the widest realistic cells in an 830 px box (37 px spare). The owner's tests passed.
+
+### Step 44 (UN6c2a): approval rule, My approvals and Waiting for me
+
+Database/BMMS-Test-AgendaWaitingFor-Step44.sql (BMMS_Test only; run it in a new query window; it refuses the name
+BMMS and any name that does not start with BMMS, and stops when step 44 is not installed). One numbered row per
+check, a summary row (Passed, Failed, Skipped); the row about the login itmgruser reads SKIPPED in a database
+without that account. 120 checks, all PASS (run of 2026-11-14 on BMMS_Test). Part 1 reads only: the markers (the five of step 44 and
+the markers of the earlier steps that the two replaced procedures keep), parameters and result columns, that the
+objects step 44 does not change carry no marker, that no EXECUTE is denied, and that every database user who can run
+step 42's procedure can run the four procedures of step 44. Part 2: on the data of the database, read only, for
+every active user and every agenda item the function gives what the rule of step 20 gives; then, inside one
+transaction that is rolled back, with made-up data (ZZ44): the earlier text of spr_UpdateAgendaByAgendaId installed
+under a temporary name and both procedures run on the same 1352 cases (13 kinds of acting user x 13 items x 8 action
+words; the script expects 32 allowed, and refusals with Reason 14 688 times, Reason 12 104, Reason 8 312, Reason 5
+144 and Reason 4 72), where Result, Reason, ReasonDetail and everything written must be the same in every case; named
+cases (among them a Manager whose alert row was removed from his list still approves; a Manager of the same department
+who is not routed is refused; the Controller approves at AMA and rejects at AC but cannot approve at AC; the system
+account Reason 12; the procedure still approves an item of a past meeting, as before); the items of the departments
+of itmgruser that are not routed to him, each refused with Reason 14; the function's flags; the approval state; the
+meeting list with the earlier text beside the new one (every column of before unchanged) and WaitingForMe; My
+approvals by role, filter and page; and the Rollback's two texts installed inside the transaction and compared with
+the texts step 44 was built from by SHA-1. Afterwards nothing of ZZ44 is left, the agenda and alert tables are
+unchanged and every identity counter is put back. The Fix, Rollback, Fix sequence was checked on BMMS_Test.
+BMMS-Test-DashboardMeetings-Step42.sql was adjusted in three places (its checks of the parameter count and of the
+result columns of spr_GetDashboardMeetings, and its own result table, each marked "Replaced by step 44"): it
+expects the step 44 shape when step 44 is installed and the step 42 shape otherwise, 71 checks either way.
+BMMS-Test-DashboardAlerts-Step43.sql passes unchanged (128).
 
 ## Reviewer stage
 

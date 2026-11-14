@@ -25,6 +25,8 @@ namespace BMMS.UserControl
         // Index of the four statistics columns in both grids (Items, Approved, Rejected, last column)
         private const int FirstStatisticsColumn = 4;
         private const int LastStatisticsColumn = 7;
+        // Step UN6c2a: "Waiting for me", the last column of the Scheduled list only
+        private const int WaitingColumn = 8;
 
         #region Role table
         // What the page shows per role (owner, UN6b addendum 1, 2026-11-12). The one place to change it.
@@ -74,6 +76,28 @@ namespace BMMS.UserControl
         protected void Filter_Changed(object sender, EventArgs e)
         {
             LoadMeetings(false);
+
+            // Step UN6c2a: the Dashboard reloads the blocks that follow the filters (the My approvals panel)
+            if (FiltersChanged != null)
+                FiltersChanged(this, EventArgs.Empty);
+        }
+        #endregion
+
+        #region Filters for the Dashboard
+        // Step UN6c2a: the filters as the last load of the meeting list used them (0 = all). The procedures that take
+        // them check them again against the acting user; these values only say what was chosen.
+        public event EventHandler FiltersChanged;
+
+        public int CommitteeId
+        {
+            get { object value = ViewState["CommitteeId"]; return value is int ? (int)value : 0; }
+            private set { ViewState["CommitteeId"] = value; }
+        }
+
+        public int DepartmentId
+        {
+            get { object value = ViewState["DepartmentId"]; return value is int ? (int)value : 0; }
+            private set { ViewState["DepartmentId"] = value; }
         }
         #endregion
 
@@ -111,11 +135,15 @@ namespace BMMS.UserControl
                 if (departmentId > 0 && dtDepartments.Select("DepartmentId = " + departmentId).Length == 0)
                     departmentId = 0;
 
+                CommitteeId = committeeId;
+                DepartmentId = departmentId;
+
                 int reason;
                 bool statisticsShown;
+                bool waitingShown;
                 string roleCode;
                 DataTable dtMeetings = MeetingMgr.GetDashboardMeetings(actingUserId, committeeId, departmentId,
-                    out reason, out statisticsShown, out roleCode);
+                    out reason, out statisticsShown, out roleCode, out waitingShown);
 
                 RoleView view;
                 if (!RoleViews.TryGetValue(roleCode, out view))
@@ -149,6 +177,7 @@ namespace BMMS.UserControl
                 }
                 grvScheduled.Columns[LastStatisticsColumn].HeaderText = view.LastColumn;
                 grvCompleted.Columns[LastStatisticsColumn].HeaderText = view.LastColumn;
+                grvScheduled.Columns[WaitingColumn].Visible = waitingShown;   // step UN6c2a: from the server's answer
 
                 grvScheduled.DataSource = Rows(dtMeetings, "S");
                 grvScheduled.DataBind();
@@ -246,6 +275,15 @@ namespace BMMS.UserControl
         #endregion
 
         #region Helpers
+        // Step UN6c2a: the count of items waiting for this person; nothing where none waits
+        protected static string WaitingText(object waiting)
+        {
+            int count;
+            if (waiting == null || waiting == DBNull.Value || !int.TryParse(waiting.ToString(), out count) || count <= 0)
+                return string.Empty;
+            return count.ToString();
+        }
+
         private static DataView Rows(DataTable dt, string listCode)
         {
             // The procedure's order is kept (RowFilter without Sort keeps the table order)

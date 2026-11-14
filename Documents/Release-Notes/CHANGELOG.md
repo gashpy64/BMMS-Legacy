@@ -3,10 +3,16 @@
 - Title: BMMS Change Log
 - Audience: Gashpy Software (internal)
 - Shipped: No
-- Applies to: UN6c1
-- Last updated by: UN6c1, based on e3bff6b
+- Applies to: UN6c2a
+- Last updated by: UN6c2a, based on 493cb45
 - Status: Draft
-- Verified against: for UN6c1: git diff against e3bff6b and the new files (BMMS/DashBoard/DashBoard.aspx(.cs, .designer.cs),
+- Verified against: for UN6c2a: git diff HEAD (493cb45) and the new files (BMMS/DashBoard/DashBoard.aspx(.cs, .designer.cs),
+  BMMS/UserControl/MeetingSummary.ascx(.cs), BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and MeetingMgr.cs,
+  BMMSDAL/AgendaDB.cs and MeetingDB.cs, Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (read in full),
+  BMMS-Rollback-AgendaWaitingFor-Step44.sql, BMMS-Test-AgendaWaitingFor-Step44.sql (header and the comparison part),
+  BMMS-Check-InstalledSteps.sql, BMMS-Test-DashboardMeetings-Step42.sql, Tests/packs/dashboard/*, Tests/fixture/*,
+  Tests/README.md, Database/README.md section Step UN6c2a and Known items), the tester run of 2026-11-14 07:52:25 and
+  the owner's tests as given; for UN6c1: git diff against e3bff6b and the new files (BMMS/DashBoard/DashBoard.aspx(.cs, .designer.cs),
   BMMS/MasterPage/Main.Master(.cs, .designer.cs), BMMS/CSS/bmms-workbench.css, BMMS/UserControl/MeetingSummary.ascx.cs,
   BMMSBAL/AlertMgr.cs, ActionItemMgr.cs and Common.cs, BMMSDAL/AlertDB.cs and ActionItemDB.cs,
   Database/BMMS-Fix-DashboardAlerts-Step43.sql, BMMS-Rollback-DashboardAlerts-Step43.sql, BMMS-Test-DashboardAlerts-Step43.sql
@@ -34,6 +40,74 @@
 One entry per step, newest first. Each entry names the step, its tag and what changed for users,
 for installers and in the database. Release entries (tags vX.Y.Z) collect the steps since the
 previous release.
+
+## UN6c2a - Dashboard My approvals panel, Waiting for me column, one rule for who may approve, wider Meetings card (tag not yet set, 2026-11-14; database step 44)
+
+- For users: the Controller and the Manager have a new card, "My approvals (n)", above the Meetings and Alerts cards. It
+  lists the items that wait for their approval (the Controller: the items the Manager has approved; the Manager: the items
+  sent to him, as the creator's manager or by an alert, also one he removed from his list), of meetings whose agenda
+  is open and whose date has not passed, newest meeting first, 10 to a page, with the columns Item, Committee, Meeting
+  and Department; it follows the Committee drop-down and the Manager's Department drop-down. Nothing waiting: "Nothing is
+  waiting for your approval." The User, Management, MD Secretariat and the Admin have no card. The Scheduled list has
+  a ninth column, "Waiting for me" (Controller and Manager): how many items of the meeting wait for him now; Pending
+  still counts every item still waiting for any approver (for a Manager also items of his departments that wait for
+  another Manager, and items of a meeting whose date has passed). Clicking an item opens the Agenda Alert panel and marks
+  only the person's own alert read; after Approve or Reject the panel, the counts, the Alerts card and the header
+  follow. Approve and Reject now show only to a person who may approve the item (before: to every Controller at AMA
+  and every Manager at AC, and the server refused what was not his), while the agenda is open and the meeting date
+  has not passed. When the person could decide an item whose meeting date has passed, the panel opens without
+  Approve and Reject and "The meeting date has passed, so this item can no longer be approved or rejected. It will be
+  rejected when the agenda is finalized." now shows inside the panel, just above Close and "Remove from my list" (it
+  showed in the page's message box under the panel). New messages: "Whether you may approve this item could not be
+  checked, so it is shown read-only. Close it and open it again.", "The item could not be checked, so nothing was
+  changed. Try again.", and for the card "The approvals could not be loaded. Reload the page to try again.", the
+  server-busy text, "The approvals are not available: your account is not active. Sign in again." and "The approvals
+  cannot be shown for this choice. Choose All committees or All my departments." The meeting date is now judged by
+  the database server's date (before, the web server's date). Layout: the Meetings card is three parts of four of the
+  content width beside the Alerts card (before, about two thirds); the cards stack at 1240 px and below (before, under
+  1100 px) and stand side by side from 1241 px; the nine-column Scheduled list fits its card from 1241 px and scrolls
+  inside the card when it is narrower. Described in the Overall manual, the Controller and Manager manuals (and the
+  User and Admin manuals for what they do not have), and the Glossary.
+- For developers: DashBoard.aspx(.cs) has the panel (`cardApprovals`, `grvApprovals`, `LoadApprovals`,
+  `lnkApproval_Click`), `TryGetApprovalState`, `ShowAgendaPanelMessage` and a message paragraph inside the Agenda Alert
+  panel; `BindAgendaDetails`, `btnApprove_Click` and `btnReject_Click` ask the server for the state instead of
+  deciding from the role and the status; MeetingSummary.ascx(.cs) has the column "Waiting for me", the properties
+  `CommitteeId` and `DepartmentId` and the event `FiltersChanged`; new `AgendaMgr` / `AgendaDB` methods
+  `GetDashboardApprovals` and `GetAgendaApprovalState`; `MeetingMgr` / `MeetingDB.GetDashboardMeetings` has the extra
+  output `WaitingShown`; CSS: grid 3fr / 1fr, the panel's grid area, the 1240 px rule, 4 px padding of the number cells
+  and the Status cell (by column position).
+- For installers: run BMMS-Fix-AgendaWaitingFor-Step44.sql (after step 43) before the new build, on BMMS_Test first,
+  then the Test script in a new query window. The earlier build keeps working with step 44 installed.
+  BMMS-Rollback-AgendaWaitingFor-Step44.sql puts the two replaced procedures back letter for letter (SHA-1 compared)
+  and drops the three new objects (roll back the build first).
+- Database: step 44, five objects (marker AgendaWaitingFor-Step44; 5 markers in BMMS-Check-InstalledSteps.sql): new
+  fn_AgendaWaitingFor (one rule for who may approve; the database server's date), spr_GetAgendaApprovalState and
+  spr_GetDashboardApprovals; replaced spr_UpdateAgendaByAgendaId (same behaviour and order of refusals 12, 8, 4, 5, 14;
+  the test "may this user act" reads the function; it still does not check the meeting date) and
+  spr_GetDashboardMeetings (one more OUTPUT parameter, @WaitingShown, and one more column, WaitingForMe, last). Reason 12
+  (system account), 8 (user missing or inactive) and 4 (a role without the panel, a filter or a page that is not
+  allowed, an unknown item). Grants nothing. Test script BMMS-Test-AgendaWaitingFor-Step44.sql: the earlier text of
+  spr_UpdateAgendaByAgendaId is run beside the new one on 1352 cases (13 acting users x 13 items x 8 action words) with no
+  difference allowed; 120 checks, all PASS (run of 2026-11-14 on BMMS_Test). BMMS-Test-DashboardMeetings-Step42.sql was adjusted in three
+  places (71 checks either way); BMMS-Test-DashboardAlerts-Step43.sql is unchanged. The tester's baseline was updated
+  for step 44.
+- Tests: tester agent, run of 2026-11-14 07:52:25 (Tests/_results/2026-11-14_075225): PASSED, all 751 checks
+  (selftest 8, access-matrix 472 with 440 cells ok, dashboard 274); fixture check 38 of 38. The dashboard pack gained
+  the My approvals, Waiting for me, fit and meeting-date message checks (side by side at 1241 px and stacked at 1240
+  px; the Scheduled list fits its card for the Controller and the Manager, nine columns, at 1366 and 1600 px and for
+  Management, eight columns, at 1366 px; a Manager opening the item of a passed meeting sees no buttons and the
+  message inside the panel; an item he can decide shows the buttons and no message). Measured: the Meetings card 864
+  px wide, its table needs 793 px with the widest realistic cells in an 830 px box (37 px spare). The owner's tests
+  passed.
+- Known items (Database/README.md, "Known items for later steps"): the meeting-date rule is checked by the page only,
+  not by the approval procedure (M6a); items of a meeting whose date has passed that are still at AC or AMA cannot be
+  approved by anybody and are not listed in My approvals (on BMMS_Test 8 items are stuck at AC); a Manager's Pending
+  can be larger than his Waiting for me until step UD1b; indexes are planned for step UN6e; a Controller may reject
+  at AC by the rule, but the panel and the buttons are about AMA only; the browser console message "Permissions policy
+  violation" from ScriptResource.axd does not come from the Dashboard (the owner's reading). Review Lows: a UserId 0 corner case in the
+  function; the state procedure answers two flags for any item to any active user; the page still chooses the branch
+  by the session role; a blank agenda number gives an empty link; the Short Text box may look editable when the buttons
+  are hidden; the message sits at the bottom of a tall panel; the Status cell padding is set by column position.
 
 ## UN6c1 - Dashboard alert rules, Remove from my list, Action Items scope and Overdue, header count (tag not yet set, 2026-11-13; database step 43)
 

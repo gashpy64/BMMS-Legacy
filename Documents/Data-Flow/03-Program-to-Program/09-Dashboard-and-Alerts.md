@@ -3,10 +3,14 @@
 - Title: Program to Program: Dashboard and Alerts
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6c1 (step 43): the Alerts card, the header count and the Action Items card; UN6b (step 42): the Meetings card; the rest not written yet
-- Last updated by: UN6c1, based on e3bff6b
+- Applies to: UN6c2a (step 44): the My approvals panel, the Waiting for me column and the Approve and Reject buttons; UN6c1 (step 43): the Alerts card, the header count and the Action Items card; UN6b (step 42): the Meetings card; the rest not written yet
+- Last updated by: UN6c2a, based on 493cb45
 - Status: Draft
-- Verified against: for the Alerts card, the header count and the Action Items card (step UN6c1): BMMS/DashBoard/DashBoard.aspx and
+- Verified against: for the step UN6c2a section: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff; BindAgendaDetails, btnApprove_Click and btnReject_Click read in full),
+  BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (diff), BMMSBAL/AgendaMgr.cs and MeetingMgr.cs (diff), BMMSDAL/AgendaDB.cs and MeetingDB.cs (diff),
+  Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (all five objects), BMMS-Rollback-AgendaWaitingFor-Step44.sql, BMMS-Test-AgendaWaitingFor-Step44.sql (header, comparison),
+  Database/README.md (section Step UN6c2a, Known items), the tester run of 2026-11-14 and the owner's tests as given;
+  for the Alerts card, the header count and the Action Items card (step UN6c1): BMMS/DashBoard/DashBoard.aspx and
   DashBoard.aspx.cs (the Alerts and Action Items regions, message constants, lnkActionItem_Click, lnkSource_Click),
   BMMS/MasterPage/Main.Master.cs (alert count), BMMSBAL/AlertMgr.cs and ActionItemMgr.cs, BMMSDAL/AlertDB.cs and
   ActionItemDB.cs (diff), Database/BMMS-Fix-DashboardAlerts-Step43.sql (all objects), BMMS-Rollback-DashboardAlerts-Step43.sql,
@@ -31,8 +35,11 @@ shows the Scheduled and the Completed (last 10) meetings with a status label and
 The Alerts card, the header count and the Action Items card (step UN6c1) are in the section "Alerts card, header
 count and Action Items card (step UN6c1)" below.
 
-[[CONFIRM: the Agenda Alert and Action Item Details panels and the Approve and Reject flow of the Dashboard are not
-written yet (WF2c3)]]
+The My approvals panel, the Waiting for me column and the Approve and Reject buttons (step UN6c2a) are in the
+section "My approvals, Waiting for me and the Approve and Reject buttons (step UN6c2a)" below.
+
+[[CONFIRM: the Action Item Details panel and the rest of the Agenda Alert panel and the Approve and Reject flow of the
+Dashboard (mail, the finalised agenda) are not written yet (WF2c3)]]
 
 ## Programs involved
 
@@ -93,8 +100,8 @@ sequenceDiagram
 | DepartmentMgr / DepartmentDB | spr_GetDashboardDepartments | @ActingUserId | OUTPUT @Result and @Reason are turned into one Reason number |
 | spr_GetDashboardDepartments | DepartmentDB | DepartmentId, DepartmentName, IsHome | Home department first, then by name; only for Manager and User |
 | MeetingSummary | MeetingMgr.GetDashboardMeetings | Acting user id, committee id (0 = all), department id (0 = all of the user's) | A chosen department that is no longer in the user's list falls back to 0 before the call |
-| MeetingMgr / MeetingDB | spr_GetDashboardMeetings | @ActingUserId, @CommitteeId, @DepartmentId | Four OUTPUT values |
-| spr_GetDashboardMeetings | MeetingDB | Rows with MeetingId, CommitteeName, MeetingNo, MeetingDate, MeetingTime, AgendaSubmissionDate, ListCode, StateCode, StateLabel, Items, Approved, Rejected, Pending; @Reason, @StatisticsShown, @ActingRoleCode | ListCode S or C; the counts are NULL when the statistics are not shown |
+| MeetingMgr / MeetingDB | spr_GetDashboardMeetings | @ActingUserId, @CommitteeId, @DepartmentId | Four OUTPUT values (five since step 44: @WaitingShown) |
+| spr_GetDashboardMeetings | MeetingDB | Rows with MeetingId, CommitteeName, MeetingNo, MeetingDate, MeetingTime, AgendaSubmissionDate, ListCode, StateCode, StateLabel, Items, Approved, Rejected, Pending (and, since step 44, WaitingForMe); @Reason, @StatisticsShown, @ActingRoleCode (and, since step 44, @WaitingShown) | ListCode S or C; the counts are NULL when the statistics are not shown |
 | MeetingDB | MeetingSummary | Table, Reason, StatisticsShown, ActingRoleCode | StatisticsShown is true only when the Reason is 0 and the procedure said 1 |
 | MeetingSummary | DashBoard.aspx (the card) | The two grids, the subtitle, the card title, the messages | The role code from the procedure picks the view in the role table, not the session role |
 | spr_GetDashboardMeetings | MeetingSummary | Reason 8 | Refusal: acting user missing, 0 or inactive |
@@ -270,6 +277,149 @@ Drawn from (UN6c1): BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/MasterPage/
 and ActionItemMgr.cs (diff), BMMSDAL/AlertDB.cs and ActionItemDB.cs (diff), Database/BMMS-Fix-DashboardAlerts-Step43.sql
 (all objects), BMMS-Rollback-DashboardAlerts-Step43.sql, BMMS-Test-DashboardAlerts-Step43.sql (header), Database/README.md
 (section Step UN6c1), the owner's test result as given (128 numbered checks passed; owner's tests passed).
+
+## My approvals, Waiting for me and the Approve and Reject buttons (step UN6c2a)
+
+Added in step UN6c2a (database step 44). One database function, fn_AgendaWaitingFor, is the only rule for who may
+approve or reject an agenda item; four things read it, so they always agree: the My approvals panel
+(spr_GetDashboardApprovals), the Waiting for me column of the Scheduled list (spr_GetDashboardMeetings), the
+Approve and Reject buttons and the check before a decision (spr_GetAgendaApprovalState) and the approval itself
+(spr_UpdateAgendaByAgendaId). The page sends the acting user id (`Session["UserId"]`), the committee and department
+last chosen at the top, and a page number; the role is read from the database. Every caller passes the database
+server's date to the function.
+
+### Programs involved
+
+| Program | Kind | Part in the flow |
+|---|---|---|
+| DashBoard/DashBoard.aspx(.cs) | Page | The panel (`LoadApprovals`, paging, `lnkApproval_Click`), the buttons (`BindAgendaDetails`, `TryGetApprovalState`), the checks in `btnApprove_Click` and `btnReject_Click`, the panel message (`ShowAgendaPanelMessage`) |
+| UserControl/MeetingSummary.ascx(.cs) | User control | Gives the page the filters (`CommitteeId`, `DepartmentId`, event `FiltersChanged`); the Waiting for me column from the answer of `GetDashboardMeetings` |
+| AgendaMgr, AgendaDB | BAL, DAL | `GetDashboardApprovals`, `GetAgendaApprovalState` (the flags are true only when the Reason is 0); `UpdateAgendaByAgendaId` (as before) |
+| MeetingMgr, MeetingDB | BAL, DAL | `GetDashboardMeetings` with the extra output `WaitingShown` |
+| spr_GetDashboardApprovals, spr_GetAgendaApprovalState | Procedures | The panel rows (a page of 10); the four flags of one item |
+| spr_GetDashboardMeetings | Procedure | The column WaitingForMe (last) and `@WaitingShown` |
+| spr_UpdateAgendaByAgendaId | Procedure | Approve and Reject; its test "may this user act" reads the function |
+| fn_AgendaWaitingFor | Inline table function | The one rule (CanApprove, CanReject, AgendaOpen, DateOpen, IsWaiting) |
+
+### Main flow
+
+```mermaid
+sequenceDiagram
+    participant U as Controller or Manager
+    participant P as DashBoard.aspx.cs
+    participant C as MeetingSummary.ascx.cs
+    participant B as AgendaMgr and MeetingMgr
+    participant SP as spr_GetDashboardApprovals
+    participant SM as spr_GetDashboardMeetings
+    participant SS as spr_GetAgendaApprovalState
+    participant SU as spr_UpdateAgendaByAgendaId
+    participant F as fn_AgendaWaitingFor
+
+    U->>P: opens the Dashboard, or changes the Committee or Department drop-down
+    P->>C: filters (committee id, department id)
+    C->>B: GetDashboardMeetings(acting user id, filters)
+    B->>SM: ActingUserId, CommitteeId, DepartmentId
+    SM->>F: user id, database server date
+    F-->>SM: items with IsWaiting
+    SM-->>C: Scheduled rows with WaitingForMe, WaitingShown
+    P->>B: GetDashboardApprovals(acting user id, committee id, department id, page)
+    B->>SP: ActingUserId, CommitteeId, DepartmentId, PageNo
+    SP->>F: user id, database server date
+    F-->>SP: items with IsWaiting
+    SP-->>P: a page of 10 rows, TotalRows, PageShown
+    P-->>U: My approvals (n), the Scheduled list with Waiting for me
+    U->>P: clicks an item in My approvals
+    P->>B: UpdateAlertByUserId(acting user id, alert id of the row)
+    P->>B: GetAgendaApprovalState(acting user id, agenda id)
+    B->>SS: ActingUserId, AgendaId
+    SS->>F: user id, database server date
+    F-->>SS: CanApprove, CanReject
+    SS-->>P: CanApprove, CanReject, AgendaOpen, DateOpen
+    P-->>U: the Agenda Alert panel with or without Approve and Reject
+    U->>P: Approve or Reject
+    P->>B: GetAgendaApprovalState again (the date)
+    P->>B: UpdateAgendaByAgendaId(item, action word, acting user id)
+    B->>SU: parameters
+    SU->>F: user id, database server date
+    F-->>SU: the item's row, CanApprove or CanReject
+    SU-->>P: Result 1
+    P->>P: mail, then the lists load again (panel, Alerts card, Meetings card)
+    P-->>U: the panel without the item, new counts
+    alt Reason 14 - the rule does not allow it
+        SU-->>P: Result 0, Reason 14
+        P-->>U: "You cannot approve or reject this agenda item at its current stage ([status name]). Reload the Dashboard to see its current state."
+    else the meeting date has passed (DateOpen 0)
+        SS-->>P: DateOpen 0
+        P-->>U: "The meeting date has passed, so this item can no longer be approved or rejected. It will be rejected when the agenda is finalized."
+    else the state cannot be read
+        SS-->>P: Reason other than 0, or an error
+        P-->>U: "The item could not be checked, so nothing was changed. Try again."
+    end
+```
+
+| From | To | Data | Notes |
+|---|---|---|---|
+| Controller or Manager | DashBoard.aspx | Opens the page, changes a drop-down, clicks a row, Approve, Reject, a page number | A change of the drop-downs reloads the panel from page 1 (`FiltersChanged`) |
+| MeetingSummary | DashBoard.aspx | Committee id and department id as the last load of the Meetings card used them | Kept in the control's ViewState; the procedures check them again |
+| DashBoard.aspx | AgendaMgr.GetDashboardApprovals | Acting user id, committee id, department id, page number | Called on the first load, on paging, after a filter change and after every Approve, Reject and row click |
+| AgendaMgr / AgendaDB | spr_GetDashboardApprovals | @ActingUserId, @CommitteeId, @DepartmentId, @PageNo | OUTPUT @Result, @Reason, @TotalRows, @PageShown |
+| spr_GetDashboardApprovals | fn_AgendaWaitingFor | User id, database server date | Rows with IsWaiting = 1 only, then the committee and department filters; newest meeting first |
+| spr_GetDashboardApprovals | DashBoard.aspx | RowNo, AgendaId, AgendaNo, SubjectNo, ShortText, AgendaStatusCode, CommitteeId, CommitteeCode, CommitteeName, MeetingId, MeetingNo, MeetingDate, DepartmentId, DepartmentName, AlertId | The title shows "My approvals ([n])" from TotalRows; the page number shown is the one the server answers with |
+| DashBoard.aspx | AlertMgr.UpdateAlertByUserId | Acting user id, the alert id of the row | Only when the row has an alert; marks the acting user's own row read; the Alerts card and the header count follow |
+| DashBoard.aspx | AgendaMgr.GetAgendaApprovalState | Acting user id, agenda id | Read when an item is opened and again before Approve and Reject |
+| spr_GetAgendaApprovalState | fn_AgendaWaitingFor | User id, database server date | CanApprove and CanReject; AgendaOpen and DateOpen are worked out in the procedure from the item's meeting |
+| spr_GetAgendaApprovalState | DashBoard.aspx | CanApprove, CanReject, AgendaOpen, DateOpen | The page shows Approve and Reject only when CanApprove and AgendaOpen are both 1, and, if DateOpen is 0, the meeting-date message instead |
+| DashBoard.aspx | AgendaMgr.UpdateAgendaByAgendaId | The item, the action word (Manager or Controller), acting user id | Called only after the state says the date is open; the procedure decides who may act |
+| spr_UpdateAgendaByAgendaId | fn_AgendaWaitingFor | User id, database server date | A Manager's row must allow CanApprove; a Controller's row CanApprove for Approved and CanReject for Rejected |
+| MeetingSummary | DashBoard.aspx | Scheduled rows with WaitingForMe, WaitingShown | The column shows the count and is empty where it is 0; it is shown only when WaitingShown is 1 |
+
+### Refusal paths
+
+| Reason | Raised by | Meaning | What the page shows |
+|---|---|---|---|
+| 12 | spr_GetDashboardApprovals, spr_GetAgendaApprovalState | The acting user is the protected system account (checked as a system account, before the role) | The panel is hidden; the item opens read-only with no message for the system account |
+| 8 | spr_GetDashboardApprovals, spr_GetAgendaApprovalState | The acting user is missing, 0 or inactive | Panel: "The approvals are not available: your account is not active. Sign in again."; item: read-only with "Whether you may approve this item could not be checked, so it is shown read-only. Close it and open it again." (Controller or Manager) |
+| 4 | spr_GetDashboardApprovals | A role other than Controller and Manager; an unknown or negative committee; a department for a Controller or one that is not the Manager's; a page below 1 | A role without the panel: the panel is hidden. A person who has the panel and a refused filter: "The approvals cannot be shown for this choice. Choose All committees or All my departments." |
+| 4 | spr_GetAgendaApprovalState | The item does not exist | The item is gone ("This item no longer exists." as for the other opens) |
+| 14 | spr_UpdateAgendaByAgendaId | The acting user may not approve or reject the item by the function (ReasonDetail the status name) | "You cannot approve or reject this agenda item at its current stage ([status name]). Reload the Dashboard to see its current state." |
+| 5 | spr_UpdateAgendaByAgendaId | The agenda is finalised | The existing finalised-agenda message |
+| (none) | The page | DateOpen is 0 | In the panel: "The meeting date has passed, so this item can no longer be approved or rejected. It will be rejected when the agenda is finalized." above the buttons; before a decision, the same text in the page's message box and nothing is saved |
+| (none) | The page | The state cannot be read before a decision | "The item could not be checked, so nothing was changed. Try again." |
+| (none) | The page | The panel cannot be loaded (error, timeout, no memory) | "The approvals could not be loaded. Reload the page to try again." or "The server is busy and the approvals could not be loaded. Wait a moment, then reload the page."; the count is not shown |
+
+A refused call returns the same columns with no rows and changes nothing.
+
+### Where each rule lives
+
+| Rule | C# | Procedure or function |
+|---|---|---|
+| Who may decide an item: a Manager an item at AC routed to him (creator's manager or an alert row of the item, also one he removed from his list); a Controller approves at AMA and rejects at AC or AMA; no one else; not the system account or an inactive user | none | fn_AgendaWaitingFor (CanApprove, CanReject) |
+| What waits for a person: CanApprove, agenda Open, meeting date today or later (or no date) | none | fn_AgendaWaitingFor (IsWaiting, AgendaOpen, DateOpen) |
+| The date is the database server's | none | `CAST(GETDATE() AS DATE)` in spr_GetDashboardApprovals, spr_GetAgendaApprovalState and spr_GetDashboardMeetings, passed to the function |
+| The My approvals rows: IsWaiting, committee, department, newest meeting first, 10 to a page | `LoadApprovals`, `OnPagingApprovals` | spr_GetDashboardApprovals |
+| Which roles have the panel: Controller and Manager | `cardApprovals.Visible` from the Reason | spr_GetDashboardApprovals (Reason 4 for the rest) |
+| Waiting for me: Scheduled meetings only, Controller and Manager; for a Manager within the chosen department | `grvScheduled.Columns[WaitingColumn].Visible` from WaitingShown; `WaitingText` | spr_GetDashboardMeetings (WaitingForMe, @WaitingShown) |
+| Approve and Reject shown: CanApprove and the agenda Open | `BindAgendaDetails` (controller and manager cases) | spr_GetAgendaApprovalState |
+| Meeting date passed: read-only item and the message inside the panel; no decision | `BindAgendaDetails`, `ShowAgendaPanelMessage`, `btnApprove_Click`, `btnReject_Click` | spr_GetAgendaApprovalState (DateOpen). The approval procedure does not check the date (known item) |
+| Opening a row marks only the person's own alert read | `lnkApproval_Click` | spr_UpdateAlertByUserId (the acting user's row) |
+| Panel, lists and header follow a decision | `LoadApprovals`, `LoadAlertGRV`, `MeetingSummary1.Reload()` | none |
+
+### Tables read and written
+
+| Object | Reads | Writes |
+|---|---|---|
+| fn_AgendaWaitingFor | Users, Roles, Agenda, Meeting, Alert_User_Map, Alert_Master | none |
+| spr_GetDashboardApprovals | Users, Roles, Committee, Agenda, Meeting, Department, Alert_Master, and fn_AgendaWaitingFor and fn_UserDepartmentScope | none |
+| spr_GetAgendaApprovalState | Users, Agenda, Meeting, and fn_AgendaWaitingFor | none |
+| spr_GetDashboardMeetings | as in step 42, and fn_AgendaWaitingFor | none |
+| spr_UpdateAgendaByAgendaId | as before (Agenda, Meeting, Users, Roles, Agenda_Status, Alert_Master, Alert_User_Map), and fn_AgendaWaitingFor | as before: Agenda (comments, approved status, who and when, AgendaStatusCode), Alert_Master (AlertTypeCode), Alert_User_Map, Audit_Trail_Master |
+
+Drawn from (UN6c2a): BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff, BindAgendaDetails,
+btnApprove_Click, btnReject_Click read in full), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (diff),
+BMMSBAL/AgendaMgr.cs and MeetingMgr.cs (diff), BMMSDAL/AgendaDB.cs and MeetingDB.cs (diff),
+Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (all five objects), BMMS-Rollback-AgendaWaitingFor-Step44.sql,
+BMMS-Test-AgendaWaitingFor-Step44.sql (header, the 1352-case comparison), Database/README.md (section Step UN6c2a,
+Known items), the tester run of 2026-11-14 as given.
 
 ## Drawn from
 

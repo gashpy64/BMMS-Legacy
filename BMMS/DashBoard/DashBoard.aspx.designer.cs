@@ -83,6 +83,42 @@ namespace BMMS.DashBoard {
         protected global::System.Web.UI.WebControls.LinkButton lnkUnread;
         
         /// <summary>
+        /// cardApprovals control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl cardApprovals;
+
+        /// <summary>
+        /// litApprovalCount control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Literal litApprovalCount;
+
+        /// <summary>
+        /// pApprovalsMessage control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl pApprovalsMessage;
+
+        /// <summary>
+        /// grvApprovals control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.GridView grvApprovals;
+
+        /// <summary>
         /// hdnAlertUserId control.
         /// </summary>
         /// <remarks>
@@ -549,7 +585,16 @@ namespace BMMS.DashBoard {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::BMMS.Controls.RichTextEditor ftxtControllerComments;
-        
+
+        /// <summary>
+        /// pAgendaPanelMessage control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl pAgendaPanelMessage;
+
         /// <summary>
         /// pnlAgendaControls control.
         /// </summary>

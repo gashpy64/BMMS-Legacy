@@ -54,6 +54,19 @@
          Controller and Management see five items, qa_manager and qa_user the
          three Credit items with finalised or confirmed minutes, qa_manager2
          (HRD and Secretarial) the one Secretarial item, qa_user2 (HRD) none.
+       - step UN6c2a (My approvals, Waiting for me): QA2 00001 gets two items,
+         direct rows without alerts: QA2-00001-1 (Credit, at AMA: a second item
+         that waits for the Controller) and QA2-00001-2 (Secretarial, at AC,
+         saved by qa_ctrl: an item of a department of qa_manager2 that is not
+         routed to him). The rest of QA2 is as described below.
+       - step UN6c2a (the meeting-date message in the Agenda Alert panel, step M6a):
+         QA2 00013, dated 40 days ago with its agenda still open (older than
+         every other fixture meeting, so it is below the ten Completed rows of
+         every list), with one item QA2-00013-1 (Credit, at AC, saved by
+         qa_user, so routed to qa_manager) and its Agenda alert for qa_manager
+         only, already read; the item and the alert are 40 days old (the dates
+         script; the Alerts card dates an entry alert by the item), so the
+         alert is on the last page of All only and changes no count.
      Committee QA2 "QA Dashboard Committee" (step UN6b, for the Dashboard's
      meeting list), twelve meetings and twelve agenda items:
        00001 dated today, submission today, agenda open, no items
@@ -477,6 +490,42 @@ BEGIN TRY
           UNION ALL SELECT '00010', '1', 'C', 'ACA' UNION ALL SELECT '00011', '1', 'C', 'ACA' UNION ALL SELECT '00012', '1', 'C', 'ACA') x
     JOIN Meeting m ON m.CommitteeId = @C2 AND m.MeetingNo = x.MeetingNo;
     IF ((SELECT COUNT(*) FROM Agenda WHERE CommitteeId = @C2) <> 12) RAISERROR('not all twelve QA2 items were saved', 16, 1);
+
+    -- Step UN6c2a (My approvals, Waiting for me): two items on QA2 00001 (dated today, agenda open). Direct rows
+    -- without alerts, so no alert count changes:
+    --   QA2-00001-1  Credit, approved by the Manager (AMA): a second item that waits for the Controller
+    --   QA2-00001-2  Secretarial, at AC, saved by qa_ctrl (nobody's manager) and without an alert row: an item of a
+    --                department of qa_manager2 that is NOT routed to him (nor to anybody)
+    SET @Step = 'UN6c2a: two items on QA2 00001';
+    INSERT INTO Agenda (AgendaNo, CommitteeId, MeetingId, DepartmentId, SubjectTypeId, ShortText, AgendaType, AgendaText, ProposedResolution,
+                        CurrentStatus, AgendaStatusCode, MgrApprovedStatus, CreatedOn, CreatedBy, UpdatedOn, UpdatedBy)
+    SELECT 'QA2-00001-' + x.Seq, @C2, m.MeetingId, CASE x.Dept WHEN 'S' THEN @DeptSec ELSE @DeptCredit END, @SubjectType,
+           N'QA2 item 00001-' + x.Seq, 'Entry', N'<p>QA agenda text.</p>', N'<p>QA proposed resolution.</p>',
+           'New', x.StatusCode, x.MgrStatus, @Now, CASE x.Dept WHEN 'S' THEN @QaController ELSE @QaUser END, @Now,
+           CASE x.Dept WHEN 'S' THEN @QaController ELSE @QaManager END
+    FROM (SELECT '1' AS Seq, 'C' AS Dept, 'AMA' AS StatusCode, 'Approved' AS MgrStatus
+          UNION ALL SELECT '2', 'S', 'AC', NULL) x
+    JOIN Meeting m ON m.CommitteeId = @C2 AND m.MeetingNo = '00001';
+    IF (@@ROWCOUNT <> 2) RAISERROR('the two items of QA2 00001 were not saved', 16, 1);
+
+    -- Step UN6c2a (the meeting-date message, step M6a): QA2 00013, 40 days ago, agenda still open, one Credit item at AC
+    -- saved by qa_user (his manager is qa_manager) and its Agenda alert for qa_manager only, read. Direct rows.
+    SET @Step = 'UN6c2a: QA2 00013 with an item of a passed meeting';
+    INSERT INTO Meeting (MeetingNo, CommitteeId, Place, Venue, MeetingDate, MeetingTime, AgendaSubmissionDate, MeetingColorCode, AgendaStatus, MinutesStatus, CreatedOn, CreatedBy)
+    VALUES ('00013', @C2, 'QA', 'QA meeting date passed, agenda open', DATEADD(DAY, -40, @Today), '10:00', DATEADD(DAY, -45, @Today), '', 'Open', 'Open', @Now, @QaController);
+    INSERT INTO Agenda (AgendaNo, CommitteeId, MeetingId, DepartmentId, SubjectTypeId, ShortText, AgendaType, AgendaText, ProposedResolution,
+                        CurrentStatus, AgendaStatusCode, CreatedOn, CreatedBy, UpdatedOn, UpdatedBy)
+    SELECT 'QA2-00013-1', @C2, m.MeetingId, @DeptCredit, @SubjectType, N'QA2 item 00013-1', 'Entry', N'<p>QA agenda text.</p>',
+           N'<p>QA proposed resolution.</p>', 'New', 'AC', DATEADD(DAY, -40, @Today), @QaUser, DATEADD(DAY, -40, @Today), @QaUser
+    FROM Meeting m WHERE m.CommitteeId = @C2 AND m.MeetingNo = '00013';
+    IF (@@ROWCOUNT <> 1) RAISERROR('item QA2-00013-1 was not saved', 16, 1);
+    INSERT INTO Alert_Master (SourceType, SourceTypeId, DepartmentId, DisplayText, AlertTypeCode, CommitteeId, AlertSendOption, CreatedOn, CreatedBy)
+    SELECT 'Agenda', a.AgendaId, @DeptCredit, 'Agenda (QA2-00013-1)', 'AC', @C2, 3, DATEADD(DAY, -40, @Today), @QaUser
+    FROM Agenda a WHERE a.CommitteeId = @C2 AND a.AgendaNo = 'QA2-00013-1';
+    INSERT INTO Alert_User_Map (AlertId, UserId, ReadStatus, StatusId)
+    SELECT am.AlertId, @QaManager, 1, 1
+    FROM Alert_Master am WHERE am.SourceType = 'Agenda' AND am.DisplayText = 'Agenda (QA2-00013-1)';
+    IF (@@ROWCOUNT <> 1) RAISERROR('the alert of QA2-00013-1 was not mapped to qa_manager', 16, 1);
 
     ---------------------------------------------------------------------------
     -- Step UN6c1: the Alerts card. Three alerts qa_user has read (their age comes from the dates script), and one

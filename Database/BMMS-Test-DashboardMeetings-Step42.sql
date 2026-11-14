@@ -7,6 +7,12 @@
    Run it AFTER BMMS-Fix-DashboardMeetings-Step42.sql; it stops if step 42 is
    not installed.
 
+   Step 44 (step UN6c2a) replaced spr_GetDashboardMeetings: it has one more
+   output (@WaitingShown) and one more result column (WaitingForMe, last).
+   Two checks of Part 1 and the test's own table of the result follow that:
+   with step 44 installed they expect the step 44 shape, without it the
+   shape of step 42. Every other check is as it was.
+
    Part 1, read only: the five markers, the parameters, the result columns
    of spr_GetDashboardMeetings, spr_GetScheduleMeet unchanged, and on this
    database every agenda item in one of the groups approved, rejected or in
@@ -74,7 +80,10 @@ CREATE TABLE #T (TestNo INT IDENTITY(1,1), Test VARCHAR(200), Expected VARCHAR(1
 CREATE TABLE #Ident (TableName SYSNAME, SavedValue BIGINT NULL, SeedValue BIGINT, IncrementValue BIGINT);
 CREATE TABLE #DM (MeetingId INT, CommitteeId INT, CommitteeCode VARCHAR(10), CommitteeName VARCHAR(50), MeetingNo VARCHAR(10),
                   MeetingDate DATETIME, MeetingTime VARCHAR(10), AgendaSubmissionDate DATETIME, ListCode CHAR(1),
-                  StateCode VARCHAR(10), StateLabel VARCHAR(30), Items INT, Approved INT, Rejected INT, Pending INT);
+                  StateCode VARCHAR(10), StateLabel VARCHAR(30), Items INT, Approved INT, Rejected INT, Pending INT, WaitingForMe INT);
+-- Replaced by step 44: the procedure returns WaitingForMe only when step 44 is installed
+IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetDashboardMeetings')), '') NOT LIKE '%AgendaWaitingFor-Step44%')
+    ALTER TABLE #DM DROP COLUMN WaitingForMe;
 CREATE TABLE #DD (DepartmentId INT, DepartmentName VARCHAR(50), IsHome BIT);
 
 -- Every identity counter before the test (put back at the end)
@@ -94,7 +103,9 @@ INSERT INTO #T SELECT 'Marker DashboardMeetings-Step42 in the five new objects',
           + CASE WHEN OBJECT_DEFINITION(OBJECT_ID('dbo.fn_AgendaStatusGroup')) LIKE '%DashboardMeetings-Step42%' THEN 1 ELSE 0 END
           + CASE WHEN OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetDashboardMeetings')) LIKE '%DashboardMeetings-Step42%' THEN 1 ELSE 0 END
           + CASE WHEN OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetDashboardDepartments')) LIKE '%DashboardMeetings-Step42%' THEN 1 ELSE 0 END AS VARCHAR(12));
-INSERT INTO #T SELECT 'Parameters: meetings 7 (4 OUTPUT), departments 3 (2 OUTPUT)', '7 4 3 2',
+-- Replaced by step 44: with step 44 installed the meetings procedure has 8 parameters (5 OUTPUT)
+INSERT INTO #T SELECT 'Parameters: meetings 7 (4 OUTPUT), with step 44 installed 8 (5 OUTPUT); departments 3 (2 OUTPUT)',
+       CASE WHEN OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetDashboardMeetings')) LIKE '%AgendaWaitingFor-Step44%' THEN '8 5 3 2' ELSE '7 4 3 2' END,
        CAST((SELECT COUNT(*) FROM sys.parameters WHERE object_id = OBJECT_ID('dbo.spr_GetDashboardMeetings')) AS VARCHAR(12)) + ' '
      + CAST((SELECT COUNT(*) FROM sys.parameters WHERE object_id = OBJECT_ID('dbo.spr_GetDashboardMeetings') AND is_output = 1) AS VARCHAR(12)) + ' '
      + CAST((SELECT COUNT(*) FROM sys.parameters WHERE object_id = OBJECT_ID('dbo.spr_GetDashboardDepartments')) AS VARCHAR(12)) + ' '
@@ -102,8 +113,10 @@ INSERT INTO #T SELECT 'Parameters: meetings 7 (4 OUTPUT), departments 3 (2 OUTPU
 
 DECLARE @Cols VARCHAR(MAX);
 SELECT @Cols = ISNULL(@Cols + ',', '') + name FROM sys.dm_exec_describe_first_result_set_for_object(OBJECT_ID('dbo.spr_GetDashboardMeetings'), 0) ORDER BY column_ordinal;
-INSERT INTO #T SELECT 'spr_GetDashboardMeetings: the result columns the page reads, in this order',
-       'MeetingId,CommitteeId,CommitteeCode,CommitteeName,MeetingNo,MeetingDate,MeetingTime,AgendaSubmissionDate,ListCode,StateCode,StateLabel,Items,Approved,Rejected,Pending',
+-- Replaced by step 44: with step 44 installed the column WaitingForMe follows
+INSERT INTO #T SELECT 'spr_GetDashboardMeetings: the result columns the page reads, in this order (with step 44 installed, then WaitingForMe)',
+       'MeetingId,CommitteeId,CommitteeCode,CommitteeName,MeetingNo,MeetingDate,MeetingTime,AgendaSubmissionDate,ListCode,StateCode,StateLabel,Items,Approved,Rejected,Pending'
+       + CASE WHEN OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetDashboardMeetings')) LIKE '%AgendaWaitingFor-Step44%' THEN ',WaitingForMe' ELSE '' END,
        ISNULL(@Cols, 'none');
 SET @Cols = NULL;
 SELECT @Cols = ISNULL(@Cols + ',', '') + name FROM sys.dm_exec_describe_first_result_set_for_object(OBJECT_ID('dbo.spr_GetDashboardDepartments'), 0) ORDER BY column_ordinal;

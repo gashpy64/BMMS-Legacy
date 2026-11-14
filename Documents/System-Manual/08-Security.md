@@ -3,10 +3,10 @@
 - Title: Security
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6c1 (the paragraph on the Dashboard alerts and Action Items under "Role and acting-user checks in procedures"); UN6b (the paragraph on the Dashboard meeting list under "Role and acting-user checks in procedures"); the rest RA1c2
-- Last updated by: UN6c1, based on e3bff6b
+- Applies to: UN6c2a (the paragraph on the approval rule under "Role and acting-user checks in procedures"); UN6c1 (the paragraph on the Dashboard alerts and Action Items under "Role and acting-user checks in procedures"); UN6b (the paragraph on the Dashboard meeting list under "Role and acting-user checks in procedures"); the rest RA1c2
+- Last updated by: UN6c2a, based on 493cb45
 - Status: Draft
-- Verified against: for step UN6c1: Database/BMMS-Fix-DashboardAlerts-Step43.sql (the procedures and functions), BMMS/DashBoard/DashBoard.aspx.cs (what is sent and read back),
+- Verified against: for step UN6c2a: Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (fn_AgendaWaitingFor, spr_GetAgendaApprovalState, spr_GetDashboardApprovals, spr_UpdateAgendaByAgendaId, spr_GetDashboardMeetings, read in full), BMMS/DashBoard/DashBoard.aspx.cs (what is sent, what is read back), BMMSDAL/AgendaDB.cs (diff), Database/README.md (section Step UN6c2a, the rule and the hardening, not the findings); for step UN6c1: Database/BMMS-Fix-DashboardAlerts-Step43.sql (the procedures and functions), BMMS/DashBoard/DashBoard.aspx.cs (what is sent and read back),
   Database/README.md (section Step UN6c1, rules); for step UN6b: Database/BMMS-Fix-DashboardMeetings-Step42.sql (spr_GetDashboardMeetings,
   spr_GetDashboardDepartments, fn_UserDepartmentScope), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (what is
   sent, what is read back, the encoding), BMMSDAL/MeetingDB.cs and DepartmentDB.cs (diff), Database/README.md
@@ -135,6 +135,22 @@ the page sends: Management can open an item but its save is refused (Reason 4), 
 an item of another department; the scope is part of the UPDATE itself. Opening an item writes only the person's
 own read row. A mode other than R, U or A and a page number below 1 give Reason 4. The two mail procedures leave
 the Admin role out. Failures are written to the error log and the cards show fixed messages.
+Who may approve or reject an agenda item since step 44 (UN6c2a) is one rule on the server, the function
+fn_AgendaWaitingFor, and every use of it agrees: the My approvals panel (spr_GetDashboardApprovals), the Waiting
+for me column (spr_GetDashboardMeetings), the Approve and Reject buttons (spr_GetAgendaApprovalState) and the
+approval itself (spr_UpdateAgendaByAgendaId, Reason 14 for what the rule does not allow). The page sends the acting
+user id (and, for the panel, a committee id, a department id and a page number); the role is read from the database.
+The function returns nothing for an inactive user and for the protected system account, and nothing for a role
+other than Manager and Controller; spr_GetDashboardApprovals and spr_GetAgendaApprovalState refuse the system
+account as such (Reason 12) before they look at the role. A Manager sees and may decide only the items routed to
+him (he is the creator's manager, or has a row in Alert_User_Map for the item's alert), whatever drop-down value is
+posted: a department that is not his, any department for a Controller, an unknown committee or a page below 1 gives
+Reason 4 and no rows. The three read procedures take the date from the database server (GETDATE()), and the page no longer compares
+the meeting date with the web server's date. The meeting-date rule (no decision once the meeting date
+has passed) is enforced by the page, which reads it from spr_GetAgendaApprovalState before it shows the buttons and
+before a decision; spr_UpdateAgendaByAgendaId does not look at the date. Recommended hardening: refuse in the
+procedure by the function's DateOpen flag, which is a change of behaviour and a later step. The grants are
+unchanged: step 44 grants nothing and the application login keeps EXECUTE on the schema.
 [[CONFIRM: lead from old Architecture notes: the acting user is the logged-in user, passed as @ActingUserId; a missing or inactive acting user is refused]]
 [[CONFIRM: lead from old Architecture notes: one protected system account (Users.IsSystem = 1) cannot be edited, deleted, deactivated or given another role, even by itself; only it can change its own password; it takes no part in the workflow (step 18)]]
 [[CONFIRM: lead from old Architecture notes: every protected procedure returns one row Result, Reason, ReasonDetail (1 done, 0 refused); the page turns the Reason into a sentence; a database error is re-raised, not reported as a refusal]]

@@ -142,8 +142,10 @@ namespace BMMSDAL
         // (CommitteeId 0 = all committees, DepartmentId 0 = all the user's departments). Reason 0 when allowed,
         // otherwise 8 (user missing or inactive) or 4 (role or filter not allowed), and then no rows.
         // StatisticsShown and ActingRoleCode come from the procedure, never from the session.
+        // Step UN6c2a (BMMS-Fix-AgendaWaitingFor-Step44.sql): WaitingShown and the column WaitingForMe: for a Controller
+        // and a Manager the items of a scheduled meeting that wait for this person's approval.
         public static DataTable GetDashboardMeetings(int ActingUserId, int CommitteeId, int DepartmentId,
-            out int Reason, out bool StatisticsShown, out string ActingRoleCode)
+            out int Reason, out bool StatisticsShown, out string ActingRoleCode, out bool WaitingShown)
         {
             SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
             result.Direction = ParameterDirection.Output;
@@ -154,7 +156,10 @@ namespace BMMSDAL
             SqlParameter role = new SqlParameter("@ActingRoleCode", SqlDbType.VarChar, 50);
             role.Direction = ParameterDirection.Output;
 
-            SqlParameter[] parameter = new SqlParameter[7];
+            SqlParameter waiting = new SqlParameter("@WaitingShown", SqlDbType.Int);
+            waiting.Direction = ParameterDirection.Output;
+
+            SqlParameter[] parameter = new SqlParameter[8];
             parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
             parameter[1] = new SqlParameter("@CommitteeId", CommitteeId);
             parameter[2] = new SqlParameter("@DepartmentId", DepartmentId);
@@ -162,10 +167,12 @@ namespace BMMSDAL
             parameter[4] = reason;
             parameter[5] = shown;
             parameter[6] = role;
+            parameter[7] = waiting;
 
             DataTable dt = CommonDB.GetDataTable("spr_GetDashboardMeetings", parameter);
             Reason = MinutesDB.RefusalReason(result, reason);
             StatisticsShown = Reason == 0 && shown.Value != null && shown.Value != DBNull.Value && Convert.ToInt32(shown.Value) == 1;
+            WaitingShown = Reason == 0 && waiting.Value != null && waiting.Value != DBNull.Value && Convert.ToInt32(waiting.Value) == 1;
             ActingRoleCode = role.Value == null || role.Value == DBNull.Value ? string.Empty : role.Value.ToString();
             return dt;
         }

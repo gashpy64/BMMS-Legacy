@@ -42,7 +42,16 @@ if the mail cannot be sent, the decision is still saved and the screen says so.
 **Meeting date passed** - Once the date of the meeting has passed, its agenda items can no longer
 be approved or rejected. The dashboard shows them read-only with the message "The meeting date
 has passed, so this item can no longer be approved or rejected. It will be rejected when the
-agenda is finalized."
+agenda is finalized." For a Controller or Manager who could have decided the item, the message is
+inside the Agenda Alert panel, just above its buttons.
+
+**My approvals** - A card on the Dashboard for the Controller and the Manager. It lists the agenda
+items that wait for your own approval, in meetings whose agenda is open and whose date has not
+passed. Other roles do not have it.
+
+**Waiting for me** - A column in the Scheduled list of the Dashboard for the Controller and the
+Manager: how many items of that meeting wait for your own approval now. It differs from Pending,
+which counts every item of the meeting that is still waiting for any approver.
 
 **Committee** - A group of members that holds meetings, for example a board or one of its
 committees.

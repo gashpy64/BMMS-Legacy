@@ -3,10 +3,11 @@
 - Title: Application Code
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6c1 (the Main.Master row and paragraph, "The Dashboard Alerts and Action Items cards (step UN6c1)"); UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
-- Last updated by: UN6c1, based on e3bff6b
+- Applies to: UN6c2a ("The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)" and the layout line of "The Dashboard Meetings card (step UN6b)"); UN6c1 (the Main.Master row and paragraph, "The Dashboard Alerts and Action Items cards (step UN6c1)"); UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
+- Last updated by: UN6c2a, based on 493cb45
 - Status: Draft
-- Verified against: for step UN6c1: BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (read: the Alerts and Action Items regions, the message constants, lnkSource_Click),
+- Verified against: for step UN6c2a: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff, and BindAgendaDetails read in full), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (diff), BMMS/CSS/bmms-workbench.css (diff),
+  BMMSBAL/AgendaMgr.cs and MeetingMgr.cs (diff), BMMSDAL/AgendaDB.cs and MeetingDB.cs (diff), Database/README.md (section Step UN6c2a, Known items), Tests/packs/dashboard/README.md, the tester run of 2026-11-14 as given; for step UN6c1: BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (read: the Alerts and Action Items regions, the message constants, lnkSource_Click),
   BMMS/MasterPage/Main.Master.cs (alert count region), BMMSBAL/AlertMgr.cs, ActionItemMgr.cs and Common.cs (diff),
   BMMSDAL/AlertDB.cs and ActionItemDB.cs (diff), Database/README.md (section Step UN6c1); for step UN6b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/DashBoard/DashBoard.aspx
   (headings and column headers by Grep), DashBoard.aspx.cs (diff), BMMSBAL/MeetingMgr.cs and DepartmentMgr.cs (diff),
@@ -84,7 +85,7 @@ How the tables are read:
 | Default.aspx | Login. Checks the login ID and password, opens the session, sends the user to the Dashboard, or to ChangePasswordFirst after a first sign-in with the default password | Public | No master page; `?status=inactive` shows "Your account is inactive. Contact the administrator." |
 | Logout.aspx | Records the end of the login in the access log, clears the session and returns to Default.aspx | Public | No master page; reached by the Logout button of the masters (PostBackUrl) |
 | ChangePasswordFirst.aspx | "Change Password" for the first sign-in (MainNoMenu.Master) | `*` | Reached from Default.aspx only |
-| DashBoard/DashBoard.aspx | Alerts, action items, committee, meeting and agenda alerts, approval of agenda items; the landing page of every role; menu entry "Home" for every role except Admin and MD Secretariat | `*` | Hosts the MeetingSummary user control; the code-behind has more than 1,000 lines. Since step UN6b the layout is cards in the grid `.wb-dash` (Meetings about two thirds beside Alerts, Action Items below; one column under 1100 px); the Alerts card has two columns, "Alert" (the Source link with the alert type, committee and department below it, separated by a vertical bar with a space on each side) and "Created on" (dd-MMM-yyyy with HH:mm below it); the list behaviour, the links and the control IDs are unchanged. After a successful Approve or Reject the page calls `MeetingSummary1.Reload()` |
+| DashBoard/DashBoard.aspx | Alerts, action items, committee, meeting and agenda alerts, approval of agenda items; the landing page of every role; menu entry "Home" for every role except Admin and MD Secretariat | `*` | Hosts the MeetingSummary user control; the code-behind has more than 1,000 lines. Since step UN6b the layout is cards in the grid `.wb-dash` (since step UN6c2a: Meetings three parts of four of the content width beside Alerts, the My approvals panel above them for a Controller and a Manager, Action Items below; one column at 1240 px and below); the Alerts card has two columns, "Alert" (the Source link with the alert type, committee and department below it, separated by a vertical bar with a space on each side) and "Date" (dd-MMM-yyyy with HH:mm below it; "Created on" until step UN6c1); the list behaviour, the links and the control IDs are unchanged. After a successful Approve or Reject the page calls `MeetingSummary1.Reload()` and loads the My approvals panel again (see "The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)") |
 | Error/ErrorPage.aspx | The error page shown after `Utilities.GoToErrPage`: a fixed text and an Exit button | Public | OnPreInit sends a visitor with no session to Default.aspx |
 
 ### Master folder (BMMS/Master, 24 pages)
@@ -146,7 +147,7 @@ entries only.
 | File | Purpose | Notes |
 |---|---|---|
 | UserControl/MenuUserControl.ascx | The top menu and its drop-down lists; the links shown depend on `Session["RoleCode"]` | Hides links only; PageAccessModule is the server-side check. Since RA1a the Master menu shows Department Master, Designation Master, Member Type, Subject Type, Decision Type and User Master to Admin only (the Controller keeps Member Master, Committee Master, Committee Member Tag / UnTag, Meeting Master, Meeting - Member Tag / UnTag and Attendance), and the "Admin" heading and menu are for Admin only (Reset Password, Backup Database, SMTP Configuration, System Settings, Audit Trail, Reset Database, in that order). The code-behind is empty. The markup calls `Session["RoleCode"].ToString()`, so it needs a logged-in session; only Main.Master uses it (MainNoMenu.Master has it commented out) |
-| UserControl/MeetingSummary.ascx | Since step UN6b (rewritten): the Dashboard heading "Dashboard" with the Committee and Department drop-downs and the subtitle, an empty container for the summary cards planned for UN6c, and the Meetings card with the Scheduled and Completed (last 10) lists (columns Meeting, Meeting date, Submit agenda by, Status, Items, Approved, Rejected and the last column). It reads `MeetingMgr.GetDashboardMeetings` and `DepartmentMgr.GetDashboardDepartments` (see "The Dashboard Meetings card (step UN6b)" below) | Used by DashBoard.aspx only. It renders no wrapper: its blocks are cells of the Dashboard grid (`.wb-dash`) |
+| UserControl/MeetingSummary.ascx | Since step UN6b (rewritten): the Dashboard heading "Dashboard" with the Committee and Department drop-downs and the subtitle, an empty container for the summary cards planned for UN6c, and the Meetings card with the Scheduled and Completed (last 10) lists (columns Meeting, Meeting date, Submit agenda by, Status, Items, Approved, Rejected and the last column; since step UN6c2a a ninth column, "Waiting for me", in the Scheduled list for a Controller and a Manager, and the properties `CommitteeId` and `DepartmentId` and the event `FiltersChanged` for the page). It reads `MeetingMgr.GetDashboardMeetings` and `DepartmentMgr.GetDashboardDepartments` (see "The Dashboard Meetings card (step UN6b)" below) | Used by DashBoard.aspx only. It renders no wrapper: its blocks are cells of the Dashboard grid (`.wb-dash`) |
 | MasterPage/Main.Master, MainNoMenu.Master | See above | |
 
 ### The Dashboard Meetings card (step UN6b)
@@ -195,7 +196,9 @@ UserControl/MeetingSummary.ascx(.cs) was rewritten in step UN6b. What it does, f
 - Markup and styles: the heading with the filters, an empty container `divSummaryCards` for the summary cards of
   step UN6c (not built), and the Meetings card in the Workbench card style. DashBoard.aspx puts the control and
   the Alerts and Action Items cards in the grid `.wb-dash` (CSS/bmms-workbench.css, Dashboard section: grid, heading
-  and filters, chips with the palette's tints, number columns, the panel widths, the 1100 px and 720 px rules).
+  and filters, chips with the palette's tints, number columns, the panel widths, the 1240 px and 720 px rules;
+  since step UN6c2a the Meetings card is three parts of four of the content width beside the Alerts card, one
+  column at 1240 px and below and two columns from 1241 px).
   The Agenda Alert and Action Item Details panels have a 165 px label column and fields up to 550 px, with the
   labels above the fields at 720 px and below.
 - DashBoard.aspx.cs (Alerts card): `FormatDate` is now protected, and `FormatTimeOfDay` (HH:mm) and `AlertDetails`
@@ -203,7 +206,8 @@ UserControl/MeetingSummary.ascx(.cs) was rewritten in step UN6b. What it does, f
   are new. The unused hidden Read column of the Alerts grid is gone; the read and unread rows, paging, hidden values
   and every control ID that `lnkSource_Click` reads are unchanged.
 - BAL and DAL: `MeetingMgr.GetDashboardMeetings` and `MeetingDB.GetDashboardMeetings` (seven parameters, four of
-  them OUTPUT; `StatisticsShown` is true only when the Reason is 0 and the procedure returned 1);
+  them OUTPUT, until step UN6c2a, which added the OUTPUT `WaitingShown`: eight parameters, five of them OUTPUT;
+  `StatisticsShown` is true only when the Reason is 0 and the procedure returned 1);
   `DepartmentMgr.GetDashboardDepartments` and `DepartmentDB.GetDashboardDepartments` (the Reason turned into one
   number by `MinutesDB.RefusalReason`).
 
@@ -258,6 +262,73 @@ acting user id from `Session["UserId"]`, never a role.
 Drawn from: BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/MasterPage/Main.Master.cs, BMMSBAL/AlertMgr.cs,
 ActionItemMgr.cs and Common.cs (diff), BMMSDAL/AlertDB.cs and ActionItemDB.cs (diff), Database/README.md (section
 Step UN6c1).
+
+### The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)
+
+DashBoard.aspx(.cs), MeetingSummary.ascx(.cs) and the Agenda and Meeting BAL and DAL classes changed in step
+UN6c2a; the rule is one database function, fn_AgendaWaitingFor (database step 44), and the page sends the acting
+user id and the filters, never a role.
+
+- My approvals panel (`cardApprovals`, `grvApprovals`, `LoadApprovals`): `AgendaMgr.GetDashboardApprovals(userId,
+  committeeId, departmentId, page, out reason, out totalRows, out pageShown)`. The committee and department are
+  those the Meetings card last used (`MeetingSummary1.CommitteeId` and `DepartmentId`, kept in the control's
+  ViewState); the control raises `FiltersChanged` when a drop-down changes and the page then loads the panel again
+  from page 1. Reason 0 shows the panel with the title "My approvals ([n])" and the grid (10 to a page, custom
+  paging, the page number in ViewState `ApprovalPage`; the server returns the page it shows). Reason 4 hides
+  the card when the server has not yet said that this person has the panel (a role without it: Management, MD
+  Secretariat, Admin, User); Reason 12 (the system account) hides it; Reason 4 once the server has said that the
+  person has the panel (`HasApprovalsPanel`, ViewState) shows "The
+  approvals cannot be shown for this choice. Choose All committees or All my departments."; Reason 8 shows "The
+  approvals are not available: your account is not active. Sign in again."; an exception is written to the error
+  log and shows "The approvals could not be loaded. Reload the page to try again." or, when `Common.IsServerBusy`,
+  "The server is busy and the approvals could not be loaded. Wait a moment, then reload the page."; the count is
+  not shown after a failure. The empty text is "Nothing is waiting for your approval.". The columns are Item (the
+  agenda number as a link, the short text under it), Committee, Meeting (the meeting number and its date) and
+  Department; every value is HTML encoded.
+- Opening a row (`lnkApproval_Click`): the Agenda Alert panel opens through `BindAgendaDetails`; the person's own
+  alert of the item, when the row has one (`AlertId`), is marked read with `AlertMgr.UpdateAlertByUserId` (that
+  procedure marks the acting user's row only), the Alerts card is loaded again (so the header count follows) and
+  the panel is loaded again. An item that is gone shows the "item is gone" text.
+- The buttons: `BindAgendaDetails` asks `AgendaMgr.GetAgendaApprovalState` (`TryGetApprovalState`) and shows
+  Approve and Reject only when CanApprove is 1 and AgendaOpen is 1, for a Controller and for a Manager; before
+  step UN6c2a it showed them to every Controller at AMA and to every Manager at AC. A Controller at AC (where he
+  may reject by the rule) is therefore shown no buttons: Approve and Reject always appear together, from "may
+  approve". When the person could decide but DateOpen is 0 the item is shown read-only, `ShowAgendaPanelMessage`
+  puts "The meeting date has passed, so this item can no longer be approved or rejected. It will be rejected when
+  the agenda is finalized." in the paragraph `pAgendaPanelMessage` inside the Agenda Alert panel, just above the
+  buttons (above Close and "Remove from my list"), and "Remove from my list" is shown. When the answer cannot be
+  read (Reason other than 0, or an exception, written to the error log) a Controller or a Manager who is not the
+  system account sees the item read-only with "Whether you may approve this item could not be checked, so it is
+  shown read-only. Close it and open it again."
+- Approve and Reject (`btnApprove_Click`, `btnReject_Click`): after the existing checks the page asks
+  `GetAgendaApprovalState` again for the date. An answer that cannot be read gives "The item could not be checked,
+  so nothing was changed. Try again." (nothing is saved); DateOpen 0 gives the meeting-date message in the page's
+  message box (`MsgDisplay`), as before step UN6c2a, now by the database server's date (before: `MeetingMgr.
+  IsMeetingOpenForChange` with the web server's date). Who may decide is checked by `spr_UpdateAgendaByAgendaId`
+  (Reason 14). After every outcome of a decision `LoadApprovals` runs with `LoadAlertGRV` and the meeting list is
+  reloaded (`MeetingSummary1.Reload()`), so the panel, the Waiting for me counts and the Alerts card follow.
+- Waiting for me (MeetingSummary.ascx, a ninth column of the Scheduled grid, `WaitingColumn` 8): visible when the
+  OUTPUT `WaitingShown` is 1 (Controller and Manager); `WaitingText` shows the count and nothing where it is 0 or
+  NULL; the cell is bold (`wb-dash-waiting`). The heading has the tooltip "Items of this meeting waiting for your
+  approval".
+- Layout (CSS/bmms-workbench.css, Dashboard section): the grid `.wb-dash` has the columns 3fr and 1fr (the
+  Meetings card three parts of four of the content width beside the Alerts card); the panel has the grid area
+  `approvals` over the full width above the lists; the single column starts at `max-width: 1240px` (was 1100 px).
+  The Scheduled table has nine columns for the Controller and the Manager and fits its card from 1241 px; the
+  number cells and the Status cell (the fourth column, `nth-child(4)`) have 4 px padding; a narrower card scrolls
+  inside `.wb-table-scroll`. Measured by the dashboard pack: the Meetings card 864 px wide; its table needs 793
+  px with the widest realistic cells in an 830 px box (37 px spare).
+- BAL and DAL: `AgendaMgr` / `AgendaDB` (`GetAgendaApprovalState`, `GetDashboardApprovals`; the flags come back as
+  INT output values that are 1 only when the Reason is 0) and `MeetingMgr` / `MeetingDB` (`GetDashboardMeetings`
+  with `WaitingShown`).
+- Known items (Database/README.md): the page still chooses the editable fields and the action word by the role in
+  the session; a blank agenda number would give a row without link text; the Status cell padding is set by column
+  position; the Short Text box may look editable while the buttons are hidden.
+
+Drawn from: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff), BMMS/UserControl/MeetingSummary.ascx
+and .ascx.cs (diff), BMMS/CSS/bmms-workbench.css (diff), BMMSBAL/AgendaMgr.cs and MeetingMgr.cs (diff),
+BMMSDAL/AgendaDB.cs and MeetingDB.cs (diff), Database/BMMS-Fix-AgendaWaitingFor-Step44.sql, Database/README.md
+(section Step UN6c2a, Known items), Tests/packs/dashboard/README.md, the tester run of 2026-11-14 as given.
 
 ### Pages in no menu and the unlisted page
 

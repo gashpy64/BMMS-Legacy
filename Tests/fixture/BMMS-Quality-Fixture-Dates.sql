@@ -13,14 +13,15 @@
      00005 minutes Finalised       meeting today - 20, submission today - 30
      00006 minutes Confirmed       meeting today - 30, submission today - 40
 
-   and of the twelve meetings of committee QA2 (step UN6b):
+   and of the thirteen meetings of committee QA2 (step UN6b; 00013 step UN6c2a):
 
      00001 dated today             meeting today,      submission today
      00002 to 00010                meeting today - 1 to today - 9,
                                    submission five days before the meeting
      00011, 00012                  meeting today - 11, today - 12, likewise
+     00013 agenda still open       meeting today - 40, submission today - 45
 
-   It updates the two date columns of those eighteen Meeting rows directly
+   It updates the two date columns of those nineteen Meeting rows directly
    (spr_AddEditMeeting refuses a date before today).
 
    Step UN6c1 (the Alerts card lists read alerts of the last seven days only,
@@ -35,8 +36,12 @@
      - the due dates of the three Followups: QA1-00005-001 today - 3
        (overdue), QA1-00005-002 today + 5, QA1-00006-001 none.
 
-   It runs on BMMS_Quality only and stops unless all eighteen meetings, the
-   two items, the alert and the three Followups are there.
+   Step UN6c2a: CreatedOn of the alert "Agenda (QA2-00013-1)" and CreatedOn and
+   UpdatedOn of its item: today - 40 (the Alerts card dates an entry alert by
+   its item; read by qa_manager, so it is on the last page of All only).
+
+   It runs on BMMS_Quality only and stops unless all nineteen meetings, the
+   three items, the two alerts and the three Followups are there.
    Compatibility level 100. Plain ASCII. Safe to run again.
    ============================================================================ */
 SET NOCOUNT ON;
@@ -56,9 +61,10 @@ BEGIN
 END
 ELSE IF ((SELECT COUNT(*) FROM Meeting m JOIN Committee c ON c.CommitteeId = m.CommitteeId
           WHERE c.CommitteeCode = 'QA2' AND m.MeetingNo IN ('00001', '00002', '00003', '00004', '00005', '00006',
-                                                             '00007', '00008', '00009', '00010', '00011', '00012')) <> 12)
+                                                             '00007', '00008', '00009', '00010', '00011', '00012',
+                                                             '00013')) <> 13)
 BEGIN
-    RAISERROR('The twelve fixture meetings of committee QA2 were not found. Nothing was changed.', 16, 1);
+    RAISERROR('The thirteen fixture meetings of committee QA2 were not found. Nothing was changed.', 16, 1);
     SET NOEXEC ON;
 END
 GO
@@ -77,7 +83,8 @@ WHERE c.CommitteeCode = 'QA1' AND m.MeetingNo IN ('00001', '00002', '00003', '00
 DECLARE @SetQa1 INT;
 SET @SetQa1 = @@ROWCOUNT;
 
--- QA2 (step UN6b): 00001 today; 00002 to 00012 one day apart going back, skipping day -10 (QA1 00004)
+-- QA2 (step UN6b): 00001 today; 00002 to 00012 one day apart going back, skipping day -10 (QA1 00004); 00013 (step
+-- UN6c2a) 40 days back, older than every other fixture meeting
 UPDATE m SET
     MeetingDate = DATEADD(DAY, x.DayOffset, @Today),
     AgendaSubmissionDate = DATEADD(DAY, x.SubOffset, @Today)
@@ -87,7 +94,8 @@ JOIN (SELECT '00001' AS MeetingNo, 0 AS DayOffset, 0 AS SubOffset
       UNION ALL SELECT '00002', -1, -6 UNION ALL SELECT '00003', -2, -7 UNION ALL SELECT '00004', -3, -8
       UNION ALL SELECT '00005', -4, -9 UNION ALL SELECT '00006', -5, -10 UNION ALL SELECT '00007', -6, -11
       UNION ALL SELECT '00008', -7, -12 UNION ALL SELECT '00009', -8, -13 UNION ALL SELECT '00010', -9, -14
-      UNION ALL SELECT '00011', -11, -16 UNION ALL SELECT '00012', -12, -17) x ON x.MeetingNo = m.MeetingNo
+      UNION ALL SELECT '00011', -11, -16 UNION ALL SELECT '00012', -12, -17
+      UNION ALL SELECT '00013', -40, -45) x ON x.MeetingNo = m.MeetingNo
 WHERE c.CommitteeCode = 'QA2';
 
 DECLARE @SetQa2 INT;
@@ -120,6 +128,14 @@ UPDATE Alert_Master SET CreatedOn = DATEADD(DAY, -10, @Today)
 WHERE SourceType = 'Committee' AND DisplayText = 'Committee (QA2)';
 SET @Set = @Set + @@ROWCOUNT;
 
+-- Step UN6c2a: the read alert of the item of the passed meeting
+UPDATE Alert_Master SET CreatedOn = DATEADD(DAY, -40, @Today)
+WHERE SourceType = 'Agenda' AND DisplayText = 'Agenda (QA2-00013-1)';
+SET @Set = @Set + @@ROWCOUNT;
+UPDATE Agenda SET CreatedOn = DATEADD(DAY, -40, @Today), UpdatedOn = DATEADD(DAY, -40, @Today)
+WHERE AgendaNo = 'QA2-00013-1';
+SET @Set = @Set + @@ROWCOUNT;
+
 UPDATE mi SET
     DueDate = CASE a.AgendaNo WHEN 'QA1-00005-001' THEN DATEADD(DAY, -3, @Today)
                               WHEN 'QA1-00005-002' THEN DATEADD(DAY, 5, @Today) ELSE NULL END
@@ -130,10 +146,10 @@ JOIN Action_Item ai ON ai.MinutesId = mi.MinutesId
 WHERE c.CommitteeCode = 'QA1' AND a.AgendaNo IN ('QA1-00005-001', 'QA1-00005-002', 'QA1-00006-001');
 SET @Set = @Set + @@ROWCOUNT;
 
-IF (@SetQa1 <> 6 OR @SetQa2 <> 12)
-    RAISERROR('The dates of the eighteen fixture meetings were not all set.', 16, 1);
-ELSE IF (@Set <> 6)
-    RAISERROR('The alert and due dates of step UN6c1 were not all set (two items, one alert, three Followups).', 16, 1);
+IF (@SetQa1 <> 6 OR @SetQa2 <> 13)
+    RAISERROR('The dates of the nineteen fixture meetings were not all set.', 16, 1);
+ELSE IF (@Set <> 8)
+    RAISERROR('The alert and due dates of steps UN6c1 and UN6c2a were not all set (three items, two alerts, three Followups).', 16, 1);
 ELSE
     PRINT 'FIXTURE DATES: DONE';
 GO

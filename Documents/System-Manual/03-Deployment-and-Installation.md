@@ -3,10 +3,12 @@
 - Title: Deployment and Installation
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6c1 (step 43: the run order, rollback and the section "Installing step 43 on a test database"); UN6b (step 42: the run order, rollback and the section "Installing step 42 on a test database"); WF3a2 (section "The tester's baseline after a new database step"); the rest RA1b (step 41)
-- Last updated by: UN6c1, based on e3bff6b
+- Applies to: UN6c2a (step 44: the run order, rollback and the section "Installing step 44 on a test database"); UN6c1 (step 43: the run order, rollback and the section "Installing step 43 on a test database"); UN6b (step 42: the run order, rollback and the section "Installing step 42 on a test database"); WF3a2 (section "The tester's baseline after a new database step"); the rest RA1b (step 41)
+- Last updated by: UN6c2a, based on 493cb45
 - Status: Draft
-- Verified against: for UN6c1 (step 43): Database/BMMS-Fix-DashboardAlerts-Step43.sql (guards, messages),
+- Verified against: for UN6c2a (step 44): Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (guards, messages, read in full), BMMS-Rollback-AgendaWaitingFor-Step44.sql (guards, messages),
+  BMMS-Test-AgendaWaitingFor-Step44.sql (header, the comparison cases), BMMS-Check-InstalledSteps.sql (diff), Database/README.md (section Step UN6c2a, "What to run where"), the owner's test result and the tester run of 2026-11-14 as given;
+  for UN6c1 (step 43): Database/BMMS-Fix-DashboardAlerts-Step43.sql (guards, messages),
   BMMS-Rollback-DashboardAlerts-Step43.sql (guards, messages), BMMS-Test-DashboardAlerts-Step43.sql (header),
   BMMS-Check-InstalledSteps.sql (diff), Database/README.md (section Step UN6c1, "What to run where"), the owner's
   test result as given (128 numbered checks passed); for UN6b (step 42): Database/BMMS-Fix-DashboardMeetings-Step42.sql (header, guards, messages),
@@ -230,6 +232,7 @@ application.
 | 41 | BMMS-Fix-ReportAccess-Step41.sql | Minutes report in every status for the Controller and Management; Followup for Management | After step 40 (stops otherwise; also needs step 22); SQL before the build (the build calls the procedures); BMMS-Rollback-ReportAccess-Step41.sql |
 | 42 | BMMS-Fix-DashboardMeetings-Step42.sql | Dashboard Meetings card: status colours, last 10 completed meetings, counts by role and department | After step 41 (stops otherwise; also needs the tables User_Department and Agenda_Status); SQL before the build (the build calls the objects); BMMS-Rollback-DashboardMeetings-Step42.sql |
 | 43 | BMMS-Fix-DashboardAlerts-Step43.sql | Dashboard Alerts card (Recent, Unread, All; server paging; person and event date; Remove from my list), header count, Action Items scope, Due date and Overdue; no functional alerts or mail for Admin | After step 42 (stops otherwise; also needs steps 35, 37 and 38); SQL before the build (the build calls the objects); BMMS-Rollback-DashboardAlerts-Step43.sql |
+| 44 | BMMS-Fix-AgendaWaitingFor-Step44.sql | Dashboard My approvals panel and Waiting for me column; one rule (fn_AgendaWaitingFor) for who may approve; the Approve and Reject buttons read the server | After step 43 (stops otherwise; also needs step 42's fn_UserDepartmentScope and the procedures spr_UpdateAgendaByAgendaId and spr_GetDashboardMeetings); stops when either of those two is neither the text the step was built from nor the step 44 text; SQL before the build (the build calls the objects; the earlier build keeps working with step 44 installed); BMMS-Rollback-AgendaWaitingFor-Step44.sql |
 
 Steps 25, 26 and 28 have no database script (code only). Step 27 is not built. Step 32 is reserved
 for role permissions and not built. The lettered code steps that have a database script are D1
@@ -242,8 +245,8 @@ The out-of-number-order installs, in the order to install:
 2. Step 23, after step 28 was built (the list in the README stays in number order; step 24 was
    installed before it on the databases that followed the README order).
 3. Steps 29, 30 and 31, last of the numbered group, in that order.
-4. Step D1, then 33, 34, 35, 36, 37, 38, 39, 40, 41 and 42 in number order. Step 42 is the last step; it
-   stops unless step 41 is installed. Step 41 stops unless step 40 is installed (and step 22, whose two
+4. Step D1, then 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43 and 44 in number order. Step 44 is the last step;
+   it stops unless step 43 is installed. Step 43 stops unless step 42 is installed. Step 42 stops unless step 41 is installed. Step 41 stops unless step 40 is installed (and step 22, whose two
    minutes report procedures it leaves unchanged). Step 40 stops unless step 39 is installed. (Re-running step 13, 14, 18 or 21 brings back an older text:
    run step 40 again.)
 
@@ -765,3 +768,56 @@ was built afresh with the extended fixture (Setup-Quality.ps1, 2026-11-12); see 
 Drawn from: Database/BMMS-Fix-DashboardAlerts-Step43.sql, Database/BMMS-Rollback-DashboardAlerts-Step43.sql,
 Database/BMMS-Test-DashboardAlerts-Step43.sql (header), Database/BMMS-Check-InstalledSteps.sql,
 Database/README.md (section Step UN6c1, "What to run where").
+
+## Installing step 44 on a test database
+
+A worked example with the step 44 scripts (step UN6c2a: the Dashboard's My approvals panel, the Waiting for me
+column and one rule for who may approve). The server is `<server>` and the database is `BMMS_Test`. The step adds
+three objects (one inline table function, fn_AgendaWaitingFor, and two procedures, spr_GetAgendaApprovalState and
+spr_GetDashboardApprovals) and replaces two procedures, spr_UpdateAgendaByAgendaId (the test "may this user act"
+reads the function) and spr_GetDashboardMeetings (one more column and one more output). It changes no data and
+grants nothing (the application login holds EXECUTE on the schema). Run the SQL before you deploy the build: the
+build calls the new objects. The earlier build keeps working with step 44 installed.
+
+1. Check the state. Select `BMMS_Test` and run BMMS-Check-InstalledSteps.sql. Step 43 should read Installed
+   and step 44 Missing.
+2. Back up the database as for any step ("Safe way to install any step").
+3. Run the Fix script (`sqlcmd -S <server> -d BMMS_Test -I -i Database/BMMS-Fix-AgendaWaitingFor-Step44.sql`).
+   It has no `USE` line; select the database first. It stops with "Nothing was changed." when the database
+   name does not start with BMMS, when step 43 or an earlier object it needs is missing ("The steps are installed
+   in order: run them first, then this script."), or when spr_UpdateAgendaByAgendaId or spr_GetDashboardMeetings
+   is neither the text this step was built from (steps 35 and 42, compared by SHA-1 in pieces of 4,000
+   characters) nor the step 44 text (a change made since would be lost; tell the Consultant).
+4. On success it prints `Database: BMMS_Test` and then `Step 44 installed: fn_AgendaWaitingFor,
+   spr_GetAgendaApprovalState and spr_GetDashboardApprovals are new; spr_UpdateAgendaByAgendaId reads its routing
+   rule from the function and spr_GetDashboardMeetings has the column WaitingForMe (AgendaWaitingFor-Step44).` If
+   an object lacks the marker it ends with "Step 44 is not complete: [n] of 5 objects carry the marker
+   AgendaWaitingFor-Step44. Read the messages above and run the script again."
+5. Run BMMS-Check-InstalledSteps.sql again. Step 44 should read Installed, 5 of 5 markers. Re-running step 16,
+   17, 18, 20, 31, 35 or 42 afterwards brings back an older text and step 44 then reads Partly: run step 44 again.
+6. Run the Test script on `BMMS_Test` only, in a new query window:
+   `Database/BMMS-Test-AgendaWaitingFor-Step44.sql`. All numbered checks must PASS; among them the 1352-case
+   comparison of the earlier and the new approval procedure (13 acting users x 13 items x 8 action words, no
+   difference allowed). 120 checks, all PASS (run of 2026-11-14 on BMMS_Test). Then run
+   BMMS-Test-DashboardMeetings-Step42.sql (71 checks, adjusted for the step 44 shape) and
+   BMMS-Test-DashboardAlerts-Step43.sql (128 checks, unchanged).
+7. Deploy the build, then make the browser checks of Database/README.md (section Step UN6c2a).
+8. To undo: the previous build first, then `Database/BMMS-Rollback-AgendaWaitingFor-Step44.sql`. On success it
+   prints `Step 44 rolled back: the three new objects are dropped; spr_UpdateAgendaByAgendaId and
+   spr_GetDashboardMeetings are again the texts of steps 35 and 42, letter for letter (SHA-1 compared).` If an
+   object is still there it ends with "Step 44 is not fully rolled back: [n] of its three new objects are still
+   there. Read the messages above and run the script again."; if a restored text differs it says so and tells the
+   Consultant. The Check script then reads step 44 Missing. The Fix, Rollback, Fix sequence was checked on
+   BMMS_Test (Database/README.md). With the new build and no step 44 the panel shows its "could not be loaded"
+   message, the meeting list fails to load and no item can be approved from the Dashboard.
+
+On `BMMS`, the Consultant runs the Check script, the Fix script and the Check script again after the backup
+(there is no Test script on `BMMS`), then deploys the build. Steps 43 and earlier come first there: the steps
+are installed in order.
+
+The tester's baseline was brought up to date for step 44 (the tester run of 2026-11-14 ran on the baseline
+with step 44, and the fixture check passes 38 of 38); see 10-Testing-and-Release.
+
+Drawn from: Database/BMMS-Fix-AgendaWaitingFor-Step44.sql, Database/BMMS-Rollback-AgendaWaitingFor-Step44.sql,
+Database/BMMS-Test-AgendaWaitingFor-Step44.sql (header), Database/BMMS-Check-InstalledSteps.sql,
+Database/README.md (section Step UN6c2a, "What to run where").

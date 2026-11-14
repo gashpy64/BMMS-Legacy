@@ -8,12 +8,65 @@
         <ContentTemplate>
             <%-- Step UN6b: card layout. The MeetingSummary control renders the heading with the filters, the place of the
                  summary cards (UN6c) and the Meetings card; with the Alert and Action Item cards they are the cells of the
-                 .wb-dash grid (Meetings about two thirds, Alerts one third, Action Items below; stacked under 1100 px). --%>
+                 .wb-dash grid (Meetings three quarters, Alerts one quarter, Action Items below; stacked at 1240 px and
+                 below). --%>
             <div class="wb-page wb-dash">
                 <uc1:MeetingSummary ID="MeetingSummary1" runat="server"></uc1:MeetingSummary>
                 <div class="wb-dash-msg" aria-live="polite">
                     <div id="divErrLogin" runat="server" class="divErrorHide">
                         <span id="spanErrLogin" runat="server" class="lblError"></span>
+                    </div>
+                </div>
+                <%-- Step UN6c2a: My approvals. The agenda items that wait for this person's approval (a Controller: the
+                     items approved by the Manager; a Manager: the items routed to him), of meetings whose agenda is open
+                     and whose date has not passed; it follows the Committee and Department filters. One rule on the
+                     server (fn_AgendaWaitingFor) for this panel, the Waiting for me column, the Approve and Reject
+                     buttons and the approval itself. Hidden when the server answers that the role has no panel. --%>
+                <div id="cardApprovals" runat="server" class="wb-card wb-dash-approvals" visible="false">
+                    <div class="wb-card-header wb-dash-card-header">
+                        <h2 class="wb-dash-card-title">My approvals<asp:Literal ID="litApprovalCount" runat="server" Mode="Encode" EnableViewState="false" /></h2>
+                    </div>
+                    <div class="wb-card-body">
+                        <div aria-live="polite">
+                            <p id="pApprovalsMessage" runat="server" class="wb-dash-message" visible="false"></p>
+                        </div>
+                        <div class="wb-table-scroll">
+                            <asp:GridView ID="grvApprovals" runat="server" Width="100%" CellPadding="4" CssClass="contentTable1"
+                                AutoGenerateColumns="false" AllowPaging="True" AllowCustomPaging="True"
+                                OnPageIndexChanging="OnPagingApprovals" PageSize="10">
+                                <Columns>
+                                    <asp:TemplateField HeaderText="Item">
+                                        <ItemTemplate>
+                                            <div class="wb-dash-alert">
+                                                <asp:LinkButton ID="lnkApproval" runat="server" CssClass="wb-dash-alert-source" OnClick="lnkApproval_Click"
+                                                    Text='<%# HttpUtility.HtmlEncode(Eval("AgendaNo")) %>' ToolTip="Open the item to approve or reject it"></asp:LinkButton>
+                                                <span class="wb-dash-alert-meta"><%# HttpUtility.HtmlEncode(Eval("ShortText")) %></span>
+                                            </div>
+                                            <asp:Label ID="lblApprovalAgendaId" runat="server" Text='<%#Bind("AgendaId") %>' Visible="false"></asp:Label>
+                                            <asp:Label ID="lblApprovalAlertId" runat="server" Text='<%#Bind("AlertId") %>' Visible="false"></asp:Label>
+                                        </ItemTemplate>
+                                    </asp:TemplateField>
+                                    <asp:TemplateField HeaderText="Committee">
+                                        <ItemTemplate><%# HttpUtility.HtmlEncode(Eval("CommitteeName")) %></ItemTemplate>
+                                    </asp:TemplateField>
+                                    <asp:TemplateField HeaderText="Meeting">
+                                        <ItemTemplate>
+                                            <span class="wb-dash-meeting-no">No <%# HttpUtility.HtmlEncode(Eval("MeetingNo")) %></span>
+                                            <span class="wb-dash-date"><%# HttpUtility.HtmlEncode(FormatDate(Eval("MeetingDate"))) %></span>
+                                        </ItemTemplate>
+                                    </asp:TemplateField>
+                                    <asp:TemplateField HeaderText="Department">
+                                        <ItemTemplate><%# HttpUtility.HtmlEncode(Eval("DepartmentName")) %></ItemTemplate>
+                                    </asp:TemplateField>
+                                </Columns>
+                                <EmptyDataTemplate>
+                                    <div class="divNoRecord">Nothing is waiting for your approval.</div>
+                                </EmptyDataTemplate>
+                                <HeaderStyle HorizontalAlign="Left" Font-Bold="True" CssClass="contentTableHeader" />
+                                <RowStyle CssClass="contentTabletd" Height="20px" />
+                                <PagerSettings Mode="NumericFirstLast" PageButtonCount="5" />
+                            </asp:GridView>
+                        </div>
                     </div>
                 </div>
                 <div class="wb-card wb-dash-alerts">
@@ -507,6 +560,12 @@
                                             <span class="spanWhite">.</span>
                                         </div>
                                         <div class="divRowRight">
+                                            <%-- Step UN6c2a: why Approve and Reject are not shown to the person who could
+                                                 decide the item (meeting date passed, step M6a; or the check failed), next
+                                                 to the buttons: the page's message box lies under this panel --%>
+                                            <div aria-live="polite">
+                                                <p id="pAgendaPanelMessage" runat="server" class="wb-dash-message" visible="false"></p>
+                                            </div>
                                             <asp:Panel ID="pnlAgendaControls" runat="server">
                                                 <asp:Button ID="btnApprove" runat="server" Text="Approve" CssClass="button" OnClick="btnApprove_Click" />
                                                 <asp:Button ID="btnReject" runat="server" Text="Reject" CssClass="button" OnClick="btnReject_Click" />

@@ -12,7 +12,9 @@
                     the person named on some alerts, the due dates of the action items, the accounts of the
                     action checks, the accounts of the check of the link chosen (filterKept), the items of
                     the Action Items card per account (actionItemsList) and the accounts and items of the
-                    scope checks (actionScope)
+                    scope checks (actionScope);
+                    step UN6c2a: the accounts and widths of the fit check of the Scheduled list (meetingsFit) and
+                    the item of a passed meeting with its alert and message (pastItem)
 
   What it checks
     1. Every case of expected.json: the rows in order, with colour class and label, the counts or no counts at
@@ -21,8 +23,8 @@
        .wb-dash-alert; the Alerts card opens on Recent), and the header "Alerts (n)" per account. The Admin: no
        rows, "No alerts.", "Alerts (0)".
     3. The inactive account cannot sign in; a visitor who opens the Dashboard ends on the sign-in page.
-    4. At each width of expected.json: the page is no wider than the window; at 1366 px the Meetings and Alerts
-       cards are side by side, below 1100 px stacked; the same with the Agenda Alert panel (qa_manager) and the
+    4. At each width of expected.json: the page is no wider than the window; above 1240 px the Meetings and Alerts
+       cards are side by side, at 1240 px and below stacked (step UN6c2a; 1100 px before); the same with the Agenda Alert panel (qa_manager) and the
        Action Item Details panel (qa_user) open. At each width (qa_manager) the Alerts card: the two headings of
        expected.json, none cut and the grid no wider than its card; every date dd-MMM-yyyy with HH:mm below it,
        on at most two lines.
@@ -38,6 +40,18 @@
        without a mapping row of the person is unread and is read after opening, for that person only; Management
        opens read-only and its Submit is refused; a Submit with the id of another department's item is refused;
        a Submit inside the scope saves.
+    9. My approvals (step UN6c2a): the panel per account (no panel for the User, Management, MD Secretariat and
+       the Admin), its rows, the filters at the top; opening a row shows the Agenda Alert panel with Approve and
+       Reject and marks the person's own alert read; a User who opens an alert of an item sees neither button.
+       In check 1 the cases of the Controller and the Managers also check the "Waiting for me" column. (Approve and
+       Reject themselves are not driven: they send mail.)
+   10. The Scheduled list fits its card (step UN6c2a): per account and width of meetingsFit, the cards side by side,
+       the number of columns, the table no wider than its scroll box, no empty gap at its right, "Waiting for me"
+       on at most two lines.
+   11. The meeting-date message (step UN6c2a, step M6a; last, because opening an item from My approvals marks an
+       alert read): qa_manager opens the read alert of QA2-00013-1 (meeting 40 days ago, agenda open, routed to
+       him) on the last page of All: no Approve or Reject, the message inside the panel just above the buttons and
+       not covered; an item he can decide, opened from My approvals, shows the buttons and no message.
     7. The link chosen stays chosen (step UN6c1, owner's test): on both cards, with Unread chosen, opening an item
        or an alert leaves the mark on Unread and the list holds unread rows only; Read, Show All and Recent then
        show the rest with their own mark.
@@ -88,22 +102,26 @@ async function readCard(page) {
     const options = (sel) => { const s = q(sel); return s ? Array.from(s.options).map((o) => o.text.trim()) : null; };
     const grid = (suffix) => {
       const table = q('table[id$="' + suffix + '"]');
-      if (!table) return { present: false, head: [], rows: [], empty: null, dates: [] };
+      if (!table) return { present: false, head: [], rows: [], empty: null, dates: [], waiting: {} };
       const trs = Array.from(table.querySelectorAll(':scope > tbody > tr'));
-      if (trs.length && !trs[0].querySelector('th')) return { present: true, head: [], rows: [], empty: txt(trs[0]), dates: [] };
+      if (trs.length && !trs[0].querySelector('th')) return { present: true, head: [], rows: [], empty: txt(trs[0]), dates: [], waiting: {} };
       const head = trs.length ? Array.from(trs[0].querySelectorAll(':scope > th')).map(txt) : [];
       const dates = [];
+      const waiting = {};
       const rows = trs.slice(1).map((tr) => {
         const td = Array.from(tr.querySelectorAll(':scope > td'));
         const chip = td[3] ? td[3].querySelector('.wb-chip') : null;
         const colour = chip ? (Array.from(chip.classList).find((c) => /^wb-chip-/.test(c)) || '').replace('wb-chip-', '') : '';
         tr.querySelectorAll('.wb-dash-date').forEach((d) => { if (txt(d)) dates.push(txt(d)); });
         const parts = [txt(td[0] && td[0].querySelector('.wb-dash-committee')), txt(td[0] && td[0].querySelector('.wb-dash-meeting-no')), colour, txt(chip)];
-        const counts = td.slice(4).map(txt);
+        // Step UN6c2a: the "Waiting for me" cell is read on its own (below), not with the statistics
+        const counts = td.slice(4).filter((c) => !c.classList.contains('wb-dash-waiting')).map(txt);
         if (counts.length) parts.push(counts.join(' '));
+        const wcell = td.find((c) => c.classList.contains('wb-dash-waiting'));
+        if (wcell && txt(wcell)) waiting[parts[0] + ' | ' + parts[1]] = txt(wcell);
         return parts.join(' | ');
       });
-      return { present: true, head, rows, empty: null, dates };
+      return { present: true, head, rows, empty: null, dates, waiting };
     };
     const card = q('.wb-dash-meetings');
     return {
@@ -149,9 +167,15 @@ async function runCase(t, c) {
   rec('Department drop-down', c.departmentOptions, card.departmentOptions);
 
   const wantHead = ['Meeting', 'Meeting date', 'Submit agenda by', 'Status'].concat(c.statistics ? ['Items', 'Approved', 'Rejected', c.lastHeader] : []);
+  // Step UN6c2a: "Waiting for me" is the last column of the Scheduled list, for a Controller and a Manager only (the
+  // cases with a "waiting" entry); the Completed list never has it
+  const hasWaiting = c.waiting !== undefined;
   for (const [label, g] of [['Scheduled', card.scheduled], ['Completed (last 10)', card.completed]]) {
-    if (g.head.length || g.rows.length) rec(label + ': column headers', wantHead, g.head);
+    const want = label === 'Scheduled' && hasWaiting ? wantHead.concat(['Waiting for me']) : wantHead;
+    if (g.head.length || g.rows.length) rec(label + ': column headers', want, g.head);
   }
+  if (hasWaiting) rec('Waiting for me: the meetings with items waiting for this person, and how many', c.waiting, card.scheduled.waiting);
+  else rec('no Waiting for me column', false, card.scheduled.head.includes('Waiting for me') || card.completed.head.includes('Waiting for me'));
   rec('Scheduled rows (in order)', c.scheduledRows, card.scheduled.rows);
   rec('Scheduled: empty text', c.scheduledRows.length ? null : 'No scheduled meetings.', card.scheduled.empty);
   rec('Completed rows (in order, at most 10)', c.completedRows, card.completed.rows);
@@ -532,6 +556,75 @@ async function actionScopeChecks(t, data) {
   await t.visit(m2, DASHBOARD);
 }
 
+// 9. My approvals (step UN6c2a): the panel per account, with the filters, and opening a row
+async function readApprovals(page) {
+  return page.evaluate(() => {
+    const txt = (el) => (el ? el.textContent.replace(/\s+/g, ' ').trim() : '');
+    const card = document.querySelector('.wb-dash-approvals');
+    if (!card) return 'no panel';
+    const table = card.querySelector('table[id$="_grvApprovals"]');
+    const rows = table ? Array.from(table.querySelectorAll(':scope > tbody > tr')).filter((tr) => tr.querySelector('a[id*="lnkApproval"]')).map((tr) => {
+      const td = Array.from(tr.querySelectorAll(':scope > td'));
+      return [txt(tr.querySelector('a[id*="lnkApproval"]')), txt(td[1]), txt(td[2] && td[2].querySelector('.wb-dash-meeting-no')), txt(td[3])].join(' | ');
+    }) : [];
+    return { title: txt(card.querySelector('.wb-dash-card-title')), rows, empty: txt(table ? table.querySelector('.divNoRecord') : null), message: txt(card.querySelector('[id$="_pApprovalsMessage"]')) };
+  });
+}
+
+async function approvalChecks(t, data) {
+  const rec = (role, title, expected, seen) => {
+    const e = typeof expected === 'string' ? expected : JSON.stringify(expected); const s = typeof seen === 'string' ? seen : JSON.stringify(seen);
+    t.record({ title, role, address: DASHBOARD, expected: e, seen: s, pass: e === s });
+  };
+  const shown = (a) => (a === 'no panel' ? a : { title: a.title, rows: a.rows });
+
+  // Who has the panel, and what waits for him
+  for (const [account, want] of Object.entries(data.approvals)) {
+    const page = await t.session(account);
+    await t.visit(page, DASHBOARD);
+    const a = await readApprovals(page);
+    rec(account, 'My approvals of ' + account + ': the panel and its rows (item | committee | meeting | department), newest meeting first', want, shown(a));
+    if (a !== 'no panel') rec(account, 'My approvals of ' + account + ': no message in the panel', '', a.message);
+  }
+
+  // The panel follows the filters at the top
+  for (const f of data.approvalFilters) {
+    const page = await t.session(f.account);
+    await t.visit(page, DASHBOARD);
+    if (f.committee) await postBack(page, () => page.selectOption('select[id$="_ddlCommittee"]', { label: f.committee }));
+    if (f.department) await postBack(page, () => page.selectOption('select[id$="_ddlDepartment"]', { label: f.department }));
+    const a = await readApprovals(page);
+    rec(f.account, 'My approvals of ' + f.account + ' with ' + (f.committee ? 'committee ' + f.committee : 'department ' + f.department) + ' chosen',
+      { title: f.title, rows: f.rows, empty: f.rows.length ? '' : 'Nothing is waiting for your approval.' }, a === 'no panel' ? a : { title: a.title, rows: a.rows, empty: a.empty });
+    await t.visit(page, DASHBOARD);
+  }
+
+  // Opening a row: the Agenda Alert panel with Approve and Reject; the person's own alert of the item is read now
+  const o = data.approvalOpen;
+  const page = await t.session(o.account);
+  await t.visit(page, DASHBOARD);
+  await setMark(page);
+  rec(o.account, 'Before opening ' + o.item + ' from My approvals: the header', o.headerBefore, String(await headerText(page)));
+  await postBack(page, () => page.locator('.wb-dash-approvals tr', { hasText: o.item }).locator('a[id*="lnkApproval"]').click());
+  const buttons = async (p) => ({ approve: await p.locator('input[id$="btnApprove"]').isVisible().catch(() => false), reject: await p.locator('input[id$="btnReject"]').isVisible().catch(() => false) });
+  rec(o.account, 'Opening ' + o.item + ' from My approvals: the Agenda Alert panel with Approve and Reject, the item\'s own alert read (header), no page reload',
+    { agendaNo: o.item, approve: true, reject: true, header: o.headerAfter, noReload: true },
+    Object.assign({ agendaNo: await page.locator('input[id$="txtAgendaNo"]').inputValue().catch(() => 'panel not open') }, await buttons(page), { header: String(await headerText(page)), noReload: await hasMark(page) }));
+  const still = await readApprovals(page);
+  rec(o.account, 'The item is still in My approvals (it was opened, not decided)', data.approvals[o.account].rows, still === 'no panel' ? still : still.rows);
+  await t.visit(page, DASHBOARD);
+
+  // A person without the panel who opens an alert of an item: no Approve, no Reject (the buttons come from the server)
+  const viewer = await t.session(o.viewer);
+  await t.visit(viewer, DASHBOARD);
+  await chooseAlertMode(viewer, 'All');
+  await postBack(viewer, () => viewer.locator('.wb-dash-alerts tr', { hasText: o.viewerAlert }).locator('a[id*="lnkSource"]').first().click());
+  rec(o.viewer, o.viewer + ' opens the alert ' + o.viewerAlert + ': the panel opens without Approve and Reject',
+    { open: true, approve: false, reject: false },
+    Object.assign({ open: await viewer.locator('input[id$="txtAgendaNo"]').isVisible().catch(() => false) }, await buttons(viewer)));
+  await t.visit(viewer, DASHBOARD);
+}
+
 async function measure(page) {
   return page.evaluate(() => {
     const r = (sel) => { const el = document.querySelector(sel); if (!el) return null; const b = el.getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, bottom: b.bottom }; };
@@ -607,6 +700,97 @@ async function openAgendaAlert(page) {
   return false;
 }
 
+// 10. Step UN6c2a: the Scheduled list fits its card. At each account and width of meetingsFit: the Meetings and Alerts
+//     cards side by side, the number of columns, the table no wider than its scroll box (scrollWidth not above
+//     clientWidth), no empty gap at its right, and the heading "Waiting for me" on at most two lines
+async function meetingsFitChecks(t, data) {
+  for (const f of data.meetingsFit) {
+    const page = await t.session(f.account);
+    await page.setViewportSize({ width: f.width, height: 768 });
+    await t.visit(page, DASHBOARD);
+    const m = await page.evaluate(() => {
+      const table = document.querySelector('table[id$="_grvScheduled"]');
+      const box = table ? table.closest('.wb-table-scroll') : null;
+      const card = document.querySelector('.wb-dash-meetings'), alerts = document.querySelector('.wb-dash-alerts');
+      if (!table || !box || !card || !alerts) return null;
+      const heads = Array.from(table.querySelectorAll('tr th')).filter((th) => th.offsetParent !== null);
+      const waiting = heads.find((th) => th.textContent.replace(/\s+/g, ' ').trim() === 'Waiting for me');
+      let lines = null;
+      if (waiting) {
+        const range = document.createRange(); range.selectNodeContents(waiting);
+        lines = new Set(Array.from(range.getClientRects()).filter((r) => r.width > 0 && r.height > 0).map((r) => Math.round(r.top))).size;
+      }
+      const a = alerts.getBoundingClientRect(), c = card.getBoundingClientRect();
+      return { sideBySide: a.left >= c.right - 1, columns: heads.length, scroll: table.scrollWidth, client: box.clientWidth,
+        gap: Math.round(box.clientWidth - table.getBoundingClientRect().width), waitingLines: lines };
+    });
+    const want = { layout: 'side by side', columns: f.columns, fits: true, gap: 0, waitingLines: f.columns === 9 ? 'at most 2' : 'no column' };
+    const seen = !m ? 'Scheduled list or a card not found' : { layout: m.sideBySide ? 'side by side' : 'stacked', columns: m.columns,
+      fits: m.scroll <= m.client, gap: m.gap <= 1 ? 0 : m.gap,
+      waitingLines: m.waitingLines === null ? 'no column' : (m.waitingLines <= 2 ? 'at most 2' : m.waitingLines + ' lines') };
+    const e = JSON.stringify(want), s = typeof seen === 'string' ? seen : JSON.stringify(seen);
+    t.record({ title: 'Width ' + f.width + ' px, ' + f.account + ': the Scheduled list (' + f.columns + ' columns) fits its card beside Alerts, no sideways scroll, no gap'
+        + (m ? ' (table ' + m.scroll + ' px, box ' + m.client + ' px)' : ''),
+      role: f.account, address: DASHBOARD, expected: e, seen: s, pass: e === s, screenshot: e === s ? '' : await t.shot(page, 'meetings-fit-' + f.account + '-' + f.width) });
+    await page.setViewportSize({ width: 1366, height: 768 });
+  }
+}
+
+// 11. Step UN6c2a (step M6a): an item the person could decide, of a meeting whose date has passed (agenda still open):
+//     the Agenda Alert panel opens without Approve and Reject, with the meeting-date message inside the panel next to
+//     the buttons, not covered; an item the person can decide shows no such message
+async function pastItemChecks(t, data) {
+  const p = data.pastItem;
+  const page = await t.session(p.account);
+  await page.setViewportSize({ width: 1366, height: 768 });
+  const panelState = () => page.evaluate(() => {
+    const msg = document.querySelector('[id$="_pAgendaPanelMessage"]');
+    const panel = document.querySelector('[id$="_pnlAgenda"]');
+    const close = document.querySelector('input[id$="_btnAgendaClose"]');
+    const shown = !!msg && msg.offsetParent !== null;
+    let onTop = false, nextToButtons = false;
+    if (shown) {
+      msg.scrollIntoView({ block: 'center' });
+      const b = msg.getBoundingClientRect();
+      const hit = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
+      onTop = !!hit && (hit === msg || msg.contains(hit));
+      if (close) { const cb = close.getBoundingClientRect(); nextToButtons = cb.top >= b.bottom - 1 && cb.top - b.bottom <= 40; }
+    }
+    return { message: shown ? msg.textContent.replace(/\s+/g, ' ').trim() : '', inPanel: !!(shown && panel && panel.contains(msg)), onTop, nextToButtons };
+  });
+  const buttons = async () => ({ approve: await page.locator('input[id$="btnApprove"]').isVisible().catch(() => false), reject: await page.locator('input[id$="btnReject"]').isVisible().catch(() => false) });
+  const rec = (title, want, seen) => {
+    const e = JSON.stringify(want), s = typeof seen === 'string' ? seen : JSON.stringify(seen);
+    t.record({ title, role: p.account, address: DASHBOARD, expected: e, seen: s, pass: e === s });
+    return e === s;
+  };
+
+  // The alert is read and 40 days old: on the last page of All
+  await t.visit(page, DASHBOARD);
+  await chooseAlertMode(page, 'All');
+  const pages = (await readAlertsCard(page)).pager.split(' ').map(Number).filter((n) => n > 0);
+  const last = pages.length ? Math.max.apply(null, pages) : 1;
+  if (last > 1) await postBack(page, () => page.locator('table[id$="_grvAlert"] table a', { hasText: new RegExp('^' + last + '$') }).click());
+  const link = page.locator('.wb-dash-alerts tr', { hasText: p.alert }).locator('a[id*="lnkSource"]').first();
+  if (!(await link.count())) {
+    rec(p.account + ' opens the alert ' + p.alert + ' (All, last page)', 'alert listed', 'alert not listed on page ' + last + ' of All');
+  } else {
+    await postBack(page, () => link.click());
+    const seen = Object.assign({ agendaNo: await page.locator('input[id$="txtAgendaNo"]').inputValue().catch(() => 'panel not open') }, await buttons(), await panelState());
+    const ok = rec(p.account + ' opens the alert ' + p.alert + ' (meeting date passed, agenda open, routed to him): no Approve or Reject; the meeting-date message inside the panel, next to the buttons, not covered',
+      { agendaNo: p.item, approve: false, reject: false, message: p.message, inPanel: true, onTop: true, nextToButtons: true }, seen);
+    if (!ok) await t.shot(page, 'past-item-panel');
+  }
+  await t.visit(page, DASHBOARD);
+
+  // An item he can decide (from My approvals): Approve and Reject, and no message in the panel
+  await postBack(page, () => page.locator('.wb-dash-approvals tr', { hasText: p.decidableItem }).locator('a[id*="lnkApproval"]').click());
+  rec(p.account + ' opens ' + p.decidableItem + ' from My approvals: Approve and Reject, no message in the panel',
+    { agendaNo: p.decidableItem, approve: true, reject: true, message: '' },
+    Object.assign({ agendaNo: await page.locator('input[id$="txtAgendaNo"]').inputValue().catch(() => 'panel not open') }, await buttons(), { message: (await panelState()).message }));
+  await t.visit(page, DASHBOARD);
+}
+
 module.exports = {
   title: 'Dashboard: meetings, colours and statistics per role; layout widths',
   async run(t) {
@@ -656,10 +840,16 @@ module.exports = {
 
     // 4. Widths and layout
     await widthChecks(t, data);
+    // 10. Step UN6c2a: the Scheduled list fits its card beside Alerts
+    await meetingsFitChecks(t, data);
 
     // 6. The actions of the Alerts card, last: they change data
     await alertActionChecks(t, data);
     await filterKeptChecks(t, data);
     await actionScopeChecks(t, data);
+    await approvalChecks(t, data);
+    // 11. Step UN6c2a: the meeting-date message in the Agenda Alert panel (last: opening the item from My approvals
+    //     marks qa_manager's own alert of it read)
+    await pastItemChecks(t, data);
   },
 };

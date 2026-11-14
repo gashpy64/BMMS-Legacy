@@ -73,6 +73,15 @@
                             <ItemStyle CssClass="wb-dash-num" />
                             <HeaderStyle CssClass="wb-dash-num" />
                         </asp:BoundField>
+                        <%-- Step UN6c2a: for a Controller and a Manager, the items of the meeting that wait for this
+                             person's approval (the same rule as the My approvals panel); empty when none. Shown only
+                             when the server says so. --%>
+                        <asp:TemplateField>
+                            <HeaderTemplate><span title="Items of this meeting waiting for your approval">Waiting for me</span></HeaderTemplate>
+                            <ItemTemplate><%# HttpUtility.HtmlEncode(WaitingText(Eval("WaitingForMe"))) %></ItemTemplate>
+                            <ItemStyle CssClass="wb-dash-num wb-dash-waiting" />
+                            <HeaderStyle CssClass="wb-dash-num wb-dash-waiting" />
+                        </asp:TemplateField>
                     </Columns>
                 </asp:GridView>
             </div>

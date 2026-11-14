@@ -445,6 +445,24 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region GetAgendaApprovalState
+        // Step UN6c2a (step 44): see AgendaDB
+        public static int GetAgendaApprovalState(int ActingUserId, int AgendaId, out bool CanApprove, out bool CanReject,
+            out bool AgendaOpen, out bool DateOpen)
+        {
+            return AgendaDB.GetAgendaApprovalState(ActingUserId, AgendaId, out CanApprove, out CanReject, out AgendaOpen, out DateOpen);
+        }
+        #endregion
+
+        #region GetDashboardApprovals
+        // Step UN6c2a (step 44): see AgendaDB
+        public static DataTable GetDashboardApprovals(int ActingUserId, int CommitteeId, int DepartmentId, int PageNo,
+            out int Reason, out int TotalRows, out int PageShown)
+        {
+            return AgendaDB.GetDashboardApprovals(ActingUserId, CommitteeId, DepartmentId, PageNo, out Reason, out TotalRows, out PageShown);
+        }
+        #endregion
+
         #region GenerateSubjectNoByMeetingId
         public static int GenerateSubjectNoByMeetingId(int MeetingId, int AgendaId)
         {

@@ -1065,17 +1065,20 @@ body.wb .bmms-comment-by-line
 
 /* ==========================================================================
    Dashboard (step UN6b): heading with the filters, the place of the summary cards (UN6c), the Meetings card
-   (about two thirds) beside the Alerts card (one third), the Action Items card below; one column under 1100 px.
+   (three quarters) beside the Alerts card (one quarter), the Action Items card below; one column at 1240 px and
+   below (step UN6c2a: the nine columns of the Scheduled list need about 852 px of card, which three quarters of
+   the 1200 px content width gives and two thirds did not).
    The cells come from DashBoard.aspx and UserControl/MeetingSummary.ascx (the control renders no wrapper).
    ========================================================================== */
 .wb-dash
 {
 	display: grid;
-	grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);   /* Meetings about two thirds, Alerts the rest */
+	grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);   /* Meetings three quarters, Alerts the rest */
 	grid-template-areas:
 		"head head"
 		"summary summary"
 		"msg msg"
+		"approvals approvals"
 		"meetings alerts"
 		"actions actions";
 	column-gap: var(--wb-space-4);
@@ -1084,9 +1087,22 @@ body.wb .bmms-comment-by-line
 .wb-dash > .wb-dash-head { grid-area: head; }
 .wb-dash > .wb-dash-summary { grid-area: summary; }
 .wb-dash > .wb-dash-msg { grid-area: msg; }
+.wb-dash > .wb-dash-approvals { grid-area: approvals; }   /* My approvals (step UN6c2a): the full width, above the lists */
 .wb-dash > .wb-dash-meetings { grid-area: meetings; }
 .wb-dash > .wb-dash-alerts { grid-area: alerts; }
 .wb-dash > .wb-dash-actions { grid-area: actions; }
+/* "Waiting for me" in the Scheduled list (step UN6c2a): a count that asks for action, so it is bold */
+.wb-dash-table td.wb-dash-waiting
+{
+	font-weight: 700;
+}
+/* The rows of My approvals (step UN6c2a): the Item cell has two lines (the number, the short text below), so every
+   cell starts at the top, as in the Alerts card; the meeting number and its date are on two lines, as in the
+   Meetings card */
+.wb-dash-approvals table.contentTable1 td
+{
+	vertical-align: top;
+}
 /* UN6c fills it; until then it takes no space */
 .wb-dash-summary:empty
 {
@@ -1246,8 +1262,10 @@ body.wb .bmms-comment-by-line
 	font-size: 13px;
 	white-space: nowrap;
 }
-/* The Meetings grid in about two thirds of 1200 px: tighter cells and headings on two lines where needed, so the
-   eight columns fit at 1366 px; a narrower card scrolls inside .wb-table-scroll */
+/* The Meetings grid in three quarters of 1200 px: tighter cells and headings on two lines where needed, so the
+   nine columns of the Scheduled list (Waiting for me, step UN6c2a, for a Controller and a Manager) fit beside the
+   Alerts card at every width above 1240 px (the dashboard pack checks it); a narrower card scrolls inside
+   .wb-table-scroll. */
 .wb-dash-table > tbody > tr > th,
 .wb-dash-table > tbody > tr > td
 {
@@ -1262,13 +1280,22 @@ body.wb .bmms-comment-by-line
 {
 	white-space: nowrap;
 }
+/* Step UN6c2a: 4 px (was 6 px) beside the numbers and in the Status cell (the fourth column of both lists; the chip
+   has its own padding), so the nine-column list keeps about 40 px to spare beside Alerts with the widest cells
+   measured (the longest committee name, "Open for submission", three-digit counts) */
 .wb-table > tbody > tr > th.wb-dash-num,
 .wb-table > tbody > tr > td.wb-dash-num
 {
-	padding-left: 6px;
-	padding-right: 6px;
+	padding-left: 4px;
+	padding-right: 4px;
 	text-align: right;
 	font-variant-numeric: tabular-nums;
+}
+.wb-dash-table > tbody > tr > th:nth-child(4),
+.wb-dash-table > tbody > tr > td:nth-child(4)
+{
+	padding-left: 4px;
+	padding-right: 4px;
 }
 /* Meeting status: a tinted chip with its label (the colour is never the only sign) */
 .wb-chip
@@ -1352,7 +1379,7 @@ body.wb .bmms-comment-by-line
 	max-width: 100%;
 	box-sizing: border-box;
 }
-@media (max-width: 1100px)
+@media (max-width: 1240px)
 {
 	.wb-dash
 	{
@@ -1361,6 +1388,7 @@ body.wb .bmms-comment-by-line
 			"head"
 			"summary"
 			"msg"
+			"approvals"
 			"meetings"
 			"alerts"
 			"actions";

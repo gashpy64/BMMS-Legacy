@@ -30,7 +30,9 @@ Fields and buttons, in the Meetings card:
 - The columns are Meeting (the committee and, under it, "No" and the meeting number), Meeting date (with
   the time), Submit agenda by, Status, Items, Approved, Rejected and In progress. The four counts are for
   your department's items only: Items (all of them), Approved (approved by the Controller), Rejected
-  (rejected by the Manager or the Controller) and In progress (still waiting for approval).
+  (rejected by the Manager or the Controller) and In progress (still waiting for approval, with the Manager or with
+  the Controller). You have no "Waiting for me" column and no "My approvals" card: only the Controller and the
+  Manager approve items.
 - The Status label is coloured: Open for submission (blue), Submission closed (orange), Agenda finalised
   (green), Minutes pending (red), Minutes finalised and Minutes confirmed (grey). The Overall manual
   explains each label.
@@ -71,10 +73,11 @@ action items cannot be loaded the card says "The action items could not be loade
 again." (or "The server is busy and the action items could not be loaded. Wait a moment, then reload the
 page.", or "The action items are not available: your account is not active. Sign in again.").
 
-The Committee drop-down of other roles narrows the Meetings card only; your Alerts and Action Items cards
-do not follow any choice of a committee.
+The Committee drop-down of other roles narrows their Meetings card (and, for the Controller and the Manager, their
+My approvals card); your Alerts and Action Items cards do not follow any choice of a committee.
 
-On a narrow window the cards stack one under the other.
+The Meetings card takes three parts of four of the width of the page, with the Alerts card beside it. On a window
+1240 pixels wide or narrower the cards stack one under the other; from 1241 pixels wide they stand side by side.
 
 [Screenshot: Dashboard as the User - supplied by Gashpy Software]
 [Screenshot: Dashboard as the User, Alerts card and Action Items card with an Overdue item - supplied by Gashpy Software]

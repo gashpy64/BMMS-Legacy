@@ -19,18 +19,20 @@ committees in two parts: Scheduled (every meeting that has not been held, the ea
 limit) and Completed (last 10) (the ten latest meetings that have been held, the newest first). A meeting
 dated today is still Scheduled until the end of that day. Each row shows the Meeting (the committee name
 and, under it, the meeting number, for example "No 00003"), the Meeting date (with the time, for example
-"10:00 Hrs."), Submit agenda by, the Status and the four counts. Dates are shown as 12-Nov-2026.
+"10:00 Hrs."), Submit agenda by, the Status and the four counts. The Scheduled list of the Controller and the
+Manager has a ninth column, "Waiting for me" (see "My approvals and Waiting for me" below). Dates are shown as
+12-Nov-2026.
 
 What each role sees:
 
-| Role | Committee drop-down | Department drop-down | Subtitle and card title | Counts | Last column |
-|---|---|---|---|---|---|
-| Controller | Yes | No | Title "Meetings" | Yes, every item | Pending |
-| Management | Yes | No | Title "Meetings" | Yes, every item | Pending |
-| MD Secretariat | Yes | No | Title "Meetings" | No | - |
-| Admin | Yes | No | Title "Meetings" | No | - |
-| Manager | Yes | Only when you look after two or more departments | Subtitle "Departments: [list of your departments]" (or "Department: [name]" with one); title "Meetings, items of my departments", or "Meetings, [department] items" when you choose one department | Yes, the items of your departments | Pending |
-| User | No | No | Subtitle "Department: [name]"; title "Meetings, [department] items" | Yes, the items of your department | In progress |
+| Role | Committee drop-down | Department drop-down | Subtitle and card title | Counts | Last column | Waiting for me column | My approvals panel |
+|---|---|---|---|---|---|---|---|
+| Controller | Yes | No | Title "Meetings" | Yes, every item | Pending | Yes | Yes |
+| Management | Yes | No | Title "Meetings" | Yes, every item | Pending | No | No |
+| MD Secretariat | Yes | No | Title "Meetings" | No | - | No | No |
+| Admin | Yes | No | Title "Meetings" | No | - | No | No |
+| Manager | Yes | Only when you look after two or more departments | Subtitle "Departments: [list of your departments]" (or "Department: [name]" with one); title "Meetings, items of my departments", or "Meetings, [department] items" when you choose one department | Yes, the items of your departments | Pending | Yes | Yes |
+| User | No | No | Subtitle "Department: [name]"; title "Meetings, [department] items" | Yes, the items of your department | In progress | No | No |
 
 The counts are Items (every agenda item of the meeting), Approved (items approved by the Controller),
 Rejected (items rejected by the Manager or the Controller) and the last column: items still waiting for
@@ -38,14 +40,60 @@ approval, with the Manager or with the Controller. It is headed "In progress" fo
 for everyone else. An item in none of those states counts in Items only. MD Secretariat and Admin see the
 meetings and their Status but no counts.
 
+"In progress", "Pending" and "Waiting for me" are not the same:
+
+- In progress (the User) and Pending (the Controller, Management and the Manager) count every item of the
+  meeting that has not been decided finally yet: it may be waiting for the Manager or for the Controller, and it
+  may belong to a meeting whose date has passed. For the Manager, Pending counts the items of your departments,
+  also the ones that wait for another Manager or for the Controller. For the Controller, Pending also counts the
+  items that still wait for the Manager.
+- Waiting for me (the Controller and the Manager only, in the Scheduled list) counts only the items that wait for
+  your own approval now, in a meeting whose agenda is open and whose date has not passed. It is empty where
+  nothing waits for you. It is usually smaller than Pending.
+
+### My approvals and Waiting for me
+
+The Controller and the Manager have a panel "My approvals (n)" above the Meetings card and the Alerts card, where n
+is the number of items that wait for your approval. It lists those items, the newest meeting first, 10 to a page,
+with the columns Item (the agenda number as a link, and the short text under it), Committee, Meeting (the meeting
+number and its date) and Department. The Controller sees the items that the Manager has approved. The Manager sees
+the items sent to him for approval: the items entered by the people who report to him, and the items about which
+BMMS sent him an alert (also when he removed the alert from his list). A Manager sees only the items he may approve.
+
+The panel follows the Committee drop-down, and the Manager's Department drop-down. It lists only items of a meeting
+whose agenda is open and whose date has not passed. When nothing waits for you it says "Nothing is waiting for
+your approval." The User, Management, MD Secretariat and the Admin have no panel.
+
+Click the agenda number to open the item in the Agenda Alert panel, as an alert does. If you have an alert about
+the item, it is marked read, and the number in the header "Alerts (n)" goes down; only your own alert is marked,
+nobody else's. Approve and Reject are shown when the item waits for your approval, the agenda is open and the
+meeting date has not passed. After you press Approve or Reject, the panel, the Waiting for me counts, the Alerts
+card and the counts in the Meetings card are read again.
+
+When you could decide an item but the meeting date has passed, the panel opens without Approve and Reject and says
+"The meeting date has passed, so this item can no longer be approved or rejected. It will be rejected when the
+agenda is finalized." The message is inside the panel, just above the buttons Close and "Remove from my list". Such
+an item is not listed in My approvals and is not counted in Waiting for me, but it still counts in Pending until the
+agenda is finalized.
+
+If BMMS cannot check whether you may approve an item, it opens the item read-only and says "Whether you may approve
+this item could not be checked, so it is shown read-only. Close it and open it again." If it cannot check before you
+press Approve or Reject, it says "The item could not be checked, so nothing was changed. Try again."
+
+If the panel cannot be loaded, it says "The approvals could not be loaded. Reload the page to try again." or, when the
+server is busy, "The server is busy and the approvals could not be loaded. Wait a moment, then reload the page." If
+your account is not active it says "The approvals are not available: your account is not active. Sign in again." If a
+choice in the drop-downs cannot be used it says "The approvals cannot be shown for this choice. Choose All committees
+or All my departments."
+
 For the Manager and the User the Scheduled list shows every scheduled meeting, but a completed meeting is
 listed only when it has items of your department (or one of your departments), and the counts cover only
 those items. BMMS works out what you may see from your own sign-in; the drop-downs only narrow the list.
 In the Committee drop-down, "All committees" comes first. In the Manager's Department drop-down, "All my
 departments" comes first. After you approve or reject an item on the Dashboard, the counts are read again.
 
-The Committee drop-down narrows the Meetings card only. The Alerts card and the Action Items card do not
-follow it.
+The Committee drop-down narrows the Meetings card, and for the Controller and the Manager the My approvals panel.
+The Alerts card and the Action Items card do not follow it.
 
 The Alerts card beside the Meetings card has the links Recent | Unread | All. The one you are looking at is
 in bold.
@@ -107,9 +155,13 @@ With this release some people notice changes in the Action Items card. You no lo
 another department. Users and Managers no longer see items whose minutes are still open (draft). A
 Controller sees each open item in bold once, because the Controller has not opened it yet.
 
-On a narrow window (under about 1100 pixels) the cards stack one under the other.
+The Meetings card takes three parts of four of the width of the page, with the Alerts card beside it. On a window
+1240 pixels wide or narrower the cards stack one under the other; from 1241 pixels wide they stand side by side. For
+the Controller and the Manager the Scheduled list has nine columns and fits its card on a window 1241 pixels wide or
+wider; if the card is narrower than the list, the list scrolls sideways inside the card.
 
 [Screenshot: Dashboard, Meetings card and Alerts card - supplied by Gashpy Software]
+[Screenshot: Dashboard, My approvals panel above the Meetings card with the Waiting for me column - supplied by Gashpy Software]
 [Screenshot: Dashboard, Action Items card with an Overdue item - supplied by Gashpy Software]
 
 ## MD Secretariat and Management
@@ -141,7 +193,8 @@ them.
 
 On the Dashboard, the Meetings card of both roles has a Committee drop-down and the title "Meetings".
 Management sees the counts (Items, Approved, Rejected, Pending) over every item. MD Secretariat sees the
-meetings and their Status but no counts. See "The Dashboard meeting list, by role" for the columns.
+meetings and their Status but no counts. Neither role has the My approvals panel or the Waiting for me column.
+See "The Dashboard meeting list, by role" for the columns.
 Management sees every action item that is not confirmed and can open it, but cannot change it. MD
 Secretariat has no Action Items card. The Committee drop-down narrows the Meetings card only.
 

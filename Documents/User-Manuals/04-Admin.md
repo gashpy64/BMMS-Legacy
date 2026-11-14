@@ -57,7 +57,10 @@ Alerts and action items: as the Admin you have no functional alerts. The Alerts 
 header reads "Alerts (0)" and BMMS sends you no mail about agenda items, meetings or committees. You have
 no Action Items card. The Committee drop-down narrows the Meetings card only.
 
-On a window under about 1100 pixels the cards stack one under the other.
+You have no "My approvals" card and no "Waiting for me" column: you do not approve agenda items.
+
+The Meetings card takes three parts of four of the width of the page, with the Alerts card beside it. On a window
+1240 pixels wide or narrower the cards stack one under the other; from 1241 pixels wide they stand side by side.
 
 [Screenshot: Dashboard as the Admin - supplied by Gashpy Software]
 
