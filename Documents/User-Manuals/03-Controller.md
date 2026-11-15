@@ -64,6 +64,20 @@ Purpose: the first screen after you sign in. It shows the items that wait for yo
 state of its agenda items, your alerts, your action items and the Approve and Reject buttons for the items that
 wait for you.
 
+Summary cards (at the top of the page, above My approvals): three cards.
+
+- "Items in progress": the items of the scheduled meetings that are not yet approved or rejected. The card carries
+  the sentence "Items not yet approved or rejected. For a Manager this includes items waiting for someone else;
+  'Waiting for me' is the part waiting for you."
+- "Items rejected": the items of the scheduled meetings that have been rejected.
+- "Unread alerts": the alerts you have not read, with the line "Your alerts, not filtered".
+
+Under the first two a line says "Scheduled meetings, all committees", or the name of the committee you chose. The
+two cards count the meetings in the Scheduled list only, and each equals the total of its column in the Scheduled
+list for the same choice. A count that BMMS cannot read shows a dash, never 0 (a screen reader says "count not
+available"), with the line "The counts could not be loaded. Reload the page to try again." or "The server is busy
+and the counts could not be loaded. Wait a moment, then reload the page."
+
 Fields and buttons, in the My approvals card (above the Meetings and Alerts cards, the full width of the page):
 
 - The title is "My approvals (n)", where n is the number of items that wait for your approval.
@@ -76,30 +90,34 @@ Fields and buttons, in the My approvals card (above the Meetings and Alerts card
 
 Fields and buttons, in the Meetings card:
 
-- Committee drop-down: "All committees" first, then the committees. It narrows both lists and the My approvals
-  card. You have no Department drop-down.
+- Committee drop-down: "All committees" first, then the active committees. It narrows both lists, the first two
+  summary cards, the My approvals card and the Action Items card. You have no Department drop-down.
 - The card title is "Meetings".
 - Scheduled: every meeting that has not been held yet, the earliest first, with no limit. A meeting dated
   today is still here until the end of the day.
 - Completed (last 10): the ten latest meetings that have been held, the newest first.
 - The columns are Meeting (the committee and, under it, "No" and the meeting number), Meeting date (with
-  the time), Submit agenda by, Status, Items, Approved, Rejected and Pending, and, in the Scheduled list only,
+  the time), Submit agenda by, Status, Items, Approved, Rejected and In progress, and, in the Scheduled list only,
   Waiting for me. The counts cover every item of the meeting: Items (all of them), Approved (approved by a
-  Controller), Rejected (rejected by the Manager or by a Controller) and Pending (still waiting for approval, with
-  the Manager or with a Controller). Waiting for me is the number of items of that meeting that wait for your own
+  Controller), Rejected (rejected by the Manager or by a Controller) and In progress (still waiting for approval, with
+  the Manager or with a Controller). Rest the pointer on the heading to read: "Items not yet approved or rejected.
+  For a Manager this includes items waiting for someone else; 'Waiting for me' is the part waiting for you." Waiting
+  for me is the number of items of that meeting that wait for your own
   approval now (in a meeting whose agenda is open and whose date has not passed); it is empty where nothing waits
-  for you and it is shown in bold. Pending is larger than Waiting for me when items still wait for the Manager, and
-  it also counts the items of a meeting whose date has passed.
-- The Meetings card takes three parts of four of the width of the page, with the Alerts card beside it. The
-  Scheduled list has nine columns and fits its card on a window 1241 pixels wide or wider; if the card is
-  narrower than the list, the list scrolls sideways inside the card.
+  for you and it is shown in bold. In progress is larger than Waiting for me when items still wait for the Manager,
+  and it also counts the items of a meeting whose date has passed.
+- The Meetings card takes three parts of four of the width of the page, with the Alerts card beside it. On a window
+  1240 pixels wide or narrower the cards stack one under the other and the cells of the lists are tighter. On a
+  window narrower than 960 pixels, a list wider than its card scrolls sideways inside the card with the Meeting
+  column kept in view. The page itself never scrolls sideways.
 - The Status label is coloured: Open for submission (blue), Submission closed (orange), Agenda finalised
   (green), Minutes pending (red), Minutes finalised and Minutes confirmed (grey). The Overall manual
   explains each label.
 
 Steps:
 
-1. To look at one committee, choose it in the Committee drop-down. The lists and My approvals change at once.
+1. To look at one committee, choose it in the Committee drop-down. The lists, the summary cards, My approvals and
+   the Action Items card change at once.
    Choose "All committees" to go back.
 2. To decide an item that waits for you, click its agenda number in My approvals. The Agenda Alert panel opens. If
    you have an alert about the item, it is marked read and the number in the header "Alerts (n)" goes down (only
@@ -114,7 +132,7 @@ Messages and what to do:
   agenda is finalized.": you opened an item that you could have decided, but its meeting date has passed. The
   message is inside the panel, just above the buttons Close and "Remove from my list", and Approve and Reject are
   not shown. Such an item is not listed in My approvals and is not counted in Waiting for me; it still counts in
-  Pending until the agenda is finalized.
+  In progress until the agenda is finalized.
 - You open an item that is still with the Manager (for example from an alert): you can read it, but Approve and
   Reject are not shown. BMMS shows them only for items that the Manager has approved and that wait for you.
 - "Whether you may approve this item could not be checked, so it is shown read-only. Close it and open it again.":
@@ -124,7 +142,13 @@ Messages and what to do:
 - "Nothing is waiting for your approval.": nothing waits for you for your choice of committee.
 - "The approvals could not be loaded. Reload the page to try again." or "The server is busy and the approvals could
   not be loaded. Wait a moment, then reload the page.": reload the page. "The approvals are not available: your
-  account is not active. Sign in again.": sign in again.
+  account is not active. Sign in again. "The approvals cannot be shown for this choice. Choose All committees.": the
+  committee you chose can no longer be used, for example because it is no longer active; choose "All committees".
+  The summary cards and the Action Items card say the same in their own words ("The counts cannot be shown for this
+  choice. Choose All committees." and "The action items cannot be shown for this choice. Choose All committees.").
+- When My approvals cannot be loaded, or cannot be shown for your choice, the title reads "My approvals (-)" with a
+  dash in place of the number (a screen reader says "count not available"). The title keeps its number when you
+  open or close an alert or an action item.
 - "No scheduled meetings." or "No completed meetings.": there is nothing in that list for your choice.
 - "The meeting list is not shown for this choice. Choose All committees.": choose "All committees".
 - "The meeting list could not be loaded. Reload the page to try again.": reload the page. Your alerts and
@@ -158,14 +182,16 @@ If the action items cannot be loaded the card says "The action items could not b
 to try again." (or "The server is busy and the action items could not be loaded. Wait a moment, then reload
 the page.", or "The action items are not available: your account is not active. Sign in again.").
 
-The Committee drop-down narrows the Meetings card and My approvals. The Alerts card and the Action Items card do
-not follow it.
+The Committee drop-down narrows the Meetings card, the first two summary cards, My approvals and the Action Items
+card. The Alerts card is your own list for every committee; it says "Your own alerts, for every committee. The
+filters at the top do not apply." The Unread alerts card follows no drop-down either.
 
 The Agenda Alert panel and the Action Item Details panel fit a narrow window: below about 720 pixels the
 labels sit above the fields. On a window 1240 pixels wide or narrower the cards stack one under the other; from
 1241 pixels wide the Meetings card and the Alerts card stand side by side.
 
 [Screenshot: Dashboard as the Controller - supplied by Gashpy Software]
+[Screenshot: Dashboard as the Controller, the three summary cards and the Committee drop-down - supplied by Gashpy Software]
 [Screenshot: Dashboard as the Controller, My approvals card with items waiting and the Waiting for me column - supplied by Gashpy Software]
 [Screenshot: Agenda Alert panel as the Controller, item of a meeting whose date has passed, message above the buttons - supplied by Gashpy Software]
 

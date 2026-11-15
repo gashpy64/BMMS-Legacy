@@ -3,10 +3,11 @@
 - Title: Testing and Release
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6c2a (the step 44 Test script section, "The dashboard pack since step UN6c2a", check 4 of the dashboard pack, the fixture and baseline notes); UN6c1 (the step 43 Test script section, "The dashboard pack since step UN6c1", the fixture and baseline notes); UN6b (the step 42 Test script section, the dashboard pack, the memory preflight, the fixture's committee QA2, the baseline upkeep note); the rest RA1c2
-- Last updated by: UN6c2a, based on 493cb45
+- Applies to: UN6c2b (the step 45 Test script section, "The dashboard pack since step UN6c2b", the fixture and baseline notes); UN6c2a (the step 44 Test script section, "The dashboard pack since step UN6c2a", check 4 of the dashboard pack, the fixture and baseline notes); UN6c1 (the step 43 Test script section, "The dashboard pack since step UN6c1", the fixture and baseline notes); UN6b (the step 42 Test script section, the dashboard pack, the memory preflight, the fixture's committee QA2, the baseline upkeep note); the rest RA1c2
+- Last updated by: UN6c2b, based on 357cdd0
 - Status: Draft
-- Verified against: for step UN6c2a: Database/BMMS-Test-AgendaWaitingFor-Step44.sql (header, parts 1 and 2 up to the comparison and the named cases; the 1352 cases counted from its actor, item and action lists), Tests/packs/dashboard/README.md, expected.json and pack.js (diff), Tests/README.md (diff), Tests/fixture/BMMS-Quality-Fixture*.sql (diff), Database/README.md (section Step UN6c2a, Known items), the tester run of 2026-11-14 07:52:25 and the owner's tests as given; for step UN6c1: Database/BMMS-Test-DashboardAlerts-Step43.sql (header), Tests/packs/dashboard/README.md,
+- Verified against: for step UN6c2b: Database/README.md (section Step UN6c2b: the Test script description, Known items), Tests/packs/dashboard/README.md and Tests/README.md (diff), Database/BMMS-Rollback-AgendaWaitingFor-Step44.sql (diff), the tester run of 2026-11-15 (dashboard pack 388 checks PASSED) and the owner's tests as given; the Test scripts themselves (1329 lines for step 45) were not read in full;
+  for step UN6c2a: Database/BMMS-Test-AgendaWaitingFor-Step44.sql (header, parts 1 and 2 up to the comparison and the named cases; the 1352 cases counted from its actor, item and action lists), Tests/packs/dashboard/README.md, expected.json and pack.js (diff), Tests/README.md (diff), Tests/fixture/BMMS-Quality-Fixture*.sql (diff), Database/README.md (section Step UN6c2a, Known items), the tester run of 2026-11-14 07:52:25 and the owner's tests as given; for step UN6c1: Database/BMMS-Test-DashboardAlerts-Step43.sql (header), Tests/packs/dashboard/README.md,
   expected.json and pack.js (diff), Tests/README.md (diff), Tests/fixture/BMMS-Quality-Fixture*.sql (diff),
   Database/README.md (section Step UN6c1, Known items), the owner's test result and the tester run of 2026-11-13 as given
   (702 checks PASSED); for step UN6b: Database/BMMS-Test-DashboardMeetings-Step42.sql (header, guards, part 1),
@@ -241,7 +242,7 @@ BMMS_Quality holds only the seed rows of Reset Database and the fixture (Tests/f
 - BMMS-Quality-Fixture-Dates.sql sets the two date columns of the meetings relative to today after every
   restore (since UN6b the QA2 meetings too).
 - BMMS-Quality-Fixture-Check.sql is read only: 29 checks before UN6b, 32 after it, 35 since step UN6c1, 38 since
-  step UN6c2a, ending "FIXTURE CHECK: PASS (n checks)".
+  step UN6c2a, 39 since step UN6c2b (committee QA9, inactive), ending "FIXTURE CHECK: PASS (n checks)".
 - Step UN6c2a extended the fixture again: two items on QA2 00001 as direct rows with no alerts (QA2-00001-1, Credit,
   at AMA, which waits for the Controller; QA2-00001-2, Secretarial, at AC, saved by qa_ctrl, so not routed to
   anybody), and the meeting QA2 00013, 40 days back with its agenda still open, with its item QA2-00013-1 (Credit, at
@@ -271,7 +272,8 @@ After a numbered database step (step 42 and on) the baseline is out of date and 
 the baseline with Update-Baseline.ps1, then BMMS_Quality was built afresh with the extended fixture
 (Setup-Quality.ps1, 2026-11-12). Step 43 (UN6c1) was done the same way: Update-Baseline.ps1 -FixScript, then
 Setup-Quality.ps1 with the extended fixture. Step 44 (UN6c2a) likewise: the tester run of 2026-11-14 ran on the
-baseline with step 44 and the extended fixture. In the workflow this is done on the owner's approval of the
+baseline with step 44 and the extended fixture. Step 45 (UN6c2b) likewise, with the fixture committee QA9 added
+to the fixture (the fixture check has 39 checks). In the workflow this is done on the owner's approval of the
 build, before the tester runs (CLAUDE.md, step 5):
 
 `pwsh -NoProfile -File Tests\_runner\Update-Baseline.ps1 -ConfirmDatabase BMMS_Quality -FixScript BMMS-Fix-[name]-Step[n].sql`
@@ -563,6 +565,56 @@ BMMS-Test-DashboardMeetings-Step42.sql was adjusted in three places (its checks 
 result columns of spr_GetDashboardMeetings, and its own result table, each marked "Replaced by step 44"): it
 expects the step 44 shape when step 44 is installed and the step 42 shape otherwise, 71 checks either way.
 BMMS-Test-DashboardAlerts-Step43.sql passes unchanged (128).
+
+### Step 45 (UN6c2b): summary cards and the Committee filter
+
+Database/BMMS-Test-DashboardSummary-Step45.sql (BMMS_Test only; run it in a new query window). 66 numbered checks, all
+PASS (run of 2026-11-14 on BMMS_Test). Part 1 reads only: the markers (new and kept), parameters and result columns;
+that fn_AgendaStatusGroup and fn_DashboardActionItems are unchanged (SHA-1); that no feature above compatibility
+level 100 is used; EXECUTE for every database user who can run step 42's procedures; the condition of the step 44
+Rollback's guard. Part 2, inside one rolled-back transaction with made-up data (ZZ45: three departments, the six roles,
+an inactive user, an active, a second active and an inactive committee, meetings today, later, without a date and
+past, 147 items in every status, 6 action items): the committee function; 26 fixed summary cases (counts, filters,
+Reasons 4, 8 and 12); for 320 cases (every active Controller, Management user, Manager and User x every committee value
+x every department of the scope) the summary equals an independent count and the totals of the Scheduled list; 60
+calls with an inactive, unknown or negative committee refused with Reason 4 by all four procedures; the MD Secretariat's
+rows equal Management's, without Waiting for me, My approvals or Action Items; the earlier texts beside the new ones
+on 730 cases each (meeting list: no difference but the MD Secretariat's statistics; My approvals: none; Action Items:
+the earlier rows of the chosen committee and department); the Action Items called without the new parameters as in
+step 43; the step 45 Rollback's three texts installed inside the transaction and compared by SHA-1.
+
+The Test scripts of the earlier steps after step 45 (each change marked "Replaced by step 45" and applied only when
+step 45 is installed; each passes with step 45 installed and with it rolled back):
+BMMS-Test-DashboardMeetings-Step42.sql (71: the two MD Secretariat cases expect the statistics),
+BMMS-Test-DashboardAlerts-Step43.sql (128: the parameter count of spr_GetDashboardActionItems is 5, 2 of them OUTPUT)
+and BMMS-Test-AgendaWaitingFor-Step44.sql (120: its two comparisons of the meeting list with the step 42 text expect an
+MD Secretariat user to have StatisticsShown 1). The step 44 Rollback refuses while step 45 is installed; run on
+BMMS_Test with step 45 installed it refused and the checksum of all 204 module definitions was the same before and
+after.
+
+The dashboard pack since step UN6c2b (Tests/packs/dashboard/README.md): expected.json gained `inProgressMeaning`,
+`inProgressMeaningWaiting`, `inProgressWaitingAccounts`, `summary`, `summaryFilters`, `alertsNote`, `inactiveCommittee`,
+`summaryWidths`, `approvalsHeadingKept` and `tableFit`. Check 1 also checks the "In progress" header and its tooltip,
+the MD Secretariat's statistics and the User's Committee drop-down. New checks: 12 (the cards per account, the
+meaning of "In progress", Unread alerts equal to the header count, the note of the Alerts card), 13 (both filters on
+every card), 14 (My approvals keeps its count through the postbacks; it failed 21 times on the build of step UN6c2a,
+run 2026-11-14_221927, all other 277 checks passed), 15 (the inactive committee is offered to nobody), 16 (the cards
+at 1366, 1280, 1097, 960 and 640 px) and 17 (the Meetings tables at narrow widths: qa_manager and qa_ctrl with a
+simulated 17 px scrollbar at 1280, 1097, 960 and 768 px, and at 800 px without it; at least 24 px to spare). The
+summary values come from an independent count of the fixture (qa_ctrl and qa_mgmt 6 in progress and 2 rejected;
+qa_manager and qa_user 4 and 2; qa_manager2 2 and 0; qa_user2 1 and 0; qa_mdsec and qa_admin no cards).
+
+The pack cannot put an inactive committee id into the Committee drop-down (ASP.NET's event validation rejects a value
+the drop-down did not offer, which writes the error log and fails the run); the server's refusal is proven by the step
+45 Test script (60 calls). The state of "My approvals (-)" on a failed or refused load cannot be reached by the tester
+(no database access in a pack) and is an owner check.
+
+The fixture grew by committee QA9 "QA Inactive Committee" (inactive; a direct row without members, meetings or alert,
+so no account's alerts change); BMMS-Quality-Fixture-Check.sql has 39 checks (38 before).
+
+Result of the step: tester agent, run of 2026-11-15 (Tests/_results/2026-11-15_003506): the dashboard pack PASSED, 388
+checks. SQL Test script 45 passed on BMMS_Test and the Test scripts of steps 42 to 44 pass with and without step 45.
+The owner's tests passed. This record states the dashboard pack only; the other packs of the run are not stated here.
 
 ## Reviewer stage
 

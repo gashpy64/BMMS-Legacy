@@ -3,10 +3,10 @@
 - Title: Application Code
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6c2a ("The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)" and the layout line of "The Dashboard Meetings card (step UN6b)"); UN6c1 (the Main.Master row and paragraph, "The Dashboard Alerts and Action Items cards (step UN6c1)"); UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
-- Last updated by: UN6c2a, based on 493cb45
+- Applies to: UN6c2b ("The Dashboard summary cards and the Committee filter (step UN6c2b)"); UN6c2a ("The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)" and the layout line of "The Dashboard Meetings card (step UN6b)"); UN6c1 (the Main.Master row and paragraph, "The Dashboard Alerts and Action Items cards (step UN6c1)"); UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
+- Last updated by: UN6c2b, based on 357cdd0
 - Status: Draft
-- Verified against: for step UN6c2a: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff, and BindAgendaDetails read in full), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (diff), BMMS/CSS/bmms-workbench.css (diff),
+- Verified against: for step UN6c2b: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs; Database/README.md (section Step UN6c2b, Known items), the tester run of 2026-11-15 as given; for step UN6c2a: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff, and BindAgendaDetails read in full), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (diff), BMMS/CSS/bmms-workbench.css (diff),
   BMMSBAL/AgendaMgr.cs and MeetingMgr.cs (diff), BMMSDAL/AgendaDB.cs and MeetingDB.cs (diff), Database/README.md (section Step UN6c2a, Known items), Tests/packs/dashboard/README.md, the tester run of 2026-11-14 as given; for step UN6c1: BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (read: the Alerts and Action Items regions, the message constants, lnkSource_Click),
   BMMS/MasterPage/Main.Master.cs (alert count region), BMMSBAL/AlertMgr.cs, ActionItemMgr.cs and Common.cs (diff),
   BMMSDAL/AlertDB.cs and ActionItemDB.cs (diff), Database/README.md (section Step UN6c1); for step UN6b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/DashBoard/DashBoard.aspx
@@ -193,8 +193,8 @@ UserControl/MeetingSummary.ascx(.cs) was rewritten in step UN6b. What it does, f
   departments." (both filters shown), "Choose All committees." or "Choose All my departments.", or, with no
   filter shown, "The meeting list is not shown for your role." Empty lists: "No scheduled meetings." and "No
   completed meetings."
-- Markup and styles: the heading with the filters, an empty container `divSummaryCards` for the summary cards of
-  step UN6c (not built), and the Meetings card in the Workbench card style. DashBoard.aspx puts the control and
+- Markup and styles: the heading with the filters, the container `divSummaryCards` for the summary cards (built in
+  step UN6c2b, see "The Dashboard summary cards and the Committee filter (step UN6c2b)"), and the Meetings card in the Workbench card style. DashBoard.aspx puts the control and
   the Alerts and Action Items cards in the grid `.wb-dash` (CSS/bmms-workbench.css, Dashboard section: grid, heading
   and filters, chips with the palette's tints, number columns, the panel widths, the 1240 px and 720 px rules;
   since step UN6c2a the Meetings card is three parts of four of the content width beside the Alerts card, one
@@ -329,6 +329,62 @@ Drawn from: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff)
 and .ascx.cs (diff), BMMS/CSS/bmms-workbench.css (diff), BMMSBAL/AgendaMgr.cs and MeetingMgr.cs (diff),
 BMMSDAL/AgendaDB.cs and MeetingDB.cs (diff), Database/BMMS-Fix-AgendaWaitingFor-Step44.sql, Database/README.md
 (section Step UN6c2a, Known items), Tests/packs/dashboard/README.md, the tester run of 2026-11-14 as given.
+
+### The Dashboard summary cards and the Committee filter (step UN6c2b)
+
+MeetingSummary.ascx(.cs), DashBoard.aspx(.cs), the Agenda and Action Item BAL and DAL classes and the CSS changed in
+step UN6c2b; the rules are on the server (database step 45) and the page sends the acting user id and the filters,
+never a role.
+
+- Summary cards (MeetingSummary.ascx, `divSummaryCards`, three `.wb-card.wb-dash-stat` tiles): `LoadSummary` runs in
+  `LoadMeetings` after the titles, with the committee id and department id of the meeting list, and calls
+  `AgendaMgr.GetDashboardSummary(userId, committeeId, departmentId, out inProgress, out rejected)` (BAL, then
+  `AgendaDB.GetDashboardSummary`; the two counts are `int?` and null unless the Reason is 0). Reason 0 shows the
+  cards and sets `HasSummaryCards` (ViewState); Reason 4 once the cards were shown (`HasSummaryCards`) shows dashes and
+  `SummaryChoiceMessage` plus `ChoiceHint`; Reason 4 before that (MD Secretariat, Admin), 8 and 12 hide the cards;
+  an exception is written to the error log and, for a person who has the cards or a role in `SummaryRoles`, shows
+  dashes with "The counts could not be loaded. Reload the page to try again." (busy: "The server is busy and the
+  counts could not be loaded. Wait a moment, then reload the page."). When the meeting list itself fails
+  (`ShowFailure`) cards that were shown keep their place with dashes. `SetCount` writes the number or the dash (an
+  en dash, `NoCount`) and shows the hidden span "count not available" (`wb-visually-hidden`); a count is never 0 by
+  default.
+- Labels: `ItemsOf` builds "Items", "[department] items" or "Items of my departments" from the role table and the
+  department list, then " in progress" or " rejected"; the scope line is "Scheduled meetings, " plus the committee name
+  or "all committees". The Unread alerts card has fixed texts ("Unread alerts", "Your alerts, not filtered").
+- Unread alerts: `DashBoard.LoadAlertGRV` calls `MeetingSummary1.SetUnreadAlerts(unreadCount)` with the unread count
+  of its own load (null when the load failed or was refused), so the card and the header use the rule of the Alerts
+  card; it follows no filter. The Alerts card carries a note (`wb-dash-note`) "Your own alerts, for every committee.
+  The filters at the top do not apply."
+- "In progress": `RoleViews` has "In progress" as the last column heading of every role, and the User now has the
+  Committee drop-down. `InProgressMeaningFor(roleCode)` (the role code the server returned) gives the sentence: the
+  two-part sentence for `controller` and `manager`, "Items not yet approved or rejected." for every other role. It is
+  the header tooltip (`SetInProgressTip`), the note on the In progress card and, where statistics are shown and no
+  card is (MD Secretariat), the visible line `pInProgressNote` "In progress: ...".
+- The hint: `MeetingSummary.ChoiceHint` is " Choose All committees." or, when the Department drop-down is shown
+  (`divDepartmentFilter.Visible`: a Manager with two or more departments), " Choose All committees or All my
+  departments."; the page adds it to the refusal text of My approvals (`ApprovalsFilterMessage`, now without the
+  hint) and of the Action Items card.
+- Action Items card: `LoadActionItemGRV` calls the new overload `ActionItemMgr.GetDashboardActionItems(userId,
+  committeeId, departmentId, out reason)` (`ActionItemDB`, procedure parameters @CommitteeId and @DepartmentId). Reason
+  4 once the server has said the person has the card (`HasActionItemsCard`, ViewState) shows
+  "The action items cannot be shown for this choice." plus the hint inside the card; Reason 4 before that hides the
+  card as before. `MeetingSummary1_FiltersChanged` loads My approvals from page 1 and the Action Items card from its
+  first page.
+- My approvals heading: `litApprovalCount` no longer has `EnableViewState="false"`, so the count survives the
+  postbacks that do not reload the panel (the Alerts and Action Items links, opening and closing an alert or an
+  item). `ShowApprovalsMessage` (failed or refused load) writes " (" and an en dash and ")" and shows the hidden
+  span `spanApprovalCountUnknown`; a successful load hides the span.
+- Layout (CSS/bmms-workbench.css): `.wb-dash-summary` is a wrapping flex row, `.wb-dash-stat` tiles at least 200 px
+  wide; at `max-width: 1240px` the Meetings cells have 6 px by 3 px padding, 13 px headings, a committee minimum of 6em
+  and a smaller wrapping chip; at `max-width: 959px` the first column is sticky (`position: sticky; left: 0`) while a
+  list wider than its card scrolls inside `.wb-table-scroll`. The page never scrolls sideways.
+- Known items (Database/README.md): the page sends the department chosen last even when the Department drop-down is
+  not shown (the server checks it); the visible "In progress" line sits under both lists; the sticky column and the
+  3 px padding are owner checks by eye.
+
+Drawn from: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff), BMMS/UserControl/MeetingSummary.ascx,
+.ascx.cs and .ascx.designer.cs (diff), BMMS/CSS/bmms-workbench.css (diff), BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs (diff),
+BMMSDAL/AgendaDB.cs and ActionItemDB.cs (diff), Database/README.md (section Step UN6c2b, Known items).
 
 ### Pages in no menu and the unlisted page
 

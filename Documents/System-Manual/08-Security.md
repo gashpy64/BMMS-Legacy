@@ -3,10 +3,10 @@
 - Title: Security
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6c2a (the paragraph on the approval rule under "Role and acting-user checks in procedures"); UN6c1 (the paragraph on the Dashboard alerts and Action Items under "Role and acting-user checks in procedures"); UN6b (the paragraph on the Dashboard meeting list under "Role and acting-user checks in procedures"); the rest RA1c2
-- Last updated by: UN6c2a, based on 493cb45
+- Applies to: UN6c2b (the paragraph on the summary cards and the Committee filter under "Role and acting-user checks in procedures"); UN6c2a (the paragraph on the approval rule under "Role and acting-user checks in procedures"); UN6c1 (the paragraph on the Dashboard alerts and Action Items under "Role and acting-user checks in procedures"); UN6b (the paragraph on the Dashboard meeting list under "Role and acting-user checks in procedures"); the rest RA1c2
+- Last updated by: UN6c2b, based on 357cdd0
 - Status: Draft
-- Verified against: for step UN6c2a: Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (fn_AgendaWaitingFor, spr_GetAgendaApprovalState, spr_GetDashboardApprovals, spr_UpdateAgendaByAgendaId, spr_GetDashboardMeetings, read in full), BMMS/DashBoard/DashBoard.aspx.cs (what is sent, what is read back), BMMSDAL/AgendaDB.cs (diff), Database/README.md (section Step UN6c2a, the rule and the hardening, not the findings); for step UN6c1: Database/BMMS-Fix-DashboardAlerts-Step43.sql (the procedures and functions), BMMS/DashBoard/DashBoard.aspx.cs (what is sent and read back),
+- Verified against: for step UN6c2b: Database/BMMS-Fix-DashboardSummary-Step45.sql (fn_DashboardCommitteeFilter, spr_GetDashboardSummary, the Reason checks of the three replaced procedures), BMMS/UserControl/MeetingSummary.ascx.cs and BMMS/DashBoard/DashBoard.aspx.cs (diff), Database/README.md (section Step UN6c2b and its Known items); and before: for step UN6c2a: Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (fn_AgendaWaitingFor, spr_GetAgendaApprovalState, spr_GetDashboardApprovals, spr_UpdateAgendaByAgendaId, spr_GetDashboardMeetings, read in full), BMMS/DashBoard/DashBoard.aspx.cs (what is sent, what is read back), BMMSDAL/AgendaDB.cs (diff), Database/README.md (section Step UN6c2a, the rule and the hardening, not the findings); for step UN6c1: Database/BMMS-Fix-DashboardAlerts-Step43.sql (the procedures and functions), BMMS/DashBoard/DashBoard.aspx.cs (what is sent and read back),
   Database/README.md (section Step UN6c1, rules); for step UN6b: Database/BMMS-Fix-DashboardMeetings-Step42.sql (spr_GetDashboardMeetings,
   spr_GetDashboardDepartments, fn_UserDepartmentScope), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (what is
   sent, what is read back, the encoding), BMMSDAL/MeetingDB.cs and DepartmentDB.cs (diff), Database/README.md
@@ -151,6 +151,17 @@ has passed) is enforced by the page, which reads it from spr_GetAgendaApprovalSt
 before a decision; spr_UpdateAgendaByAgendaId does not look at the date. Recommended hardening: refuse in the
 procedure by the function's DateOpen flag, which is a change of behaviour and a later step. The grants are
 unchanged: step 44 grants nothing and the application login keeps EXECUTE on the schema.
+The summary cards and the Committee filter since step 45 (UN6c2b) work the same way. spr_GetDashboardSummary takes the
+acting user id, a committee id and a department id, and reads the role and the departments from the database: the
+Controller, Management, Manager and User get counts; MD Secretariat and Admin get Reason 4 and no counts; the system
+account Reason 12; a missing or inactive user Reason 8. The Committee filter is one function,
+fn_DashboardCommitteeFilter, read by all four Dashboard procedures (meeting list, summary, My approvals, Action Items):
+0, or an active committee; an inactive, unknown or negative id gives Reason 4 and no rows, whatever the drop-down
+sent. The Action Items procedure now takes the department filter too and checks it against the user's departments
+(any department is refused for the Controller and Management). The page may send a stale or forged department value
+(it sends the last one chosen even when the drop-down is not shown); the server checks it and a wrong one gives
+Reason 4, dashes and a message, never other people's data. The count a card cannot read is shown as a dash with the
+text "count not available", never as 0. Step 45 grants nothing and the application login keeps EXECUTE on the schema.
 [[CONFIRM: lead from old Architecture notes: the acting user is the logged-in user, passed as @ActingUserId; a missing or inactive acting user is refused]]
 [[CONFIRM: lead from old Architecture notes: one protected system account (Users.IsSystem = 1) cannot be edited, deleted, deactivated or given another role, even by itself; only it can change its own password; it takes no part in the workflow (step 18)]]
 [[CONFIRM: lead from old Architecture notes: every protected procedure returns one row Result, Reason, ReasonDetail (1 done, 0 refused); the page turns the Reason into a sentence; a database error is re-raised, not reported as a refusal]]

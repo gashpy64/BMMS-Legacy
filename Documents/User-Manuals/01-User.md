@@ -21,8 +21,9 @@ agenda items, your alerts and your action items.
 
 Fields and buttons, in the Meetings card:
 
-- The subtitle "Department: [name]" and the card title "Meetings, [department] items". You have no
-  drop-downs: you always see your own department.
+- The subtitle "Department: [name]" and the card title "Meetings, [department] items". You have a
+  Committee drop-down: "All committees" first, then the active committees. You have no Department
+  drop-down: you always see your own department.
 - Scheduled: every meeting that has not been held yet, the earliest first. A meeting dated today is
   still here until the end of the day.
 - Completed (last 10): the ten latest meetings that have been held, the newest first. A completed
@@ -31,13 +32,30 @@ Fields and buttons, in the Meetings card:
   the time), Submit agenda by, Status, Items, Approved, Rejected and In progress. The four counts are for
   your department's items only: Items (all of them), Approved (approved by the Controller), Rejected
   (rejected by the Manager or the Controller) and In progress (still waiting for approval, with the Manager or with
-  the Controller). You have no "Waiting for me" column and no "My approvals" card: only the Controller and the
-  Manager approve items.
+  the Controller). Rest the pointer on the heading "In progress" to read "Items not yet approved or rejected."
+  You have no "Waiting for me" column and no "My approvals" card: only the Controller and the Manager approve
+  items.
 - The Status label is coloured: Open for submission (blue), Submission closed (orange), Agenda finalised
   (green), Minutes pending (red), Minutes finalised and Minutes confirmed (grey). The Overall manual
   explains each label.
 
-Steps: read the Meetings card. The Alerts card is beside it and the Action Items card is below. The counts
+Summary cards: above the Meetings card are three cards.
+
+- "[Department] items in progress" (for example "Credit items in progress"): the items of your department in
+  the scheduled meetings that are not yet approved or rejected. It carries the sentence "Items not yet approved
+  or rejected."
+- "[Department] items rejected": the items of your department in the scheduled meetings that have been rejected.
+- "Unread alerts": the alerts you have not read, with the line "Your alerts, not filtered".
+
+Under the first two a line says "Scheduled meetings, all committees", or the name of the committee you
+chose. They count the meetings in the Scheduled list only, and each equals the total of its column in the Scheduled
+list. A count that BMMS cannot read shows a dash, never 0 (a screen reader says "count not available"), and a
+line under the cards says "The counts could not be loaded. Reload the page to try again." or "The server is busy
+and the counts could not be loaded. Wait a moment, then reload the page."
+
+Steps: read the summary cards and the Meetings card. To look at one committee, choose it in the Committee
+drop-down; the Meetings card, the first two summary cards and the Action Items card change at once. Choose "All
+committees" to go back. The Alerts card is beside the Meetings card and the Action Items card is below. The counts
 are read when the page loads, so reload the page to see a decision made after you opened it.
 
 Messages and what to do:
@@ -47,6 +65,10 @@ Messages and what to do:
   action items are still shown.
 - "The server is busy and the meeting list could not be loaded. Wait a moment, then reload the page."
 - "The meeting list is not available: your account is not active. Sign in again."
+- "The meeting list is not shown for this choice. Choose All committees.": the committee you chose can no longer
+  be used, for example because it is no longer active. Choose "All committees". The summary cards and the Action
+  Items card then say "The counts cannot be shown for this choice. Choose All committees." and "The action items
+  cannot be shown for this choice. Choose All committees."
 
 Alerts card: the links Recent | Unread | All choose what is listed; the one you are looking at is in bold.
 Recent (shown first) lists every alert you have not read and the alerts you have read in the last 7 days.

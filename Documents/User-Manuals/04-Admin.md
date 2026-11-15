@@ -37,7 +37,8 @@ Fields and buttons, in the Meetings card:
 - Completed (last 10): the ten latest meetings that have been held, the newest first.
 - The columns are Meeting (the committee and, under it, "No" and the meeting number), Meeting date (with
   the time), Submit agenda by and Status. You see no counts: BMMS does not show the Items, Approved,
-  Rejected and Pending columns to your role.
+  Rejected and In progress columns to your role. You have no summary cards (Items in progress, Items rejected,
+  Unread alerts) either.
 - The Status label is coloured: Open for submission (blue), Submission closed (orange), Agenda finalised
   (green), Minutes pending (red), Minutes finalised and Minutes confirmed (grey). The Overall manual
   explains each label.
@@ -55,12 +56,15 @@ Messages and what to do:
 
 Alerts and action items: as the Admin you have no functional alerts. The Alerts card says "No alerts.", the
 header reads "Alerts (0)" and BMMS sends you no mail about agenda items, meetings or committees. You have
-no Action Items card. The Committee drop-down narrows the Meetings card only.
+no Action Items card. The Committee drop-down narrows the Meetings card only. The Alerts card says "Your own
+alerts, for every committee. The filters at the top do not apply."
 
 You have no "My approvals" card and no "Waiting for me" column: you do not approve agenda items.
 
 The Meetings card takes three parts of four of the width of the page, with the Alerts card beside it. On a window
-1240 pixels wide or narrower the cards stack one under the other; from 1241 pixels wide they stand side by side.
+1240 pixels wide or narrower the cards stack one under the other and the cells of the lists are tighter; from 1241
+pixels wide they stand side by side. On a window narrower than 960 pixels a list wider than its card scrolls
+sideways inside the card with the Meeting column kept in view; the page itself never scrolls sideways.
 
 [Screenshot: Dashboard as the Admin - supplied by Gashpy Software]
 

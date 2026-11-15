@@ -50,8 +50,17 @@ items that wait for your own approval, in meetings whose agenda is open and whos
 passed. Other roles do not have it.
 
 **Waiting for me** - A column in the Scheduled list of the Dashboard for the Controller and the
-Manager: how many items of that meeting wait for your own approval now. It differs from Pending,
+Manager: how many items of that meeting wait for your own approval now. It differs from In progress,
 which counts every item of the meeting that is still waiting for any approver.
+
+**In progress** - The last count in the Meetings lists of the Dashboard (and the card "Items in
+progress"): items not yet approved or rejected. For a Manager this includes items waiting for someone
+else; "Waiting for me" is the part waiting for you.
+
+**Summary cards** - The three cards at the top of the Dashboard for the Controller, Management, the
+Manager and the User: Items in progress, Items rejected (both for the scheduled meetings, following the
+Committee drop-down and the Manager's Department drop-down) and Unread alerts (your own count, not
+filtered). A count that cannot be read shows a dash, never 0.
 
 **Committee** - A group of members that holds meetings, for example a board or one of its
 committees.

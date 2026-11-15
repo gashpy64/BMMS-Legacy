@@ -3,10 +3,11 @@
 - Title: Workflow: Meeting Life Cycle
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6b (step 42): the meeting status on the Dashboard; the rest not written yet
-- Last updated by: UN6b, based on 0736c7f
+- Applies to: UN6c2b (step 45): the decision points for the statistics, the summary cards and the Committee filter; UN6b (step 42): the meeting status on the Dashboard; the rest not written yet
+- Last updated by: UN6c2b, based on 357cdd0
 - Status: Draft
-- Verified against: for the Dashboard status (step UN6b): Database/BMMS-Fix-DashboardMeetings-Step42.sql
+- Verified against: for step UN6c2b: Database/BMMS-Fix-DashboardSummary-Step45.sql (fn_DashboardCommitteeFilter, spr_GetDashboardSummary, spr_GetDashboardMeetings header), Database/README.md (section Step UN6c2b);
+  for the Dashboard status (step UN6b): Database/BMMS-Fix-DashboardMeetings-Step42.sql
   (fn_MeetingDashboardState, spr_GetDashboardMeetings), BMMS/UserControl/MeetingSummary.ascx.cs,
   BMMS/DashBoard/DashBoard.aspx.cs (diff: Reload after Approve and Reject), Database/README.md (section Step UN6b),
   Documents/User-Manuals/Glossary.md (the screens of each role)
@@ -79,7 +80,7 @@ Secretariat and Admin).
 |---|---|---|---|
 | Controller | Dashboard | A saved meeting | Blue "Open for submission", also for a meeting with no dates |
 | Dashboard | Manager and User | The open meeting | Agenda items are entered on Agenda Entry |
-| Manager and User | Dashboard | Items approved or rejected | The counts of Items, Approved, Rejected and Pending (In progress for the User) change |
+| Manager and User | Dashboard | Items approved or rejected | The counts of Items, Approved, Rejected and In progress (headed Pending for some roles before step 45) change; since step 45 the summary cards Items in progress and Items rejected change too |
 | Controller | Dashboard | Agenda finalised | Green "Agenda finalised" until the meeting date passes |
 | Dashboard | Controller | Meeting date passed, minutes still open | Red "Minutes pending" |
 | Controller | Dashboard | Minutes finalised | Grey "Minutes finalised" |
@@ -93,8 +94,10 @@ Secretariat and Admin).
 | Which label does the meeting carry? | The database, for every role | The first rule that fits: grey (minutes F or C), red (date before today), green (agenda not Open), orange (submission date before today; the submission date itself is still open), blue | fn_MeetingDashboardState (StateCode, StateLabel); MeetingSummary.StateCssClass for the chip |
 | How many completed meetings are listed? | The database | The last 10, newest first, for every role | spr_GetDashboardMeetings (TOP 10) |
 | Does a Manager or a User see a completed meeting? | The database, from the acting user id | Only when the meeting has at least one item of one of their departments | spr_GetDashboardMeetings with fn_UserDepartmentScope |
-| Are the counts shown? | The database | Controller, Management, Manager, User: yes; MD Secretariat, Admin: no | spr_GetDashboardMeetings (@StatisticsShown) |
-| Which items does a count cover? | The database | Controller and Management: every item; Manager and User: the items of their department(s). Approved is ACA, Rejected is AMR and ACR, Pending (In progress) is AC and AMA | fn_AgendaStatusGroup; spr_GetDashboardMeetings |
+| Are the counts shown? | The database | Controller, Management, Manager, User: yes; MD Secretariat: yes since step 45, read-only; Admin: no | spr_GetDashboardMeetings (@StatisticsShown) |
+| Which items does a count cover? | The database | Controller, Management and MD Secretariat: every item; Manager and User: the items of their department(s). Approved is ACA, Rejected is AMR and ACR, In progress (column Pending) is AC and AMA | fn_AgendaStatusGroup; spr_GetDashboardMeetings |
+| Who has the summary cards, and what do they count? (step 45) | The database | Controller, Management, Manager, User: the items of Scheduled meetings in progress (AC, AMA) and rejected (AMR, ACR), for the committee and department chosen; MD Secretariat and Admin: no cards. Each equals the total of its column in the Scheduled list | spr_GetDashboardSummary; fn_AgendaStatusGroup |
+| Which committee may be chosen? (step 45) | The database | All committees (0), or an active committee; an inactive or unknown one is refused (Reason 4) by the meeting list, the summary, My approvals and the Action Items card | fn_DashboardCommitteeFilter |
 | When are the counts read again? | The Dashboard | After a successful Approve or Reject on the Dashboard | DashBoard.aspx.cs (MeetingSummary1.Reload) |
 
 ## Drawn from

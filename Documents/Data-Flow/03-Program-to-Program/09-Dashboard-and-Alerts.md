@@ -3,10 +3,12 @@
 - Title: Program to Program: Dashboard and Alerts
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6c2a (step 44): the My approvals panel, the Waiting for me column and the Approve and Reject buttons; UN6c1 (step 43): the Alerts card, the header count and the Action Items card; UN6b (step 42): the Meetings card; the rest not written yet
-- Last updated by: UN6c2a, based on 493cb45
+- Applies to: UN6c2b (step 45): the summary cards, the Committee filter on every card, the Action Items filters; UN6c2a (step 44): the My approvals panel, the Waiting for me column and the Approve and Reject buttons; UN6c1 (step 43): the Alerts card, the header count and the Action Items card; UN6b (step 42): the Meetings card; the rest not written yet
+- Last updated by: UN6c2b, based on 357cdd0
 - Status: Draft
-- Verified against: for the step UN6c2a section: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff; BindAgendaDetails, btnApprove_Click and btnReject_Click read in full),
+- Verified against: for the step UN6c2b section: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs,
+  Database/BMMS-Fix-DashboardSummary-Step45.sql (read), Database/README.md (section Step UN6c2b and its Known items), the tester run of 2026-11-15 and the owner's tests as given;
+  for the step UN6c2a section: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff; BindAgendaDetails, btnApprove_Click and btnReject_Click read in full),
   BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (diff), BMMSBAL/AgendaMgr.cs and MeetingMgr.cs (diff), BMMSDAL/AgendaDB.cs and MeetingDB.cs (diff),
   Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (all five objects), BMMS-Rollback-AgendaWaitingFor-Step44.sql, BMMS-Test-AgendaWaitingFor-Step44.sql (header, comparison),
   Database/README.md (section Step UN6c2a, Known items), the tester run of 2026-11-14 and the owner's tests as given;
@@ -30,13 +32,16 @@
 This file covers the flow of the Dashboard's Meetings card (step UN6b): how the page asks the database for the
 meeting list and the department list, what the procedures decide, and what happens when they refuse. The card
 shows the Scheduled and the Completed (last 10) meetings with a status label and, for four roles, four counts
-(Items, Approved, Rejected and Pending or In progress). Everything is read only: the card writes nothing.
+(Items, Approved, Rejected and In progress; before step 45 "Pending" for some roles). Everything is read only: the card writes nothing.
 
 The Alerts card, the header count and the Action Items card (step UN6c1) are in the section "Alerts card, header
 count and Action Items card (step UN6c1)" below.
 
 The My approvals panel, the Waiting for me column and the Approve and Reject buttons (step UN6c2a) are in the
 section "My approvals, Waiting for me and the Approve and Reject buttons (step UN6c2a)" below.
+
+The summary cards and the Committee filter on every card (step UN6c2b) are in the section "Summary cards and the
+Committee filter on every card (step UN6c2b)" below.
 
 [[CONFIRM: the Action Item Details panel and the rest of the Agenda Alert panel and the Approve and Reject flow of the
 Dashboard (mail, the finalised agenda) are not written yet (WF2c3)]]
@@ -124,7 +129,7 @@ filter is refused, so the page can word its message by the role.
 
 | Rule | C# | Procedure or function |
 |---|---|---|
-| Who may call, and which role gets which statistics (Controller, Management, Manager, User: yes; MD Secretariat, Admin: no) | MeetingSummary.ascx.cs reads StatisticsShown from the answer | spr_GetDashboardMeetings (role read from Users and Roles for an active user; @StatisticsShown) |
+| Who may call, and which role gets which statistics (Controller, Management, Manager, User: yes; MD Secretariat: yes since step 45, read-only; Admin: no) | MeetingSummary.ascx.cs reads StatisticsShown from the answer | spr_GetDashboardMeetings (role read from Users and Roles for an active user; @StatisticsShown) |
 | Scheduled means the meeting date is today or later, or there is no date (today is the database server's date) | none | fn_MeetingDashboardState (IsScheduled) |
 | Status colour and label, the first rule that fits: grey (minutes F or C), red (date before today), green (agenda not Open), orange (submission date before today), blue | MeetingSummary.StateCssClass turns the colour name into the chip class | fn_MeetingDashboardState (StateCode, StateLabel) |
 | A user's departments: open User_Department rows and the home department | none | fn_UserDepartmentScope |
@@ -132,7 +137,7 @@ filter is refused, so the page can word its message by the role.
 | Every scheduled meeting, no cap; the last 10 completed meetings, newest first, for every role | Rows() splits the table by ListCode | spr_GetDashboardMeetings (TOP 10, ORDER BY date, time, id) |
 | Manager and User: a completed meeting only with an item of their department(s); counts over those items | none | spr_GetDashboardMeetings (@Dept from fn_UserDepartmentScope) |
 | Filters checked against the user's scope | Department fallback to 0 when no longer listed (LoadMeetings) | spr_GetDashboardMeetings (Reason 4) |
-| What each role sees: Committee drop-down, Department drop-down (Manager with two or more departments), subtitle, card titles, last column header ("In progress" for the User, "Pending" for the others) | MeetingSummary.ascx.cs: RoleViews (one place), ShowTitles, BindCommittees, BindDepartments | spr_GetDashboardDepartments gives the departments |
+| What each role sees: Committee drop-down, Department drop-down (Manager with two or more departments), subtitle, card titles, last column header ("In progress" for every role since step 45; before, "In progress" for the User and "Pending" for the others; the User has the Committee drop-down since step 45) | MeetingSummary.ascx.cs: RoleViews (one place), ShowTitles, BindCommittees, BindDepartments | spr_GetDashboardDepartments gives the departments |
 | Counts follow an Approve or Reject | DashBoard.aspx.cs calls MeetingSummary1.Reload() after a successful approve and reject | none |
 | Messages and the server-busy test | MeetingSummary.ascx.cs: the five message constants, IsServerBusy, ShowFailure | none |
 
@@ -379,13 +384,13 @@ sequenceDiagram
 |---|---|---|---|
 | 12 | spr_GetDashboardApprovals, spr_GetAgendaApprovalState | The acting user is the protected system account (checked as a system account, before the role) | The panel is hidden; the item opens read-only with no message for the system account |
 | 8 | spr_GetDashboardApprovals, spr_GetAgendaApprovalState | The acting user is missing, 0 or inactive | Panel: "The approvals are not available: your account is not active. Sign in again."; item: read-only with "Whether you may approve this item could not be checked, so it is shown read-only. Close it and open it again." (Controller or Manager) |
-| 4 | spr_GetDashboardApprovals | A role other than Controller and Manager; an unknown or negative committee; a department for a Controller or one that is not the Manager's; a page below 1 | A role without the panel: the panel is hidden. A person who has the panel and a refused filter: "The approvals cannot be shown for this choice. Choose All committees or All my departments." |
+| 4 | spr_GetDashboardApprovals | A role other than Controller and Manager; an unknown or negative committee; a department for a Controller or one that is not the Manager's; a page below 1 | A role without the panel: the panel is hidden. A person who has the panel and a refused filter: "The approvals cannot be shown for this choice." followed by the hint of the page (since step 45: " Choose All committees." or, where the Department drop-down is shown, " Choose All committees or All my departments."; an inactive committee is refused too) |
 | 4 | spr_GetAgendaApprovalState | The item does not exist | The item is gone ("This item no longer exists." as for the other opens) |
 | 14 | spr_UpdateAgendaByAgendaId | The acting user may not approve or reject the item by the function (ReasonDetail the status name) | "You cannot approve or reject this agenda item at its current stage ([status name]). Reload the Dashboard to see its current state." |
 | 5 | spr_UpdateAgendaByAgendaId | The agenda is finalised | The existing finalised-agenda message |
 | (none) | The page | DateOpen is 0 | In the panel: "The meeting date has passed, so this item can no longer be approved or rejected. It will be rejected when the agenda is finalized." above the buttons; before a decision, the same text in the page's message box and nothing is saved |
 | (none) | The page | The state cannot be read before a decision | "The item could not be checked, so nothing was changed. Try again." |
-| (none) | The page | The panel cannot be loaded (error, timeout, no memory) | "The approvals could not be loaded. Reload the page to try again." or "The server is busy and the approvals could not be loaded. Wait a moment, then reload the page."; the count is not shown |
+| (none) | The page | The panel cannot be loaded (error, timeout, no memory) | "The approvals could not be loaded. Reload the page to try again." or "The server is busy and the approvals could not be loaded. Wait a moment, then reload the page."; since step 45 the heading reads "My approvals (-)" with a dash and the hidden text "count not available" (before, no count) |
 
 A refused call returns the same columns with no rows and changes nothing.
 
@@ -420,6 +425,127 @@ BMMSBAL/AgendaMgr.cs and MeetingMgr.cs (diff), BMMSDAL/AgendaDB.cs and MeetingDB
 Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (all five objects), BMMS-Rollback-AgendaWaitingFor-Step44.sql,
 BMMS-Test-AgendaWaitingFor-Step44.sql (header, the 1352-case comparison), Database/README.md (section Step UN6c2a,
 Known items), the tester run of 2026-11-14 as given.
+
+## Summary cards and the Committee filter on every card (step UN6c2b)
+
+Added in step UN6c2b (database step 45). The Meetings card (MeetingSummary) also asks for the two item cards, and
+hands the Unread alerts card the count the Alerts card read. One function, fn_DashboardCommitteeFilter, is the only
+rule for the Committee filter (0, or an active committee); the four Dashboard procedures read it: the meeting list,
+the summary, My approvals and the Action Items card. The Action Items card now also takes the Committee and the
+Department filter. The page sends the acting user id; the role and the departments are read from the database.
+
+### Programs involved
+
+| Program | Kind | Part in the flow |
+|---|---|---|
+| UserControl/MeetingSummary.ascx(.cs) | User control | `LoadSummary` (after the department list, before the meeting list), `SetUnreadAlerts`, `ShowSummaryDashes`, `ChoiceHint`, `InProgressMeaningFor`; the role table (`RoleViews`) |
+| DashBoard/DashBoard.aspx(.cs) | Page | `LoadAlertGRV` gives the unread count to `SetUnreadAlerts` (null on a failed load); `LoadActionItemGRV` sends both filters and shows its own refusal message; `MeetingSummary1_FiltersChanged` reloads My approvals and the Action Items card from page 1; `ShowApprovalsMessage` |
+| AgendaMgr.GetDashboardSummary, AgendaDB.GetDashboardSummary | BAL, DAL | Call spr_GetDashboardSummary; return the Reason and two nullable counts (null unless the Reason is 0) |
+| ActionItemMgr.GetDashboardActionItems, ActionItemDB.GetDashboardActionItems | BAL, DAL | The new overload with committee id and department id; the old one sends 0 and 0 |
+| spr_GetDashboardSummary | Procedure | The counts of items in progress and rejected of scheduled meetings |
+| spr_GetDashboardMeetings, spr_GetDashboardApprovals, spr_GetDashboardActionItems | Procedures | Replaced: they read the committee rule; the meeting list also gives the MD Secretariat the statistics; the Action Items procedure has the two new filters |
+| fn_DashboardCommitteeFilter | Inline table function | Allowed 1 for committee 0 or an active committee |
+| fn_AgendaStatusGroup, fn_MeetingDashboardState, fn_UserDepartmentScope | Inline table functions | As in step 42: the item groups, the Scheduled rule, a user's departments |
+
+### Main flow
+
+```mermaid
+sequenceDiagram
+    participant U as Controller, Management, Manager or User
+    participant C as MeetingSummary.ascx.cs
+    participant P as DashBoard.aspx.cs
+    participant B as AgendaMgr and ActionItemMgr
+    participant SS as spr_GetDashboardSummary
+    participant SA as spr_GetDashboardActionItems
+    participant F as fn_DashboardCommitteeFilter
+
+    U->>C: opens the Dashboard, or changes the Committee or Department drop-down
+    C->>B: GetDashboardSummary(acting user id, committee id, department id)
+    B->>SS: ActingUserId, CommitteeId, DepartmentId
+    SS->>F: committee id
+    F-->>SS: Allowed
+    SS-->>C: InProgress, Rejected, Reason
+    C-->>U: Items in progress and Items rejected, or dashes with a message
+    P->>P: the Alerts card read its unread count (spr_GetDashboardAlerts)
+    P->>C: SetUnreadAlerts(unread count, or null)
+    C-->>U: Unread alerts, or a dash
+    C->>P: FiltersChanged
+    P->>B: GetDashboardActionItems(acting user id, committee id, department id)
+    B->>SA: ActingUserId, CommitteeId, DepartmentId
+    SA->>F: committee id
+    SA-->>P: rows, or Reason 4
+    P-->>U: Action Items card, or its message for the choice
+    alt Reason 4 - the committee is not active or unknown, or the department is outside the scope
+        SS-->>C: no counts, Reason 4
+        C-->>U: dashes and "The counts cannot be shown for this choice." plus the hint
+    else Reason 8 - the acting user is missing or inactive
+        SS-->>C: no counts, Reason 8
+        C-->>U: no cards (the meeting list shows its own Reason 8 message)
+    else a database error, timeout or no memory
+        C-->>U: dashes and "The counts could not be loaded. Reload the page to try again."
+    end
+```
+
+| From | To | Data | Notes |
+|---|---|---|---|
+| Role | MeetingSummary | Opens the page, picks a committee or department | The User now has the Committee drop-down (all active committees) |
+| MeetingSummary | AgendaMgr.GetDashboardSummary | Acting user id, committee id, department id | Called from `LoadSummary`, on every load of the Meetings card, with the same filters as the meeting list |
+| AgendaMgr / AgendaDB | spr_GetDashboardSummary | @ActingUserId, @CommitteeId, @DepartmentId | OUTPUT @Result, @Reason, @InProgress, @Rejected; both counts are null unless the Reason is 0 |
+| spr_GetDashboardSummary | MeetingSummary | InProgress, Rejected | Items of Scheduled meetings (today or later, or no date) by fn_AgendaStatusGroup: in progress AC and AMA, rejected AMR and ACR; equal to the totals of the In progress and Rejected columns of the Scheduled list for the same filters |
+| DashBoard.aspx | MeetingSummary.SetUnreadAlerts | The unread count of the Alerts card's load, or null | The Unread alerts card follows no filter: the rule of the Alerts card and the header count. A dash when no load ran or it failed |
+| MeetingSummary | DashBoard.aspx | Event `FiltersChanged` | The page reloads My approvals from page 1 and the Action Items card from its first page |
+| DashBoard.aspx | ActionItemMgr.GetDashboardActionItems | Acting user id, committee id, department id | The old call without filters gave the rows of step 43; with 0 and 0 the new call gives the same rows |
+| ActionItemMgr / ActionItemDB | spr_GetDashboardActionItems | @ActingUserId, @CommitteeId, @DepartmentId | The two new parameters are last and optional (default 0) |
+| spr_GetDashboardMeetings | MeetingSummary | The statistics also for the MD Secretariat | StatisticsShown 1, no WaitingForMe; the page shows a line "In progress: ..." under the lists where no card carries the meaning |
+
+### Refusal paths
+
+| Reason | Raised by | Meaning | What the page shows |
+|---|---|---|---|
+| 12 | spr_GetDashboardSummary | The protected system account | No cards |
+| 8 | spr_GetDashboardSummary | The acting user is missing, 0 or inactive | No cards; the meeting list shows its Reason 8 message |
+| 4 | spr_GetDashboardSummary | A role without the cards (MD Secretariat, Admin); a committee that is not active, unknown or below 0; a department below 0, for a Controller or Management, or not one of the user's | A role without cards: none (hidden). Where the cards were already shown (`HasSummaryCards`): dashes and "The counts cannot be shown for this choice." followed by the hint |
+| 4 | spr_GetDashboardMeetings, spr_GetDashboardApprovals | A committee that is not active (since step 45; before, any existing committee) | The meeting list: "The meeting list is not shown for this choice." and the hint; My approvals: "The approvals cannot be shown for this choice." and the hint |
+| 4 | spr_GetDashboardActionItems | A role without the card (MD Secretariat, Admin, the system account); since step 45 also a committee that is not active, or a department outside the scope | A role without the card: the card is hidden. A person who has it (`HasActionItemsCard`): "The action items cannot be shown for this choice." followed by the hint |
+| (none) | The page | The summary cannot be loaded (error, timeout, no memory) | Dashes and "The counts could not be loaded. Reload the page to try again." or "The server is busy and the counts could not be loaded. Wait a moment, then reload the page."; the cards keep their place for the four roles that have them |
+
+The hint (`ChoiceHint`) is " Choose All committees." for every role, and " Choose All committees or All my
+departments." only where the Department drop-down is shown (a Manager with two or more departments). A count that
+cannot be read shows a dash (en dash) with the hidden text "count not available", never 0.
+
+### Where each rule lives
+
+| Rule | C# | Procedure or function |
+|---|---|---|
+| The Committee filter: 0, or an active committee | none (the page offers the active committees; the server checks again) | fn_DashboardCommitteeFilter, read by spr_GetDashboardMeetings, spr_GetDashboardSummary, spr_GetDashboardApprovals and spr_GetDashboardActionItems. "All committees" still lists meetings of inactive committees |
+| Who has the summary cards: Controller, Management, Manager, User | `SummaryRoles` (only to show dashes when no answer came), `divSummaryCards.Visible` from the Reason | spr_GetDashboardSummary (Reason 4 for the rest) |
+| What the cards count: items of Scheduled meetings, in progress AC and AMA, rejected AMR and ACR; a Manager and a User over the chosen department(s) | none | spr_GetDashboardSummary with fn_AgendaStatusGroup, fn_MeetingDashboardState, fn_UserDepartmentScope |
+| The Unread alerts value: the unread count of the Alerts card's list, no filter | `SetUnreadAlerts`, called by `LoadAlertGRV` | spr_GetDashboardAlerts (@UnreadCount) |
+| Card labels and scope line: "Items", "[department] items", "Items of my departments" + " in progress" or " rejected"; "Scheduled meetings, all committees" or the committee name | `ItemsOf`, `LoadSummary` | none |
+| The meaning of "In progress": the second sentence only for the Controller and the Manager | `InProgressMeaningFor` (by the role code the server returned): tooltip of the header, the In progress card, and the line under the lists when no card is shown | none |
+| The hint of a refused choice | `ChoiceHint` (is the Department drop-down shown) | none |
+| The Action Items card follows both filters and shows a message for a refused choice | `LoadActionItemGRV`, `HasActionItemsCard`, `ActionItemsFilterMessage` | spr_GetDashboardActionItems (@CommitteeId, @DepartmentId) |
+| "My approvals (n)" keeps its count through every postback; a dash on a failed or refused load | `litApprovalCount` keeps its text in ViewState; `ShowApprovalsMessage` | none |
+| The role table: "In progress" for every role; the Committee drop-down for the User | `RoleViews` | none |
+| Narrow windows: at 1240 px and below the Meetings grid is one column and the cells are tighter; below 960 px the table scrolls inside its box with the Meeting column fixed; the page never scrolls sideways | none | none (bmms-workbench.css) |
+
+### Tables read and written
+
+Read only; nothing is written.
+
+| Object | Reads |
+|---|---|
+| fn_DashboardCommitteeFilter | Committee |
+| spr_GetDashboardSummary | Users, Roles, Meeting, Committee, and fn_AgendaStatusGroup, fn_MeetingDashboardState, fn_UserDepartmentScope, fn_DashboardCommitteeFilter |
+| spr_GetDashboardMeetings, spr_GetDashboardApprovals | as before, and fn_DashboardCommitteeFilter |
+| spr_GetDashboardActionItems | as in step 43, and fn_DashboardCommitteeFilter, fn_UserDepartmentScope |
+
+Drawn from (UN6c2b): BMMS/DashBoard/DashBoard.aspx and .aspx.cs (diff), BMMS/UserControl/MeetingSummary.ascx and
+.ascx.cs (diff), BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs (diff), BMMSDAL/AgendaDB.cs (diff),
+Database/BMMS-Fix-DashboardSummary-Step45.sql (fn_DashboardCommitteeFilter, spr_GetDashboardSummary, and the header
+comments and Reason checks of the three replaced procedures), BMMS-Rollback-DashboardSummary-Step45.sql,
+Database/README.md (section Step UN6c2b and its Known items), the tester run of 2026-11-15 (dashboard pack, 388
+checks) and the owner's tests as given.
 
 ## Drawn from
 

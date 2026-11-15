@@ -3,10 +3,10 @@
 - Title: Workflow: Alerts
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6c2a (step 44): the section "Approval from the Dashboard: My approvals and Approve or Reject"; UN6c1 (step 43): how an alert is listed, read, removed and counted; the rest not written yet
-- Last updated by: UN6c2a, based on 493cb45
+- Applies to: UN6c2b (step 45): the Unread alerts card and the note that the filters do not apply to the Alerts card; UN6c2a (step 44): the section "Approval from the Dashboard: My approvals and Approve or Reject"; UN6c1 (step 43): how an alert is listed, read, removed and counted; the rest not written yet
+- Last updated by: UN6c2b, based on 357cdd0
 - Status: Draft
-- Verified against: for UN6c2a: BMMS/DashBoard/DashBoard.aspx.cs (LoadApprovals, lnkApproval_Click, BindAgendaDetails, btnApprove_Click, btnReject_Click), Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (read in full), Database/README.md (section Step UN6c2a, Known items), the tester run of 2026-11-14 and the owner's tests as given; for UN6c1: BMMS/DashBoard/DashBoard.aspx.cs (alert region, lnkSource_Click, Remove), BMMS/MasterPage/Main.Master.cs
+- Verified against: for UN6c2b: BMMS/DashBoard/DashBoard.aspx and .aspx.cs (the note of the Alerts card, SetUnreadAlerts in LoadAlertGRV), BMMS/UserControl/MeetingSummary.ascx.cs (SetUnreadAlerts, SetCount), Database/README.md (section Step UN6c2b); for UN6c2a: BMMS/DashBoard/DashBoard.aspx.cs (LoadApprovals, lnkApproval_Click, BindAgendaDetails, btnApprove_Click, btnReject_Click), Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (read in full), Database/README.md (section Step UN6c2a, Known items), the tester run of 2026-11-14 and the owner's tests as given; for UN6c1: BMMS/DashBoard/DashBoard.aspx.cs (alert region, lnkSource_Click, Remove), BMMS/MasterPage/Main.Master.cs
   (alert count), Database/BMMS-Fix-DashboardAlerts-Step43.sql (fn_DashboardAlerts, spr_GetDashboardAlerts, spr_GetAlertCount,
   spr_RemoveAlertForUser, the two mail procedures), Database/README.md (section Step UN6c1), the owner's test result as given
 - To confirm: the creation of alerts (which action writes which alert to whom) is not drawn yet (WF2c4)
@@ -14,6 +14,12 @@
 This workflow follows an alert after it exists: who sees it, how it is read, removed and counted. The writing
 of alerts (an agenda item entered, approved or rejected, a meeting or a committee saved) is done by the save
 procedures of the other areas and is described in their files.
+
+Since step 45 (UN6c2b) the Dashboard also shows the unread count as the "Unread alerts" summary card (for the
+Controller, Management, Manager and User). It is the unread count of the Alerts card's own list (the rule of the
+header count), a dash when the list cannot be read, and it follows no filter: the Committee and Department drop-downs
+at the top do not apply to the Alerts card, which says "Your own alerts, for every committee. The filters at the top
+do not apply."
 
 ## Lanes
 

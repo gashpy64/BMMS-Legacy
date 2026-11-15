@@ -20,6 +20,23 @@ Purpose: the first screen after you sign in. It shows the items that wait for yo
 state of the agenda items of your departments, your alerts, your action items and the Approve and Reject
 buttons.
 
+Summary cards (at the top of the page, above My approvals): three cards.
+
+- "Items of my departments in progress": the items of your departments in the scheduled meetings that are not yet
+  approved or rejected. With one department, or when you choose one in the Department drop-down, the name of the
+  department takes the place of "Items of my departments", for example "HRD items in progress". The card carries
+  the same sentence as the In progress heading (see below).
+- "Items of my departments rejected": the same, for the items that have been rejected.
+- "Unread alerts": the alerts you have not read, with the line "Your alerts, not filtered".
+
+Under the first two a line says "Scheduled meetings, all committees", or the name of the committee you chose. The
+two cards count the meetings in the Scheduled list only, and each equals the total of its column in the Scheduled
+list for the same choice. They follow the Committee drop-down and the Department drop-down. Because they count
+every item of your departments, "Items in progress" can be larger than the number of items that wait for you. A
+count that BMMS cannot read shows a dash, never 0 (a screen reader says "count not available"), with the line "The
+counts could not be loaded. Reload the page to try again." or "The server is busy and the counts could not be
+loaded. Wait a moment, then reload the page."
+
 Fields and buttons, in the My approvals card (above the Meetings and Alerts cards, the full width of the page):
 
 - The title is "My approvals (n)", where n is the number of items that wait for your approval.
@@ -35,11 +52,11 @@ Fields and buttons, in the My approvals card (above the Meetings and Alerts card
 
 Fields and buttons, in the Meetings card:
 
-- Committee drop-down: "All committees" first, then the committees. It narrows both lists and the My approvals
-  card.
+- Committee drop-down: "All committees" first, then the active committees. It narrows both lists, the first two
+  summary cards, the My approvals card and the Action Items card.
 - Department drop-down: shown only when you look after two or more departments. "All my departments" comes
-  first, then your departments. With one department there is no drop-down. It narrows the My approvals card and
-  the counts, including Waiting for me.
+  first, then your departments. With one department there is no drop-down. It narrows the My approvals card, the
+  Action Items card, the summary cards and the counts, including Waiting for me.
 - The subtitle "Departments: [list of your departments]" (with one department, "Department: [name]").
 - The card title: "Meetings, items of my departments", or "Meetings, [department] items" when you have
   chosen one department (or have only one).
@@ -48,24 +65,28 @@ Fields and buttons, in the Meetings card:
 - Completed (last 10): the ten latest meetings that have been held, the newest first. A completed
   meeting is listed only when it has items of your department or departments.
 - The columns are Meeting (the committee and, under it, "No" and the meeting number), Meeting date (with
-  the time), Submit agenda by, Status, Items, Approved, Rejected and Pending, and, in the Scheduled list only,
+  the time), Submit agenda by, Status, Items, Approved, Rejected and In progress, and, in the Scheduled list only,
   Waiting for me. The counts cover the items of the departments you have chosen: Items (all of them), Approved
-  (approved by the Controller), Rejected (rejected by you or the Controller) and Pending (still waiting for
-  approval, with you or with the Controller). Pending counts every such item of your departments, also an item that
-  waits for another Manager or for the Controller, and the items of a meeting whose date has passed. Waiting for me
+  (approved by the Controller), Rejected (rejected by you or the Controller) and In progress (still waiting for
+  approval, with you or with the Controller). In progress counts every such item of your departments, also an item
+  that waits for another Manager or for the Controller, and the items of a meeting whose date has passed. Rest the
+  pointer on the heading to read: "Items not yet approved or rejected. For a Manager this includes items waiting for
+  someone else; 'Waiting for me' is the part waiting for you." Waiting for me
   is the number of items of that meeting that wait for your own approval now (in a meeting whose agenda is open and
-  whose date has not passed); it is empty where nothing waits for you and it is shown in bold. So Pending can be
+  whose date has not passed); it is empty where nothing waits for you and it is shown in bold. So In progress can be
   larger than Waiting for me.
-- The Meetings card takes three parts of four of the width of the page, with the Alerts card beside it. The
-  Scheduled list has nine columns and fits its card on a window 1241 pixels wide or wider; if the card is
-  narrower than the list, the list scrolls sideways inside the card.
+- The Meetings card takes three parts of four of the width of the page, with the Alerts card beside it. On a window
+  1240 pixels wide or narrower the cards stack one under the other and the cells of the lists are tighter. On a
+  window narrower than 960 pixels, a list wider than its card scrolls sideways inside the card with the Meeting
+  column kept in view. The page itself never scrolls sideways.
 - The Status label is coloured: Open for submission (blue), Submission closed (orange), Agenda finalised
   (green), Minutes pending (red), Minutes finalised and Minutes confirmed (grey). The Overall manual
   explains each label.
 
 Steps:
 
-1. To look at one committee, choose it in the Committee drop-down. The lists and My approvals change at once.
+1. To look at one committee, choose it in the Committee drop-down. The lists, the summary cards, My approvals and
+   the Action Items card change at once.
 2. To look at one of your departments, choose it in the Department drop-down. Choose "All my
    departments" to go back.
 3. To decide an item that waits for you, click its agenda number in My approvals. The Agenda Alert panel opens. If
@@ -82,7 +103,7 @@ Messages and what to do:
 - "The meeting date has passed, so this item can no longer be approved or rejected. It will be rejected when the
   agenda is finalized.": you opened an item that was sent to you, but its meeting date has passed. The message is
   inside the panel, just above the buttons Close and "Remove from my list", and Approve and Reject are not shown.
-  Such an item is not listed in My approvals and is not counted in Waiting for me; it still counts in Pending until
+  Such an item is not listed in My approvals and is not counted in Waiting for me; it still counts in In progress until
   the agenda is finalized.
 - "Whether you may approve this item could not be checked, so it is shown read-only. Close it and open it again.":
   press Close and open the item again.
@@ -93,10 +114,17 @@ Messages and what to do:
 - "The approvals could not be loaded. Reload the page to try again." or "The server is busy and the approvals could
   not be loaded. Wait a moment, then reload the page.": reload the page. "The approvals are not available: your
   account is not active. Sign in again.": sign in again. "The approvals cannot be shown for this choice. Choose All
-  committees or All my departments.": choose one of those two entries.
+  committees." (with two or more departments: "... Choose All committees or All my departments."): the committee
+  you chose can no longer be used, for example because it is no longer active; choose "All committees" (or "All my
+  departments"). The summary cards, the Action Items card and the Meetings card say the same in their own words, for
+  example "The counts cannot be shown for this choice. Choose All committees." and "The action items cannot be shown
+  for this choice. Choose All committees."
+- When My approvals cannot be loaded, or cannot be shown for your choice, the title reads "My approvals (-)" with a
+  dash in place of the number (a screen reader says "count not available"). The title keeps its number when you
+  open or close an alert or an action item.
 - "No scheduled meetings." or "No completed meetings.": there is nothing in that list for your choice.
 - "The meeting list is not shown for this choice. Choose All committees or All my departments.": choose one
-  of those two entries.
+  of those two entries. With one department, the text ends "Choose All committees."
 - "The meeting list could not be loaded. Reload the page to try again.": reload the page. Your alerts and
   action items are still shown, and the drop-downs are hidden until the list loads.
 - "The server is busy and the meeting list could not be loaded. Wait a moment, then reload the page."
@@ -128,14 +156,17 @@ action items cannot be loaded the card says "The action items could not be loade
 again." (or "The server is busy and the action items could not be loaded. Wait a moment, then reload the
 page.", or "The action items are not available: your account is not active. Sign in again.").
 
-The Committee drop-down narrows the Meetings card and My approvals. Your Alerts and Action Items cards do not
-follow it, and they do not follow the Department drop-down either.
+The Committee drop-down narrows the Meetings card, the first two summary cards, My approvals and the Action Items
+card. The Department drop-down (if you have it) narrows the same four. Your Alerts card is your own list for every
+committee; it says "Your own alerts, for every committee. The filters at the top do not apply." The Unread alerts
+card follows no drop-down either.
 
 The Agenda Alert panel and the Action Item Details panel fit a narrow window: below about 720 pixels the
 labels sit above the fields. On a window 1240 pixels wide or narrower the cards stack one under the other; from
 1241 pixels wide the Meetings card and the Alerts card stand side by side.
 
 [Screenshot: Dashboard as a Manager with two departments - supplied by Gashpy Software]
+[Screenshot: Dashboard as a Manager, the three summary cards and the Committee and Department drop-downs - supplied by Gashpy Software]
 [Screenshot: Dashboard as a Manager, My approvals card with items waiting and the Waiting for me column - supplied by Gashpy Software]
 [Screenshot: Agenda Alert panel as a Manager, item of a meeting whose date has passed, message above the buttons - supplied by Gashpy Software]
 

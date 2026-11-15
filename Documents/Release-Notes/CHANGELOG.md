@@ -3,10 +3,10 @@
 - Title: BMMS Change Log
 - Audience: Gashpy Software (internal)
 - Shipped: No
-- Applies to: UN6c2a
-- Last updated by: UN6c2a, based on 493cb45
+- Applies to: UN6c2b
+- Last updated by: UN6c2b, based on 357cdd0
 - Status: Draft
-- Verified against: for UN6c2a: git diff HEAD (493cb45) and the new files (BMMS/DashBoard/DashBoard.aspx(.cs, .designer.cs),
+- Verified against: for UN6c2b: git diff f3cbd7e~1 f3cbd7e (BMMS/DashBoard/DashBoard.aspx(.cs), BMMS/UserControl/MeetingSummary.ascx(.cs), BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs and ActionItemDB.cs, Database/BMMS-Fix-DashboardSummary-Step45.sql (read), BMMS-Rollback-AgendaWaitingFor-Step44.sql, BMMS-Check-InstalledSteps.sql, Database/README.md section Step UN6c2b and Known items, Tests/README.md, Tests/packs/dashboard/README.md), the tester run of 2026-11-15 and the owner's tests as given; for UN6c2a: git diff HEAD (493cb45) and the new files (BMMS/DashBoard/DashBoard.aspx(.cs, .designer.cs),
   BMMS/UserControl/MeetingSummary.ascx(.cs), BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and MeetingMgr.cs,
   BMMSDAL/AgendaDB.cs and MeetingDB.cs, Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (read in full),
   BMMS-Rollback-AgendaWaitingFor-Step44.sql, BMMS-Test-AgendaWaitingFor-Step44.sql (header and the comparison part),
@@ -40,6 +40,57 @@
 One entry per step, newest first. Each entry names the step, its tag and what changed for users,
 for installers and in the database. Release entries (tags vX.Y.Z) collect the steps since the
 previous release.
+
+## UN6c2b - Dashboard summary cards, the Committee filter on every card, "In progress" for every role (tag not yet set, 2026-11-15; database step 45; code commit f3cbd7e)
+
+- For users: the Controller, Management, the Manager and the User have three summary cards above the Dashboard cards:
+  "Items in progress", "Items rejected" (for the User "[department] items in progress" and "[department] items
+  rejected"; for a Manager "Items of my departments ...", or the department chosen) and "Unread alerts". The item cards
+  count the items of scheduled meetings only, with the line "Scheduled meetings, all committees" or the committee's
+  name, and follow the Committee drop-down and the Manager's Department drop-down; "Unread alerts" says "Your alerts,
+  not filtered". A count that cannot be read shows a dash (hidden text "count not available"), never 0, with a message
+  under the cards. MD Secretariat and the Admin have no cards. The Committee drop-down now also narrows the Action
+  Items card (with the Manager's Department drop-down), and the User has a Committee drop-down (all active
+  committees). A committee that is not active is refused: "The counts cannot be shown for this choice.", "The
+  approvals cannot be shown for this choice.", "The action items cannot be shown for this choice." and the meeting
+  list's text, each followed by "Choose All committees." (and "or All my departments." only for a Manager with two or
+  more departments, where that drop-down is shown; before, the approvals text always named both). The Alerts card
+  says "Your own alerts, for every committee. The filters at the top do not apply." The last count of the Meetings lists
+  is headed "In progress" for every role (before, "Pending" for the Controller, Management and the Manager); the
+  heading has the tooltip, and the In progress card the same sentence: for the Controller and the Manager "Items not
+  yet approved or rejected. For a Manager this includes items waiting for someone else; 'Waiting for me' is the part
+  waiting for you.", for every other role "Items not yet approved or rejected."; where no card shows it (MD Secretariat)
+  a line "In progress: ..." under the lists. MD Secretariat now sees the statistics (read-only, as Management). The
+  heading "My approvals (n)" keeps its count when an alert or an action item is opened or closed and when the Alerts and
+  Action Items links are used (it lost the count before); on a failed or refused load it reads "My approvals (-)" with
+  the hidden text "count not available". Layout: at 1240 px and below the Meetings cells are tighter (and the status chip
+  may wrap), and below 960 px a list wider than its card scrolls inside the card with the Meeting column kept in view;
+  the page never scrolls sideways. Described in the Overall manual (new subsection "The summary cards", the table of
+  roles), the User, Manager, Controller and Admin manuals and the Glossary (entries "In progress" and "Summary cards").
+- For developers: MeetingSummary.ascx(.cs) has the cards (`divSummaryCards`, `LoadSummary`, `SetUnreadAlerts`,
+  `SetCount`, `ShowSummaryDashes`, `ItemsOf`), `ChoiceHint`, `InProgressMeaningFor` and the role table with "In
+  progress" for every role and the Committee drop-down for the User; DashBoard.aspx(.cs) passes the unread count,
+  sends both filters to the Action Items card (`HasActionItemsCard`, `ActionItemsFilterMessage`), reloads it when a
+  filter changes and keeps the My approvals count in ViewState (`ShowApprovalsMessage` shows the dash); new
+  `AgendaMgr` / `AgendaDB.GetDashboardSummary` and an overload of `ActionItemMgr` / `ActionItemDB.GetDashboardActionItems`
+  with committee and department (the old signature sends 0 and 0); CSS: the card row, the 1240 px and 959 px rules.
+- For installers: run BMMS-Fix-DashboardSummary-Step45.sql (after step 44) before the new build, on BMMS_Test first,
+  then the Test scripts in new query windows. The earlier build keeps working with step 45 installed.
+  BMMS-Rollback-DashboardSummary-Step45.sql puts the three replaced procedures back letter for letter (SHA-1 compared) and
+  drops the two new objects (roll back the build first). BMMS-Rollback-AgendaWaitingFor-Step44.sql now refuses while
+  step 45 is installed: roll step 45 back first.
+- Database: step 45, five objects (marker DashboardSummary-Step45; 5 markers in BMMS-Check-InstalledSteps.sql): new
+  fn_DashboardCommitteeFilter (0, or an active committee) and spr_GetDashboardSummary (@InProgress and @Rejected for
+  scheduled meetings; Reason 12, 8 and 4); replaced spr_GetDashboardMeetings (the committee rule; statistics for the
+  MD Secretariat), spr_GetDashboardApprovals (the committee rule) and spr_GetDashboardActionItems (@CommitteeId and
+  @DepartmentId, last and optional). Reason 4 for an inactive, unknown or negative committee in all four Dashboard
+  procedures. Grants nothing. Test script BMMS-Test-DashboardSummary-Step45.sql: 66 numbered checks, all PASS on
+  BMMS_Test; the Test scripts of steps 42, 43 and 44 pass with and without step 45.
+- Tests: the Test script of step 45 passes on BMMS_Test; the Test scripts of steps 42 to 44 pass with and without
+  step 45; tester agent, run of 2026-11-15 (Tests/_results/2026-11-15_003506): dashboard pack PASSED, 388 checks (new
+  checks 12 to 17: the cards, the filters on every card, the My approvals count kept, the inactive committee offered to
+  nobody, the cards at five widths, the Meetings tables at narrow widths with a simulated scrollbar; fixture check 39,
+  with the inactive committee QA9). The owner's tests passed.
 
 ## UN6c2a - Dashboard My approvals panel, Waiting for me column, one rule for who may approve, wider Meetings card (tag not yet set, 2026-11-14; database step 44)
 
