@@ -675,6 +675,12 @@
                                             <span class="spanWhite">.</span>
                                         </div>
                                         <div class="divRowRight">
+                                            <%-- Step UN6d: for a role that can only read, the line that says so; for the
+                                                 roles that may save, a save that failed, the busy server or a text that is
+                                                 too long (the page's message box lies under this panel) --%>
+                                            <div aria-live="polite">
+                                                <p id="pActionItemPanelMessage" runat="server" class="wb-dash-message" visible="false"></p>
+                                            </div>
                                             <asp:Panel ID="Panel2" runat="server">
                                                 <asp:Button ID="btnActionItemApprove" runat="server" Text="Submit" CssClass="button"
                                                     OnClick="btnActionItemApprove_Click" />

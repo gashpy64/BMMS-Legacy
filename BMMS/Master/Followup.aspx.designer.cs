@@ -225,7 +225,16 @@ namespace BMMS.Master {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Panel pnlViewFollowup;
-        
+
+        /// <summary>
+        /// pFollowupReadOnly control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl pFollowupReadOnly;
+
         /// <summary>
         /// grvFollowup control.
         /// </summary>
@@ -279,7 +288,16 @@ namespace BMMS.Master {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Panel pnlActionText;
-        
+
+        /// <summary>
+        /// litActionTextTitle control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Literal litActionTextTitle;
+
         /// <summary>
         /// ftxtActionText control.
         /// </summary>
@@ -288,7 +306,16 @@ namespace BMMS.Master {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::BMMS.Controls.RichTextEditor ftxtActionText;
-        
+
+        /// <summary>
+        /// pActionTextPanelMessage control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl pActionTextPanelMessage;
+
         /// <summary>
         /// btnActionTextSave control.
         /// </summary>

@@ -332,6 +332,8 @@ namespace BMMS.DashBoard
         private const string ActionItemInactiveMessage = "Your account is not active. Nothing was saved. Sign in again.";
         private const string ActionItemSaveFailedMessage = "The action text could not be saved. Nothing was saved. Try again.";
         private const string ActionItemSaveBusyMessage = "The server is busy and the action text could not be saved. Nothing was saved. Wait a moment, then try again.";
+        private const string ActionItemSavedMessage = "The action text was saved.";   // step UN6d
+        private const string ActionItemReadOnlyMessage = "You can read this action item. Your role cannot change it.";   // step UN6d
         private const string ActionItemsFailedMessage = "The action items could not be loaded. Reload the page to try again.";
         private const string ActionItemsBusyMessage = "The server is busy and the action items could not be loaded. Wait a moment, then reload the page.";
         private const string ActionItemsInactiveMessage = "The action items are not available: your account is not active. Sign in again.";
@@ -588,30 +590,20 @@ namespace BMMS.DashBoard
             if (!HasSessionUser(out UserId, out RoleCode))
                 return;
 
-            switch (RoleCode)
-            {
-                case "controller":
-                    ftxtActualResolution.ReadOnly = true;
-                    ftxtActionText.ReadOnly = false;
-                    btnActionItemClose.Visible = true;
-                    break;
-                case "manager":
-                    ftxtActualResolution.ReadOnly = true;
-                    ftxtActionText.ReadOnly = false;
-                    btnActionItemClose.Visible = false;
-                    break;
-                case "user":
-                    ftxtActualResolution.ReadOnly = true;
-                    ftxtActionText.ReadOnly = false;
-                    btnActionItemClose.Visible = false;
-                    break;
-                default:
-                    ftxtActualResolution.ReadOnly = true;
-                    ftxtActionText.ReadOnly = true;
-                    btnActionItemClose.Visible = true;
-                    break;
-
-            }
+            // Step UN6d: Submit and Cancel only for the roles that may save the action text (Controller, Manager, User);
+            // every other role (in practice Management: MD Secretariat and Admin have no card) sees Close only and the
+            // line that it can only read. The buttons follow the session role; the server decides every save
+            // (spr_SaveDashboardActionText, step 43).
+            bool canSave = RoleCode == "controller" || RoleCode == "manager" || RoleCode == "user";
+            ftxtActualResolution.ReadOnly = true;
+            ftxtActionText.ReadOnly = !canSave;
+            btnActionItemApprove.Visible = canSave;
+            btnActionItemCancel.Visible = canSave;
+            btnActionItemClose.Visible = !canSave;
+            if (canSave)
+                HideActionItemPanelMessage();
+            else
+                ShowActionItemPanelMessage(ActionItemReadOnlyMessage);
 
             LinkButton link = (LinkButton)sender;
             GridViewRow gv = (GridViewRow)(link.Parent.Parent);
@@ -1266,8 +1258,9 @@ namespace BMMS.DashBoard
             if (!HasSessionUser(out UserId, out RoleCode))
                 return;
 
-            // Step A3: rich text over the limit (Web.config): nothing is saved, the panel stays open
-            if (RichTextEditor.IsTooLong(this)) { MsgDisplay(RichTextLimits.TooLongMessage); return; }
+            // Step A3: rich text over the limit (Web.config): nothing is saved, the panel stays open.
+            // Step UN6d: the message on the line inside the open panel (the page's message box lies under it)
+            if (RichTextEditor.IsTooLong(this)) { ShowActionItemPanelMessage(RichTextLimits.TooLongMessage); return; }
 
             // Step F2: an unusable id shows the warning.
             // Step UN6c1: the save goes through spr_SaveDashboardActionText (step 43), which decides on the server,
@@ -1291,18 +1284,26 @@ namespace BMMS.DashBoard
             }
             catch (Exception ex)
             {
-                // A failed save: the panel stays open with the text typed, so the person can try again
+                // A failed save: the panel stays open with the text typed, so the person can try again; the message on
+                // the line inside the panel (step UN6d)
                 Utilities.WriteErrorLog(className, "btnActionItemApprove_Click", ex.ToString());
-                MsgDisplay(Common.IsServerBusy(ex) ? ActionItemSaveBusyMessage : ActionItemSaveFailedMessage);
+                ShowActionItemPanelMessage(Common.IsServerBusy(ex) ? ActionItemSaveBusyMessage : ActionItemSaveFailedMessage);
                 return;
             }
 
             pnlActionItemDetails.Visible = false;
             ClearActionItemEditors();   // step A3: saved or refused, the panel closes
+            HideActionItemPanelMessage();   // step UN6d
 
-            if (reason == 8)
+            // Step UN6d: saved or refused, the list is read again with the link, the page and the filters chosen
+            // (LoadActionItemGRV keeps ActionMode, the page index and the Committee and Department filters)
+            LoadActionItemGRV();
+
+            if (reason == 0)
+                MsgDisplay(ActionItemSavedMessage, MessageKind.Success);
+            else if (reason == 8)
                 MsgDisplay(ActionItemInactiveMessage);
-            else if (reason != 0)
+            else
                 MsgDisplay(ActionItemNotSavedMessage);
         }
         #endregion
@@ -1313,6 +1314,7 @@ namespace BMMS.DashBoard
         {
             pnlActionItemDetails.Visible = false;
             ClearActionItemEditors();   // step A3
+            HideActionItemPanelMessage();   // step UN6d
         }
         #endregion
 
@@ -1321,6 +1323,24 @@ namespace BMMS.DashBoard
         {
             pnlActionItemDetails.Visible = false;
             ClearActionItemEditors();   // step A3
+            HideActionItemPanelMessage();   // step UN6d
+        }
+        #endregion
+
+        #region ShowActionItemPanelMessage
+        // Step UN6d: the line inside the Action Item Details panel, above its buttons: the read-only line for a role
+        // that cannot change the item, or (for the roles that may save) a failed save, a busy server or a text that is
+        // too long. Plain text (InnerText). Cleared when the panel opens and when it closes.
+        private void ShowActionItemPanelMessage(string message)
+        {
+            pActionItemPanelMessage.InnerText = message;
+            pActionItemPanelMessage.Visible = true;
+        }
+
+        private void HideActionItemPanelMessage()
+        {
+            pActionItemPanelMessage.InnerText = string.Empty;
+            pActionItemPanelMessage.Visible = false;
         }
         #endregion
 
@@ -1475,6 +1495,7 @@ namespace BMMS.DashBoard
         {
             pnlAgenda.Visible = false;
             pnlActionItemDetails.Visible = false;
+            HideActionItemPanelMessage();   // step UN6d: the closed panel keeps no line
             pnlMeeting.Visible = false;
             pnlCommittee.Visible = false;
 

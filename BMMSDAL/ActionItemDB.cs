@@ -212,18 +212,63 @@ namespace BMMSDAL
         }
         #endregion
 
-        #region UpdateActionItem
-        public static void UpdateActionItem(string Code, int ActionItemId, string ActualResolution, string ActionText, int IsComplied, int IsConfirmed)
+        #region SaveFollowupActionText
+        // Step UN6d (BMMS-Fix-FollowupSave-Step46.sql): the Save of the Followup page's Action Text panel. The procedure
+        // decides from the acting user id (the role read from the database): only an active Controller. It writes
+        // Action_Item.ActionText only, as spr_UpdateActionItem did for the code 'ActionText'. Returns 0 when saved;
+        // 12 (the system account), 8 (user missing or inactive) or 4 (another role, or an item that does not exist),
+        // and then nothing was saved.
+        public static int SaveFollowupActionText(int ActingUserId, int ActionItemId, string ActionText)
         {
-            SqlParameter[] parameter = new SqlParameter[6];
-            parameter[0] = new SqlParameter("@Code", Code);
-            parameter[1] = new SqlParameter("@ActionItemId", ActionItemId);
-            parameter[2] = new SqlParameter("@ActualResolution", ActualResolution);
-            parameter[3] = new SqlParameter("@ActionText", ActionText);
-            parameter[4] = new SqlParameter("@IsComplied", IsComplied);
-            parameter[5] = new SqlParameter("@IsConfirmed", IsConfirmed);
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
 
-            CommonDB.ExecuteProcedure("spr_UpdateActionItem", parameter); ;
+            SqlParameter text = new SqlParameter("@ActionText", SqlDbType.NVarChar, -1);
+            text.Value = (object)ActionText ?? DBNull.Value;
+
+            SqlParameter[] parameter = new SqlParameter[5];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = new SqlParameter("@ActionItemId", ActionItemId);
+            parameter[2] = text;
+            parameter[3] = result;
+            parameter[4] = reason;
+
+            CommonDB.ExecuteProcedure("spr_SaveFollowupActionText", parameter);
+            return MinutesDB.RefusalReason(result, reason);
+        }
+        #endregion
+
+        #region SaveFollowupConfirmed
+        // Step UN6d (step 46): the Submit of the Followup page's Confirmed ticks, every row in ONE call and one
+        // transaction: all rows are written or none. Items: <items><i id=".." c="0|1"/>...</items> (built by
+        // ActionItemMgr). For each row the procedure writes what spr_UpdateActionItem wrote for the code 'All' with the
+        // values the page always sent (IsComplied 0, IsConfirmed the tick; a tick sets the item's mapping rows to
+        // StatusId 0). Returns 0 when saved (Saved = rows written); 12, 8 or 4 (another role, an item that does not
+        // exist, a list that is not allowed), and then nothing was saved.
+        public static int SaveFollowupConfirmed(int ActingUserId, string Items, out int Saved)
+        {
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+            SqlParameter saved = new SqlParameter("@Saved", SqlDbType.Int);
+            saved.Direction = ParameterDirection.Output;
+
+            SqlParameter items = new SqlParameter("@Items", SqlDbType.Xml);
+            items.Value = (object)Items ?? DBNull.Value;
+
+            SqlParameter[] parameter = new SqlParameter[5];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = items;
+            parameter[2] = result;
+            parameter[3] = reason;
+            parameter[4] = saved;
+
+            CommonDB.ExecuteProcedure("spr_SaveFollowupConfirmed", parameter);
+            Saved = saved.Value == null || saved.Value == DBNull.Value ? 0 : Convert.ToInt32(saved.Value);
+            return MinutesDB.RefusalReason(result, reason);
         }
         #endregion
 

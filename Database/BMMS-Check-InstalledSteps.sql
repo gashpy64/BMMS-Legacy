@@ -153,6 +153,10 @@
    Partly; run step 45 again. After
    BMMS-Rollback-DashboardSummary-Step45.sql it reads Missing (roll back
    step 45 before step 44: the step 44 Rollback refuses otherwise).
+   Step 46 (step UN6d) adds two procedures (spr_SaveFollowupActionText,
+   spr_SaveFollowupConfirmed) and replaces nothing: 2 markers. No earlier
+   step touches them, so a re-run of an earlier step leaves step 46
+   Installed. After BMMS-Rollback-FollowupSave-Step46.sql it reads Missing.
    Step 32 is reserved and not built; it has no row.
    Step D1 (shown as step 100) replaces spr_DeleteMeetingByMeetingId, which
    no numbered script contains: it reads Missing only on a database restored
@@ -466,6 +470,11 @@ SELECT 45, o.Name + ' (DashboardSummary-Step45)', CASE WHEN ISNULL(OBJECT_DEFINI
 FROM (VALUES ('fn_DashboardCommitteeFilter'), ('spr_GetDashboardSummary'), ('spr_GetDashboardMeetings'),
              ('spr_GetDashboardApprovals'), ('spr_GetDashboardActionItems')) o(Name);
 
+-- 46. BMMS-Fix-FollowupSave-Step46.sql, installed after step 45 (two new procedures; nothing is replaced)
+INSERT INTO @M
+SELECT 46, o.Name + ' (FollowupSave-Step46)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%FollowupSave-Step46%' THEN 1 ELSE 0 END
+FROM (VALUES ('spr_SaveFollowupActionText'), ('spr_SaveFollowupConfirmed')) o(Name);
+
 -- D1 (shown as step 100). BMMS-Fix-MeetingDelete-D1.sql; no numbered script contains spr_DeleteMeetingByMeetingId
 INSERT INTO @M VALUES
 (100, 'spr_DeleteMeetingByMeetingId (MeetingDelete-D1)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_DeleteMeetingByMeetingId')), '') LIKE '%MeetingDelete-D1%' THEN 1 ELSE 0 END);
@@ -512,6 +521,7 @@ INSERT INTO @Steps VALUES
 (43, 'BMMS-Fix-DashboardAlerts-Step43.sql', 'step 17, 18 or 37 was re-run after step 43 (8 of 10), or an object is missing: run step 43 again (after step 42)'),
 (44, 'BMMS-Fix-AgendaWaitingFor-Step44.sql', 'step 16, 17, 18, 20, 31, 35 or 42 was re-run after step 44 (3 or 4 of 5), or an object is missing: run step 44 again (after step 43)'),
 (45, 'BMMS-Fix-DashboardSummary-Step45.sql', 'step 42, 43 or 44 was re-run after step 45 (2 to 4 of 5), or an object is missing: run step 45 again (after step 44)'),
+(46, 'BMMS-Fix-FollowupSave-Step46.sql', 'an object is missing: run step 46 again (after step 45)'),
 (100, 'BMMS-Fix-MeetingDelete-D1.sql (step D1)', '');
 
 SELECT s.Step, s.Script,

@@ -33,8 +33,13 @@ pwsh -NoProfile -File Tests/_runner/Run-Tests.ps1 -Pack access-matrix
 - `-Pack dashboard` (steps UN6b, UN6c1, UN6c2a and UN6c2b): the Dashboard's Meetings card per role (meetings, colours,
   statistics, filters, titles), the Alert and Action Item lists, the page width at 1366, 1241, 1240, 1024 and 800 px, and
   (UN6c1) the Alerts card rules: the header count, Recent / Unread / All, the person named, "Overdue", opening and
-  removing an alert, another user's row id refused, the link chosen kept on both cards, the items of the Action Items card per account and role, the read state per person, Management's Submit and a Submit for another department's item refused; (UN6c2a) the My approvals panel per account and with the filters, opening a row, the Approve and Reject buttons, the Waiting for me column, the Scheduled list fitting its card beside Alerts at 1366 and 1600 px, the meeting-date message inside the Agenda Alert panel; (UN6c2b) the summary cards per account, the Committee and Department filters on every card, the My approvals heading keeping its count, the inactive committee offered to nobody, the cards at 1366, 1280, 1097, 960 and 640 px. It does not drive Approve or Reject (they send mail). Its
-  rules, files and rows: `Tests\packs\dashboard\README.md`. About two and a half minutes.
+  removing an alert, another user's row id refused, the link chosen kept on both cards, the items of the Action Items card per account and role, the read state per person, a Submit for another department's item refused; (UN6c2a) the My approvals panel per account and with the filters, opening a row, the Approve and Reject buttons, the Waiting for me column, the Scheduled list fitting its card beside Alerts at 1366 and 1600 px, the meeting-date message inside the Agenda Alert panel; (UN6c2b) the summary cards per account, the Committee and Department filters on every card, the My approvals heading keeping its count, the inactive committee offered to nobody, the cards at 1366, 1280, 1097, 960 and 640 px. It does not drive Approve or Reject (they send mail). Its
+  rules, files and rows: `Tests\packs\dashboard\README.md`. About two and a half minutes. Step UN6d: the Action Item
+  Details panel by role (Submit and Cancel for the Controller, the Manager and the User; Close and the read-only line
+  for Management) and the "saved" message with the list read again.
+- `-Pack followup` (step UN6d): the Followup page by role: the MD Secretariat reads only (no Save, no Submit, the ticks
+  disabled, the read-only line), the Controller's Save and Submit with their success messages. Its rules, files and
+  checks: `Tests\packs\followup\README.md`.
 - `-Pack access-matrix -ProofFullMatrix` (you only; the tester agent cannot use it): the standing
   proof over every row instead of two. Exactly one cell must change. Use it when the pack itself
   changes.

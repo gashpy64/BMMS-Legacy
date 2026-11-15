@@ -42,8 +42,10 @@
        and the tester has no mail server; the owner checks the header after them.)
     8. The scope of the Action Items card (step UN6c1; which items each account sees is in check 2): an item
        without a mapping row of the person is unread and is read after opening, for that person only; Management
-       opens read-only and its Submit is refused; a Submit with the id of another department's item is refused;
-       a Submit inside the scope saves.
+       opens read-only: no Submit and no Cancel, Close and the read-only line (step UN6d); the Controller's panel
+       has Submit and Cancel and no Close; a Submit with the id of another department's item is refused and the
+       list is read again; a Submit inside the scope saves with "The action text was saved." and the list is read
+       again with the link chosen (step UN6d).
     9. My approvals (step UN6c2a): the panel per account (no panel for the User, Management, MD Secretariat and
        the Admin), its rows, the filters at the top; opening a row shows the Agenda Alert panel with Approve and
        Reject and marks the person's own alert read; a User who opens an alert of an item sees neither button.
@@ -545,6 +547,17 @@ async function actionScopeChecks(t, data) {
   const submit = 'input[id$="btnActionItemApprove"]';
   const hidden = 'input[id$="hdnActionItemId"]';
   const allUnread = (list) => { const o = {}; for (const k of list) o[k] = 'unread'; return o; };
+  // Step UN6d: the buttons of the details panel (a button the server does not render is not in the page) and its line
+  const panelButtons = async (p) => p.evaluate(() => {
+    const shown = (sel) => { const el = document.querySelector(sel); return !!el && el.offsetParent !== null; };
+    const line = document.querySelector('[id$="pActionItemPanelMessage"]');
+    return { submit: shown('input[id$="btnActionItemApprove"]'), cancel: shown('input[id$="btnActionItemCancel"]'),
+      close: shown('input[id$="btnActionItemClose"]'), line: line && line.offsetParent !== null ? line.textContent.replace(/\s+/g, ' ').trim() : '' };
+  });
+  const messageKind = async (p) => p.evaluate(() => {
+    const box = document.querySelector('[id$="divErrLogin"]');
+    return !box || /divErrorHide/.test(box.className) ? 'none' : (/msg-success/.test(box.className) ? 'success' : 'warning');
+  });
 
   // The read state is the person's own: the Controller has no mapping row for the item, sees it unread, opens it
   const ctl = await t.session(a.opener);
@@ -552,21 +565,26 @@ async function actionScopeChecks(t, data) {
   rec(a.opener, 'Action Items of ' + a.opener + ' before: every item unread, also ' + a.unmappedItem + ' (no mapping row of this person)', allUnread(data.actionItemsList[a.opener]), await readState(ctl));
   await openItem(ctl, a.unmappedItem);
   rec(a.opener, 'Opening ' + a.unmappedItem + ': the details panel opens', true, await panelOpen(ctl));
+  // Step UN6d: a role that may save sees Submit and Cancel, no Close, no read-only line
+  rec(a.opener, 'Details panel of ' + a.opener + ': Submit and Cancel, no Close, no read-only line', { submit: true, cancel: true, close: false, line: '' }, await panelButtons(ctl));
   await closePanel(ctl);
   const afterOpen = allUnread(data.actionItemsList[a.opener]); afterOpen[a.unmappedItem] = 'read';
   rec(a.opener, 'After opening: ' + a.unmappedItem + ' is read for ' + a.opener + ', the others still unread', afterOpen, await readState(ctl));
   await t.visit(ctl, DASHBOARD);
   rec(a.opener, 'The same after the Dashboard is opened afresh (the read state is kept)', afterOpen, await readState(ctl));
 
-  // Management: sees every item, another person's opening does not mark it read; Submit saves nothing
+  // Management: sees every item, another person's opening does not mark it read. Step UN6d: its panel has no Submit
+  // and no Cancel, only Close, and the line that it can only read (the server's refusal of a Submit by Management is
+  // proven by the step 43 Test script; a button the page does not render cannot be clicked)
   const mg = await t.session(a.readOnly);
   await t.visit(mg, DASHBOARD);
   rec(a.readOnly, 'Action Items of ' + a.readOnly + ': every item still unread (the read state of ' + a.opener + ' is not shared)', allUnread(data.actionItemsList[a.readOnly]), await readState(mg));
   await openItem(mg, a.unmappedItem);
   rec(a.readOnly, a.readOnly + ' opens ' + a.unmappedItem + ': the details panel opens', true, await panelOpen(mg));
-  await postBack(mg, () => mg.locator(submit).click());
-  rec(a.readOnly, 'Submit by ' + a.readOnly + ': refused with a message, the panel closes', { message: 'You cannot change this action item: your role can only read it, or it is not an item of your department. Nothing was saved.', panel: false },
-    { message: await pageMessage(mg), panel: await panelOpen(mg) });
+  rec(a.readOnly, 'Details panel of ' + a.readOnly + ': no Submit, no Cancel, Close, and the read-only line', { submit: false, cancel: false, close: true, line: a.readOnlyLine },
+    await panelButtons(mg));
+  await postBack(mg, () => mg.locator('input[id$="btnActionItemClose"]').click());
+  rec(a.readOnly, 'Close by ' + a.readOnly + ': the panel closes, no message', { panel: false, message: '' }, { panel: await panelOpen(mg), message: await pageMessage(mg) });
 
   // A Submit for an item outside the person's scope: the id of a Credit item put into the page of the HRD and
   // Secretarial manager
@@ -581,14 +599,21 @@ async function actionScopeChecks(t, data) {
   const ownId = await m2.locator(hidden).inputValue();
   await m2.evaluate(([sel, value]) => { document.querySelector(sel).value = value; }, [hidden, foreignId]);
   await postBack(m2, () => m2.locator(submit).click());
-  rec(a.account, 'Submit by ' + a.account + ' with the id of ' + a.otherItem + ' (another department) put in the page: refused with a message',
-    { foreignIdUsed: true, message: 'You cannot change this action item: your role can only read it, or it is not an item of your department. Nothing was saved.' },
-    { foreignIdUsed: /^\d+$/.test(foreignId) && foreignId !== ownId, message: await pageMessage(m2) });
+  rec(a.account, 'Submit by ' + a.account + ' with the id of ' + a.otherItem + ' (another department) put in the page: refused with a message, the panel closes, the list read again',
+    { foreignIdUsed: true, message: 'You cannot change this action item: your role can only read it, or it is not an item of your department. Nothing was saved.', panel: false, listed: true },
+    { foreignIdUsed: /^\d+$/.test(foreignId) && foreignId !== ownId, message: await pageMessage(m2), panel: await panelOpen(m2),
+      listed: Object.keys((await readActionItems(m2) || { rows: {} }).rows).includes(a.ownItem) });
+  // Step UN6d: a Submit inside the scope saves with a success message; the panel closes and the list is read again
+  // with the link chosen (Read: the item was opened above, so it is read)
   await t.visit(m2, DASHBOARD);
+  await chooseActionMode(m2, 'Read');
   await openItem(m2, a.ownItem);
   await postBack(m2, () => m2.locator(submit).click());
-  rec(a.account, 'Submit by ' + a.account + ' for ' + a.ownItem + ' (his department): saved, no message, the panel closes', { message: '', panel: false },
-    { message: await pageMessage(m2), panel: await panelOpen(m2) });
+  const after = await readActionItems(m2);
+  rec(a.account, 'Submit by ' + a.account + ' for ' + a.ownItem + ' (his department) under Read: saved with a success message, the panel closes, the list read again under Read',
+    { message: a.savedMessage, kind: 'success', panel: false, current: 'Read', listed: true },
+    { message: await pageMessage(m2), kind: await messageKind(m2), panel: await panelOpen(m2), current: after ? after.current : 'no card',
+      listed: !!after && Object.keys(after.rows).includes(a.ownItem) });
   await t.visit(m2, DASHBOARD);
 }
 

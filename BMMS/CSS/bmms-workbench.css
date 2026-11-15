@@ -1525,6 +1525,33 @@ body.wb .bmms-comment-by-line
 		text-align: left;
 	}
 }
+/* Step UN6d: the Followup page (Master/Followup.aspx) only; the shared classes (.divRow, .MyPopupContentInner,
+   .formPanel, .rte) are not changed.
+   .wb-followup-row: the wrapper of a message line among the floated .divRow rows (CommonHTML.css). It floats too,
+   as wide as its row, so the line sits below the row before it; a plain block would start at the top of that
+   floated row with its background drawn under it. No padding, so an empty wrapper adds no gap. */
+.wb-followup-row
+{
+	float: left;
+	width: 100%;
+}
+/* .wb-followup-popup (Actual Resolution and Action Text panels): the editor is a block (.rte, RichTextEditor.css),
+   which text-align does not centre; auto margins do. The message line is as wide as the editor and centred
+   under it. Width 600px: the same width is the Width of ftxtActionText in Master/Followup.aspx; change both
+   together. */
+.wb-followup-popup .rte
+{
+	margin-left: auto;
+	margin-right: auto;
+}
+.wb-followup-popup .wb-dash-message
+{
+	box-sizing: border-box;
+	width: 600px;
+	max-width: 100%;
+	margin: 0 auto var(--wb-space-3);
+	text-align: left;
+}
 /* ==========================================================================
    Narrow windows
    ========================================================================== */

@@ -2,6 +2,7 @@ using System;
 using System.Data;
 using System.Configuration;
 using System.Collections;
+using System.Collections.Generic;
 using System.Web;
 using System.Web.Security;
 using System.Web.UI;
@@ -17,10 +18,36 @@ namespace BMMS.Master
     {
         private string className = "Followup";
 
+        // Step UN6d: the messages of the two saves (decided on the server, BMMS-Fix-FollowupSave-Step46.sql)
+        private const string ReadOnlyMessage = "You can read the followups. Your role cannot change them.";
+        private const string NotSavedMessage = "You cannot change the followups: your role can only read them, or an item on the list no longer exists. Nothing was saved. Click View to read the list again.";
+        private const string InactiveMessage = "Your account is not active. Nothing was saved. Sign in again.";
+        private const string ActionTextSavedMessage = "The action text was saved.";
+        private const string ActionTextFailedMessage = "The action text could not be saved. Nothing was saved. Try again.";
+        private const string ActionTextBusyMessage = "The server is busy and the action text could not be saved. Nothing was saved. Wait a moment, then try again.";
+        private const string ConfirmedSavedMessage = "The confirmations were saved.";
+        private const string ConfirmedFailedMessage = "The confirmations could not be saved. Nothing was saved. Try again.";
+        private const string ConfirmedBusyMessage = "The server is busy and the confirmations could not be saved. Nothing was saved. Wait a moment, then try again.";
+
+        #region CanSave
+        // Step UN6d: only the Controller may change the followups; every other role that opens the page (MD
+        // Secretariat) reads them. This decides what the page SHOWS only (Save, Submit, the ticks, the read-only
+        // line); every save is decided on the server from the acting user id, with the role read from the database.
+        private bool CanSave
+        {
+            get { return Convert.ToString(Session["RoleCode"]) == "controller"; }
+        }
+        #endregion
+
         #region Page_Load
         protected void Page_Load(object sender, EventArgs e)
         {
             Common.InitSetup(className);
+
+            // Step UN6d: Submit and the read-only line by role, on every request
+            btnSubmit.Visible = CanSave;
+            pFollowupReadOnly.InnerText = ReadOnlyMessage;
+            pFollowupReadOnly.Visible = !CanSave;
 
             if (!IsPostBack)
             {
@@ -271,6 +298,15 @@ namespace BMMS.Master
                         chkIsConfirmed.Checked = true;
                     else
                         chkIsConfirmed.Checked = false;
+
+                    // Step UN6d: a role that can only read sees the ticks disabled and "View" for the action text
+                    if (!CanSave)
+                    {
+                        chkIsConfirmed.Enabled = false;
+                        Button btnActionText = (Button)e.Row.FindControl("btnActionText");
+                        if (btnActionText != null)
+                            btnActionText.Text = "View";
+                    }
                 }
             }
             catch (Exception ex)
@@ -320,6 +356,17 @@ namespace BMMS.Master
                 {
                     pnlActionText.Visible = true;
                     ftxtActionText.Text = HtmlCleaner.Clean(dtActionItem.Rows[0]["ActionText"].ToString());
+
+                    // Step UN6d: Save only for the Controller; another role reads the text, with the read-only line
+                    bool canSave = CanSave;
+                    ftxtActionText.ReadOnly = !canSave;
+                    btnActionTextSave.Visible = canSave;
+                    btnActionTextCancel.Text = canSave ? "Cancel" : "Close";
+                    litActionTextTitle.Text = canSave ? ":: Edit Action Text" : ":: View Action Text";
+                    if (canSave)
+                        HideActionTextPanelMessage();
+                    else
+                        ShowActionTextPanelMessage(ReadOnlyMessage);
                 }
             }
             catch (Exception ex)
@@ -340,67 +387,153 @@ namespace BMMS.Master
         #region btnActionTextCancel_Click
         protected void btnActionTextCancel_Click(object sender, EventArgs e)
         {
-            pnlActionText.Visible = false;
-            ftxtActionText.Text = string.Empty;   // step A3
+            CloseActionTextPanel();
         }
         #endregion
 
         #region btnActionTextSave_Click
+        // Step UN6d: the save goes through spr_SaveFollowupActionText (step 46), which decides on the server from the
+        // acting user id: only an active Controller; it writes the action text only, as before. Saved or refused, the
+        // panel closes with a message; a failed save keeps the panel open with the text typed and says so inside it.
         protected void btnActionTextSave_Click(object sender, EventArgs e)
         {
-            // Step A3: rich text over the limit (Web.config): nothing is saved, the panel stays open
-            if (RichTextEditor.IsTooLong(this)) { MsgDisplay(RichTextLimits.TooLongMessage); return; }
+            MsgHide();
 
-            string Code = "ActionText";
-            int ActionItemId = Convert.ToInt16(ViewState["ActionItemId"].ToString());
-            string ActualResolution = "";
+            // Step A3: rich text over the limit (Web.config): nothing is saved, the panel stays open.
+            // Step UN6d: the message on the line inside the open panel (the page's message box lies under it)
+            if (RichTextEditor.IsTooLong(this)) { ShowActionTextPanelMessage(RichTextLimits.TooLongMessage); return; }
+
+            int UserId;
+            if (!HasSessionUser(out UserId))
+                return;
+
+            int ActionItemId;
+            if (!int.TryParse(Convert.ToString(ViewState["ActionItemId"]), out ActionItemId))
+            {
+                CloseActionTextPanel();
+                MsgDisplay(NotSavedMessage);
+                return;
+            }
+
             string ActionText = ftxtActionText.Text.Trim();
-            int IsComplied = 0;
-            int IsConfirmed = 0;
 
-            ActionItemMgr.UpdateActionItem(Code, ActionItemId, ActualResolution, ActionText, IsComplied, IsConfirmed);
+            int reason;
+            try
+            {
+                reason = ActionItemMgr.SaveFollowupActionText(UserId, ActionItemId, ActionText);
+            }
+            catch (Exception ex)
+            {
+                Utilities.WriteErrorLog(className, "btnActionTextSave_Click", ex.ToString());
+                ShowActionTextPanelMessage(Common.IsServerBusy(ex) ? ActionTextBusyMessage : ActionTextFailedMessage);
+                return;
+            }
 
+            CloseActionTextPanel();   // step A3: saved or refused, the panel closes and keeps no text
 
-            pnlActionText.Visible = false;
-            ftxtActionText.Text = string.Empty;   // step A3: saved, the panel closes
+            if (reason == 0)
+                MsgDisplay(ActionTextSavedMessage, MessageKind.Success);
+            else if (reason == 8)
+                MsgDisplay(InactiveMessage);
+            else
+                MsgDisplay(NotSavedMessage);
         }
         #endregion
 
 
         #region btnSubmit_Click
+        // Step UN6d: every row of the list in ONE call to spr_SaveFollowupConfirmed (step 46), in one transaction: all
+        // rows are saved or none. The server decides from the acting user id: only an active Controller; one row that
+        // is not allowed (an item that no longer exists) refuses the whole Submit. It writes for each row what the page
+        // wrote before (IsComplied 0, IsConfirmed the tick; a tick sets the item's mapping rows to StatusId 0).
         protected void btnSubmit_Click(object sender, EventArgs e)
         {
             MsgHide();
-            string strMsg = string.Empty;
 
+            int UserId;
+            if (!HasSessionUser(out UserId))
+                return;
+
+            List<KeyValuePair<int, bool>> rows = new List<KeyValuePair<int, bool>>();
             foreach (GridViewRow gr in grvFollowup.Rows)
             {
-                if (gr.RowType == DataControlRowType.DataRow)
+                if (gr.RowType != DataControlRowType.DataRow)
+                    continue;
+
+                int ActionItemId;
+                Label lblActionItemId = (Label)gr.FindControl("lblActionItemId");
+                CheckBox chkIsConfirmed = (CheckBox)gr.FindControl("chkIsConfirmed");
+                if (lblActionItemId == null || chkIsConfirmed == null || !int.TryParse(lblActionItemId.Text.Trim(), out ActionItemId))
                 {
-                    string Code = "All";
-                    int ActionItemId = int.Parse(((Label)gr.FindControl("lblActionItemId")).Text);
-                    string ActualResolution = "";
-                    string ActionText = "";
-
-                    int IsComplied = 0;
-
-                    CheckBox chkIsConfirmed = (CheckBox)gr.FindControl("chkIsConfirmed");
-
-                    int IsConfirmed = 0;
-                    if (chkIsConfirmed.Checked)
-                        IsConfirmed = 1;
-
-                    ActionItemMgr.UpdateActionItem(Code, ActionItemId, ActualResolution, ActionText, IsComplied, IsConfirmed);
+                    // A row whose item cannot be read: nothing is sent, nothing is saved
+                    MsgDisplay(NotSavedMessage);
+                    return;
                 }
+
+                rows.Add(new KeyValuePair<int, bool>(ActionItemId, chkIsConfirmed.Checked));
             }
 
-            strMsg = "Successfully Saved";
+            int reason;
+            int saved;
+            try
+            {
+                reason = ActionItemMgr.SaveFollowupConfirmed(UserId, rows, out saved);
+            }
+            catch (Exception ex)
+            {
+                Utilities.WriteErrorLog(className, "btnSubmit_Click", ex.ToString());
+                MsgDisplay(Common.IsServerBusy(ex) ? ConfirmedBusyMessage : ConfirmedFailedMessage);
+                return;
+            }
 
-            MsgDisplay(strMsg, MessageKind.Success);
+            if (reason == 0)
+                MsgDisplay(ConfirmedSavedMessage, MessageKind.Success);
+            else if (reason == 8)
+                MsgDisplay(InactiveMessage);
+            else
+                MsgDisplay(NotSavedMessage);
 
             ScriptManager.GetCurrent(this).SetFocus(ddlCommittee.ClientID);
+        }
+        #endregion
 
-            //btnViewFollowup_Click(this, e);
+        #region CloseActionTextPanel
+        // Step UN6d: the Action Text panel closed, with no text in its editor (step A3) and no line
+        private void CloseActionTextPanel()
+        {
+            pnlActionText.Visible = false;
+            ftxtActionText.Text = string.Empty;
+            HideActionTextPanelMessage();
+        }
+        #endregion
+
+        #region ShowActionTextPanelMessage
+        // Step UN6d: the line inside the Action Text panel, above its buttons (plain text): the read-only line, or a
+        // failed save, a busy server or a text that is too long. Cleared when the panel opens and when it closes.
+        private void ShowActionTextPanelMessage(string message)
+        {
+            pActionTextPanelMessage.InnerText = message;
+            pActionTextPanelMessage.Visible = true;
+        }
+
+        private void HideActionTextPanelMessage()
+        {
+            pActionTextPanelMessage.InnerText = string.Empty;
+            pActionTextPanelMessage.Visible = false;
+        }
+        #endregion
+
+        #region HasSessionUser
+        // Step UN6d: a session without a usable user id is treated as expired (as the Dashboard does, step F2)
+        private bool HasSessionUser(out int UserId)
+        {
+            UserId = 0;
+            if (Session["UserId"] == null || !int.TryParse(Session["UserId"].ToString(), out UserId))
+            {
+                Response.Redirect("~/", true);
+                return false;
+            }
+            return true;
         }
         #endregion
 

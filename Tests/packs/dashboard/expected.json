@@ -265,7 +265,9 @@
   },
   "actionScope": {
     "opener": "controller", "unmappedItem": "QA1-00006-001", "readOnly": "mgmt",
-    "account": "manager2", "ownItem": "QA2-00003-1", "otherAccount": "user", "otherItem": "QA1-00005-002"
+    "account": "manager2", "ownItem": "QA2-00003-1", "otherAccount": "user", "otherItem": "QA1-00005-002",
+    "readOnlyLine": "You can read this action item. Your role cannot change it.",
+    "savedMessage": "The action text was saved."
   },
   "approvals": {
     "admin": "no panel",

@@ -128,6 +128,12 @@
                         </div>
                     </asp:Panel>
                     <asp:Panel ID="pnlViewFollowup" runat="server">
+                        <%-- Step UN6d: a role that can only read the followups (MD Secretariat) is told so above the list.
+                             The wrapper is a floated row like the .divRow rows around it (wb-followup-row), so the line
+                             stays below the filter rows --%>
+                        <div class="wb-followup-row">
+                            <p id="pFollowupReadOnly" runat="server" class="wb-dash-message" visible="false"></p>
+                        </div>
                         <div class="divRow">
                             <asp:GridView ID="grvFollowup" runat="server" SkinID="grvSkinNoPaging" AutoGenerateColumns="false"
                                 CssClass="contentTable1" AllowSorting="true" CellPadding="4" DataKeyNames="MinutesId"
@@ -242,7 +248,7 @@
             <asp:Panel ID="pnlActualResolution" runat="server">
                 <div class="MyPopupOuter">
                     <div class="MyPopupContent">
-                        <div class="MyPopupContentInner">
+                        <div class="MyPopupContentInner wb-followup-popup">
                             <div class="formPanel">
                                 <div class="divHeader">
                                     :: View Minute Actual Resolution</div>
@@ -261,12 +267,19 @@
             <asp:Panel ID="pnlActionText" runat="server">
                 <div class="MyPopupOuter">
                     <div class="MyPopupContent">
-                        <div class="MyPopupContentInner">
+                        <div class="MyPopupContentInner wb-followup-popup">
                             <div class="formPanel">
                                 <div class="divHeader">
-                                    :: Edit Action Text</div>
+                                    <asp:Literal ID="litActionTextTitle" runat="server" Text=":: Edit Action Text"></asp:Literal></div>
                                 <div class="divRow" style="text-align: center;">
+                                    <%-- Width 600px: the same width is in ".wb-followup-popup .wb-dash-message" (CSS/bmms-workbench.css); change both together --%>
                                     <bmms:RichTextEditor ID="ftxtActionText" runat="server" Width="600px" Height="200px" Label="Action Text" />
+                                </div>
+                                <%-- Step UN6d: the read-only line, or a save that failed, a busy server or a text that is too
+                                     long (the page's message box lies under this panel). A floated row (wb-followup-row),
+                                     so it sits under the editor's row, as wide as the editor --%>
+                                <div class="wb-followup-row" aria-live="polite">
+                                    <p id="pActionTextPanelMessage" runat="server" class="wb-dash-message" visible="false"></p>
                                 </div>
                                 <div class="divRow" style="text-align: center;">
                                     <asp:Button ID="btnActionTextSave" runat="server" CssClass="button" Text="Save" OnClick="btnActionTextSave_Click" />

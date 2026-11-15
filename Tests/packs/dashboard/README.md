@@ -1,4 +1,4 @@
-# Dashboard pack (steps UN6b, UN6c1, UN6c2a and UN6c2b)
+# Dashboard pack (steps UN6b, UN6c1, UN6c2a, UN6c2b and UN6d)
 
 The pack proves on every run that the Dashboard's Meetings card shows each role the meetings, colours and
 statistics of the owner's rules (Database\README.md, section "Step UN6b"), that the Alert and Action Item lists
@@ -8,7 +8,7 @@ still show what they showed, and that the page fits the window.
 
 | File | What | Who changes it |
 |---|---|---|
-| `expected.json` | The cases (account, filter chosen, drop-downs, subtitle, card title, last column header, statistics shown, the Scheduled and Completed rows), the first-page row counts of the Alert and Action Item lists, the two headings of the Alerts card, the window widths. Step UN6c1: the header count per account (`alertHeader`), the three links for one account (`alertModes`), the person named on some alerts (`alertActors`), the due dates of the action items (`actionItemsDue`), the accounts of the action checks (`alertActions`). Step UN6c2a: `meetingsFit` (account, window width and number of columns of the fit check of the Scheduled list) and `pastItem` (the account, the alert and item of the passed meeting, the meeting-date message as the page shows it, and an item the account can decide). Step UN6c2b: `inProgressMeaning` and `inProgressMeaningWaiting` (the meaning of "In progress": the first half, and the whole sentence for the accounts of `inProgressWaitingAccounts`, the Controller and the Managers), `summary` (the summary cards per account), `summaryFilters` (one filter chosen, and what every card shows then), `alertsNote`, `inactiveCommittee`, `summaryWidths`, `approvalsHeadingKept`, `tableFit`. | The owner, or Claude on the owner's instruction (the build report lists it under "expectations changed"). Never the tester. |
+| `expected.json` | The cases (account, filter chosen, drop-downs, subtitle, card title, last column header, statistics shown, the Scheduled and Completed rows), the first-page row counts of the Alert and Action Item lists, the two headings of the Alerts card, the window widths. Step UN6c1: the header count per account (`alertHeader`), the three links for one account (`alertModes`), the person named on some alerts (`alertActors`), the due dates of the action items (`actionItemsDue`), the accounts of the action checks (`alertActions`). Step UN6c2a: `meetingsFit` (account, window width and number of columns of the fit check of the Scheduled list) and `pastItem` (the account, the alert and item of the passed meeting, the meeting-date message as the page shows it, and an item the account can decide). Step UN6c2b: `inProgressMeaning` and `inProgressMeaningWaiting` (the meaning of "In progress": the first half, and the whole sentence for the accounts of `inProgressWaitingAccounts`, the Controller and the Managers), `summary` (the summary cards per account), `summaryFilters` (one filter chosen, and what every card shows then), `alertsNote`, `inactiveCommittee`, `summaryWidths`, `approvalsHeadingKept`, `tableFit`. Step UN6d: `actionScope.readOnlyLine` and `actionScope.savedMessage`. | The owner, or Claude on the owner's instruction (the build report lists it under "expectations changed"). Never the tester. |
 | `pack.js` | The checks. | Claude, in a reviewed step. |
 
 ## A row
@@ -77,10 +77,16 @@ the run):
    the two unread rows and the header reads "Alerts (2)"; Recent shows the three, one read.
 8. The scope of the Action Items card (step UN6c1, `actionScope`; which items each account sees is in check 2,
    `actionItemsList`): qa_ctrl has no mapping row for QA1-00006-001, sees it unread, opens it and sees it read,
-   also on a fresh Dashboard; for qa_mgmt it is still unread; qa_mgmt opens it and its Submit is refused with
-   "You cannot change this action item: your role can only read it, or it is not an item of your department. Nothing was saved."; with the id of QA1-00005-002 (Credit) put into the
-   page of qa_manager2 (HRD and Secretarial), Submit is refused with the same message; his Submit for his own
-   QA2-00003-1 saves (no message).
+   also on a fresh Dashboard; qa_ctrl's panel has Submit and Cancel, no Close and no read-only line (step UN6d);
+   for qa_mgmt it is still unread; qa_mgmt opens it: no Submit, no Cancel, Close, and the line "You can read this
+   action item. Your role cannot change it." (`readOnlyLine`; step UN6d; before, its Submit was shown and the server
+   refused it; that refusal is still proven by the step 43 Test script, since a button the page does not render
+   cannot be clicked); Close closes the panel without a message. With the id of QA1-00005-002 (Credit) put into the
+   page of qa_manager2 (HRD and Secretarial), Submit is refused with "You cannot change this action item: your role
+   can only read it, or it is not an item of your department. Nothing was saved.", the panel closes and the list is
+   read again; his Submit for his own QA2-00003-1 with Read chosen saves with "The action text was saved." as a
+   success (`savedMessage`; step UN6d; before: no message), the panel closes and the list is read again with Read
+   still chosen and the item in it.
 9. My approvals (step UN6c2a; `approvals`, `approvalFilters`, `approvalOpen`): the panel per account and its rows,
    newest meeting first; no panel for qa_user, qa_user2, qa_mgmt, qa_mdsec and qa_admin. With committee QA Dashboard
    Committee chosen qa_ctrl sees QA2-00001-1 only; qa_manager2 with HRD chosen sees his item, with Secretarial

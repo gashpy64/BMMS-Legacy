@@ -734,7 +734,16 @@ namespace BMMS.DashBoard {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::BMMS.Controls.RichTextEditor ftxtActionText;
-        
+
+        /// <summary>
+        /// pActionItemPanelMessage control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl pActionItemPanelMessage;
+
         /// <summary>
         /// Panel2 control.
         /// </summary>

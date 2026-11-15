@@ -1,0 +1,8 @@
+{
+  "readOnlyAccount": "mdsec",
+  "saveAccount": "controller",
+  "rows": ["QA1-00005-001", "QA1-00005-002", "QA1-00006-001", "QA2-00002-1", "QA2-00003-1"],
+  "readOnlyLine": "You can read the followups. Your role cannot change them.",
+  "actionTextSaved": "The action text was saved.",
+  "confirmedSaved": "The confirmations were saved."
+}

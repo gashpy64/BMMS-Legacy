@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Data;
+using System.Globalization;
+using System.Xml;
 using BMMSDAL;
 
 namespace BMMSBAL
@@ -96,11 +98,40 @@ namespace BMMSBAL
         }
         #endregion
 
-        #region UpdateActionItem
-        public static void UpdateActionItem(string Code, int ActionItemId, string ActualResolution, string ActionText, int IsComplied, int IsConfirmed)
+        #region SaveFollowupActionText
+        // Step UN6d (step 46): see ActionItemDB. The rich text is cleaned before it is stored, as before (step A1a).
+        public static int SaveFollowupActionText(int ActingUserId, int ActionItemId, string ActionText)
         {
-            // Rich text cleaned before it is stored (step A1a)
-            ActionItemDB.UpdateActionItem(Code, ActionItemId, HtmlCleaner.Clean(ActualResolution), HtmlCleaner.Clean(ActionText), IsComplied, IsConfirmed);
+            return ActionItemDB.SaveFollowupActionText(ActingUserId, ActionItemId, HtmlCleaner.Clean(ActionText));
+        }
+        #endregion
+
+        #region SaveFollowupConfirmed
+        // Step UN6d (step 46): the Submit of the Followup page, every row in one call. Rows: the action item id and
+        // the tick (true = Confirmed) of each row of the page. The list is written with XmlWriter, so nothing of it
+        // is ever read as markup. See ActionItemDB.
+        public static int SaveFollowupConfirmed(int ActingUserId, IList<KeyValuePair<int, bool>> Rows, out int Saved)
+        {
+            StringBuilder sb = new StringBuilder();
+            XmlWriterSettings settings = new XmlWriterSettings();
+            settings.OmitXmlDeclaration = true;
+            using (XmlWriter w = XmlWriter.Create(sb, settings))
+            {
+                w.WriteStartElement("items");
+                if (Rows != null)
+                {
+                    foreach (KeyValuePair<int, bool> row in Rows)
+                    {
+                        w.WriteStartElement("i");
+                        w.WriteAttributeString("id", row.Key.ToString(CultureInfo.InvariantCulture));
+                        w.WriteAttributeString("c", row.Value ? "1" : "0");
+                        w.WriteEndElement();
+                    }
+                }
+                w.WriteEndElement();
+            }
+
+            return ActionItemDB.SaveFollowupConfirmed(ActingUserId, sb.ToString(), out Saved);
         }
         #endregion
 

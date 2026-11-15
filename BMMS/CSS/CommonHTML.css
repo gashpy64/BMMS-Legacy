@@ -36,6 +36,10 @@ body.wb div#contentArea:has(.MyPopupOuter)
 	position: relative;
 	min-height: 70vh;      /* room for the panel when the page behind it is short */
 	overflow: visible;
+	/* Step UN6d: overflow: visible took away what made the content area contain floated content (overflow-x: auto,
+	   bmms-workbench.css), so on Followup a list taller than 70vh hung out below it and the footer was squeezed
+	   into a narrow column beside the floats. flow-root contains them again without clipping or scrolling. */
+	display: flow-root;
 }
 body.wb div#contentArea .MyPopupOuter
 {

@@ -74,7 +74,10 @@ Written rules the draft also cites (Database\README.md and the code comments of 
   (ChangePasswordFirst.aspx; RA1a test users).
 - **W5:** Admin's Master menu shows all twelve items (RA1a browser check 1), so Admin opens the
   six committee and meeting masters too.
-- **W6:** MD Secretariat works on Followup (Minutes menu; step A2 browser checks).
+- **W6:** MD Secretariat opens Followup (Minutes menu; step A2 browser checks) and, since step UN6d
+  (owner decision 2026-11-15), reads it only: no Save, no Submit, the ticks disabled; every save of
+  the page is decided on the server (Controller only). The page still opens for MD Secretariat, so
+  its cell is unchanged; what the page shows is checked by the followup pack.
 - **W7:** Error/TestPage.aspx was a leftover nobody could open (step WF3a1); removed in step RA1c2 with its row.
 - **W8:** Logout ends the session and shows the sign-in page.
 - **RA1b:** the code rules of step RA1b: Reports.aspx refuses any rc other than minutes,
