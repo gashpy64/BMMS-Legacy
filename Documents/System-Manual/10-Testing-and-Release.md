@@ -3,10 +3,11 @@
 - Title: Testing and Release
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6c2b (the step 45 Test script section, "The dashboard pack since step UN6c2b", the fixture and baseline notes); UN6c2a (the step 44 Test script section, "The dashboard pack since step UN6c2a", check 4 of the dashboard pack, the fixture and baseline notes); UN6c1 (the step 43 Test script section, "The dashboard pack since step UN6c1", the fixture and baseline notes); UN6b (the step 42 Test script section, the dashboard pack, the memory preflight, the fixture's committee QA2, the baseline upkeep note); the rest RA1c2
-- Last updated by: UN6c2b, based on 357cdd0
+- Applies to: UN6d (the step 46 Test script section "Step 46 (UN6d): the Followup saves", the followup pack, the dashboard pack check 8, the packs line of the tester table); UN6c2b (the step 45 Test script section, "The dashboard pack since step UN6c2b", the fixture and baseline notes); UN6c2a (the step 44 Test script section, "The dashboard pack since step UN6c2a", check 4 of the dashboard pack, the fixture and baseline notes); UN6c1 (the step 43 Test script section, "The dashboard pack since step UN6c1", the fixture and baseline notes); UN6b (the step 42 Test script section, the dashboard pack, the memory preflight, the fixture's committee QA2, the baseline upkeep note); the rest RA1c2
+- Last updated by: UN6d, based on ce7358a
 - Status: Draft
-- Verified against: for step UN6c2b: Database/README.md (section Step UN6c2b: the Test script description, Known items), Tests/packs/dashboard/README.md and Tests/README.md (diff), Database/BMMS-Rollback-AgendaWaitingFor-Step44.sql (diff), the tester run of 2026-11-15 (dashboard pack 388 checks PASSED) and the owner's tests as given; the Test scripts themselves (1329 lines for step 45) were not read in full;
+- Verified against: for step UN6d: Database/README.md (section Step UN6d: the Test script description, the tester paragraph, the changed expected values), Tests/packs/followup/README.md and expected.json, Tests/packs/dashboard/README.md and expected.json (diff), Tests/packs/access-matrix/README.md and Tests/README.md (diff), the Test script result (56 of 56) and the tester runs of 2026-11-15 as given; the Test script itself (632 lines) and pack.js were not read in full;
+  for step UN6c2b: Database/README.md (section Step UN6c2b: the Test script description, Known items), Tests/packs/dashboard/README.md and Tests/README.md (diff), Database/BMMS-Rollback-AgendaWaitingFor-Step44.sql (diff), the tester run of 2026-11-15 (dashboard pack 388 checks PASSED) and the owner's tests as given; the Test scripts themselves (1329 lines for step 45) were not read in full;
   for step UN6c2a: Database/BMMS-Test-AgendaWaitingFor-Step44.sql (header, parts 1 and 2 up to the comparison and the named cases; the 1352 cases counted from its actor, item and action lists), Tests/packs/dashboard/README.md, expected.json and pack.js (diff), Tests/README.md (diff), Tests/fixture/BMMS-Quality-Fixture*.sql (diff), Database/README.md (section Step UN6c2a, Known items), the tester run of 2026-11-14 07:52:25 and the owner's tests as given; for step UN6c1: Database/BMMS-Test-DashboardAlerts-Step43.sql (header), Tests/packs/dashboard/README.md,
   expected.json and pack.js (diff), Tests/README.md (diff), Tests/fixture/BMMS-Quality-Fixture*.sql (diff),
   Database/README.md (section Step UN6c1, Known items), the owner's test result and the tester run of 2026-11-13 as given
@@ -31,7 +32,7 @@
   and the owner's test result of step RA1a; for the step 41 section Database/BMMS-Test-ReportAccess-Step41.sql
   (header), Database/README.md (section RA1b) and the owner's test result of step RA1b
 - To confirm: the UN6b tester result (649 checks, access-matrix and dashboard together, run folder 2026-11-12_214642, memory 1522 MB available of 7886 MB) is as given for the step, not re-read from the results folder; the count of the step 42 Test script (71 in the owner's run) is as given, not recounted; the number of checks of the dashboard pack alone and its run time are not recorded here; the fixture check count after QA2 (29 before, three rows added) was not re-run; the counts of the RA1c2 run (477 checks) are as given for the step, not re-read from the results folder; the run time and counts of the RA1c1 run are as given for the step, not re-read from the results folder; the run times and request count of the access matrix are the owner's measurements as given for the step, not re-measured; the count of 44 checks and the counts of the older Test scripts are Database/README.md's, not
-  recounted from the scripts; chapter not written yet (WF2b2); leads from the old Architecture notes to verify
+  recounted from the scripts; the three UN6d tester runs (871, 399 and 871 checks) are as given for the step, and which packs each held and the number of checks of the followup pack alone are not recorded here; chapter not written yet (WF2b2); leads from the old Architecture notes to verify
 
 ## Test database
 
@@ -162,7 +163,7 @@ Database/README.md, section "Step WF3a1". What the development machine needs is 
 | SQL logins | Two, made by the setup. bmms_tester owns BMMS_Quality; the runner restores and checks as this login. bmms_site is the site copy's login: a user in BMMS_Quality with db_datareader, db_datawriter, db_backupoperator and EXECUTE on the dbo schema. Neither has a server role or access to any other database. Before every run the runner asks the server, as each login, what it can reach, and refuses when that is more than BMMS_Quality (any other database, BMMS or BMMS_Test, a server role, CONTROL SERVER, IMPERSONATE). Since WF3a2 the server permissions are an allow-list: in effect only CONNECT SQL and VIEW ANY DATABASE, and granted to the login only CONNECT SQL, otherwise the run is refused; the check is made again after the restore (Run-Tests.ps1), and Update-Baseline.ps1 makes it after the Fix scripts and before the baseline backup. The application login bmms_app is not used |
 | Browser | The installed Chrome, headless, driven by Node scripts (playwright-core). Requests to any host other than localhost are aborted and listed |
 | Mail | BMMS_Quality has the safe default (localhost, port 25); no real mail can be sent |
-| Packs | One folder per pack under Tests/packs (pack.js and data files). The packs are selftest (WF3a1), access-matrix (WF3a2) and dashboard (UN6b). A pack is Node code: it is written in a step's build and reviewed there, and the tester cannot change it |
+| Packs | One folder per pack under Tests/packs (pack.js and data files). The packs are selftest (WF3a1), access-matrix (WF3a2), dashboard (UN6b) and followup (UN6d). A pack is Node code: it is written in a step's build and reviewed there, and the tester cannot change it |
 
 ### How it is run
 
@@ -615,6 +616,60 @@ so no account's alerts change); BMMS-Quality-Fixture-Check.sql has 39 checks (38
 Result of the step: tester agent, run of 2026-11-15 (Tests/_results/2026-11-15_003506): the dashboard pack PASSED, 388
 checks. SQL Test script 45 passed on BMMS_Test and the Test scripts of steps 42 to 44 pass with and without step 45.
 The owner's tests passed. This record states the dashboard pack only; the other packs of the run are not stated here.
+
+### Step 46 (UN6d): the Followup saves
+
+Database/BMMS-Test-FollowupSave-Step46.sql (BMMS_Test only; run it in a new query window). 56 numbered checks, all PASS
+(run of 2026-11-15 on BMMS_Test). Part 1 reads only: the markers, the parameters, no result set, no feature above
+compatibility level 100; spr_UpdateActionItem is still the step 31 text (SHA-1); the objects of steps 43 and 45 are
+unchanged; EXECUTE for every database user who can run step 42's procedure. Part 2, inside one rolled-back transaction
+with made-up data (ZZ46: one department, a committee, a meeting with finalised minutes, the six roles, an inactive
+Controller, 17 action items with two mapping rows each): the Submit on six twin pairs against spr_UpdateActionItem row
+by row (both ticks from every start of IsComplied and IsConfirmed, a mapping row already at StatusId 0): every column of
+Action_Item and the mapping rows the same; the Action Text on a confirmed twin pair with a Unicode text, the same as
+spr_UpdateActionItem; each role refused for both procedures (Manager, User, Management, MD Secretariat, Admin: Reason
+4; the system account: 12; an inactive Controller, an unknown user, 0 and NULL: 8) with every ZZ46 row unchanged; the
+Submit by the Controller refused as a whole, every row as it was, when one row is bad (an unknown item last of four and
+first of four, an id given twice, a tick of 2 or missing, an id that is not a whole number, with a space, negative, too
+large or of 11 digits, an element other than i, two roots, another root name, no list); the three good rows of those
+lists alone saved; an empty list (Result 1, nothing written); the test's own transaction still open after the refusals;
+the Action Text refused for an unknown and a NULL item; the Rollback's two DROPs inside the transaction. Afterwards the
+agenda, minutes, action item and mapping tables are unchanged and every identity counter is put back. The Fix, Fix
+again, Rollback, Rollback again (refused), Fix sequence was checked on BMMS_Test. The Test scripts of earlier steps pass
+unchanged with step 46 installed: BMMS-Test-UnicodeText-Step31.sql (41), BMMS-Test-DashboardAlerts-Step43.sql (128) and
+BMMS-Test-DashboardSummary-Step45.sql (66).
+
+The followup pack (Tests/packs/followup/README.md; new in step UN6d; run with `-Pack followup`): `expected.json` holds
+the read-only account (`readOnlyAccount`, qa_mdsec), the saving account (`saveAccount`, qa_ctrl), the five rows of the
+list with the default filters (`rows`), the read-only line (`readOnlyLine`) and the two success messages
+(`actionTextSaved`, `confirmedSaved`). Check 1, qa_mdsec: the page opens; after View the five rows, the read-only line
+above the list, no Submit, every Is Confirmed tick disabled, "View" on every Action Text button; the Action Text panel
+titled ":: View Action Text", no Save, a Close button, the line inside the panel; Close closes it without a message.
+Check 2, qa_ctrl: after View the five rows, no line, Submit, ticks enabled, "Edit"; the panel ":: Edit Action Text"
+with Save and Cancel and no line; Save with the text unchanged shows "The action text was saved."; Submit with the
+ticks unchanged shows "The confirmations were saved." and every row keeps its tick. Not in the pack: a forged Save or
+Submit for the MD Secretariat (the page does not render the buttons and ASP.NET's event validation refuses a post for a
+control it did not render; the server's refusal is proven by the Test script), the failure messages and the too-long
+message (owner checks). The Controller's Save and Submit write the values the fixture already has.
+
+The dashboard pack since step UN6d (Tests/packs/dashboard/README.md): expected.json gained `actionScope.readOnlyLine`
+and `actionScope.savedMessage`. Check 8 changed: qa_ctrl's Action Item Details panel has Submit and Cancel, no Close
+and no line; qa_mgmt's panel has no Submit, no Cancel, Close and the line "You can read this action item. Your role
+cannot change it." (before, its Submit was clicked and the server refused it; the server's refusal is still proven by
+the step 43 Test script), and Close closes without a message; qa_manager2's Submit with another department's id closes
+the panel and the list is read again (the message as before); his own Submit with Read chosen shows "The action text
+was saved." as a success, with Read still chosen and the item listed (before: no message). The access-matrix pack's
+expected.csv is unchanged (the page still opens for md_sect); the text of rule W6 in its README changed to say that the
+MD Secretariat reads Followup only.
+
+The tester's baseline: the new step needs `Update-Baseline.ps1 -ConfirmDatabase BMMS_Quality -FixScript
+BMMS-Fix-FollowupSave-Step46.sql` and then `Setup-Quality.ps1`; the fixture is unchanged.
+
+Result of the step: tester agent, runs of 2026-11-15 (folders 2026-11-15_090800, 871 checks; 100359, 399 checks; 124820,
+871 checks), all PASSED, with the packs access-matrix, dashboard and followup as given for the step (not re-read from
+the results folder; which packs each run held is not recorded here). SQL Test script 46 passed on BMMS_Test (56 of 56),
+and the Test scripts of steps 31, 43 and 45 pass. The owner's tests passed. The layout fault C (the footer under an
+open Followup panel) was seen as fixed only after a hard refresh (Ctrl+F5), because the stylesheet is cached.
 
 ## Reviewer stage
 

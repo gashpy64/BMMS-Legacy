@@ -182,6 +182,14 @@ If the action items cannot be loaded the card says "The action items could not b
 to try again." (or "The server is busy and the action items could not be loaded. Wait a moment, then reload
 the page.", or "The action items are not available: your account is not active. Sign in again.").
 
+To change the action text, open the item: the Action Item Details panel shows Submit and Cancel (and no Close).
+Press Submit to save. The panel closes, the list is read again (the link you chose, Show All, Read or Unread, and
+your Committee choice stay) and BMMS says "The action text was saved." If the text could not be saved, the panel
+stays open with your text and says so on a line above the buttons: "The action text could not be saved. Nothing was
+saved. Try again." or "The server is busy and the action text could not be saved. Nothing was saved. Wait a
+moment, then try again.", or "The text is too long. Shorten it or attach the document as a file." Press Submit
+again. If your account is not active BMMS says "Your account is not active. Nothing was saved. Sign in again."
+
 The Committee drop-down narrows the Meetings card, the first two summary cards, My approvals and the Action Items
 card. The Alerts card is your own list for every committee; it says "Your own alerts, for every committee. The
 filters at the top do not apply." The Unread alerts card follows no drop-down either.
@@ -194,6 +202,44 @@ labels sit above the fields. On a window 1240 pixels wide or narrower the cards 
 [Screenshot: Dashboard as the Controller, the three summary cards and the Committee drop-down - supplied by Gashpy Software]
 [Screenshot: Dashboard as the Controller, My approvals card with items waiting and the Waiting for me column - supplied by Gashpy Software]
 [Screenshot: Agenda Alert panel as the Controller, item of a meeting whose date has passed, message above the buttons - supplied by Gashpy Software]
+
+### Followup
+
+Purpose: to read the follow-up decisions of the meetings, to change the action text of a decision and to mark
+decisions as confirmed. You are the only role that can save on this screen. (MD Secretariat opens the same screen to read it.)
+
+Fields and buttons:
+
+- The filter at the top: Committee Name, Meeting No. Search (Particular or Between), Department,
+  Meeting No., Confirmed Status (Both, Confirmed or Not Confirmed), and the buttons View and Cancel.
+- The list shows, for each decision, the Committee Name, Meeting No, Meeting Date, Agenda No., Subject No. and
+  Decision. The column Actual Resolution has a View button that opens the actual resolution to read. The column
+  Action Text has an Edit button. The column Is Confirmed has a tick for each decision.
+- The Submit button under the list saves the ticks.
+
+Steps:
+
+1. Choose the filter and press View. The list appears.
+2. To change the action text, press Edit on the row. The panel ":: Edit Action Text" opens. Change the text and
+   press Save, or press Cancel to leave it unchanged. After Save the panel closes and BMMS says "The action text was
+   saved."
+3. To mark decisions as confirmed, tick Is Confirmed on the rows and press Submit. Submit saves every row of the list in one
+   step: either all of it is saved or none of it. BMMS says "The confirmations were saved."
+
+Messages and what to do:
+
+- "You cannot change the followups: your role can only read them, or an item on the list no longer exists. Nothing
+  was saved. Click View to read the list again.": nothing was saved; press View to read the list again.
+- "Your account is not active. Nothing was saved. Sign in again.": sign in again.
+- "The action text could not be saved. Nothing was saved. Try again." or "The server is busy and the action text
+  could not be saved. Nothing was saved. Wait a moment, then try again.": the panel stays open with your text, and
+  the message stands on a line inside the panel; press Save again.
+- "The text is too long. Shorten it or attach the document as a file.": shorten the text; the panel stays open.
+- "The confirmations could not be saved. Nothing was saved. Try again." or "The server is busy and the
+  confirmations could not be saved. Nothing was saved. Wait a moment, then try again.": press Submit again.
+
+[Screenshot: Followup as the Controller, the list with Edit buttons, the ticks and Submit - supplied by Gashpy Software]
+[Screenshot: Followup as the Controller, the panel ":: Edit Action Text" - supplied by Gashpy Software]
 
 [[CONFIRM: the other screens are not written yet]]
 

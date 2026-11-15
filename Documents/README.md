@@ -3,8 +3,8 @@
 - Title: BMMS Documents - index, register and rules
 - Audience: Gashpy Software (owner, developers, doc-writer)
 - Shipped: No
-- Applies to: UN6c2b
-- Last updated by: UN6c2b, based on 357cdd0 (register entries of 00-Overall, 01-User, 02-Manager, 03-Controller, 04-Admin and Glossary only)
+- Applies to: UN6d
+- Last updated by: UN6d, based on ce7358a (register entries of 00-Overall, 01-User, 02-Manager, 03-Controller and Glossary only)
 - Status: Draft
 - Verified against: the register entries of the five manuals and the Glossary: see there; CLAUDE.md, .claude/agents/doc-writer.md, Documents/_build/*.ps1, Tests/README.md
   (the update matrix lines for the tester)
@@ -120,10 +120,11 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
 - Title: BMMS Overall Manual
 - Audience: Everyone who uses BMMS, and the people who decide on it
 - Shipped: Yes (PDF export)
-- Applies to: UN6c2b (section "The Dashboard meeting list, by role": the table of roles, "In progress" and "Waiting for me", the new subsection "The summary cards", "My approvals and Waiting for me": the heading with a dash, the hint of a refused choice, the Committee drop-down sentence, the layout paragraph; the Dashboard paragraph of "MD Secretariat and Management"); UN6c2a (section "The Dashboard meeting list, by role": the Waiting for me column, "In progress", "Pending" and "Waiting for me", the new subsection "My approvals and Waiting for me", the layout paragraph, the Committee drop-down sentence; the Dashboard paragraph of "MD Secretariat and Management"); UN6c1 (section "The Dashboard meeting list, by role": the Alerts card, the header count, the Action Items card; the Dashboard paragraph of "MD Secretariat and Management"); UN6b (sections "The Dashboard meeting list, by role", "Meeting status on the Dashboard" and the Dashboard paragraph of "MD Secretariat and Management"); the rest RA1b (step 41)
-- Last updated by: UN6c2b, based on 357cdd0
+- Applies to: UN6d (section "The Dashboard meeting list, by role": the Action Items table and the paragraph on Submit in the Action Item Details panel; the section "MD Secretariat and Management": the MD Secretariat reads Followup only, four screenshot placeholders); UN6c2b (section "The Dashboard meeting list, by role": the table of roles, "In progress" and "Waiting for me", the new subsection "The summary cards", "My approvals and Waiting for me": the heading with a dash, the hint of a refused choice, the Committee drop-down sentence, the layout paragraph; the Dashboard paragraph of "MD Secretariat and Management"); UN6c2a (section "The Dashboard meeting list, by role": the Waiting for me column, "In progress", "Pending" and "Waiting for me", the new subsection "My approvals and Waiting for me", the layout paragraph, the Committee drop-down sentence; the Dashboard paragraph of "MD Secretariat and Management"); UN6c1 (section "The Dashboard meeting list, by role": the Alerts card, the header count, the Action Items card; the Dashboard paragraph of "MD Secretariat and Management"); UN6b (sections "The Dashboard meeting list, by role", "Meeting status on the Dashboard" and the Dashboard paragraph of "MD Secretariat and Management"); the rest RA1b (step 41)
+- Last updated by: UN6d, based on ce7358a
 - Status: Draft
-- Verified against: for UN6c2b: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (the Alerts card note, the My approvals heading and its dash, the filter messages), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (the cards, labels, scope line, the meaning of In progress, the hint, the role table, the messages), BMMS/CSS/bmms-workbench.css (the 1240 px and 959 px rules), Database/BMMS-Fix-DashboardSummary-Step45.sql (who has the cards, what is counted, the Committee rule), Database/README.md (section Step UN6c2b and its Known items), the tester run of 2026-11-15 and the owner's tests as given;
+- Verified against: for UN6d: git diff ce7358a 276e402 of BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (the buttons by role, the read-only line, the saved message, the list read again, the failure messages inside the panel) and BMMS/Master/Followup.aspx and Followup.aspx.cs (the read-only look for a role that is not the Controller: the line, the ticks, "View", the panel ":: View Action Text" with Close), Database/README.md (section Step UN6d and its Known items), the tester runs of 2026-11-15 and the owner's tests as given;
+  for UN6c2b: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (the Alerts card note, the My approvals heading and its dash, the filter messages), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (the cards, labels, scope line, the meaning of In progress, the hint, the role table, the messages), BMMS/CSS/bmms-workbench.css (the 1240 px and 959 px rules), Database/BMMS-Fix-DashboardSummary-Step45.sql (who has the cards, what is counted, the Committee rule), Database/README.md (section Step UN6c2b and its Known items), the tester run of 2026-11-15 and the owner's tests as given;
   for UN6c2a: BMMS/DashBoard/DashBoard.aspx (the My approvals card, headings, empty text, the message paragraph inside the Agenda Alert panel) and DashBoard.aspx.cs (all message texts, LoadApprovals, lnkApproval_Click, BindAgendaDetails, btnApprove_Click and btnReject_Click read in full),
   BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (the Waiting for me column, its tooltip, when it is shown), BMMS/CSS/bmms-workbench.css (diff: the 3 to 1 grid, the 1240 px rule), Database/BMMS-Fix-AgendaWaitingFor-Step44.sql
   (who may decide, what IsWaiting needs, who has the panel), Database/README.md (section Step UN6c2a and its Known items), the tester run of 2026-11-14 and the owner's tests as given; for UN6c1: BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (links, column headings, buttons, message texts),
@@ -142,7 +143,7 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
   rule that a Controller does not list the controller approved and rejected alerts and a Manager the manager approved
   and rejected alerts: the owner confirms the wording); the meaning of the Approved, Rejected and Pending counts is worded from the item
   statuses in the code (the owner confirms the wording); the colour names on the status labels (blue, orange,
-  green, red, grey) are taken from the code and are to be compared with the screenshots; what MD Secretariat uses beyond Followup and the dashboard; whether the owner wants the Management
+  green, red, grey) are taken from the code and are to be compared with the screenshots; what MD Secretariat uses beyond reading Followup and the dashboard (the owner's decision of 2026-11-15 that it reads Followup only is written from Database/README.md, section Step UN6d; the text of "MD Secretariat and Management" and of the Action Items table of Management was written from the code and not compared with a screenshot); whether the owner wants the Management
   reports described only here (the rules give Management no manual of its own) or also as a short
   manual; the button names "View" and "Generate" on the report pages are taken from the code
   comments and the step test table, not from the page markup
@@ -152,10 +153,11 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
 - Title: BMMS User Manual
 - Audience: User role
 - Shipped: Yes (PDF export)
-- Applies to: UN6c2b (section "Screens", Dashboard: the summary cards, the Committee drop-down, the heading In progress and its meaning, the message for a choice that cannot be used); UN6c2a (section "Screens", Dashboard: the description of In progress, no My approvals or Waiting for me, the layout and the Committee drop-down sentences); UN6c1 (section "Screens", Dashboard: Alerts card and Action Items card); UN6b (section "Screens", Dashboard only); the rest user-ud1a
-- Last updated by: UN6c2b, based on 357cdd0
+- Applies to: UN6d (section "Screens", Dashboard: the paragraph on changing the action text, Submit and Cancel, the saved message and the failure messages); UN6c2b (section "Screens", Dashboard: the summary cards, the Committee drop-down, the heading In progress and its meaning, the message for a choice that cannot be used); UN6c2a (section "Screens", Dashboard: the description of In progress, no My approvals or Waiting for me, the layout and the Committee drop-down sentences); UN6c1 (section "Screens", Dashboard: Alerts card and Action Items card); UN6b (section "Screens", Dashboard only); the rest user-ud1a
+- Last updated by: UN6d, based on ce7358a
 - Status: Draft
-- Verified against: for UN6c2b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (the role table: the User has the Committee drop-down; the cards, labels "[department] items in progress", the scope line, the meaning of In progress, the messages), BMMS/DashBoard/DashBoard.aspx and .aspx.cs (the Action Items message for a refused choice), Database/README.md (section Step UN6c2b), the tester run of 2026-11-15 and the owner's tests as given;
+- Verified against: for UN6d: BMMS/DashBoard/DashBoard.aspx and .aspx.cs (the Action Item Details panel: Submit and Cancel for the User, the saved message, the list read again, the failure messages on the line inside the panel), Database/README.md (section Step UN6d), the tester runs of 2026-11-15 and the owner's tests as given;
+  for UN6c2b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (the role table: the User has the Committee drop-down; the cards, labels "[department] items in progress", the scope line, the meaning of In progress, the messages), BMMS/DashBoard/DashBoard.aspx and .aspx.cs (the Action Items message for a refused choice), Database/README.md (section Step UN6c2b), the tester run of 2026-11-15 and the owner's tests as given;
   for UN6c2a: BMMS/UserControl/MeetingSummary.ascx.cs (the Waiting for me column only for the roles the server names), BMMS/DashBoard/DashBoard.aspx.cs (the panel is hidden for every role but Controller and Manager), BMMS/CSS/bmms-workbench.css (diff),
   Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (the roles that have the panel), the tester run of 2026-11-14 and the owner's tests as given; for UN6c1: BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (links, headings, message texts),
   BMMS/MasterPage/Main.Master.cs, Database/BMMS-Fix-DashboardAlerts-Step43.sql, Database/README.md (section Step UN6c1), the owner's
@@ -171,10 +173,11 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
 - Title: BMMS Manager Manual
 - Audience: Manager role
 - Shipped: Yes (PDF export)
-- Applies to: UN6c2b (section "Screens", Dashboard: the summary cards, the heading In progress and its meaning, the Committee and Department drop-downs on every card, My approvals heading with a dash, the messages for a choice that cannot be used, the layout sentence); UN6c2a (section "Screens", Dashboard: the My approvals card, the Waiting for me column, Pending and Waiting for me, deciding an item, the meeting-date and could-not-be-checked messages, the layout and the drop-down sentences); UN6c1 (section "Screens", Dashboard: Alerts card and Action Items card); UN6b (section "Screens", Dashboard only); the rest user-ud1a
-- Last updated by: UN6c2b, based on 357cdd0
+- Applies to: UN6d (section "Screens", Dashboard: the paragraph on changing the action text, Submit and Cancel, the saved message and the failure messages); UN6c2b (section "Screens", Dashboard: the summary cards, the heading In progress and its meaning, the Committee and Department drop-downs on every card, My approvals heading with a dash, the messages for a choice that cannot be used, the layout sentence); UN6c2a (section "Screens", Dashboard: the My approvals card, the Waiting for me column, Pending and Waiting for me, deciding an item, the meeting-date and could-not-be-checked messages, the layout and the drop-down sentences); UN6c1 (section "Screens", Dashboard: Alerts card and Action Items card); UN6b (section "Screens", Dashboard only); the rest user-ud1a
+- Last updated by: UN6d, based on ce7358a
 - Status: Draft
-- Verified against: for UN6c2b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (the cards, the Manager's labels with one, several or a chosen department, ChoiceHint: the Department drop-down shown only with two or more departments, the meaning of In progress for the Manager), BMMS/DashBoard/DashBoard.aspx and .aspx.cs (the My approvals heading and its dash, the Action Items message, the Alerts note), BMMS/CSS/bmms-workbench.css, Database/BMMS-Fix-DashboardSummary-Step45.sql, Database/README.md (section Step UN6c2b), the tester run of 2026-11-15 and the owner's tests as given;
+- Verified against: for UN6d: BMMS/DashBoard/DashBoard.aspx and .aspx.cs (the Action Item Details panel: Submit and Cancel for the Manager, the saved message, the list read again with the Committee and Department filters kept, the failure messages on the line inside the panel), Database/README.md (section Step UN6d), the tester runs of 2026-11-15 and the owner's tests as given;
+  for UN6c2b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (the cards, the Manager's labels with one, several or a chosen department, ChoiceHint: the Department drop-down shown only with two or more departments, the meaning of In progress for the Manager), BMMS/DashBoard/DashBoard.aspx and .aspx.cs (the My approvals heading and its dash, the Action Items message, the Alerts note), BMMS/CSS/bmms-workbench.css, Database/BMMS-Fix-DashboardSummary-Step45.sql, Database/README.md (section Step UN6c2b), the tester run of 2026-11-15 and the owner's tests as given;
   for UN6c2a: BMMS/DashBoard/DashBoard.aspx (the My approvals card, empty text, the message paragraph inside the Agenda Alert panel, the buttons) and DashBoard.aspx.cs (all message texts, LoadApprovals, lnkApproval_Click, BindAgendaDetails, btnApprove_Click and btnReject_Click read in full),
   BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (the Waiting for me column, the Department drop-down passed on), BMMS/CSS/bmms-workbench.css (diff), Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (which items are routed to a Manager, what IsWaiting needs),
   Database/README.md (section Step UN6c2a and its Known items), the tester run of 2026-11-14 and the owner's tests as given; for UN6c1: BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (links, headings, message texts),
@@ -192,10 +195,11 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
 - Title: BMMS Controller Manual
 - Audience: Controller role
 - Shipped: Yes (PDF export)
-- Applies to: UN6c2b (section "Screens", Dashboard: the summary cards, the heading In progress and its meaning, the Committee drop-down on every card, My approvals heading with a dash, the messages for a choice that cannot be used, the layout sentence); UN6c2a (section "Screens", Dashboard: the My approvals card, the Waiting for me column, Pending and Waiting for me, deciding an item, the meeting-date and could-not-be-checked messages, the layout and the Committee drop-down sentences); UN6c1 (section "Screens", Dashboard: Alerts card and Action Items card); UN6b (section "Screens", Dashboard); the rest RA1c2
-- Last updated by: UN6c2b, based on 357cdd0
+- Applies to: UN6d (section "Screens": the paragraph on changing the action text in the Dashboard, and the new screen "Followup" with its messages and two screenshot placeholders); UN6c2b (section "Screens", Dashboard: the summary cards, the heading In progress and its meaning, the Committee drop-down on every card, My approvals heading with a dash, the messages for a choice that cannot be used, the layout sentence); UN6c2a (section "Screens", Dashboard: the My approvals card, the Waiting for me column, Pending and Waiting for me, deciding an item, the meeting-date and could-not-be-checked messages, the layout and the Committee drop-down sentences); UN6c1 (section "Screens", Dashboard: Alerts card and Action Items card); UN6b (section "Screens", Dashboard); the rest RA1c2
+- Last updated by: UN6d, based on ce7358a
 - Status: Draft
-- Verified against: for UN6c2b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (the cards, the labels "Items in progress" and "Items rejected", the meaning of In progress for the Controller, ChoiceHint), BMMS/DashBoard/DashBoard.aspx and .aspx.cs (the My approvals heading and its dash, the Action Items message, the Alerts note), BMMS/CSS/bmms-workbench.css, Database/BMMS-Fix-DashboardSummary-Step45.sql, Database/README.md (section Step UN6c2b), the tester run of 2026-11-15 and the owner's tests as given;
+- Verified against: for UN6d: BMMS/Master/Followup.aspx and .aspx.cs (the filter fields, the list columns, the buttons Edit, View, Save, Cancel, Submit, the panel ":: Edit Action Text", all message texts, the all-or-nothing Submit), BMMS/DashBoard/DashBoard.aspx and .aspx.cs (the Action Item Details panel: Submit and Cancel, no Close, the saved message), Database/README.md (section Step UN6d), the tester runs of 2026-11-15 and the owner's tests as given;
+  for UN6c2b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (the cards, the labels "Items in progress" and "Items rejected", the meaning of In progress for the Controller, ChoiceHint), BMMS/DashBoard/DashBoard.aspx and .aspx.cs (the My approvals heading and its dash, the Action Items message, the Alerts note), BMMS/CSS/bmms-workbench.css, Database/BMMS-Fix-DashboardSummary-Step45.sql, Database/README.md (section Step UN6c2b), the tester run of 2026-11-15 and the owner's tests as given;
   for UN6c2a: BMMS/DashBoard/DashBoard.aspx (the My approvals card, empty text, the message paragraph inside the Agenda Alert panel, the buttons) and DashBoard.aspx.cs (all message texts, LoadApprovals, lnkApproval_Click, BindAgendaDetails, btnApprove_Click and btnReject_Click read in full: the Controller is shown Approve and Reject only where he may approve),
   BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (the Waiting for me column), BMMS/CSS/bmms-workbench.css (diff), Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (which items a Controller may decide, what IsWaiting needs),
   Database/README.md (section Step UN6c2a and its Known items), the tester run of 2026-11-14 and the owner's tests as given; for UN6c1: BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (links, headings, message texts),
@@ -207,8 +211,8 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
   BMMS/Report/Reports.aspx.cs, BMMSBAL/ReportsMgr.cs, BMMSBAL/HTML_Report.cs,
   Database/BMMS-Fix-ReportAccess-Step41.sql, the owner's principle of 2026-11-10 (Admin superior for the
   technical items, Controller superior for the functional items)
-- To confirm: manual not written yet (WF2d3), except the first section in part and the Dashboard screen (written
-  from the code, not compared with a screenshot; "Pending" worded from the item statuses in the code; the Alerts and
+- To confirm: manual not written yet (WF2d3), except the first section in part, the Dashboard screen and the Followup screen (written
+  from the code, not compared with a screenshot; the Followup section does not describe the Meeting Date boxes of the filter, which the list's query does not use; "Pending" worded from the item statuses in the code; the Alerts and
   Action Items text of UN6c1 likewise); the wording of the
   owner's principle as the owner wants it in a shipped manual; the button names "View" and "Generate" as
   shown on the report page; the Followup by Department wording (the owner looks at the page's function in a
@@ -240,10 +244,10 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
 - Title: BMMS Glossary
 - Audience: Everyone who uses BMMS
 - Shipped: Yes (appended to the Overall manual's export)
-- Applies to: UN6c2b (entries "In progress" and "Summary cards", and "Waiting for me"); UN6c2a (entries "Meeting date passed", "My approvals" and "Waiting for me"); RA1b (step 41)
-- Last updated by: UN6c2b, based on 357cdd0
+- Applies to: UN6d (entry "MD Secretariat"); UN6c2b (entries "In progress" and "Summary cards", and "Waiting for me"); UN6c2a (entries "Meeting date passed", "My approvals" and "Waiting for me"); RA1b (step 41)
+- Last updated by: UN6d, based on ce7358a
 - Status: Draft
-- Verified against: for UN6c2b: BMMS/UserControl/MeetingSummary.ascx.cs (InProgressMeaning, the cards), Database/BMMS-Fix-DashboardSummary-Step45.sql; for UN6c2a: BMMS/DashBoard/DashBoard.aspx.cs (message texts, BindAgendaDetails), BMMS/UserControl/MeetingSummary.ascx.cs (the Waiting for me column), Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (who has the panel, what IsWaiting needs); for step RA1b (step 41): BMMS/XML/PageAccess.xml, BMMS/UserControl/MenuUserControl.ascx
+- Verified against: for UN6d: BMMS/Master/Followup.aspx.cs (CanSave, the read-only line, "View", the disabled ticks), Database/README.md (section Step UN6d); for UN6c2b: BMMS/UserControl/MeetingSummary.ascx.cs (InProgressMeaning, the cards), Database/BMMS-Fix-DashboardSummary-Step45.sql; for UN6c2a: BMMS/DashBoard/DashBoard.aspx.cs (message texts, BindAgendaDetails), BMMS/UserControl/MeetingSummary.ascx.cs (the Waiting for me column), Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (who has the panel, what IsWaiting needs); for step RA1b (step 41): BMMS/XML/PageAccess.xml, BMMS/UserControl/MenuUserControl.ascx
   (Reports menu of Management), BMMS/Report/Reports.aspx.cs, Followup.aspx.cs, BMMSBAL/HTML_Report.cs
   (Minutes status, draft note), BMMSBAL/ReportsMgr.cs; and before: BMMS/XML/PageAccess.xml (role codes and the pages of each role; the nine
   Admin-only pages of step RA1a), BMMS/PageAccessModule.cs (RequireRole), BMMS/UserControl/MenuUserControl.ascx
@@ -265,7 +269,7 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
   Database/README.md (In Attendance, Special Invitee, Invitee as member tags)
 - To confirm: the display names of the roles as stored in the database (the glossary uses the
   names the code and PageAccess.xml use); what the Management role uses beyond the dashboard and the three reports of RA1b; what MD
-  Secretariat uses beyond Followup and the dashboard
+  Secretariat uses beyond reading Followup and the dashboard
 
 ## Update matrix
 

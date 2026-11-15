@@ -3,10 +3,10 @@
 - Title: Program to Program: Reports
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: RA1c2
-- Last updated by: RA1c2, based on 1db6ac6
+- Applies to: UN6d (one pointer in "Scope" only); RA1c2
+- Last updated by: UN6d, based on ce7358a
 - Status: Draft
-- Verified against: for step RA1c2: BMMS/Report/FollowupActionTaken.aspx(.cs) (git diff against 1db6ac6),
+- Verified against: for step UN6d: BMMS/Master/Followup.aspx.cs (it is the Master page, not Report/Followup.aspx), Database/README.md (section Step UN6d); for step RA1c2: BMMS/Report/FollowupActionTaken.aspx(.cs) (git diff against 1db6ac6),
   BMMS/XML/PageAccess.xml, BMMS/UserControl/MenuUserControl.ascx, BMMSDAL/ActionItemDB.cs
   (GetActionItemByMeetingIdDeptId), Database/README.md (section Step RA1c2); for step RA1c1: BMMS/Report/ViewReport.aspx.cs (git diff against 4946500); and before:
   BMMS/Report/Reports.aspx.cs, Followup.aspx.cs, ViewReport.aspx.cs (diff of step RA1b),
@@ -26,6 +26,9 @@ The report pages that read minutes and follow-up data: Reports.aspx (rc=minutes)
 the Manager and Management, and Followup.aspx (fc=followup, fc=summary) for the Controller and Management,
 with ViewReport.aspx that shows, prints and exports what they built. Written for step RA1b (step 41). Step
 RA1c2 adds Followup by Department (FollowupActionTaken.aspx, Controller only; see "Followup by Department").
+The Followup page of the Master menu (Master/Followup.aspx, where the Controller saves the action text and the
+Confirmed ticks and the MD Secretariat reads) is not a report. It is described in 09-Dashboard-and-Alerts.md, section
+"Action Item Details panel and the Followup page saves (step UN6d)", beside the other save of Action_Item.
 [[CONFIRM: the other report pages are not written yet (WF2c3)]]
 
 ## Programs involved

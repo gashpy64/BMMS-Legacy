@@ -3,10 +3,10 @@
 - Title: BMMS Change Log
 - Audience: Gashpy Software (internal)
 - Shipped: No
-- Applies to: UN6c2b
-- Last updated by: UN6c2b, based on 357cdd0
+- Applies to: UN6d
+- Last updated by: UN6d, based on ce7358a
 - Status: Draft
-- Verified against: for UN6c2b: git diff f3cbd7e~1 f3cbd7e (BMMS/DashBoard/DashBoard.aspx(.cs), BMMS/UserControl/MeetingSummary.ascx(.cs), BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs and ActionItemDB.cs, Database/BMMS-Fix-DashboardSummary-Step45.sql (read), BMMS-Rollback-AgendaWaitingFor-Step44.sql, BMMS-Check-InstalledSteps.sql, Database/README.md section Step UN6c2b and Known items, Tests/README.md, Tests/packs/dashboard/README.md), the tester run of 2026-11-15 and the owner's tests as given; for UN6c2a: git diff HEAD (493cb45) and the new files (BMMS/DashBoard/DashBoard.aspx(.cs, .designer.cs),
+- Verified against: for UN6d: git diff ce7358a 276e402 (BMMS/DashBoard/DashBoard.aspx(.cs), BMMS/Master/Followup.aspx(.cs), BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, BMMS/CSS/CommonHTML.css and bmms-workbench.css, Database/BMMS-Fix-FollowupSave-Step46.sql and BMMS-Rollback-FollowupSave-Step46.sql (read in full), BMMS-Check-InstalledSteps.sql, Database/README.md section Step UN6d and Known items, Tests/README.md, Tests/packs/followup/*, Tests/packs/dashboard/README.md and expected.json, Tests/packs/access-matrix/README.md), Claude outputs/un6d-requirements.md, the Test script and tester results and the owner's tests as given; for UN6c2b: git diff f3cbd7e~1 f3cbd7e (BMMS/DashBoard/DashBoard.aspx(.cs), BMMS/UserControl/MeetingSummary.ascx(.cs), BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs and ActionItemDB.cs, Database/BMMS-Fix-DashboardSummary-Step45.sql (read), BMMS-Rollback-AgendaWaitingFor-Step44.sql, BMMS-Check-InstalledSteps.sql, Database/README.md section Step UN6c2b and Known items, Tests/README.md, Tests/packs/dashboard/README.md), the tester run of 2026-11-15 and the owner's tests as given; for UN6c2a: git diff HEAD (493cb45) and the new files (BMMS/DashBoard/DashBoard.aspx(.cs, .designer.cs),
   BMMS/UserControl/MeetingSummary.ascx(.cs), BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and MeetingMgr.cs,
   BMMSDAL/AgendaDB.cs and MeetingDB.cs, Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (read in full),
   BMMS-Rollback-AgendaWaitingFor-Step44.sql, BMMS-Test-AgendaWaitingFor-Step44.sql (header and the comparison part),
@@ -40,6 +40,62 @@
 One entry per step, newest first. Each entry names the step, its tag and what changed for users,
 for installers and in the database. Release entries (tags vX.Y.Z) collect the steps since the
 previous release.
+
+## UN6d - Submit hidden on read-only action items; the Followup page saves decided on the server (tag un6d, 2026-11-15; database step 46; code commit 276e402)
+
+- For users: Dashboard, Action Item Details panel: the Controller, the Manager and the User see Submit and Cancel (the
+  Controller no longer has Close); every other role (in practice Management) sees Close only, the action text read-only
+  and the line "You can read this action item. Your role cannot change it." After a Submit that saved, the panel closes,
+  the Action Items list is read again (the link Show All, Read or Unread, the page and the filters kept) and
+  "The action text was saved." is shown; a refused Submit also closes the panel and reads the list again, with the
+  message as before. A save that failed, a busy server or a text that is too long keeps the panel open with the text and
+  shows its message on a line inside the panel (the page's message box lay under the open panel). Followup page (Master
+  menu "Minutes"): only the Controller saves. The MD Secretariat reads only: the line "You can read the followups. Your
+  role cannot change them." above the list, no Submit, the Is Confirmed ticks cannot be changed, "View" in place of
+  "Edit" on the Action Text button, and the panel ":: View Action Text" without Save, with Close and the same line
+  (before, the manuals said the MD Secretariat works on Followup, and the page let it save). The Controller's Action
+  Text Save shows "The action text was saved." (before: no message) and Submit "The confirmations were saved." (before:
+  "Successfully Saved"). Submit saves every row of the list in one step: all rows or none. A refused save (a role that
+  may not change followups, or an item that no longer exists) says "You cannot change the followups: your role can only
+  read them, or an item on the list no longer exists. Nothing was saved. Click View to read the list again."; an inactive
+  account "Your account is not active. Nothing was saved. Sign in again."; a failed save "The action text could not be
+  saved. Nothing was saved. Try again." or "The confirmations could not be saved. Nothing was saved. Try again." (and the
+  "The server is busy ..." forms), no longer the error page. Layout faults found in the owner's test of the Followup page
+  and fixed: A (caused by this step) the new message lines drew their background under the filter rows; B (old, since
+  step A2a) the 600 px editor sat at the left of the Followup panels while the buttons were centred; C (old, present
+  since commit ba361c3, step H1, not caused by this step) with a panel open and a long list the page footer was drawn as a
+  narrow column at the right edge of the window. After a stylesheet change the page must be reloaded with Ctrl+F5
+  (the stylesheets are cached; fault C was seen as fixed only after a hard refresh). Described in the Overall manual
+  (the Action Items table, MD Secretariat and Management), the User, Manager and Controller manuals (the action text
+  Submit; the Controller's new section "Followup") and the Glossary (MD Secretariat).
+- For developers: DashBoard.aspx(.cs): `canSave` by session role, the line `pActionItemPanelMessage`,
+  `ShowActionItemPanelMessage` and `HideActionItemPanelMessage`, `LoadActionItemGRV` after a done or refused save.
+  Followup.aspx(.cs): `CanSave` (display only), `pFollowupReadOnly`, `litActionTextTitle`, `pActionTextPanelMessage`,
+  `CloseActionTextPanel`, `HasSessionUser`; both handlers call the server with the acting user id, catch every failure
+  (error log, a message, no error page) and read the item ids with `int.TryParse`. `ActionItemMgr` / `ActionItemDB`:
+  new `SaveFollowupActionText` and `SaveFollowupConfirmed` (the list built with `XmlWriter`); the `UpdateActionItem`
+  wrappers are removed. CSS: `.wb-followup-row` and `.wb-followup-popup` (bmms-workbench.css) and `display: flow-root`
+  in the popup rule of CommonHTML.css (fault C).
+- For installers: run BMMS-Fix-FollowupSave-Step46.sql (after step 45) before the new build, on BMMS_Test first, then the
+  Test scripts in new query windows and the tester's baseline (`Update-Baseline.ps1 -FixScript`, then
+  `Setup-Quality.ps1`). The earlier build keeps working with step 46 installed. BMMS-Rollback-FollowupSave-Step46.sql
+  drops the two procedures (roll back the build first); a second run is refused. See System-Manual/03, "Installing step
+  46 on a test database".
+- Database: step 46, two new procedures (marker FollowupSave-Step46; 2 markers in BMMS-Check-InstalledSteps.sql):
+  spr_SaveFollowupActionText and spr_SaveFollowupConfirmed (Reason 12 system account, 8 no usable or inactive acting user,
+  4 another role than Controller, an item that does not exist, or for the Submit a list that cannot be read). Only an
+  active Controller saves; what a save writes is what spr_UpdateActionItem wrote. spr_UpdateActionItem is not changed
+  and has no caller (drop list). Grants nothing. Test script BMMS-Test-FollowupSave-Step46.sql: 56 numbered checks,
+  all PASS on BMMS_Test; the Test scripts of steps 31 (41), 43 (128) and 45 (66) pass.
+- Tests: tester agent, runs of 2026-11-15 (2026-11-15_090800, 871 checks; 100359, 399 checks; 124820, 871 checks), all
+  PASSED, with the packs access-matrix, dashboard and followup; new pack followup; dashboard pack check 8 changed (see
+  System-Manual/10); the rule W6 of the access-matrix pack reworded, expected.csv unchanged. The owner's tests passed.
+- Known items (Database/README.md, "Known items for later steps"): the Submit overwrites a tick changed by another
+  Controller in between (lost update); the saves set no UpdatedOn or UpdatedBy and write no audit row; opening a panel
+  for an item that is gone, View and the drop-down handlers still go to the error page; nothing sets IsComplied to 1;
+  the buttons follow the session role while the server decides; a Controller with an empty list sees Submit and a
+  saved message; the MD Secretariat's two "View" buttons in a row are told apart by the column headings only; the View
+  button calls a script function that does not exist and the meeting date boxes are not used by the list.
 
 ## UN6c2b - Dashboard summary cards, the Committee filter on every card, "In progress" for every role (tag not yet set, 2026-11-15; database step 45; code commit f3cbd7e)
 

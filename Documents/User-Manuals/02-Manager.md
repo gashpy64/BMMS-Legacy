@@ -156,6 +156,16 @@ action items cannot be loaded the card says "The action items could not be loade
 again." (or "The server is busy and the action items could not be loaded. Wait a moment, then reload the
 page.", or "The action items are not available: your account is not active. Sign in again.").
 
+To change the action text, open the item: the Action Item Details panel shows Submit and Cancel. Press Submit to
+save. The panel closes, the list is read again (the link you chose, Show All, Read or Unread, and your Committee
+and Department choices stay) and BMMS says "The action text was saved." If the item is not one of your
+departments, BMMS says "You cannot change this action item: your role can only read it, or it is not an item of
+your department. Nothing was saved." If the text could not be saved, the panel stays open with your text and says
+so on a line above the buttons: "The action text could not be saved. Nothing was saved. Try again." or "The server
+is busy and the action text could not be saved. Nothing was saved. Wait a moment, then try again.", or "The text
+is too long. Shorten it or attach the document as a file." Press Submit again. If your account is not active BMMS
+says "Your account is not active. Nothing was saved. Sign in again."
+
 The Committee drop-down narrows the Meetings card, the first two summary cards, My approvals and the Action Items
 card. The Department drop-down (if you have it) narrows the same four. Your Alerts card is your own list for every
 committee; it says "Your own alerts, for every committee. The filters at the top do not apply." The Unread alerts

@@ -3,10 +3,10 @@
 - Title: Security
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6c2b (the paragraph on the summary cards and the Committee filter under "Role and acting-user checks in procedures"); UN6c2a (the paragraph on the approval rule under "Role and acting-user checks in procedures"); UN6c1 (the paragraph on the Dashboard alerts and Action Items under "Role and acting-user checks in procedures"); UN6b (the paragraph on the Dashboard meeting list under "Role and acting-user checks in procedures"); the rest RA1c2
-- Last updated by: UN6c2b, based on 357cdd0
+- Applies to: UN6d (the paragraph on the Followup saves and the Action Item Details panel under "Role and acting-user checks in procedures"); UN6c2b (the paragraph on the summary cards and the Committee filter under "Role and acting-user checks in procedures"); UN6c2a (the paragraph on the approval rule under "Role and acting-user checks in procedures"); UN6c1 (the paragraph on the Dashboard alerts and Action Items under "Role and acting-user checks in procedures"); UN6b (the paragraph on the Dashboard meeting list under "Role and acting-user checks in procedures"); the rest RA1c2
+- Last updated by: UN6d, based on ce7358a
 - Status: Draft
-- Verified against: for step UN6c2b: Database/BMMS-Fix-DashboardSummary-Step45.sql (fn_DashboardCommitteeFilter, spr_GetDashboardSummary, the Reason checks of the three replaced procedures), BMMS/UserControl/MeetingSummary.ascx.cs and BMMS/DashBoard/DashBoard.aspx.cs (diff), Database/README.md (section Step UN6c2b and its Known items); and before: for step UN6c2a: Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (fn_AgendaWaitingFor, spr_GetAgendaApprovalState, spr_GetDashboardApprovals, spr_UpdateAgendaByAgendaId, spr_GetDashboardMeetings, read in full), BMMS/DashBoard/DashBoard.aspx.cs (what is sent, what is read back), BMMSDAL/AgendaDB.cs (diff), Database/README.md (section Step UN6c2a, the rule and the hardening, not the findings); for step UN6c1: Database/BMMS-Fix-DashboardAlerts-Step43.sql (the procedures and functions), BMMS/DashBoard/DashBoard.aspx.cs (what is sent and read back),
+- Verified against: for step UN6d: Database/BMMS-Fix-FollowupSave-Step46.sql (both procedures, read in full), BMMS/Master/Followup.aspx.cs and BMMS/DashBoard/DashBoard.aspx.cs (diff), BMMSBAL/ActionItemMgr.cs and BMMSDAL/ActionItemDB.cs (diff), Database/README.md (section Step UN6d, the rule, not the findings); for step UN6c2b: Database/BMMS-Fix-DashboardSummary-Step45.sql (fn_DashboardCommitteeFilter, spr_GetDashboardSummary, the Reason checks of the three replaced procedures), BMMS/UserControl/MeetingSummary.ascx.cs and BMMS/DashBoard/DashBoard.aspx.cs (diff), Database/README.md (section Step UN6c2b and its Known items); and before: for step UN6c2a: Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (fn_AgendaWaitingFor, spr_GetAgendaApprovalState, spr_GetDashboardApprovals, spr_UpdateAgendaByAgendaId, spr_GetDashboardMeetings, read in full), BMMS/DashBoard/DashBoard.aspx.cs (what is sent, what is read back), BMMSDAL/AgendaDB.cs (diff), Database/README.md (section Step UN6c2a, the rule and the hardening, not the findings); for step UN6c1: Database/BMMS-Fix-DashboardAlerts-Step43.sql (the procedures and functions), BMMS/DashBoard/DashBoard.aspx.cs (what is sent and read back),
   Database/README.md (section Step UN6c1, rules); for step UN6b: Database/BMMS-Fix-DashboardMeetings-Step42.sql (spr_GetDashboardMeetings,
   spr_GetDashboardDepartments, fn_UserDepartmentScope), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (what is
   sent, what is read back, the encoding), BMMSDAL/MeetingDB.cs and DepartmentDB.cs (diff), Database/README.md
@@ -162,6 +162,24 @@ sent. The Action Items procedure now takes the department filter too and checks 
 (it sends the last one chosen even when the drop-down is not shown); the server checks it and a wrong one gives
 Reason 4, dashes and a message, never other people's data. The count a card cannot read is shown as a dash with the
 text "count not available", never as 0. Step 45 grants nothing and the application login keeps EXECUTE on the schema.
+The two saves of the Followup page (Master/Followup.aspx) since step 46 (UN6d) are decided on the server. The page
+sends the acting user id (`Session["UserId"]`; a session without a usable id is sent to the sign-in page) and the item
+id or the list of item ids and ticks. spr_SaveFollowupActionText and spr_SaveFollowupConfirmed read the role and the
+account status from the database: only an active Controller that is not the system account may save; the system
+account gets Reason 12, a missing, 0, NULL or inactive user Reason 8, every other role (Manager, User, Management, MD
+Secretariat, Admin) Reason 4, and a refused call writes nothing. The Submit is one call and one transaction, so one
+refused row (an item that does not exist, an id given twice, a tick other than 0 or 1, a list that cannot be read)
+refuses the whole Submit. The list is built with XmlWriter and read as XML by the procedure, and the ids are checked
+as whole numbers, so nothing the page sends is read as markup or as SQL. Before step 46 the page called
+spr_UpdateActionItem with no acting user, so any session that reached the page, the MD Secretariat too, could save.
+What the page shows by role (Save, Submit, the ticks, the read-only line, "View" in place of "Edit") follows
+`Session["RoleCode"]` and is for display only: a forged post-back of a hidden button is still refused by the
+procedure. The same holds for the Dashboard's Action Item Details panel since UN6d (Submit and Cancel for the
+Controller, Manager and User, Close and a read-only line for every other role): the buttons follow the session
+role, and spr_SaveDashboardActionText (step 43, not changed) decides. A role changed while a person is signed in
+shows the old buttons until the next sign-in, and a save is then refused or allowed by the new role. PageAccess.xml is
+not changed: the Followup page still opens for controller and md_sect. Step 46 grants nothing and the application
+login keeps EXECUTE on the schema. A failed save is written to the error log and the page shows a fixed message.
 [[CONFIRM: lead from old Architecture notes: the acting user is the logged-in user, passed as @ActingUserId; a missing or inactive acting user is refused]]
 [[CONFIRM: lead from old Architecture notes: one protected system account (Users.IsSystem = 1) cannot be edited, deleted, deactivated or given another role, even by itself; only it can change its own password; it takes no part in the workflow (step 18)]]
 [[CONFIRM: lead from old Architecture notes: every protected procedure returns one row Result, Reason, ReasonDetail (1 done, 0 refused); the page turns the Reason into a sentence; a database error is re-raised, not reported as a refusal]]

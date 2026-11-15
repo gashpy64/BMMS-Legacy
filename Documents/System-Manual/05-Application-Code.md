@@ -3,10 +3,10 @@
 - Title: Application Code
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6c2b ("The Dashboard summary cards and the Committee filter (step UN6c2b)"); UN6c2a ("The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)" and the layout line of "The Dashboard Meetings card (step UN6b)"); UN6c1 (the Main.Master row and paragraph, "The Dashboard Alerts and Action Items cards (step UN6c1)"); UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
-- Last updated by: UN6c2b, based on 357cdd0
+- Applies to: UN6d ("The Action Item Details panel and the Followup page saves (step UN6d)", the Followup.aspx row, the Dashboard Action Items paragraph note); UN6c2b ("The Dashboard summary cards and the Committee filter (step UN6c2b)"); UN6c2a ("The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)" and the layout line of "The Dashboard Meetings card (step UN6b)"); UN6c1 (the Main.Master row and paragraph, "The Dashboard Alerts and Action Items cards (step UN6c1)"); UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
+- Last updated by: UN6d, based on ce7358a
 - Status: Draft
-- Verified against: for step UN6c2b: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs; Database/README.md (section Step UN6c2b, Known items), the tester run of 2026-11-15 as given; for step UN6c2a: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff, and BindAgendaDetails read in full), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (diff), BMMS/CSS/bmms-workbench.css (diff),
+- Verified against: for step UN6d: git diff ce7358a 276e402 of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/Master/Followup.aspx and .aspx.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, BMMS/CSS/CommonHTML.css and bmms-workbench.css; Database/README.md (section Step UN6d and its Known items), the tester runs of 2026-11-15 as given; for step UN6c2b: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs; Database/README.md (section Step UN6c2b, Known items), the tester run of 2026-11-15 as given; for step UN6c2a: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff, and BindAgendaDetails read in full), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (diff), BMMS/CSS/bmms-workbench.css (diff),
   BMMSBAL/AgendaMgr.cs and MeetingMgr.cs (diff), BMMSDAL/AgendaDB.cs and MeetingDB.cs (diff), Database/README.md (section Step UN6c2a, Known items), Tests/packs/dashboard/README.md, the tester run of 2026-11-14 as given; for step UN6c1: BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (read: the Alerts and Action Items regions, the message constants, lnkSource_Click),
   BMMS/MasterPage/Main.Master.cs (alert count region), BMMSBAL/AlertMgr.cs, ActionItemMgr.cs and Common.cs (diff),
   BMMSDAL/AlertDB.cs and ActionItemDB.cs (diff), Database/README.md (section Step UN6c1); for step UN6b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/DashBoard/DashBoard.aspx
@@ -102,7 +102,7 @@ How the tables are read:
 | DecisionType.aspx | Decision Type | admin (since RA1a; page check RequireRole) | Yes |
 | Department.aspx | Department Master | admin (since RA1a; page check RequireRole) | Yes |
 | Designation.aspx | Designation Master | admin (since RA1a; page check RequireRole) | Yes |
-| Followup.aspx | Followup (menu "Minutes") | controller, md_sect | Yes |
+| Followup.aspx | Followup (menu "Minutes"); since step UN6d only the Controller saves, md_sect reads | controller, md_sect | Yes (ActionItemMgr.SaveFollowupActionText and SaveFollowupConfirmed, since step UN6d) |
 | Meeting.aspx | Meeting Master | admin, controller | Yes |
 | MeetingMember.aspx | Meeting - Member Tag / UnTag | admin, controller | Yes |
 | Member.aspx | Member Master | admin, controller | Yes |
@@ -252,7 +252,8 @@ acting user id from `Session["UserId"]`, never a role.
   change this action item: your role can only read it, or it is not an item of your department. Nothing was
   saved."; Reason 8 "Your account is not active. Nothing was saved. Sign in again."; a failure "The action text
   could not be saved. Nothing was saved. Try again." (busy: "The server is busy and the action text could not be
-  saved. Nothing was saved. Wait a moment, then try again."). The Submit button is still shown to Management.
+  saved. Nothing was saved. Wait a moment, then try again."). Until step UN6d the Submit button was still shown to
+  Management; see "The Action Item Details panel and the Followup page saves (step UN6d)".
 - `Common.IsServerBusy` (BMMSBAL/Common.cs) moved there from MeetingSummary.ascx.cs, which now calls it.
 - BAL and DAL: `AlertMgr` / `AlertDB` (`GetDashboardAlerts`, `GetAlertCount`, `RemoveAlertForUser`) and
   `ActionItemMgr` / `ActionItemDB` (`GetDashboardActionItems`, `OpenDashboardActionItem`,
@@ -385,6 +386,80 @@ never a role.
 Drawn from: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff), BMMS/UserControl/MeetingSummary.ascx,
 .ascx.cs and .ascx.designer.cs (diff), BMMS/CSS/bmms-workbench.css (diff), BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs (diff),
 BMMSDAL/AgendaDB.cs and ActionItemDB.cs (diff), Database/README.md (section Step UN6c2b, Known items).
+
+### The Action Item Details panel and the Followup page saves (step UN6d)
+
+Database step 46 and the code of step UN6d. Both pages send the acting user id (`Session["UserId"]`); the server decides
+every save (chapter 08). What the pages show follows `Session["RoleCode"]` and is for display only.
+
+DashBoard.aspx(.cs), the Action Item Details panel:
+
+- The open-item handler sets `canSave` for the roles controller, manager and user: Submit (`btnActionItemApprove`)
+  and Cancel are visible and the Action Text editor is writable; for every other role (in practice Management; MD
+  Secretariat and Admin have no card) Close is visible, the editor is read-only and the line "You can read this
+  action item. Your role cannot change it." is shown. The Controller no longer has Close. The X in the header stays
+  for everyone.
+- The new line `pActionItemPanelMessage` (inside the panel, above the buttons, plain text) shows the read-only line, and
+  for the roles that save the failed-save, server-busy and text-too-long messages (the page's message box lies under
+  the open panel). It is cleared when the panel opens and when it closes (Cancel, Close, the page's close-all).
+- After Submit: a failure, a busy server or a text that is too long keeps the panel open with the text typed and the
+  message on the line. A done or refused save closes the panel, calls `LoadActionItemGRV` (the link chosen, the page
+  and the Committee and Department filters are kept) and shows "The action text was saved." as a success (Reason 0),
+  or the Reason 8 or Reason 4 text of step 43 unchanged. The server rule (spr_SaveDashboardActionText) is not
+  changed.
+
+Master/Followup.aspx(.cs), the Followup page:
+
+- `CanSave` is true when the session role is controller. In Page_Load, on every request, Submit (`btnSubmit`) is
+  visible only for `CanSave` and the line `pFollowupReadOnly` ("You can read the followups. Your role cannot change
+  them.") above the list is visible when not. For a role that only reads, `grvFollowup_RowDataBound` disables the
+  Is Confirmed tick and sets the Action Text button to "View" (it reads "Edit" for the Controller); the Action Text
+  panel opened by `grvFollowup_RowCommand` has the editor read-only, no Save, Cancel renamed Close, the title
+  ":: View Action Text" (`litActionTextTitle`; ":: Edit Action Text" for the Controller) and the same line inside it
+  (`pActionTextPanelMessage`).
+- `btnActionTextSave_Click` (Save): a text over the limit shows the too-long message inside the panel and the panel
+  stays open; the item id is read with `int.TryParse` (before: `Convert.ToInt16`, which failed above 32,767); the
+  call is `ActionItemMgr.SaveFollowupActionText(userId, itemId, text)`. Reason 0 closes the panel and shows "The action
+  text was saved."; Reason 8 shows "Your account is not active. Nothing was saved. Sign in again."; Reason 4 or 12
+  shows "You cannot change the followups: your role can only read them, or an item on the list no longer exists.
+  Nothing was saved. Click View to read the list again." and the panel closes. An exception is written to the error
+  log (`Utilities.WriteErrorLog`) and the panel stays open with "The action text could not be saved. Nothing was
+  saved. Try again." (busy: "The server is busy and the action text could not be saved. Nothing was saved. Wait a
+  moment, then try again."). There is no error page.
+- `btnSubmit_Click` (Submit): every row of the list is read (item id by `int.TryParse`, the tick); a row whose id
+  cannot be read refuses the Submit with the Reason 4 text before anything is sent. One call
+  `ActionItemMgr.SaveFollowupConfirmed(userId, rows, out saved)` sends all rows. Reason 0: "The confirmations were
+  saved." (was "Successfully Saved"); Reason 8 and 4 or 12 as above; an exception: "The confirmations could not be
+  saved. Nothing was saved. Try again." (busy: "The server is busy and the confirmations could not be saved. Nothing
+  was saved. Wait a moment, then try again."), written to the error log.
+- `HasSessionUser`: a session without a usable user id redirects to the sign-in page, as the Dashboard does.
+- Markup: the new lines sit in wrappers of the class `wb-followup-row`, the two popup panels carry `wb-followup-popup`.
+
+BMMSBAL/ActionItemMgr.cs and BMMSDAL/ActionItemDB.cs: `SaveFollowupActionText` (the text is cleaned with
+`HtmlCleaner.Clean` first, as before) and `SaveFollowupConfirmed` (the list written with `XmlWriter` as
+`<items><i id=".." c=".."/>...</items>`, so nothing of it is read as markup) are new; both return the Reason through
+`MinutesDB.RefusalReason`, `SaveFollowupConfirmed` also the number of rows written. The wrappers
+`ActionItemMgr.UpdateActionItem` and `ActionItemDB.UpdateActionItem` are removed; nothing calls spr_UpdateActionItem
+any more (it stays in the database and goes on the drop list).
+
+Styles: CSS/bmms-workbench.css has `.wb-followup-row` (floated, full width, so a message line stands below the
+floated `.divRow` rows of CommonHTML.css instead of under them) and `.wb-followup-popup` (the editor centred with auto
+margins and the message line 600 px wide, as wide as the editor; the same width is `Width="600px"` of `ftxtActionText`
+in Followup.aspx, change both together). CSS/CommonHTML.css: the rule for `#contentArea` with a popup
+(`:has(.MyPopupOuter)`) now has `display: flow-root`; it took away the containment of floats that `overflow: visible`
+had removed in step H1 (commit ba361c3), so on Followup a list taller than 70 percent of the window no longer left the
+footer as a narrow column beside the floats (an old fault, not caused by UN6d; the Dashboard and Update Minutes
+measure the same). The stylesheets have no Cache-Control header, so after a stylesheet change reload the page with
+Ctrl+F5.
+
+Known items (Database/README.md): the Submit writes every listed row with the ticks read at View (a lost update); the
+saves set no UpdatedOn or UpdatedBy and write no audit row; opening a panel for an item that no longer exists, View
+and the drop-down handlers still go to the error page; nothing sets IsComplied to 1; the View button calls a script
+function that does not exist; the meeting date boxes are not used by the list's query.
+
+Drawn from: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff), BMMS/Master/Followup.aspx, .aspx.cs
+and .aspx.designer.cs (diff), BMMSBAL/ActionItemMgr.cs and BMMSDAL/ActionItemDB.cs (diff), BMMS/CSS/CommonHTML.css and
+bmms-workbench.css (diff), Database/README.md (section Step UN6d and its Known items).
 
 ### Pages in no menu and the unlisted page
 
@@ -601,7 +676,7 @@ chapter 04.
 
 | DB class | Area | Literal calls |
 |---|---|---|
-| ActionItemDB | Action items, follow-up | 7 |
+| ActionItemDB | Action items, follow-up | 12 |
 | AgendaDB | Agenda | 25 |
 | AlertDB | Alerts | 5 |
 | AttendanceDB | Attendance | 6 |

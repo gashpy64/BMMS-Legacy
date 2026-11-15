@@ -3,10 +3,11 @@
 - Title: Program to Program: Dashboard and Alerts
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6c2b (step 45): the summary cards, the Committee filter on every card, the Action Items filters; UN6c2a (step 44): the My approvals panel, the Waiting for me column and the Approve and Reject buttons; UN6c1 (step 43): the Alerts card, the header count and the Action Items card; UN6b (step 42): the Meetings card; the rest not written yet
-- Last updated by: UN6c2b, based on 357cdd0
+- Applies to: UN6d (step 46): the Action Item Details panel Submit and the Followup page saves; UN6c2b (step 45): the summary cards, the Committee filter on every card, the Action Items filters; UN6c2a (step 44): the My approvals panel, the Waiting for me column and the Approve and Reject buttons; UN6c1 (step 43): the Alerts card, the header count and the Action Items card; UN6b (step 42): the Meetings card; the rest not written yet
+- Last updated by: UN6d, based on ce7358a
 - Status: Draft
-- Verified against: for the step UN6c2b section: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs,
+- Verified against: for the step UN6d section: git diff ce7358a 276e402 of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/Master/Followup.aspx and .aspx.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/BMMS-Fix-FollowupSave-Step46.sql (read in full), Database/README.md (section Step UN6d and its Known items), the Test script result of step 46 (56 of 56) and the tester runs of 2026-11-15 as given;
+  for the step UN6c2b section: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs,
   Database/BMMS-Fix-DashboardSummary-Step45.sql (read), Database/README.md (section Step UN6c2b and its Known items), the tester run of 2026-11-15 and the owner's tests as given;
   for the step UN6c2a section: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff; BindAgendaDetails, btnApprove_Click and btnReject_Click read in full),
   BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (diff), BMMSBAL/AgendaMgr.cs and MeetingMgr.cs (diff), BMMSDAL/AgendaDB.cs and MeetingDB.cs (diff),
@@ -24,8 +25,8 @@
   BMMS-Rollback-DashboardMeetings-Step42.sql, BMMS-Test-DashboardMeetings-Step42.sql (header), Database/README.md
   (section Step UN6b), the owner's test result as given for the step (71 of 71, not re-run)
 - To confirm: feature area not written yet except the Meetings card and, since UN6c1, the Alerts card, the header count and the
-  Action Items card (WF2c3): the Agenda Alert and Action Item Details panels and the approval flow of the Dashboard
-  are still to be drawn
+  Action Items card (WF2c3): the Agenda Alert panel and the approval flow of the Dashboard are still to be drawn (the
+  Submit of the Action Item Details panel is drawn since UN6d)
 
 ## Scope
 
@@ -43,7 +44,10 @@ section "My approvals, Waiting for me and the Approve and Reject buttons (step U
 The summary cards and the Committee filter on every card (step UN6c2b) are in the section "Summary cards and the
 Committee filter on every card (step UN6c2b)" below.
 
-[[CONFIRM: the Action Item Details panel and the rest of the Agenda Alert panel and the Approve and Reject flow of the
+The Submit of the Action Item Details panel and the saves of the Followup page (Master/Followup.aspx) (step UN6d) are
+in the section "Action Item Details panel and the Followup page saves (step UN6d)" below.
+
+[[CONFIRM: the rest of the Agenda Alert panel and the Approve and Reject flow of the
 Dashboard (mail, the finalised agenda) are not written yet (WF2c3)]]
 
 ## Programs involved
@@ -546,6 +550,102 @@ Database/BMMS-Fix-DashboardSummary-Step45.sql (fn_DashboardCommitteeFilter, spr_
 comments and Reason checks of the three replaced procedures), BMMS-Rollback-DashboardSummary-Step45.sql,
 Database/README.md (section Step UN6c2b and its Known items), the tester run of 2026-11-15 (dashboard pack, 388
 checks) and the owner's tests as given.
+
+## Action Item Details panel and the Followup page saves (step UN6d)
+
+Added in step UN6d (database step 46). Two flows that write Action_Item: the Submit of the Dashboard's Action Item
+Details panel (the save of step 43, with a new reaction of the page) and the two saves of the Followup page
+(Master/Followup.aspx, the page where the Controller records the follow-up decisions and the Confirmed ticks).
+The Followup page is not a report: Data-Flow/03-Program-to-Program/10-Reports.md covers Report/Followup.aspx (the
+read-only reports) and has no section for Master/Followup.aspx, so the page is described here, next to the other
+save of Action_Item. Both flows send the acting user id (`Session["UserId"]`); the role is read from the database.
+
+### Programs involved
+
+| Program | Kind | Part in the flow |
+|---|---|---|
+| DashBoard/DashBoard.aspx(.cs) | Page | Action Item Details panel: buttons by session role (`canSave`), the line `pActionItemPanelMessage`, `btnActionItemApprove_Click`, `LoadActionItemGRV` after a done or refused Submit |
+| Master/Followup.aspx(.cs) | Page | The Followup list, the Action Text panel, the Is Confirmed ticks and Submit; `CanSave` (session role, for what is shown), `btnActionTextSave_Click`, `btnSubmit_Click`, `HasSessionUser` |
+| ActionItemMgr, ActionItemDB | BAL, DAL | SaveDashboardActionText (step 43); SaveFollowupActionText and SaveFollowupConfirmed (new; the list built with XmlWriter, the text cleaned with HtmlCleaner.Clean); the UpdateActionItem wrappers are removed |
+| spr_SaveDashboardActionText | Procedure | Step 43, not changed |
+| spr_SaveFollowupActionText, spr_SaveFollowupConfirmed | Procedures | New in step 46: only an active Controller, not the system account |
+| spr_UpdateActionItem | Procedure | Step 31, not changed; no caller since step UN6d |
+
+### Main flow
+
+```mermaid
+sequenceDiagram
+    participant U as Signed-in role
+    participant D as DashBoard.aspx.cs
+    participant F as Followup.aspx.cs
+    participant B as ActionItemMgr
+    participant SD as spr_SaveDashboardActionText
+    participant SF as spr_SaveFollowupActionText
+    participant SC as spr_SaveFollowupConfirmed
+
+    U->>D: Submit in the Action Item Details panel (Controller, Manager, User only)
+    D->>B: SaveDashboardActionText(acting user id, item id, text)
+    B->>SD: ActingUserId, ActionItemId, ActionText
+    SD-->>D: Reason 0, 4 or 8
+    D->>D: closes the panel, LoadActionItemGRV (link, page and filters kept)
+    D-->>U: "The action text was saved." (Reason 0), or the refusal message
+
+    U->>F: Save in the Action Text panel (Controller)
+    F->>B: SaveFollowupActionText(acting user id, item id, text)
+    B->>SF: ActingUserId, ActionItemId, ActionText cleaned
+    SF-->>F: Reason 0, 12, 8 or 4
+    F-->>U: panel closed, "The action text was saved." (Reason 0), or the refusal message
+
+    U->>F: Submit under the list (Controller)
+    F->>B: SaveFollowupConfirmed(acting user id, all rows: item id and tick)
+    B->>SC: ActingUserId, Items XML (one element per row)
+    SC-->>F: Reason 0, 12, 8 or 4, and Saved
+    F-->>U: "The confirmations were saved." (Reason 0), or the refusal message
+```
+
+| From | To | Data | Notes |
+|---|---|---|---|
+| Role | DashBoard.aspx | Submit | The page shows Submit and Cancel to the session roles controller, manager and user; every other role sees Close and the line "You can read this action item. Your role cannot change it." The server decides the save |
+| DashBoard.aspx | ActionItemMgr.SaveDashboardActionText | Acting user id, item id, text | As in step 43; after a done or refused save the panel closes, the list is read again and the message is shown |
+| Role | Followup.aspx | Save (Action Text panel), Submit | The page shows Save and Submit only when the session role is controller; a role that only reads sees "View", disabled ticks and the line "You can read the followups. Your role cannot change them." The server decides the save |
+| Followup.aspx | ActionItemMgr.SaveFollowupActionText | Acting user id, item id (int.TryParse), the text | HtmlCleaner.Clean before the call; writes Action_Item.ActionText only |
+| Followup.aspx | ActionItemMgr.SaveFollowupConfirmed | Acting user id, the item id and tick of every row of the list | One call; a row whose id cannot be read stops the Submit before anything is sent |
+| ActionItemMgr / ActionItemDB | spr_SaveFollowupActionText | @ActingUserId, @ActionItemId, @ActionText | OUTPUT @Result, @Reason |
+| ActionItemMgr / ActionItemDB | spr_SaveFollowupConfirmed | @ActingUserId, @Items XML `<items><i id=".." c="0|1"/>...</items>` | OUTPUT @Result, @Reason, @Saved; one transaction, all rows or none |
+
+### Refusal paths
+
+| Reason | Raised by | Meaning | Message the page shows |
+|---|---|---|---|
+| 4 | spr_SaveFollowupActionText | A role other than Controller, or an item that does not exist; nothing saved | Followup: "You cannot change the followups: your role can only read them, or an item on the list no longer exists. Nothing was saved. Click View to read the list again." (the same text for every role) |
+| 4 | spr_SaveFollowupConfirmed | A role other than Controller; or a list that cannot be read (another root, an element other than i, an id that is not a whole number of at most 10 digits that fits an INT, an id given twice, a tick other than 0 or 1, no list); or one row whose item does not exist: the whole Submit is refused, no row is written | The same text |
+| 12 | both | The protected system account | The same text as Reason 4 |
+| 8 | both | The acting user is missing, 0 or inactive | "Your account is not active. Nothing was saved. Sign in again." |
+| (none) | The page | A database error, a timeout, or a busy server | Action Text: "The action text could not be saved. Nothing was saved. Try again." or "The server is busy and the action text could not be saved. Nothing was saved. Wait a moment, then try again." on a line inside the open panel; Submit: "The confirmations could not be saved. Nothing was saved. Try again." or "The server is busy and the confirmations could not be saved. Nothing was saved. Wait a moment, then try again."; the cause goes to the error log and there is no error page. The Dashboard panel shows its own failure texts on the line inside the panel |
+| (none) | The page | A text over the limit | "The text is too long. Shorten it or attach the document as a file." on the line inside the panel |
+| (none) | The page | No usable user id in the session | The page redirects to the sign-in page (`HasSessionUser`) |
+
+### Where each rule lives
+
+| Rule | C# | Procedure or function |
+|---|---|---|
+| Only an active Controller saves on Followup; the role is read from the database | `HasSessionUser`; `CanSave` decides only what is shown | spr_SaveFollowupActionText, spr_SaveFollowupConfirmed |
+| Submit is all or nothing | One call with every row (`SaveFollowupConfirmed`) | spr_SaveFollowupConfirmed (own transaction when the caller has none; UPDLOCK, HOLDLOCK on the rows) |
+| What a save writes: the Action Text writes ActionText only; the Submit writes IsComplied 0 and IsConfirmed = the tick, and for a ticked row StatusId 0 on every mapping row of the item | none | spr_SaveFollowupActionText, spr_SaveFollowupConfirmed |
+| Submit and Cancel on the Dashboard panel only for Controller, Manager and User | `canSave` in the open-item handler | spr_SaveDashboardActionText decides every save (step 43) |
+| The read-only look of the Followup page (View, disabled ticks, the lines, ":: View Action Text" with Close) | `CanSave`, `grvFollowup_RowDataBound`, `grvFollowup_RowCommand` | none |
+
+### Tables read and written
+
+| Object | Reads | Writes |
+|---|---|---|
+| spr_SaveFollowupActionText | Users, Roles, Action_Item | Action_Item (ActionText) |
+| spr_SaveFollowupConfirmed | Users, Roles, Action_Item | Action_Item (IsComplied, IsConfirmed), ActionItem_User_Map (StatusId 0 for a ticked row) |
+
+Drawn from (UN6d): BMMS/DashBoard/DashBoard.aspx and .aspx.cs (diff), BMMS/Master/Followup.aspx and .aspx.cs (diff),
+BMMSBAL/ActionItemMgr.cs and BMMSDAL/ActionItemDB.cs (diff), Database/BMMS-Fix-FollowupSave-Step46.sql (both
+procedures, read in full), Database/README.md (section Step UN6d and its Known items), the Database Test script
+of step 46 (56 of 56 PASS on BMMS_Test), the tester runs of 2026-11-15 and the owner's tests as given.
 
 ## Drawn from
 

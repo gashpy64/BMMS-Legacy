@@ -177,11 +177,15 @@ Who sees which action items is decided from your own sign-in:
 | Role | Action items you see | Can you change the action text |
 |---|---|---|
 | Controller | Every item that is not confirmed, whatever the status of its minutes | Yes, any item that is not confirmed |
-| Management | The same as the Controller | No: you can open an item and read it. If you press Submit, BMMS says "You cannot change this action item: your role can only read it, or it is not an item of your department. Nothing was saved." |
+| Management | The same as the Controller | No: you can open an item and read it. The panel "Action Item Details" shows Close only, with the line "You can read this action item. Your role cannot change it." |
 | Manager | Items of your departments whose minutes are finalised or confirmed | Yes, for an item of your department |
 | User | Items of your department whose minutes are finalised or confirmed | Yes, for an item of your department |
 | MD Secretariat | No Action Items card | - |
 | Admin | No Action Items card | - |
+
+The Controller, the Manager and the User see Submit and Cancel in the Action Item Details panel. After Submit the
+panel closes, the list is read again with the link and filters you had chosen, and BMMS says "The action text was
+saved." If the text could not be saved, the panel stays open with the text and says so on a line inside it.
 
 If the action items cannot be loaded, the card says "The action items could not be loaded. Reload the page to
 try again." or "The server is busy and the action items could not be loaded. Wait a moment, then reload the
@@ -226,8 +230,18 @@ You have no Minutes Extract, no agenda reports and no other report. If you open 
 its address, BMMS shows "Access denied". The Manager and every other role see finalised and
 confirmed minutes only.
 
-MD Secretariat uses the Followup screen and views agenda items on the dashboard without approving
-them.
+MD Secretariat opens the Followup screen to read it, and views agenda items on the dashboard without approving
+them. On the Followup screen MD Secretariat cannot change anything: the line "You can read the followups. Your
+role cannot change them." stands above the list, the Is Confirmed ticks cannot be changed, there is no Submit
+button, and each row has the button "View" in place of "Edit" in the Action Text column. "View" opens the panel
+":: View Action Text", which shows the text to read, with the same line and the button Close. Only the
+Controller changes and confirms followups.
+
+[Screenshot: Followup as MD Secretariat, the read-only line, the list with View buttons and the ticks - supplied by Gashpy Software]
+[Screenshot: Followup as MD Secretariat, the panel ":: View Action Text" with Close - supplied by Gashpy Software]
+[Screenshot: Dashboard, Action Item Details panel as Management, read-only line and Close - supplied by Gashpy Software]
+[Screenshot: Dashboard, Action Item Details panel as the Controller with Submit and Cancel - supplied by Gashpy Software]
+[Screenshot: Dashboard, the message "The action text was saved." after Submit - supplied by Gashpy Software]
 
 On the Dashboard, the Meetings card of both roles has a Committee drop-down and the title "Meetings".
 Both roles see the counts (Items, Approved, Rejected, In progress) over every item, to read only. Management has the
@@ -238,7 +252,7 @@ Management sees every action item that is not confirmed and can open it, but can
 Secretariat has no Action Items card. The Committee drop-down narrows the Meetings card, and for Management the
 summary cards and the Action Items card.
 
-[[CONFIRM: what MD Secretariat does beyond Followup and the dashboard]]
+[[CONFIRM: what MD Secretariat does beyond reading the Followup screen and the dashboard]]
 
 ## From meeting to minutes
 

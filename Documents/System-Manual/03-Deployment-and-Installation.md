@@ -3,10 +3,11 @@
 - Title: Deployment and Installation
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6c2b (step 45: the run order, rollback and the section "Installing step 45 on a test database"); UN6c2a (step 44: the run order, rollback and the section "Installing step 44 on a test database"); UN6c1 (step 43: the run order, rollback and the section "Installing step 43 on a test database"); UN6b (step 42: the run order, rollback and the section "Installing step 42 on a test database"); WF3a2 (section "The tester's baseline after a new database step"); the rest RA1b (step 41)
-- Last updated by: UN6c2b, based on 357cdd0
+- Applies to: UN6d (step 46: the run order, rollback and the section "Installing step 46 on a test database"); UN6c2b (step 45: the run order, rollback and the section "Installing step 45 on a test database"); UN6c2a (step 44: the run order, rollback and the section "Installing step 44 on a test database"); UN6c1 (step 43: the run order, rollback and the section "Installing step 43 on a test database"); UN6b (step 42: the run order, rollback and the section "Installing step 42 on a test database"); WF3a2 (section "The tester's baseline after a new database step"); the rest RA1b (step 41)
+- Last updated by: UN6d, based on ce7358a
 - Status: Draft
-- Verified against: for UN6c2b (step 45): Database/BMMS-Fix-DashboardSummary-Step45.sql (guards, messages), BMMS-Rollback-DashboardSummary-Step45.sql (guards, messages), BMMS-Rollback-AgendaWaitingFor-Step44.sql (diff), BMMS-Check-InstalledSteps.sql (diff), Database/README.md (section Step UN6c2b, "What to run where"), the owner's test result and the tester run of 2026-11-15 as given;
+- Verified against: for UN6d (step 46): Database/BMMS-Fix-FollowupSave-Step46.sql and BMMS-Rollback-FollowupSave-Step46.sql (read in full), BMMS-Check-InstalledSteps.sql (diff), Database/README.md (section Step UN6d, "What to run where"), the Test script result (56 of 56) and the tester runs of 2026-11-15 as given;
+  for UN6c2b (step 45): Database/BMMS-Fix-DashboardSummary-Step45.sql (guards, messages), BMMS-Rollback-DashboardSummary-Step45.sql (guards, messages), BMMS-Rollback-AgendaWaitingFor-Step44.sql (diff), BMMS-Check-InstalledSteps.sql (diff), Database/README.md (section Step UN6c2b, "What to run where"), the owner's test result and the tester run of 2026-11-15 as given;
   for UN6c2a (step 44): Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (guards, messages, read in full), BMMS-Rollback-AgendaWaitingFor-Step44.sql (guards, messages),
   BMMS-Test-AgendaWaitingFor-Step44.sql (header, the comparison cases), BMMS-Check-InstalledSteps.sql (diff), Database/README.md (section Step UN6c2a, "What to run where"), the owner's test result and the tester run of 2026-11-14 as given;
   for UN6c1 (step 43): Database/BMMS-Fix-DashboardAlerts-Step43.sql (guards, messages),
@@ -235,6 +236,7 @@ application.
 | 43 | BMMS-Fix-DashboardAlerts-Step43.sql | Dashboard Alerts card (Recent, Unread, All; server paging; person and event date; Remove from my list), header count, Action Items scope, Due date and Overdue; no functional alerts or mail for Admin | After step 42 (stops otherwise; also needs steps 35, 37 and 38); SQL before the build (the build calls the objects); BMMS-Rollback-DashboardAlerts-Step43.sql |
 | 44 | BMMS-Fix-AgendaWaitingFor-Step44.sql | Dashboard My approvals panel and Waiting for me column; one rule (fn_AgendaWaitingFor) for who may approve; the Approve and Reject buttons read the server | After step 43 (stops otherwise; also needs step 42's fn_UserDepartmentScope and the procedures spr_UpdateAgendaByAgendaId and spr_GetDashboardMeetings); stops when either of those two is neither the text the step was built from nor the step 44 text; SQL before the build (the build calls the objects; the earlier build keeps working with step 44 installed); BMMS-Rollback-AgendaWaitingFor-Step44.sql (since step 45 it refuses while step 45 is installed: roll step 45 back first) |
 | 45 | BMMS-Fix-DashboardSummary-Step45.sql | Dashboard summary cards (Items in progress, Items rejected); the Committee filter rule (fn_DashboardCommitteeFilter: all, or an active committee) for the meeting list, My approvals and the Action Items card; the Action Items card follows the Committee and Department filters; statistics for the MD Secretariat | After step 44 (stops otherwise); stops when spr_GetDashboardMeetings, spr_GetDashboardApprovals or spr_GetDashboardActionItems is neither the text the step was built from (steps 44 and 43) nor the step 45 text; SQL before the build (the build calls the new procedure and parameters; the earlier build keeps working with step 45 installed); BMMS-Rollback-DashboardSummary-Step45.sql |
+| 46 | BMMS-Fix-FollowupSave-Step46.sql | Followup page (Master/Followup.aspx): two new procedures, spr_SaveFollowupActionText and spr_SaveFollowupConfirmed, decide every save from the acting user (only an active Controller); the Submit is one call, all or nothing | After step 45 (stops otherwise); SQL before the build (the build calls the two procedures; the earlier build keeps working with step 46 installed, because spr_UpdateActionItem is not changed); replaces nothing, grants nothing, changes no data; BMMS-Rollback-FollowupSave-Step46.sql |
 
 Steps 25, 26 and 28 have no database script (code only). Step 27 is not built. Step 32 is reserved
 for role permissions and not built. The lettered code steps that have a database script are D1
@@ -247,8 +249,9 @@ The out-of-number-order installs, in the order to install:
 2. Step 23, after step 28 was built (the list in the README stays in number order; step 24 was
    installed before it on the databases that followed the README order).
 3. Steps 29, 30 and 31, last of the numbered group, in that order.
-4. Step D1, then 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44 and 45 in number order. Step 45 is the last step;
-   it stops unless step 44 is installed. Rollbacks run in the reverse order: the step 44 Rollback refuses while step 45 is installed. Step 44
+4. Step D1, then 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45 and 46 in number order. Step 46 is the last step;
+   it stops unless step 45 is installed. Rollbacks run in the reverse order: the step 44 Rollback refuses while step 45 is installed. The step 46
+   Rollback drops its two procedures only; no other Rollback depends on it. Step 45 stops unless step 44 is installed. Step 44
    stops unless step 43 is installed. Step 43 stops unless step 42 is installed. Step 42 stops unless step 41 is installed. Step 41 stops unless step 40 is installed (and step 22, whose two
    minutes report procedures it leaves unchanged). Step 40 stops unless step 39 is installed. (Re-running step 13, 14, 18 or 21 brings back an older text:
    run step 40 again.)
@@ -876,3 +879,48 @@ see 10-Testing-and-Release.
 Drawn from: Database/BMMS-Fix-DashboardSummary-Step45.sql (guards, messages), BMMS-Rollback-DashboardSummary-Step45.sql
 (guards, messages), BMMS-Rollback-AgendaWaitingFor-Step44.sql (diff), BMMS-Check-InstalledSteps.sql (diff),
 Database/README.md (section Step UN6c2b, "What to run where").
+
+## Installing step 46 on a test database
+
+A worked example with the step 46 scripts (step UN6d: the Followup page saves, decided on the server). The server is
+`<server>` and the database is `BMMS_Test`. The step adds two procedures, spr_SaveFollowupActionText and
+spr_SaveFollowupConfirmed. It replaces nothing (spr_UpdateActionItem of step 31 is not changed, so a re-run of step 31
+does not touch step 46), changes no data and grants nothing (the application login holds EXECUTE on the schema). Run
+the SQL before you deploy the build: the build calls the two procedures. The earlier build keeps working with step 46
+installed.
+
+1. Check the state. Select `BMMS_Test` and run BMMS-Check-InstalledSteps.sql. Step 45 should read Installed and step 46
+   Missing.
+2. Back up the database as for any step ("Safe way to install any step").
+3. Run the Fix script (`sqlcmd -S <server> -d BMMS_Test -I -i Database/BMMS-Fix-FollowupSave-Step46.sql`). It has no
+   `USE` line; select the database first. It stops with "Nothing was changed." when the database name does not start
+   with BMMS, or when step 45 or an earlier object it needs is missing ("The steps are installed in order: run them
+   first, then this script.").
+4. On success it prints `Database: BMMS_Test` and then `Step 46 installed: spr_SaveFollowupActionText and
+   spr_SaveFollowupConfirmed are new; spr_UpdateActionItem is not changed (FollowupSave-Step46).` If a procedure lacks
+   the marker it ends with "Step 46 is not complete: [n] of 2 procedures carry the marker FollowupSave-Step46. Read the
+   messages above and run the script again."
+5. Run BMMS-Check-InstalledSteps.sql again. Step 46 should read Installed, 2 of 2 markers.
+6. Run the Test script on `BMMS_Test` only, in a new query window: `Database/BMMS-Test-FollowupSave-Step46.sql`. All
+   numbered checks must PASS (56 checks, run of 2026-11-15 on BMMS_Test). Then run BMMS-Test-UnicodeText-Step31.sql
+   (41), BMMS-Test-DashboardAlerts-Step43.sql (128) and BMMS-Test-DashboardSummary-Step45.sql (66); they pass with step
+   46 installed.
+7. Bring the tester's baseline up to date: `pwsh -NoProfile -File Tests\_runner\Update-Baseline.ps1 -ConfirmDatabase
+   BMMS_Quality -FixScript BMMS-Fix-FollowupSave-Step46.sql`, then `pwsh -NoProfile -File
+   Tests\_runner\Setup-Quality.ps1` (see "The tester's baseline after a new database step").
+8. Deploy the build, then make the browser checks of Database/README.md (section Step UN6d).
+9. To undo: the build first (or at the same time), then `Database/BMMS-Rollback-FollowupSave-Step46.sql`. It stops when
+   neither procedure exists ("nothing to roll back"); a second run is therefore refused. On success it prints `Step 46
+   rolled back: spr_SaveFollowupActionText and spr_SaveFollowupConfirmed are dropped; spr_UpdateActionItem (step 31) is
+   still installed.` If a procedure is still there it ends with "Step 46 is not fully rolled back: [n] of its two
+   procedures are still there. ..."; if spr_UpdateActionItem is missing it says so and tells the Consultant to run
+   step 31 again. The Check script then reads step 46 Missing. With the new build and the Rollback run, every Save and
+   Submit of the Followup page shows its "could not be saved" message and saves nothing. The Fix, Fix again,
+   Rollback, Rollback again (refused), Fix sequence was checked on BMMS_Test (Database/README.md).
+
+On `BMMS`, the Consultant runs the Check script, the Fix script and the Check script again after the backup (there is
+no Test script on `BMMS`), then deploys the build. Steps 42 to 45 come first there.
+
+Drawn from (step 46): Database/BMMS-Fix-FollowupSave-Step46.sql (guards, messages, read in full),
+BMMS-Rollback-FollowupSave-Step46.sql (guards, messages, read in full), BMMS-Check-InstalledSteps.sql (diff),
+Database/README.md (section Step UN6d, "What to run where").
