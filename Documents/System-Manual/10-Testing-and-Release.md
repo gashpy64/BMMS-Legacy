@@ -3,10 +3,11 @@
 - Title: Testing and Release
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6d (the step 46 Test script section "Step 46 (UN6d): the Followup saves", the followup pack, the dashboard pack check 8, the packs line of the tester table); UN6c2b (the step 45 Test script section, "The dashboard pack since step UN6c2b", the fixture and baseline notes); UN6c2a (the step 44 Test script section, "The dashboard pack since step UN6c2a", check 4 of the dashboard pack, the fixture and baseline notes); UN6c1 (the step 43 Test script section, "The dashboard pack since step UN6c1", the fixture and baseline notes); UN6b (the step 42 Test script section, the dashboard pack, the memory preflight, the fixture's committee QA2, the baseline upkeep note); the rest RA1c2
-- Last updated by: UN6d, based on ce7358a
+- Applies to: FU1 (the section "Step 47 (FU1): the Test script, the followup pack and the run"); UN6d (the step 46 Test script section "Step 46 (UN6d): the Followup saves", the followup pack, the dashboard pack check 8, the packs line of the tester table); UN6c2b (the step 45 Test script section, "The dashboard pack since step UN6c2b", the fixture and baseline notes); UN6c2a (the step 44 Test script section, "The dashboard pack since step UN6c2a", check 4 of the dashboard pack, the fixture and baseline notes); UN6c1 (the step 43 Test script section, "The dashboard pack since step UN6c1", the fixture and baseline notes); UN6b (the step 42 Test script section, the dashboard pack, the memory preflight, the fixture's committee QA2, the baseline upkeep note); the rest RA1c2
+- Last updated by: FU1, based on 3d571c4
 - Status: Draft
-- Verified against: for step UN6d: Database/README.md (section Step UN6d: the Test script description, the tester paragraph, the changed expected values), Tests/packs/followup/README.md and expected.json, Tests/packs/dashboard/README.md and expected.json (diff), Tests/packs/access-matrix/README.md and Tests/README.md (diff), the Test script result (56 of 56) and the tester runs of 2026-11-15 as given; the Test script itself (632 lines) and pack.js were not read in full;
+- Verified against: for step FU1: Database/README.md (section Step FU1: the Test script description, the tester paragraph, the changed expected values, "What to run where"), Tests/packs/followup/README.md (read in full), Tests/README.md and Database/BMMS-Check-InstalledSteps.sql (diff), the Test script result (95 of 95) and the tester run 2026-11-16_133023 as given; the Test script itself and pack.js were not read in full;
+  for step UN6d: Database/README.md (section Step UN6d: the Test script description, the tester paragraph, the changed expected values), Tests/packs/followup/README.md and expected.json, Tests/packs/dashboard/README.md and expected.json (diff), Tests/packs/access-matrix/README.md and Tests/README.md (diff), the Test script result (56 of 56) and the tester runs of 2026-11-15 as given; the Test script itself (632 lines) and pack.js were not read in full;
   for step UN6c2b: Database/README.md (section Step UN6c2b: the Test script description, Known items), Tests/packs/dashboard/README.md and Tests/README.md (diff), Database/BMMS-Rollback-AgendaWaitingFor-Step44.sql (diff), the tester run of 2026-11-15 (dashboard pack 388 checks PASSED) and the owner's tests as given; the Test scripts themselves (1329 lines for step 45) were not read in full;
   for step UN6c2a: Database/BMMS-Test-AgendaWaitingFor-Step44.sql (header, parts 1 and 2 up to the comparison and the named cases; the 1352 cases counted from its actor, item and action lists), Tests/packs/dashboard/README.md, expected.json and pack.js (diff), Tests/README.md (diff), Tests/fixture/BMMS-Quality-Fixture*.sql (diff), Database/README.md (section Step UN6c2a, Known items), the tester run of 2026-11-14 07:52:25 and the owner's tests as given; for step UN6c1: Database/BMMS-Test-DashboardAlerts-Step43.sql (header), Tests/packs/dashboard/README.md,
   expected.json and pack.js (diff), Tests/README.md (diff), Tests/fixture/BMMS-Quality-Fixture*.sql (diff),
@@ -670,6 +671,52 @@ Result of the step: tester agent, runs of 2026-11-15 (folders 2026-11-15_090800,
 the results folder; which packs each run held is not recorded here). SQL Test script 46 passed on BMMS_Test (56 of 56),
 and the Test scripts of steps 31, 43 and 45 pass. The owner's tests passed. The layout fault C (the footer under an
 open Followup panel) was seen as fixed only after a hard refresh (Ctrl+F5), because the stylesheet is cached.
+
+### Step 47 (FU1): the Test script, the followup pack and the run
+
+BMMS-Test-FollowupFinal-Step47.sql runs on BMMS_Test only, in a new query window: 95 numbered checks, all PASS on
+2026-11-16. Part 1 checks the markers (and the kept markers of steps 46 and 39), the parameters and result sets, that no
+feature above compatibility level 100 is used, the new table (columns, identity, key, default, the two foreign keys and
+their delete rule, the two check constraints, the index), that no module updates or deletes the table by name, and
+EXECUTE for every database user. Part 2 runs in one rolled-back transaction with made-up data (prefix ZZ47): only the rows
+sent are written, with their history rows; a row already confirmed is skipped; the step 46 shape (the attribute c) and
+16 more bad lists are refused as a whole; the Action Text is saved on a Pending item and refused (Reason 26) on a
+confirmed one; Reopen with the reason trimmed, refused (Reason 27) when not confirmed and (Reason 4) for a NULL, empty
+or blank reason, 500 characters kept and 501 cut by the parameter type; every role and the system, inactive, missing, 0
+and NULL user refused for the three saves and the list (the MD Secretariat reads the list); parity of
+spr_GetFollowupList with the earlier View_Action_Item query for 24 filter combinations (the same ids in the same order);
+a reopened item counted as not confirmed in fn_DashboardActionItems, View_Action_Item and
+spr_GetFollowupReportForManagement; the history rows gone with their item (spr_UpdateMinutes, spr_DeleteAgendaByAgendaId,
+spr_AgendaFinalizeByMeetingId and a direct DELETE); spr_DeleteUserByUserId refusing a user with history rows (Reason 6).
+Afterwards every table and identity counter is as before. The Rollback restores the step 46 and step 39 texts exactly
+(compared by SHA-1) and keeps the table; after it the step 46 Test script passes 56 of 56. While step 47 is installed the
+step 46 Test script runs no check and names the step 47 Test; BMMS-Test-ResetDatabase.sql counts 30 keys to Users when
+the table exists (40 PASS). The Test scripts of steps 31, 39, 43, 45, 41, the user delete and user protection scripts and
+BMMS-Test-FK-Procedures.sql pass unchanged. The Fix, the Test scripts and the Rollback must be run in the order given in
+Database/README.md (section Step FU1, "What to run where"); step 47 and the FU1 build are installed and deployed together.
+
+The followup pack since step FU1 (Tests/packs/followup/README.md): expected.json gained the row the Controller confirms
+and reopens (`confirmRow`), the Controller's displayed name, the reopen reason typed and the new messages. Check 1,
+qa_ctrl (now first): View (five Pending rows with the Status drop-down, "Edit"); the Action Text saved unchanged; Submit
+with no row changed ("No followup was changed to Confirmed. Nothing was saved."); the Confirm of one row ("1 followup was
+confirmed.", "Confirmed by [name (login)] on [date]", no drop-down, Reopen, "View"); its action text read-only with the
+confirmed line; the filter Confirmed without Submit; the Reopen panel (no reason, "<b" stopped in the browser, a reason
+with &, quotes and surrounding spaces saved and shown as typed); the row Pending again with its "Reopened by" line.
+Check 2, qa_mdsec, afterwards: the five rows as text, no drop-down, no Reopen, "View", the reopen line. The row ends not
+confirmed, as in the fixture. Not in the pack: a second Controller (skipped rows, Reasons 26 and 27 from the page),
+"Confirmed (before history)", the failure messages and the too-long messages: owner checks. The access-matrix and
+dashboard packs are unchanged.
+
+The tester's baseline for step 47: `Update-Baseline.ps1 -ConfirmDatabase BMMS_Quality -FixScript
+BMMS-Fix-FollowupFinal-Step47.sql`, then `Setup-Quality.ps1`; the fixture is unchanged. A copy of BMMS_Quality (a restore)
+carries the tester's login as its dbo and keeps a bmms_site user, so Update-Baseline.ps1 refuses until the copy's owner is
+changed and the user dropped; Tests/README.md ("One-time setup and upkeep") says how. The runner call needs a foreground
+timeout of about 600 seconds (the run took 288 seconds).
+
+Result of the step: tester run 2026-11-16_133023 (access-matrix, dashboard, followup; baseline updated for step 47):
+PASSED, 878 checks (selftest 8, access-matrix 472, dashboard 385, followup 16), error log clean, 288 s. SQL Test script 47
+passed on BMMS_Test (95 of 95). The owner's tests passed (SQL on BMMS_Test; browser as Controller and MD Secretariat, Chrome
+and Edge).
 
 ## Reviewer stage
 

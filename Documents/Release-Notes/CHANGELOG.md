@@ -3,10 +3,11 @@
 - Title: BMMS Change Log
 - Audience: Gashpy Software (internal)
 - Shipped: No
-- Applies to: UN6d
-- Last updated by: UN6d, based on ce7358a
+- Applies to: FU1
+- Last updated by: FU1, based on 3d571c4
 - Status: Draft
-- Verified against: for UN6d: git diff ce7358a 276e402 (BMMS/DashBoard/DashBoard.aspx(.cs), BMMS/Master/Followup.aspx(.cs), BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, BMMS/CSS/CommonHTML.css and bmms-workbench.css, Database/BMMS-Fix-FollowupSave-Step46.sql and BMMS-Rollback-FollowupSave-Step46.sql (read in full), BMMS-Check-InstalledSteps.sql, Database/README.md section Step UN6d and Known items, Tests/README.md, Tests/packs/followup/*, Tests/packs/dashboard/README.md and expected.json, Tests/packs/access-matrix/README.md), Claude outputs/un6d-requirements.md, the Test script and tester results and the owner's tests as given; for UN6c2b: git diff f3cbd7e~1 f3cbd7e (BMMS/DashBoard/DashBoard.aspx(.cs), BMMS/UserControl/MeetingSummary.ascx(.cs), BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs and ActionItemDB.cs, Database/BMMS-Fix-DashboardSummary-Step45.sql (read), BMMS-Rollback-AgendaWaitingFor-Step44.sql, BMMS-Check-InstalledSteps.sql, Database/README.md section Step UN6c2b and Known items, Tests/README.md, Tests/packs/dashboard/README.md), the tester run of 2026-11-15 and the owner's tests as given; for UN6c2a: git diff HEAD (493cb45) and the new files (BMMS/DashBoard/DashBoard.aspx(.cs, .designer.cs),
+- Verified against: for FU1: git diff 3d571c4 (BMMS/Master/Followup.aspx(.cs, .designer.cs), BMMS/CSS/bmms-workbench.css, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/BMMS-Check-InstalledSteps.sql, Tests/README.md, Tests/packs/followup/*), Database/README.md section Step FU1 and Known items; the three step 47 scripts were not read line by line (their content is taken from Database/README.md), the Test result (95 of 95), the tester run 2026-11-16_133023 and the owner's tests as given;
+  for UN6d: git diff ce7358a 276e402 (BMMS/DashBoard/DashBoard.aspx(.cs), BMMS/Master/Followup.aspx(.cs), BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, BMMS/CSS/CommonHTML.css and bmms-workbench.css, Database/BMMS-Fix-FollowupSave-Step46.sql and BMMS-Rollback-FollowupSave-Step46.sql (read in full), BMMS-Check-InstalledSteps.sql, Database/README.md section Step UN6d and Known items, Tests/README.md, Tests/packs/followup/*, Tests/packs/dashboard/README.md and expected.json, Tests/packs/access-matrix/README.md), Claude outputs/un6d-requirements.md, the Test script and tester results and the owner's tests as given; for UN6c2b: git diff f3cbd7e~1 f3cbd7e (BMMS/DashBoard/DashBoard.aspx(.cs), BMMS/UserControl/MeetingSummary.ascx(.cs), BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs and ActionItemDB.cs, Database/BMMS-Fix-DashboardSummary-Step45.sql (read), BMMS-Rollback-AgendaWaitingFor-Step44.sql, BMMS-Check-InstalledSteps.sql, Database/README.md section Step UN6c2b and Known items, Tests/README.md, Tests/packs/dashboard/README.md), the tester run of 2026-11-15 and the owner's tests as given; for UN6c2a: git diff HEAD (493cb45) and the new files (BMMS/DashBoard/DashBoard.aspx(.cs, .designer.cs),
   BMMS/UserControl/MeetingSummary.ascx(.cs), BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and MeetingMgr.cs,
   BMMSDAL/AgendaDB.cs and MeetingDB.cs, Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (read in full),
   BMMS-Rollback-AgendaWaitingFor-Step44.sql, BMMS-Test-AgendaWaitingFor-Step44.sql (header and the comparison part),
@@ -40,6 +41,60 @@
 One entry per step, newest first. Each entry names the step, its tag and what changed for users,
 for installers and in the database. Release entries (tags vX.Y.Z) collect the steps since the
 previous release.
+
+## FU1 - A confirmed followup becomes final; Reopen with a reason; who confirmed and when (tag not yet set, 2026-11-16; database step 47; code not yet committed, based on 3d571c4)
+
+- For users: Followup page (Master menu "Minutes"). The list has a Status column in place of the Is Confirmed tick, and the
+  filter label reads "Pending" (was "Not Confirmed"). The Controller has a drop-down Pending / Confirmed on each Pending
+  row. Submit confirms only the rows changed to Confirmed and is hidden while the list has no Pending row. Messages: "[n]
+  followups were confirmed." or "1 followup was confirmed.", with "[m] had already been confirmed." when another
+  Controller confirmed rows in the meantime; "No followup was confirmed. [m] had already been confirmed." when all were
+  skipped; "No followup was changed to Confirmed. Nothing was saved." when no row was changed (nothing is sent). A
+  confirmed row is final: no drop-down, "Confirmed by [Name (login)] on [dd-MMM-yyyy HH:mm]" ("Confirmed (before
+  history)" for an item confirmed before this step), and its Action Text opens as View (":: View Action Text", Close, the
+  line "This followup is confirmed and can no longer be changed. Reopen it to change the action text."). A save of the
+  action text of an item confirmed in the meantime is refused: "This followup is confirmed and can no longer be changed.
+  Nothing was saved. Click View to read the list again." New: the Controller's Reopen button on a confirmed row and the
+  panel ":: Reopen Followup" with a mandatory reason of at most 500 characters ("Enter the reason for reopening.", "The
+  reason can be at most 500 characters.", and in the browser, with nothing sent, `Remove the "<" or "&#" from the reason,
+  then save again.` for a "<" followed by a letter, "!", "/" or "?", or "&#"); saved: "The followup was reopened."; the row
+  is Pending again with "Reopened by [Name (login)] on [date]: [reason]" (shown as text). A reopen of an item no longer
+  confirmed: "This followup is no longer confirmed. Nothing was saved. Click View to read the list again." The MD
+  Secretariat reads only (the Status as text, no Submit, no Reopen, the line "You can read the followups. Your role cannot
+  change them."). A reopened item counts as not confirmed everywhere (the Dashboard Action Items card, the Followup
+  reports). Described in the Controller manual (Followup), the Overall manual (MD Secretariat and Management) and the
+  Glossary (MD Secretariat).
+- For developers: Followup.aspx(.cs): `BindFollowup` (the list through `ActionItemMgr.GetFollowupList` with the filters
+  kept in ViewState; the ViewState copy of the whole list is gone), the Status cell built and HTML-encoded in
+  `grvFollowup_RowDataBound`, `btnSubmit_Click` (only the changed rows), the Reopen panel (`btnReopenSave_Click`, the
+  script `FollowupReopenCheck`), `RebindAfterSave`. `ActionItemMgr` / `ActionItemDB`: `SaveFollowupConfirmed` (a list of
+  ids, out Saved and Skipped), `ReopenFollowup`, `GetFollowupList`. CSS: `.wb-followup-status*` and
+  `.wb-followup-reopen*` (bmms-workbench.css). See System-Manual/05 and Data-Flow/03-Program-to-Program/09.
+- For installers: install step 47 and deploy the FU1 build together (the build of step UN6d cannot Submit with step 47; the
+  FU1 build cannot list without it). Run BMMS-Fix-FollowupFinal-Step47.sql after step 46, on BMMS_Test first, then the
+  Test scripts in new query windows, then the tester's baseline (`Update-Baseline.ps1 -FixScript`, then
+  `Setup-Quality.ps1`). BMMS-Rollback-FollowupFinal-Step47.sql (roll back the build first) restores the step 46 and step 39
+  texts and keeps the table; roll back step 47 before step 46. A re-run of step 46, 2, 6, 10, 13 or 39 afterwards reads step
+  47 Partly: run step 47 again. See System-Manual/03, "Installing step 47 on a test database".
+- Database: step 47 (marker FollowupFinal-Step47; 5 markers and the table, 6 rows in BMMS-Check-InstalledSteps.sql). New
+  table Action_Item_Status_History (one Confirm or Reopen row per action, who and when, the reason; cascading delete with
+  its item). Replaced: spr_SaveFollowupConfirmed (ids only, skips rows already confirmed, writes a Confirm row; OUTPUT
+  @Saved, @Skipped), spr_SaveFollowupActionText (Reason 26 for a confirmed item), spr_DeleteUserByUserId (a user with
+  history rows is refused, Reason 6). New: spr_ReopenFollowup (@ReopenReason NVARCHAR(500); Reason 27 when the item is not
+  confirmed) and spr_GetFollowupList (Controller and MD Secretariat only; the same ids in the same order as the earlier
+  query, proven in the Test). New Reason codes 26 and 27. Grants nothing. Test script
+  BMMS-Test-FollowupFinal-Step47.sql: 95 numbered checks, all PASS on BMMS_Test; the Rollback restores the step 46 and
+  step 39 texts exactly, and the step 46 Test then passes 56 of 56 (while step 47 is installed it names the step 47 Test);
+  the Test scripts of steps 31, 39, 41, 43, 45 and the user delete and reset database scripts pass.
+- Tests: tester run 2026-11-16_133023 (access-matrix, dashboard, followup; baseline updated for step 47): PASSED, 878
+  checks (selftest 8, access-matrix 472, dashboard 385, followup 16), error log clean, 288 s. The followup pack was
+  rewritten (Controller first, then the MD Secretariat). The owner's tests passed (BMMS_Test; Chrome and Edge; Controller
+  and MD Secretariat).
+- Known items (Database/README.md, "Known items for later steps"): the history table is not in the Audit Trail report; who
+  and when are not shown in the Followup reports or the Dashboard panel; a reason over 500 characters sent by another
+  caller is cut without a refusal; the list is not read again after a refused save; the Status column width at 1024 px
+  is an owner check; the line "Enter the reason for reopening." of an earlier empty Save stays shown above the browser's "<" message; the list order has
+  no agenda number tie-breaker; the identity counter of the history table is not restarted by Reset Database.
 
 ## UN6d - Submit hidden on read-only action items; the Followup page saves decided on the server (tag un6d, 2026-11-15; database step 46; code commit 276e402)
 

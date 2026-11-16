@@ -205,28 +205,59 @@ labels sit above the fields. On a window 1240 pixels wide or narrower the cards 
 
 ### Followup
 
-Purpose: to read the follow-up decisions of the meetings, to change the action text of a decision and to mark
-decisions as confirmed. You are the only role that can save on this screen. (MD Secretariat opens the same screen to read it.)
+Purpose: to read the follow-up decisions of the meetings, to change the action text of a decision, to mark
+decisions as Confirmed and to reopen a confirmed decision. You are the only role that can save on this screen. (MD Secretariat
+opens the same screen to read it.)
 
 Fields and buttons:
 
 - The filter at the top: Committee Name, Meeting No. Search (Particular or Between), Department,
-  Meeting No., Confirmed Status (Both, Confirmed or Not Confirmed), and the buttons View and Cancel.
+  Meeting No., Confirmed Status (Both, Confirmed or Pending), and the buttons View and Cancel.
 - The list shows, for each decision, the Committee Name, Meeting No, Meeting Date, Agenda No., Subject No. and
   Decision. The column Actual Resolution has a View button that opens the actual resolution to read. The column
-  Action Text has an Edit button. The column Is Confirmed has a tick for each decision.
-- The Submit button under the list saves the ticks.
+  Action Text has an Edit button on a Pending decision and a View button on a confirmed one. The column Status
+  shows where the decision stands:
+  - A Pending decision has a drop-down with Pending and Confirmed. Pending is chosen when the list appears.
+  - A confirmed decision is final. It has no drop-down. The Status column reads "Confirmed" and a line "Confirmed by [name (login)] on [date and time]", with the date as day, month and year and the time as hours and minutes. A decision that was confirmed before BMMS kept this record reads "Confirmed (before history)". A confirmed decision has a Reopen button.
+  - A decision that was reopened is Pending again. Under its drop-down a line reads "Reopened by [name (login)] on [date and time]: [reason]", the reason shown as plain text.
+- The Submit button under the list confirms the decisions you changed to Confirmed. It is hidden while the list has no Pending decision.
 
 Steps:
 
 1. Choose the filter and press View. The list appears.
-2. To change the action text, press Edit on the row. The panel ":: Edit Action Text" opens. Change the text and
-   press Save, or press Cancel to leave it unchanged. After Save the panel closes and BMMS says "The action text was
-   saved."
-3. To mark decisions as confirmed, tick Is Confirmed on the rows and press Submit. Submit saves every row of the list in one
-   step: either all of it is saved or none of it. BMMS says "The confirmations were saved."
+2. To change the action text of a Pending decision, press Edit on the row. The panel ":: Edit Action Text" opens.
+   Change the text and press Save, or press Cancel to leave it unchanged. After Save the panel closes and BMMS says
+   "The action text was saved."
+3. To mark decisions as Confirmed, choose Confirmed in the Status drop-down of each of them and press Submit. Submit saves
+   only the decisions you changed to Confirmed, in one step: either all of them are saved or none. BMMS says, for
+   example, "3 followups were confirmed." or "1 followup was confirmed." If another Controller confirmed some of
+   them in the meantime, BMMS leaves those as they are and adds "[m] had already been confirmed." If nothing was
+   confirmed now, BMMS says "No followup was confirmed. [m] had already been confirmed." Once confirmed, a decision
+   can no longer be changed, except by reopening it.
+4. To read a confirmed decision's action text, press View on its row. The panel ":: View Action Text" opens with the
+   line "This followup is confirmed and can no longer be changed. Reopen it to change the action text." Press Close.
+5. To reopen a confirmed decision, press Reopen on its row. The panel ":: Reopen Followup" opens and names the
+   decision (agenda number, subject number and meeting). Type the reason for reopening (it must be filled in, at most
+   500 characters) and press Save, or press Cancel. After Save BMMS says "The followup was reopened." and the decision
+   is Pending again, with the line that tells who reopened it, when and why. You can then change its action text or
+   confirm it again. Each confirming and each reopening is recorded with the person, the date and time.
 
 Messages and what to do:
+
+- "No followup was changed to Confirmed. Nothing was saved.": you pressed Submit but no decision was changed to
+  Confirmed; choose Confirmed on at least one row.
+- "This followup is confirmed and can no longer be changed. Nothing was saved. Click View to read the list again.":
+  somebody confirmed the decision while you had its action text open; your change was not saved; press View.
+- "Enter the reason for reopening.": the reason is empty; type it and press Save.
+- "The reason can be at most 500 characters.": shorten the reason; the panel stays open with your text.
+- "Remove the "<" or "&#" from the reason, then save again.": the reason holds a "<" followed by a letter, "!", "/"
+  or "?", or the characters "&#"; BMMS does not send it. Remove them and press Save.
+- "This followup is no longer confirmed. Nothing was saved. Click View to read the list again.": someone else
+  reopened the decision first; press View.
+- "The followup could not be reopened. Nothing was saved. Try again." or "The server is busy and the followup could
+  not be reopened. Nothing was saved. Wait a moment, then try again.": the panel stays open with your reason; press
+  Save again.
+- "You cannot read the followups: your role has no access to them.": the list is not shown to your account.
 
 - "You cannot change the followups: your role can only read them, or an item on the list no longer exists. Nothing
   was saved. Click View to read the list again.": nothing was saved; press View to read the list again.
@@ -238,8 +269,11 @@ Messages and what to do:
 - "The confirmations could not be saved. Nothing was saved. Try again." or "The server is busy and the
   confirmations could not be saved. Nothing was saved. Wait a moment, then try again.": press Submit again.
 
-[Screenshot: Followup as the Controller, the list with Edit buttons, the ticks and Submit - supplied by Gashpy Software]
+[Screenshot: Followup as the Controller, the list with the Status drop-downs, a confirmed row and Submit - supplied by Gashpy Software]
 [Screenshot: Followup as the Controller, the panel ":: Edit Action Text" - supplied by Gashpy Software]
+[Screenshot: Followup as the Controller, the panel ":: View Action Text" of a confirmed followup - supplied by Gashpy Software]
+[Screenshot: Followup as the Controller, the panel ":: Reopen Followup" - supplied by Gashpy Software]
+[Screenshot: Followup as the Controller, a reopened row with its Reopened by line - supplied by Gashpy Software]
 
 [[CONFIRM: the other screens are not written yet]]
 

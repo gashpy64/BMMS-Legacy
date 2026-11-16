@@ -3,10 +3,11 @@
 - Title: Program to Program: Dashboard and Alerts
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6d (step 46): the Action Item Details panel Submit and the Followup page saves; UN6c2b (step 45): the summary cards, the Committee filter on every card, the Action Items filters; UN6c2a (step 44): the My approvals panel, the Waiting for me column and the Approve and Reject buttons; UN6c1 (step 43): the Alerts card, the header count and the Action Items card; UN6b (step 42): the Meetings card; the rest not written yet
-- Last updated by: UN6d, based on ce7358a
+- Applies to: FU1 (step 47): the Followup page (list, Submit, Reopen, status history) in the new section after the UN6d section; UN6d (step 46): the Action Item Details panel Submit and the Followup page saves; UN6c2b (step 45): the summary cards, the Committee filter on every card, the Action Items filters; UN6c2a (step 44): the My approvals panel, the Waiting for me column and the Approve and Reject buttons; UN6c1 (step 43): the Alerts card, the header count and the Action Items card; UN6b (step 42): the Meetings card; the rest not written yet
+- Last updated by: FU1, based on 3d571c4
 - Status: Draft
-- Verified against: for the step UN6d section: git diff ce7358a 276e402 of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/Master/Followup.aspx and .aspx.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/BMMS-Fix-FollowupSave-Step46.sql (read in full), Database/README.md (section Step UN6d and its Known items), the Test script result of step 46 (56 of 56) and the tester runs of 2026-11-15 as given;
+- Verified against: for the step FU1 section: BMMS/Master/Followup.aspx and .aspx.cs (read in full), BMMSBAL/ActionItemMgr.cs and BMMSDAL/ActionItemDB.cs (diff), Database/README.md (section Step FU1 and its Known items), the Test result of step 47 (95 of 95) and the tester run of 2026-11-16 as given;
+  for the step UN6d section: git diff ce7358a 276e402 of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/Master/Followup.aspx and .aspx.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/BMMS-Fix-FollowupSave-Step46.sql (read in full), Database/README.md (section Step UN6d and its Known items), the Test script result of step 46 (56 of 56) and the tester runs of 2026-11-15 as given;
   for the step UN6c2b section: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs,
   Database/BMMS-Fix-DashboardSummary-Step45.sql (read), Database/README.md (section Step UN6c2b and its Known items), the tester run of 2026-11-15 and the owner's tests as given;
   for the step UN6c2a section: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff; BindAgendaDetails, btnApprove_Click and btnReject_Click read in full),
@@ -646,6 +647,123 @@ Drawn from (UN6d): BMMS/DashBoard/DashBoard.aspx and .aspx.cs (diff), BMMS/Maste
 BMMSBAL/ActionItemMgr.cs and BMMSDAL/ActionItemDB.cs (diff), Database/BMMS-Fix-FollowupSave-Step46.sql (both
 procedures, read in full), Database/README.md (section Step UN6d and its Known items), the Database Test script
 of step 46 (56 of 56 PASS on BMMS_Test), the tester runs of 2026-11-15 and the owner's tests as given.
+
+Step FU1 (database step 47) replaces the Followup parts of this section: the Is Confirmed ticks, the Submit with every
+row and the tick c, and the two procedures' texts. The section below says what holds now; the Dashboard parts above
+are unchanged.
+
+## The Followup page: a confirmed followup is final, Reopen, the status history (step FU1)
+
+Added in step FU1 (database step 47). The page Master/Followup.aspx lists the followups, and the Controller confirms
+them, reopens them and saves their Action Text; the MD Secretariat reads the list. Every call sends the acting user
+id (`Session["UserId"]`); the role is read from the database. A confirmed followup is final: the only way back is
+Reopen, with a reason, and each confirm and each reopen is recorded in Action_Item_Status_History.
+
+### Programs involved
+
+| Program | Kind | Part in the flow |
+|---|---|---|
+| Master/Followup.aspx(.cs) | Page | The filter, the list with the Status column, the Action Text panel, the Reopen panel; `BindFollowup`, `grvFollowup_RowDataBound`, `btnSubmit_Click`, `btnReopenSave_Click`, `btnActionTextSave_Click`; the script `FollowupReopenCheck` in the page |
+| ActionItemMgr, ActionItemDB | BAL, DAL | GetFollowupList, SaveFollowupConfirmed (the list of ids, out Saved and Skipped), ReopenFollowup (the BAL trims the reason and never sends a blank one or one over 500 characters), SaveFollowupActionText |
+| spr_GetFollowupList | Procedure | New in step 47: the list for the Controller and the MD Secretariat |
+| spr_SaveFollowupConfirmed, spr_SaveFollowupActionText | Procedures | Replaced in step 47 |
+| spr_ReopenFollowup | Procedure | New in step 47: only an active Controller |
+| Action_Item_Status_History | Table | New in step 47: one row per confirm and per reopen |
+
+### Main flow
+
+```mermaid
+sequenceDiagram
+    participant U as Signed-in role
+    participant F as Followup.aspx.cs
+    participant B as ActionItemMgr
+    participant GL as spr_GetFollowupList
+    participant SC as spr_SaveFollowupConfirmed
+    participant SF as spr_SaveFollowupActionText
+    participant RO as spr_ReopenFollowup
+    participant H as Action_Item_Status_History
+
+    U->>F: View (Controller or MD Secretariat)
+    F->>B: GetFollowupList(acting user id, filters)
+    B->>GL: ActingUserId, filters
+    GL-->>F: Reason 0 and the rows with the latest history row of each item, or Reason 12, 8, 4 and no rows
+    F-->>U: the list, Pending rows with a drop-down for the Controller, Submit only while a row is Pending
+
+    U->>F: Submit (Controller)
+    F->>F: collects the Pending rows changed to Confirmed, none changed: nothing is sent and the page says so
+    F->>B: SaveFollowupConfirmed(acting user id, ids)
+    B->>SC: ActingUserId, Items XML (id only)
+    SC->>H: one Confirm row per row confirmed now
+    SC-->>F: Reason 0, Saved, Skipped (or 12, 8, 4)
+    F-->>U: the count confirmed and the count already confirmed, the list read again
+
+    U->>F: Save in the Action Text panel (Controller)
+    F->>B: SaveFollowupActionText(acting user id, item id, text)
+    B->>SF: ActingUserId, ActionItemId, ActionText cleaned
+    SF-->>F: Reason 0, or 26 (confirmed), 12, 8, 4
+    F-->>U: "The action text was saved." or the refusal message
+
+    U->>F: Save in the Reopen panel (Controller)
+    F->>F: reason trimmed, not blank, at most 500 characters, the browser has already refused the forbidden characters
+    F->>B: ReopenFollowup(acting user id, item id, reason)
+    B->>RO: ActingUserId, ActionItemId, ReopenReason
+    RO->>H: one Reopen row with the reason
+    RO-->>F: Reason 0, or 27 (not confirmed), 12, 8, 4
+    F-->>U: "The followup was reopened." and the list read again, or the refusal message
+```
+
+| From | To | Data | Notes |
+|---|---|---|---|
+| Role | Followup.aspx | View | The Controller and the MD Secretariat get rows; the page shows the Status drop-down, Submit, Reopen and Save only when the session role is controller (display only) |
+| Followup.aspx | ActionItemMgr.GetFollowupList | Acting user id, the seven filter values kept at View | The meeting date boxes are not used, as before |
+| ActionItemMgr / ActionItemDB | spr_GetFollowupList | @ActingUserId, the filters | OUTPUT @Result, @Reason; always one result set; the rows are those of View_Action_Item with the filters and order of the earlier query, plus StatusAction, StatusReason, StatusOn, StatusByName, StatusByLogin, StatusByActive |
+| Followup.aspx | ActionItemMgr.SaveFollowupConfirmed | Acting user id, the ids of the rows changed to Confirmed | One call; rows left Pending and rows already confirmed (as read) are not sent |
+| ActionItemMgr / ActionItemDB | spr_SaveFollowupConfirmed | @ActingUserId, @Items XML `<items><i id=".."/>...</items>` | OUTPUT @Result, @Reason, @Saved, @Skipped; one transaction, all rows or none; a row confirmed in between is skipped and counted |
+| Followup.aspx | ActionItemMgr.SaveFollowupActionText | Acting user id, item id, the text | HtmlCleaner.Clean before the call |
+| ActionItemMgr / ActionItemDB | spr_SaveFollowupActionText | @ActingUserId, @ActionItemId, @ActionText | OUTPUT @Result, @Reason; refused for a confirmed item |
+| Followup.aspx | ActionItemMgr.ReopenFollowup | Acting user id, item id, the reason (trimmed, at most 500 characters) | The Reopen button is shown to the Controller on a confirmed row only |
+| ActionItemMgr / ActionItemDB | spr_ReopenFollowup | @ActingUserId, @ActionItemId, @ReopenReason NVARCHAR(500) | OUTPUT @Result, @Reason |
+
+### Refusal paths
+
+| Reason | Raised by | Meaning | Message the page shows |
+|---|---|---|---|
+| 4 | spr_SaveFollowupActionText; spr_SaveFollowupConfirmed; spr_ReopenFollowup | A role other than Controller, or an item that does not exist; for the Submit also a list that cannot be read, including an attribute other than id (the build of step 46 sent c, so its Submit is refused); for Reopen also a NULL or blank reason | "You cannot change the followups: your role can only read them, or an item on the list no longer exists. Nothing was saved. Click View to read the list again." |
+| 4, 12, 8 | spr_GetFollowupList | A role other than Controller and MD Secretariat; the system account; an inactive or unknown user: no rows | "You cannot read the followups: your role has no access to them."; Reason 8: "Your account is not active. Sign in again." |
+| 12 | the three saves | The protected system account | The same text as Reason 4 |
+| 8 | the three saves | The acting user is missing, 0, NULL or inactive | "Your account is not active. Nothing was saved. Sign in again." |
+| 26 | spr_SaveFollowupActionText | The item is confirmed (confirmed in between, or before a stale page was read); nothing saved | "This followup is confirmed and can no longer be changed. Nothing was saved. Click View to read the list again." |
+| 27 | spr_ReopenFollowup | The item is not confirmed (reopened in between); nothing written | "This followup is no longer confirmed. Nothing was saved. Click View to read the list again." |
+| (none) | The page | No row changed to Confirmed: nothing is sent | "No followup was changed to Confirmed. Nothing was saved." |
+| (none) | The page | Every row sent was already confirmed (Reason 0, Saved 0) | "No followup was confirmed. [m] had already been confirmed." (warning) |
+| (none) | The page | The reason is empty, over 500 characters, or holds "<" followed by a letter, "!", "/" or "?", or "&#" | Inside the Reopen panel: "Enter the reason for reopening." or "The reason can be at most 500 characters."; in the browser, nothing sent: Remove the "<" or "&#" from the reason, then save again. |
+| (none) | The page | A database error, a timeout, or a busy server | Submit and Action Text: the texts of step 46; Reopen: "The followup could not be reopened. Nothing was saved. Try again." or "The server is busy and the followup could not be reopened. Nothing was saved. Wait a moment, then try again." inside the panel; the cause goes to the error log |
+
+### Where each rule lives
+
+| Rule | C# | Procedure or function |
+|---|---|---|
+| Only an active Controller saves; only an active Controller or MD Secretariat reads the list | `HasSessionUser`; `CanSave` decides only what is shown | spr_GetFollowupList, spr_SaveFollowupConfirmed, spr_SaveFollowupActionText, spr_ReopenFollowup |
+| A confirmed followup is final | `grvFollowup_RowDataBound` (no drop-down, View), `grvFollowup_RowCommand` (read-only panel) | spr_SaveFollowupActionText (Reason 26), spr_SaveFollowupConfirmed (skips), spr_ReopenFollowup is the only way back |
+| Submit writes only the rows changed to Confirmed; none changed sends nothing | `btnSubmit_Click` | spr_SaveFollowupConfirmed (UPDLOCK, HOLDLOCK; Saved and Skipped) |
+| The reason is mandatory and at most 500 characters | `btnReopenSave_Click`, `ActionItemMgr.ReopenReasonMaxLength`, `FollowupReopenCheck` for "<" and "&#" | spr_ReopenFollowup (Reason 4 for a blank reason; a longer text is cut by the parameter type) |
+| Each confirm and each reopen is recorded | none | spr_SaveFollowupConfirmed (Confirm row), spr_ReopenFollowup (Reopen row) |
+| Who and when are shown as "Name (login)" and dd-MMM-yyyy HH:mm; "Confirmed (before history)" when no history row exists | `ActedByName`, `ActedOnText`, `grvFollowup_RowDataBound`; every text HtmlEncoded | the latest history row of each item (spr_GetFollowupList) |
+| A reopened item counts as not confirmed everywhere | none | IsConfirmed 0: fn_DashboardActionItems, View_Action_Item, spr_GetFollowupReportForManagement (not changed) |
+
+### Tables read and written
+
+| Object | Reads | Writes |
+|---|---|---|
+| spr_GetFollowupList | Users, Roles, View_Action_Item, Action_Item_Status_History, Users (name and login of the actor) | none |
+| spr_SaveFollowupConfirmed | Users, Roles, Action_Item | Action_Item (IsComplied 0, IsConfirmed 1), ActionItem_User_Map (StatusId 0), Action_Item_Status_History (Confirm) |
+| spr_SaveFollowupActionText | Users, Roles, Action_Item | Action_Item (ActionText) |
+| spr_ReopenFollowup | Users, Roles, Action_Item | Action_Item (IsConfirmed 0), Action_Item_Status_History (Reopen) |
+
+Drawn from (FU1): BMMS/Master/Followup.aspx and .aspx.cs (read in full), BMMSBAL/ActionItemMgr.cs and
+BMMSDAL/ActionItemDB.cs (diff), Database/README.md (section Step FU1 and its Known items; the procedure texts of step
+47 as described there), the Test script result of step 47 (95 of 95 PASS on BMMS_Test), the tester run of 2026-11-16 and
+the owner's tests as given.
 
 ## Drawn from
 

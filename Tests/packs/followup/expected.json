@@ -4,5 +4,14 @@
   "rows": ["QA1-00005-001", "QA1-00005-002", "QA1-00006-001", "QA2-00002-1", "QA2-00003-1"],
   "readOnlyLine": "You can read the followups. Your role cannot change them.",
   "actionTextSaved": "The action text was saved.",
-  "confirmedSaved": "The confirmations were saved."
+  "confirmRow": "QA1-00005-001",
+  "saveAccountName": "QA Controller (qa_ctrl)",
+  "nothingChanged": "No followup was changed to Confirmed. Nothing was saved.",
+  "confirmedOne": "1 followup was confirmed.",
+  "confirmedReadLine": "This followup is confirmed and can no longer be changed. Reopen it to change the action text.",
+  "reopenTitle": ":: Reopen Followup",
+  "reopenBlank": "Enter the reason for reopening.",
+  "reopenCheck": "Remove the \"<\" or \"&#\" from the reason, then save again.",
+  "reopenReason": "QA reopen & \"check\" 'quotes'",
+  "reopened": "The followup was reopened."
 }

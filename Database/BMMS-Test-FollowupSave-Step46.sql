@@ -8,6 +8,10 @@
    "BMMS" and any name that does not start with "BMMS", and stops if step 46
    is not installed.
 
+   Replaced by step 47 (step FU1): while step 47 is installed it runs no
+   check and names BMMS-Test-FollowupFinal-Step47.sql instead (not a
+   failure). With step 47 rolled back it runs as before (56 checks).
+
    Run it in a NEW query window (it uses temporary objects of its own names).
    Result: one grid with a numbered row per check (TestNo, Test, Expected,
    Actual, Status) and one summary row (Passed, Failed, Skipped). Every row
@@ -56,6 +60,15 @@ DECLARE @CurrentDatabase SYSNAME = DB_NAME();
 IF (@CurrentDatabase = 'BMMS' OR @CurrentDatabase NOT LIKE 'BMMS%')
 BEGIN
     RAISERROR('Current database is "%s". This test is only allowed in a test copy whose name starts with "BMMS" but is not "BMMS" (for example BMMS_Test). Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
+-- Replaced by step 47 (step FU1): step 47 changed what the two procedures write (only the rows changed to Confirmed;
+-- a confirmed item is final), so these checks no longer apply; BMMS-Test-FollowupFinal-Step47.sql carries those that
+-- still hold. With step 47 rolled back this script runs as before.
+ELSE IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_SaveFollowupActionText')), '') LIKE '%FollowupFinal-Step47%'
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_SaveFollowupConfirmed')), '') LIKE '%FollowupFinal-Step47%')
+BEGIN
+    RAISERROR('Step 47 is installed in "%s": it replaced the two procedures of step 46. Run BMMS-Test-FollowupFinal-Step47.sql instead (it carries the step 46 checks that still hold). This script ran no check; this is not a failure.', 10, 1, @CurrentDatabase) WITH NOWAIT;
     SET NOEXEC ON;
 END
 ELSE IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_SaveFollowupActionText')), '') NOT LIKE '%FollowupSave-Step46%'

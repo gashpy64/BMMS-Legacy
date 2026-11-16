@@ -1552,6 +1552,66 @@ body.wb .bmms-comment-by-line
 	margin: 0 auto var(--wb-space-3);
 	text-align: left;
 }
+/* Step FU1: the Status cell of the Followup list. The status word, then one line of who and when (or of the reopen
+   and its reason), each on a line of its own; a long reason wraps inside the cell. The drop-down and the Reopen
+   button sit on their own line too. */
+.wb-followup-status-cell,
+.wb-followup-status-line
+{
+	overflow-wrap: anywhere;   /* a long unbroken reason breaks inside the cell; the grid's auto layout does not widen */
+	word-break: break-word;
+}
+.wb-followup-status
+{
+	display: block;
+	font-weight: 600;
+}
+.wb-followup-status-line
+{
+	display: block;
+	margin-top: var(--wb-space-1);
+	color: var(--wb-text-muted);
+	white-space: normal;
+}
+.wb-followup-status-ddl
+{
+	display: block;
+	max-width: 100%;
+}
+.wb-followup-status-cell .wb-followup-reopen-button
+{
+	margin-top: var(--wb-space-1);
+}
+/* Step FU1: the Reopen panel. The item it is for, the reason box and its hint, as wide as the Action Text editor
+   (600px, see .wb-followup-popup .wb-dash-message) and centred like it. */
+.wb-followup-reopen-item,
+.wb-followup-reopen
+{
+	box-sizing: border-box;
+	width: 600px;
+	max-width: 100%;
+	margin: 0 auto var(--wb-space-3);
+	text-align: left;
+}
+.wb-followup-reopen .Lable
+{
+	display: inline-block;
+	margin-bottom: var(--wb-space-1);
+}
+.wb-followup-reopen-text
+{
+	box-sizing: border-box;
+	display: block;
+	width: 100%;
+	min-height: 96px;
+	resize: vertical;
+}
+.wb-followup-reopen-hint
+{
+	display: block;
+	margin-top: var(--wb-space-1);
+	color: var(--wb-text-muted);
+}
 /* ==========================================================================
    Narrow windows
    ========================================================================== */

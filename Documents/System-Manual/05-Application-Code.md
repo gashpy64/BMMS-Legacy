@@ -3,10 +3,10 @@
 - Title: Application Code
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6d ("The Action Item Details panel and the Followup page saves (step UN6d)", the Followup.aspx row, the Dashboard Action Items paragraph note); UN6c2b ("The Dashboard summary cards and the Committee filter (step UN6c2b)"); UN6c2a ("The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)" and the layout line of "The Dashboard Meetings card (step UN6b)"); UN6c1 (the Main.Master row and paragraph, "The Dashboard Alerts and Action Items cards (step UN6c1)"); UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
-- Last updated by: UN6d, based on ce7358a
+- Applies to: FU1 ("The Action Item Details panel and the Followup page saves (step UN6d)": the Followup page bullets, the FU1 bullets for the list, Submit and Reopen); UN6d ("The Action Item Details panel and the Followup page saves (step UN6d)", the Followup.aspx row, the Dashboard Action Items paragraph note); UN6c2b ("The Dashboard summary cards and the Committee filter (step UN6c2b)"); UN6c2a ("The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)" and the layout line of "The Dashboard Meetings card (step UN6b)"); UN6c1 (the Main.Master row and paragraph, "The Dashboard Alerts and Action Items cards (step UN6c1)"); UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
+- Last updated by: FU1, based on 3d571c4
 - Status: Draft
-- Verified against: for step UN6d: git diff ce7358a 276e402 of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/Master/Followup.aspx and .aspx.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, BMMS/CSS/CommonHTML.css and bmms-workbench.css; Database/README.md (section Step UN6d and its Known items), the tester runs of 2026-11-15 as given; for step UN6c2b: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs; Database/README.md (section Step UN6c2b, Known items), the tester run of 2026-11-15 as given; for step UN6c2a: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff, and BindAgendaDetails read in full), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (diff), BMMS/CSS/bmms-workbench.css (diff),
+- Verified against: for step FU1: BMMS/Master/Followup.aspx and Followup.aspx.cs (read in full: CanSave, Page_Load, BindFollowup, grvFollowup_RowDataBound, grvFollowup_RowCommand, the save, Submit and Reopen handlers, the script), Database/README.md (section Step FU1); and before: for step UN6d: git diff ce7358a 276e402 of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/Master/Followup.aspx and .aspx.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, BMMS/CSS/CommonHTML.css and bmms-workbench.css; Database/README.md (section Step UN6d and its Known items), the tester runs of 2026-11-15 as given; for step UN6c2b: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs; Database/README.md (section Step UN6c2b, Known items), the tester run of 2026-11-15 as given; for step UN6c2a: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff, and BindAgendaDetails read in full), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (diff), BMMS/CSS/bmms-workbench.css (diff),
   BMMSBAL/AgendaMgr.cs and MeetingMgr.cs (diff), BMMSDAL/AgendaDB.cs and MeetingDB.cs (diff), Database/README.md (section Step UN6c2a, Known items), Tests/packs/dashboard/README.md, the tester run of 2026-11-14 as given; for step UN6c1: BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (read: the Alerts and Action Items regions, the message constants, lnkSource_Click),
   BMMS/MasterPage/Main.Master.cs (alert count region), BMMSBAL/AlertMgr.cs, ActionItemMgr.cs and Common.cs (diff),
   BMMSDAL/AlertDB.cs and ActionItemDB.cs (diff), Database/README.md (section Step UN6c1); for step UN6b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/DashBoard/DashBoard.aspx
@@ -410,28 +410,56 @@ DashBoard.aspx(.cs), the Action Item Details panel:
 
 Master/Followup.aspx(.cs), the Followup page:
 
-- `CanSave` is true when the session role is controller. In Page_Load, on every request, Submit (`btnSubmit`) is
-  visible only for `CanSave` and the line `pFollowupReadOnly` ("You can read the followups. Your role cannot change
-  them.") above the list is visible when not. For a role that only reads, `grvFollowup_RowDataBound` disables the
-  Is Confirmed tick and sets the Action Text button to "View" (it reads "Edit" for the Controller); the Action Text
-  panel opened by `grvFollowup_RowCommand` has the editor read-only, no Save, Cancel renamed Close, the title
-  ":: View Action Text" (`litActionTextTitle`; ":: Edit Action Text" for the Controller) and the same line inside it
-  (`pActionTextPanelMessage`).
+- Step FU1 (database step 47) changed this page; the points below that say "step 46" describe what FU1 replaced and
+  the FU1 bullets that follow them say what holds now. `CanSave` is true when the session role is controller. In
+  Page_Load, on every request, Submit (`btnSubmit`) is visible only for `CanSave` and while the list shown has a Pending
+  row (`ViewState["HasPending"]`, set by `BindFollowup`), and the line `pFollowupReadOnly` ("You can read the followups.
+  Your role cannot change them.") above the list is visible when `CanSave` is false. The Action Text panel opened by
+  `grvFollowup_RowCommand` has the editor read-only, no Save, Cancel renamed Close, the title ":: View Action Text"
+  (`litActionTextTitle`; ":: Edit Action Text" for an editable item) and a line inside it (`pActionTextPanelMessage`).
+- FU1, the list: `BindFollowup` reads `ActionItemMgr.GetFollowupList` (spr_GetFollowupList) with the filters kept at
+  View in `ViewState["FollowupFilter"]` (the old ViewState copy of the whole list is gone); a refused list is empty and
+  says "You cannot read the followups: your role has no access to them." (Reason 8: "Your account is not active. Sign in
+  again."). The Status column replaces the Is Confirmed tick. `grvFollowup_RowDataBound` builds the cell: a Pending row
+  gets the drop-down `ddlStatus` (Pending, Confirmed) for the Controller and the word "Pending" for a reader, and, when its
+  latest history row is a Reopen, the line "Reopened by [Name (login)] on [dd-MMM-yyyy HH:mm]: [reason]"; a confirmed row
+  has no drop-down, "Confirmed" and "Confirmed by [Name (login)] on [date]" ("Confirmed (before history)" when it has
+  no history row), and the Reopen button for the Controller. A confirmed row's Action Text button reads "View" for every
+  role, and its panel carries the line "This followup is confirmed and can no longer be changed. Reopen it to change the
+  action text." for the Controller. Every text from the database goes through `HttpUtility.HtmlEncode` and a Literal.
+- FU1, Submit: `btnSubmit_Click` collects only the ids of Pending rows whose drop-down is Confirmed and sends them in one
+  call, `ActionItemMgr.SaveFollowupConfirmed(userId, ids, out saved, out skipped)`; no row changed: nothing is sent and
+  the page says "No followup was changed to Confirmed. Nothing was saved." Reason 0: "[n] followups were confirmed." /
+  "1 followup was confirmed." (success) with " [m] had already been confirmed." when rows were skipped, or "No followup
+  was confirmed. [m] had already been confirmed." (warning); the list is read again with `RebindAfterSave`.
+- FU1, Reopen: the Reopen button (`CommandName` Reopen) opens the panel `pnlReopen` (":: Reopen Followup"); Save
+  (`btnReopenSave_Click`) trims the reason, refuses a blank one ("Enter the reason for reopening.") or one over 500
+  characters (`ActionItemMgr.ReopenReasonMaxLength`; "The reason can be at most 500 characters.") inside the panel, then
+  calls `ActionItemMgr.ReopenFollowup`. The browser check `FollowupReopenCheck` (the Reopen Save button's
+  OnClientClick) stops a "<" followed by a letter, "!", "/" or "?", or "&#", with `Remove the "<" or "&#" from the
+  reason, then save again.`, and nothing is posted. Reason 0: "The followup was reopened." and the list is read again,
+  the not yet submitted Confirmed choices on other rows kept (`ChosenConfirmed`, `ApplyChosenConfirmed`); Reason 27:
+  "This followup is no longer confirmed. Nothing was saved. Click View to read the list again."; Reason 8 and 4 or 12 as
+  below; a failure or a busy server keeps the panel open with "The followup could not be reopened. Nothing was saved.
+  Try again." (busy: "The server is busy and the followup could not be reopened. Nothing was saved. Wait a moment, then
+  try again.") and writes the error log.
 - `btnActionTextSave_Click` (Save): a text over the limit shows the too-long message inside the panel and the panel
   stays open; the item id is read with `int.TryParse` (before: `Convert.ToInt16`, which failed above 32,767); the
   call is `ActionItemMgr.SaveFollowupActionText(userId, itemId, text)`. Reason 0 closes the panel and shows "The action
   text was saved."; Reason 8 shows "Your account is not active. Nothing was saved. Sign in again."; Reason 4 or 12
   shows "You cannot change the followups: your role can only read them, or an item on the list no longer exists.
-  Nothing was saved. Click View to read the list again." and the panel closes. An exception is written to the error
+  Nothing was saved. Click View to read the list again." and the panel closes; since step 47 Reason 26 (the item is
+  confirmed) shows "This followup is confirmed and can no longer be changed. Nothing was saved. Click View to read the
+  list again." An exception is written to the error
   log (`Utilities.WriteErrorLog`) and the panel stays open with "The action text could not be saved. Nothing was
   saved. Try again." (busy: "The server is busy and the action text could not be saved. Nothing was saved. Wait a
   moment, then try again."). There is no error page.
-- `btnSubmit_Click` (Submit): every row of the list is read (item id by `int.TryParse`, the tick); a row whose id
-  cannot be read refuses the Submit with the Reason 4 text before anything is sent. One call
-  `ActionItemMgr.SaveFollowupConfirmed(userId, rows, out saved)` sends all rows. Reason 0: "The confirmations were
-  saved." (was "Successfully Saved"); Reason 8 and 4 or 12 as above; an exception: "The confirmations could not be
-  saved. Nothing was saved. Try again." (busy: "The server is busy and the confirmations could not be saved. Nothing
-  was saved. Wait a moment, then try again."), written to the error log.
+- `btnSubmit_Click` (Submit), step 46 text, replaced in step 47 (see the FU1 Submit bullet above): every row of the
+  list was sent with its tick and Reason 0 said "The confirmations were saved." (was "Successfully Saved"). Still
+  true: a row whose id cannot be read refuses the Submit with the Reason 4 text before anything is sent; Reason 8 and 4
+  or 12 as above; an exception: "The confirmations could not be saved. Nothing was saved. Try again." (busy: "The
+  server is busy and the confirmations could not be saved. Nothing was saved. Wait a moment, then try again."),
+  written to the error log.
 - `HasSessionUser`: a session without a usable user id redirects to the sign-in page, as the Dashboard does.
 - Markup: the new lines sit in wrappers of the class `wb-followup-row`, the two popup panels carry `wb-followup-popup`.
 

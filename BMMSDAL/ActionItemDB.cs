@@ -217,7 +217,7 @@ namespace BMMSDAL
         // decides from the acting user id (the role read from the database): only an active Controller. It writes
         // Action_Item.ActionText only, as spr_UpdateActionItem did for the code 'ActionText'. Returns 0 when saved;
         // 12 (the system account), 8 (user missing or inactive) or 4 (another role, or an item that does not exist),
-        // and then nothing was saved.
+        // and then nothing was saved. Step FU1 (step 47): 26 when the item is confirmed (a confirmed followup is final).
         public static int SaveFollowupActionText(int ActingUserId, int ActionItemId, string ActionText)
         {
             SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
@@ -241,13 +241,13 @@ namespace BMMSDAL
         #endregion
 
         #region SaveFollowupConfirmed
-        // Step UN6d (step 46): the Submit of the Followup page's Confirmed ticks, every row in ONE call and one
-        // transaction: all rows are written or none. Items: <items><i id=".." c="0|1"/>...</items> (built by
-        // ActionItemMgr). For each row the procedure writes what spr_UpdateActionItem wrote for the code 'All' with the
-        // values the page always sent (IsComplied 0, IsConfirmed the tick; a tick sets the item's mapping rows to
-        // StatusId 0). Returns 0 when saved (Saved = rows written); 12, 8 or 4 (another role, an item that does not
-        // exist, a list that is not allowed), and then nothing was saved.
-        public static int SaveFollowupConfirmed(int ActingUserId, string Items, out int Saved)
+        // Step FU1 (step 47): the Submit of the Followup page, in ONE call and one transaction: all rows are written or
+        // none. Items: <items><i id=".."/>...</items> (built by ActionItemMgr), only the rows the Controller changed from
+        // Pending to Confirmed. The procedure writes the rows still not confirmed (IsConfirmed 1, IsComplied 0, the
+        // item's mapping rows StatusId 0, one Confirm history row each) and skips a row already confirmed. Returns 0
+        // when saved (Saved = rows confirmed now, Skipped = rows already confirmed); 12, 8 or 4 (another role, an item
+        // that does not exist, a list that is not allowed), and then nothing was saved.
+        public static int SaveFollowupConfirmed(int ActingUserId, string Items, out int Saved, out int Skipped)
         {
             SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
             result.Direction = ParameterDirection.Output;
@@ -255,20 +255,85 @@ namespace BMMSDAL
             reason.Direction = ParameterDirection.Output;
             SqlParameter saved = new SqlParameter("@Saved", SqlDbType.Int);
             saved.Direction = ParameterDirection.Output;
+            SqlParameter skipped = new SqlParameter("@Skipped", SqlDbType.Int);
+            skipped.Direction = ParameterDirection.Output;
 
             SqlParameter items = new SqlParameter("@Items", SqlDbType.Xml);
             items.Value = (object)Items ?? DBNull.Value;
 
-            SqlParameter[] parameter = new SqlParameter[5];
+            SqlParameter[] parameter = new SqlParameter[6];
             parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
             parameter[1] = items;
             parameter[2] = result;
             parameter[3] = reason;
             parameter[4] = saved;
+            parameter[5] = skipped;
 
             CommonDB.ExecuteProcedure("spr_SaveFollowupConfirmed", parameter);
             Saved = saved.Value == null || saved.Value == DBNull.Value ? 0 : Convert.ToInt32(saved.Value);
+            Skipped = skipped.Value == null || skipped.Value == DBNull.Value ? 0 : Convert.ToInt32(skipped.Value);
             return MinutesDB.RefusalReason(result, reason);
+        }
+        #endregion
+
+        #region ReopenFollowup
+        // Step FU1 (step 47): the Save of the Reopen panel, one item at once (never part of Submit). The procedure
+        // decides from the acting user id: only an active Controller; it sets IsConfirmed 0 and writes one Reopen history
+        // row with the reason, in one transaction. Returns 0 when reopened; 12, 8, 4 (another role, an item that does not
+        // exist, a blank reason) or 27 (the item is not confirmed any more), and then nothing was saved. The reason is at
+        // most ReopenReasonMaxLength characters (the caller checks it; the parameter is NVARCHAR(500)).
+        public const int ReopenReasonMaxLength = 500;
+
+        public static int ReopenFollowup(int ActingUserId, int ActionItemId, string ReopenReason)
+        {
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+
+            SqlParameter text = new SqlParameter("@ReopenReason", SqlDbType.NVarChar, ReopenReasonMaxLength);
+            text.Value = (object)ReopenReason ?? DBNull.Value;
+
+            SqlParameter[] parameter = new SqlParameter[5];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = new SqlParameter("@ActionItemId", ActionItemId);
+            parameter[2] = text;
+            parameter[3] = result;
+            parameter[4] = reason;
+
+            CommonDB.ExecuteProcedure("spr_ReopenFollowup", parameter);
+            return MinutesDB.RefusalReason(result, reason);
+        }
+        #endregion
+
+        #region GetFollowupList
+        // Step FU1 (step 47): the Followup page's list. The rows and the order of the query ReportsMgr.GetFollowupReport
+        // builds (it stays for the Followup reports), with the latest history row of each item (StatusAction, StatusReason,
+        // StatusOn) and the user who acted (StatusByName, StatusByLogin, StatusByActive). Only an active Controller or MD
+        // Secretariat gets rows; Reason 0 when allowed, 12, 8 or 4 otherwise (then no rows).
+        public static DataTable GetFollowupList(int ActingUserId, int CommitteeId, int MeetingNoSearch, int MeetingId, int FromMeetingId,
+            int ToMeetingId, int DepartmentId, int ConfirmStatus, out int Reason)
+        {
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+
+            SqlParameter[] parameter = new SqlParameter[10];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = new SqlParameter("@CommitteeId", CommitteeId);
+            parameter[2] = new SqlParameter("@MeetingNoSearch", MeetingNoSearch);
+            parameter[3] = new SqlParameter("@MeetingId", MeetingId);
+            parameter[4] = new SqlParameter("@FromMeetingId", FromMeetingId);
+            parameter[5] = new SqlParameter("@ToMeetingId", ToMeetingId);
+            parameter[6] = new SqlParameter("@DepartmentId", DepartmentId);
+            parameter[7] = new SqlParameter("@ConfirmStatus", ConfirmStatus);
+            parameter[8] = result;
+            parameter[9] = reason;
+
+            DataTable dt = CommonDB.GetDataTable("spr_GetFollowupList", parameter);
+            Reason = MinutesDB.RefusalReason(result, reason);
+            return dt;
         }
         #endregion
 

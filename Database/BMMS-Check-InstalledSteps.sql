@@ -157,6 +157,16 @@
    spr_SaveFollowupConfirmed) and replaces nothing: 2 markers. No earlier
    step touches them, so a re-run of an earlier step leaves step 46
    Installed. After BMMS-Rollback-FollowupSave-Step46.sql it reads Missing.
+   Step 47 (step FU1) adds the table Action_Item_Status_History and two
+   procedures (spr_ReopenFollowup, spr_GetFollowupList) and replaces
+   spr_SaveFollowupActionText and spr_SaveFollowupConfirmed (step 46) and
+   spr_DeleteUserByUserId (step 39), which keep the markers of their earlier
+   steps (so step 46 still reads Installed): 5 markers and the table, 6 rows.
+   Re-running step 46 afterwards brings back the step 46 texts (4 of 6);
+   re-running step 2, 6, 10, 13 or 39 brings back an older
+   spr_DeleteUserByUserId (5 of 6): step 47 reads Partly; run step 47
+   again. After BMMS-Rollback-FollowupFinal-Step47.sql it reads Partly, 1 of
+   6 (the table is kept with its rows); a later run of step 47 finds it.
    Step 32 is reserved and not built; it has no row.
    Step D1 (shown as step 100) replaces spr_DeleteMeetingByMeetingId, which
    no numbered script contains: it reads Missing only on a database restored
@@ -475,6 +485,15 @@ INSERT INTO @M
 SELECT 46, o.Name + ' (FollowupSave-Step46)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%FollowupSave-Step46%' THEN 1 ELSE 0 END
 FROM (VALUES ('spr_SaveFollowupActionText'), ('spr_SaveFollowupConfirmed')) o(Name);
 
+-- 47. BMMS-Fix-FollowupFinal-Step47.sql, installed after step 46 (one table and two procedures new; spr_SaveFollowupActionText,
+-- spr_SaveFollowupConfirmed (step 46) and spr_DeleteUserByUserId (step 39) replaced)
+INSERT INTO @M
+SELECT 47, o.Name + ' (FollowupFinal-Step47)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%FollowupFinal-Step47%' THEN 1 ELSE 0 END
+FROM (VALUES ('spr_SaveFollowupActionText'), ('spr_SaveFollowupConfirmed'), ('spr_ReopenFollowup'), ('spr_GetFollowupList'),
+             ('spr_DeleteUserByUserId')) o(Name);
+INSERT INTO @M VALUES
+(47, 'Action_Item_Status_History (table, FollowupFinal-Step47)', CASE WHEN OBJECT_ID('dbo.Action_Item_Status_History', 'U') IS NOT NULL THEN 1 ELSE 0 END);
+
 -- D1 (shown as step 100). BMMS-Fix-MeetingDelete-D1.sql; no numbered script contains spr_DeleteMeetingByMeetingId
 INSERT INTO @M VALUES
 (100, 'spr_DeleteMeetingByMeetingId (MeetingDelete-D1)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_DeleteMeetingByMeetingId')), '') LIKE '%MeetingDelete-D1%' THEN 1 ELSE 0 END);
@@ -522,6 +541,7 @@ INSERT INTO @Steps VALUES
 (44, 'BMMS-Fix-AgendaWaitingFor-Step44.sql', 'step 16, 17, 18, 20, 31, 35 or 42 was re-run after step 44 (3 or 4 of 5), or an object is missing: run step 44 again (after step 43)'),
 (45, 'BMMS-Fix-DashboardSummary-Step45.sql', 'step 42, 43 or 44 was re-run after step 45 (2 to 4 of 5), or an object is missing: run step 45 again (after step 44)'),
 (46, 'BMMS-Fix-FollowupSave-Step46.sql', 'an object is missing: run step 46 again (after step 45)'),
+(47, 'BMMS-Fix-FollowupFinal-Step47.sql', 'step 46 was re-run (4 of 6), step 2, 6, 10, 13 or 39 was re-run (5 of 6), or step 47 was rolled back (1 of 6: the table stays): run step 47 again (after step 46)'),
 (100, 'BMMS-Fix-MeetingDelete-D1.sql (step D1)', '');
 
 SELECT s.Step, s.Script,

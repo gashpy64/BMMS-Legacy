@@ -232,12 +232,15 @@ confirmed minutes only.
 
 MD Secretariat opens the Followup screen to read it, and views agenda items on the dashboard without approving
 them. On the Followup screen MD Secretariat cannot change anything: the line "You can read the followups. Your
-role cannot change them." stands above the list, the Is Confirmed ticks cannot be changed, there is no Submit
-button, and each row has the button "View" in place of "Edit" in the Action Text column. "View" opens the panel
-":: View Action Text", which shows the text to read, with the same line and the button Close. Only the
-Controller changes and confirms followups.
+role cannot change them." stands above the list, the Status column shows "Pending" or "Confirmed" as text (no
+drop-down), there is no Submit button and no Reopen button, and each row has the button "View" in place of "Edit" in
+the Action Text column. "View" opens the panel ":: View Action Text", which shows the text to read, with the same
+line and the button Close. A confirmed row shows who confirmed it and when ("Confirmed by [name (login)] on [date
+and time]"), and a row that was reopened shows "Reopened by [name (login)] on [date and time]: [reason]". Only the
+Controller changes, confirms and reopens followups. A confirmed followup is final: it cannot be changed until the
+Controller reopens it with a reason.
 
-[Screenshot: Followup as MD Secretariat, the read-only line, the list with View buttons and the ticks - supplied by Gashpy Software]
+[Screenshot: Followup as MD Secretariat, the read-only line, the list with View buttons and the Status column - supplied by Gashpy Software]
 [Screenshot: Followup as MD Secretariat, the panel ":: View Action Text" with Close - supplied by Gashpy Software]
 [Screenshot: Dashboard, Action Item Details panel as Management, read-only line and Close - supplied by Gashpy Software]
 [Screenshot: Dashboard, Action Item Details panel as the Controller with Submit and Cancel - supplied by Gashpy Software]

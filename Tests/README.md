@@ -220,6 +220,16 @@ pwsh -NoProfile -File Tests\_runner\Update-Baseline.ps1 -ConfirmDatabase BMMS_Qu
 It restores the baseline, runs the Fix script, checks the fixture and the steps, and takes the
 baseline again. If anything fails, the old baseline stays.
 
+**A copy of BMMS_Quality** (for example for manual tests) carries the login `bmms_tester`
+inside it: as the database user `bmms_tester`, and also as the copy's `dbo`, because
+`bmms_tester` owns BMMS_Quality and a restore keeps the owner's SID on `dbo` even when
+sys.databases shows another owner. The login can then open the copy, and Update-Baseline.ps1
+refuses with "bmms_tester can open another database (...)". In the copy: drop the user
+`bmms_tester`, give the copy a new owner so `dbo` follows it (`ALTER AUTHORIZATION ON
+DATABASE::<copy> TO [<your Windows login>];`), and revoke CONNECT from guest. The copy also
+holds the user `bmms_site`; drop it too if the copy is not for the tester's site. Seen on
+2026-11-16 (step FU1).
+
 **Node packages** - once per machine, and after `Tests\package.json` changes: `npm ci` in the
 `Tests` folder (needs the internet; nothing else in the tester does). No browser is downloaded:
 the installed Chrome is used.

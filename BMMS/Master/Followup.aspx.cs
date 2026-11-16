@@ -3,6 +3,7 @@ using System.Data;
 using System.Configuration;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Web;
 using System.Web.Security;
 using System.Web.UI;
@@ -25,14 +26,28 @@ namespace BMMS.Master
         private const string ActionTextSavedMessage = "The action text was saved.";
         private const string ActionTextFailedMessage = "The action text could not be saved. Nothing was saved. Try again.";
         private const string ActionTextBusyMessage = "The server is busy and the action text could not be saved. Nothing was saved. Wait a moment, then try again.";
-        private const string ConfirmedSavedMessage = "The confirmations were saved.";
         private const string ConfirmedFailedMessage = "The confirmations could not be saved. Nothing was saved. Try again.";
         private const string ConfirmedBusyMessage = "The server is busy and the confirmations could not be saved. Nothing was saved. Wait a moment, then try again.";
 
+        // Step FU1 (BMMS-Fix-FollowupFinal-Step47.sql): a confirmed followup is final; the Controller can reopen it with a
+        // reason. The Submit message gives the counts (ConfirmedMessage).
+        private const string NothingChangedMessage = "No followup was changed to Confirmed. Nothing was saved.";
+        private const string ActionTextConfirmedMessage = "This followup is confirmed and can no longer be changed. Nothing was saved. Click View to read the list again.";
+        private const string ReopenedMessage = "The followup was reopened.";
+        private const string ReopenNotConfirmedMessage = "This followup is no longer confirmed. Nothing was saved. Click View to read the list again.";
+        private const string ReopenBlankMessage = "Enter the reason for reopening.";
+        private const string ReopenTooLongMessage = "The reason can be at most 500 characters.";
+        private const string ReopenFailedMessage = "The followup could not be reopened. Nothing was saved. Try again.";
+        private const string ReopenBusyMessage = "The server is busy and the followup could not be reopened. Nothing was saved. Wait a moment, then try again.";
+        private const string ListRefusedMessage = "You cannot read the followups: your role has no access to them.";
+        private const string ListInactiveMessage = "Your account is not active. Sign in again.";
+        private const string DateTimeFormat = "dd-MMM-yyyy HH:mm";
+
         #region CanSave
         // Step UN6d: only the Controller may change the followups; every other role that opens the page (MD
-        // Secretariat) reads them. This decides what the page SHOWS only (Save, Submit, the ticks, the read-only
-        // line); every save is decided on the server from the acting user id, with the role read from the database.
+        // Secretariat) reads them. This decides what the page SHOWS only (Save, Submit, the drop-downs, Reopen, the
+        // read-only line); every save is decided on the server from the acting user id, with the role read from the
+        // database.
         private bool CanSave
         {
             get { return Convert.ToString(Session["RoleCode"]) == "controller"; }
@@ -44,8 +59,9 @@ namespace BMMS.Master
         {
             Common.InitSetup(className);
 
-            // Step UN6d: Submit and the read-only line by role, on every request
-            btnSubmit.Visible = CanSave;
+            // Step UN6d: Submit and the read-only line by role, on every request. Step FU1: Submit only while the list
+            // shown has a Pending row (kept in ViewState when the list is bound)
+            btnSubmit.Visible = CanSave && Convert.ToBoolean(ViewState["HasPending"] ?? false);
             pFollowupReadOnly.InnerText = ReadOnlyMessage;
             pFollowupReadOnly.Visible = !CanSave;
 
@@ -57,6 +73,7 @@ namespace BMMS.Master
                 pnlViewFollowup.Visible = false;
                 pnlActualResolution.Visible = false;
                 pnlActionText.Visible = false;
+                pnlReopen.Visible = false;
 
                 txtFromDate.Text = Common.GetFinStartDate();
                 txtToDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
@@ -68,7 +85,7 @@ namespace BMMS.Master
                 pnlMeetingNoBetween.Visible = false;
                 MeetingNoSearchChanged();
             }
-        } 
+        }
         #endregion
 
         #region InitCtrlAttributes
@@ -77,6 +94,9 @@ namespace BMMS.Master
             btnViewFollowup.Attributes.Add("onclick", "return MinutesFinalizeValidation()");
             //ddlMemberName.Attributes.Add("onkeydown", "javascript:ClearErrMsg('" + divErrLogin.ClientID + "','" + ddlMemberName.ClientID + "');GoToNxtTxtBox(event,'" + btnSave.ClientID + "')");
 
+            // Step FU1 (decision D5): the reason is checked in the browser before the post (FollowupReopenCheck in the page)
+            btnReopenSave.OnClientClick = "return FollowupReopenCheck();";
+            txtReopenReason.Attributes["maxlength"] = ActionItemMgr.ReopenReasonMaxLength.ToString(CultureInfo.InvariantCulture);
         }
         #endregion
 
@@ -131,7 +151,7 @@ namespace BMMS.Master
                 pnlViewFollowup.Visible = false;
 
                 MeetingNoSearchChanged();
-                
+
             }
             catch (Exception ex)
             {
@@ -219,15 +239,14 @@ namespace BMMS.Master
         protected void btnViewFollowup_Click(object sender, EventArgs e)
         {
             MsgHide();
-            string sMsg = string.Empty;
             try
             {
-                DataTable dtFollowup = new DataTable();
-                dtFollowup = GetFollowup();
+                int UserId;
+                if (!HasSessionUser(out UserId))
+                    return;
 
-                grvFollowup.DataSource = dtFollowup;
-                grvFollowup.DataBind();
-
+                SaveFilter();
+                BindFollowup(UserId);
             }
             catch (Exception ex)
             {
@@ -237,14 +256,11 @@ namespace BMMS.Master
         }
         #endregion
 
-
-        #region GetFollowup
-        private DataTable GetFollowup()
+        #region SaveFilter
+        // Step FU1: the filters of the list as chosen at View, kept so that the list read again after a Submit or a
+        // Reopen is the same list (a filter changed since, without View, does not count)
+        private void SaveFilter()
         {
-            pnlViewFollowup.Visible = true;
-
-            DateTime FromMeetingDate = Convert.ToDateTime(txtFromDate.Text.Trim());
-            DateTime ToMeetingDate = Convert.ToDateTime(txtToDate.Text.Trim());
             int CommitteeId = int.Parse(ddlCommittee.SelectedValue.ToString().Trim());
             int MeetingNoSearch = int.Parse(rdoMeatingNoSearch.SelectedValue.ToString().Trim());
 
@@ -267,18 +283,66 @@ namespace BMMS.Master
             int DepartmentId = int.Parse(ddlDepartment.SelectedValue.ToString().Trim());
             int ConfirmStatus = int.Parse(rdoConfirmStatus.SelectedValue.ToString().Trim());
 
-            DataTable dtFollowup = ReportsMgr.GetFollowupReport(FromMeetingDate, ToMeetingDate, CommitteeId,
-                MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId, DepartmentId, ConfirmStatus);
-
-            ViewState["GetFollowup"] = dtFollowup;
-
-            return dtFollowup;
-        } 
+            ViewState["FollowupFilter"] = new int[] { CommitteeId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId, DepartmentId, ConfirmStatus };
+        }
         #endregion
 
+        #region BindFollowup
+        // Step FU1 (step 47): the list through spr_GetFollowupList (the rows and the order of the query before, with the
+        // latest status row of each item), for the filters kept at View. The procedure decides from the acting user id
+        // (Controller or MD Secretariat); refused, the list is empty and a message says so. The meeting date boxes are
+        // not used by the list, as before (Known items).
+        private void BindFollowup(int UserId)
+        {
+            pnlViewFollowup.Visible = true;
 
+            int[] f = ViewState["FollowupFilter"] as int[];
+            if (f == null || f.Length != 7)
+            {
+                SaveFilter();
+                f = (int[])ViewState["FollowupFilter"];
+            }
 
+            int reason;
+            DataTable dtFollowup = ActionItemMgr.GetFollowupList(UserId, f[0], f[1], f[2], f[3], f[4], f[5], f[6], out reason);
 
+            bool hasPending = false;
+            if (reason == 0)
+            {
+                foreach (DataRow row in dtFollowup.Rows)
+                {
+                    if (!IsConfirmedValue(row["IsConfirmed"]))
+                    {
+                        hasPending = true;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                dtFollowup.Rows.Clear();
+                MsgDisplay(reason == 8 ? ListInactiveMessage : ListRefusedMessage);
+            }
+
+            // Step FU1: no Submit while the list has no Pending row (closes the UN6d UX Low on the empty list)
+            ViewState["HasPending"] = hasPending;
+            btnSubmit.Visible = CanSave && hasPending;
+
+            grvFollowup.DataSource = dtFollowup;
+            grvFollowup.DataBind();
+        }
+        #endregion
+
+        #region IsConfirmedValue
+        // Step FU1: a confirmed item, as everywhere IsConfirmed is read (ISNULL(IsConfirmed, 0) <> 0); NULL is Pending
+        private static bool IsConfirmedValue(object value)
+        {
+            if (value == null || value == DBNull.Value)
+                return false;
+            int n;
+            return int.TryParse(Convert.ToString(value, CultureInfo.InvariantCulture), out n) && n != 0;
+        }
+        #endregion
 
         #region grvFollowup_RowDataBound(object sender, GridViewRowEventArgs e)
         protected void grvFollowup_RowDataBound(object sender, GridViewRowEventArgs e)
@@ -290,22 +354,53 @@ namespace BMMS.Master
                     //e.Row.Attributes.Add("onmouseover", "MouseEvents(this, event)");
                     //e.Row.Attributes.Add("onmouseout", "MouseEvents(this, event)");
 
-                    Label lblIsConfirmed = (Label)e.Row.FindControl("lblIsConfirmed");
+                    // Step FU1 (step 47): the Status cell. Pending: the Controller's drop-down (Pending chosen), or the word
+                    // for a role that only reads, and the latest reopen when there is one. Confirmed: final; who and when
+                    // (or "before history"), the Action Text as View for every role, and Reopen for the Controller. Every
+                    // text from the database is encoded here (HttpUtility.HtmlEncode); the Literal writes it as it is.
+                    DataRowView data = (DataRowView)e.Row.DataItem;
+                    bool confirmed = IsConfirmedValue(data["IsConfirmed"]);
+                    string action = Convert.ToString(data["StatusAction"]);
 
-                    CheckBox chkIsConfirmed = (CheckBox)e.Row.FindControl("chkIsConfirmed");
+                    DropDownList ddlStatus = (DropDownList)e.Row.FindControl("ddlStatus");
+                    Literal litStatus = (Literal)e.Row.FindControl("litStatus");
+                    Button btnReopen = (Button)e.Row.FindControl("btnReopen");
+                    Button btnActionText = (Button)e.Row.FindControl("btnActionText");
 
-                    if (lblIsConfirmed.Text.Trim() == "1")
-                        chkIsConfirmed.Checked = true;
-                    else
-                        chkIsConfirmed.Checked = false;
-
-                    // Step UN6d: a role that can only read sees the ticks disabled and "View" for the action text
-                    if (!CanSave)
+                    string html;
+                    if (confirmed)
                     {
-                        chkIsConfirmed.Enabled = false;
-                        Button btnActionText = (Button)e.Row.FindControl("btnActionText");
-                        if (btnActionText != null)
-                            btnActionText.Text = "View";
+                        // No history row: confirmed before step 47. A latest row that is not a Confirm (confirmed again
+                        // by an older build after a rollback): "Confirmed" without who and when
+                        if (action == "Confirm")
+                            html = StatusWord("Confirmed") + StatusLine("Confirmed by " + ActedByName(data) + " on " + ActedOnText(data));
+                        else if (action.Length == 0)
+                            html = StatusWord("Confirmed (before history)");
+                        else
+                            html = StatusWord("Confirmed");
+                    }
+                    else
+                    {
+                        html = CanSave ? string.Empty : StatusWord("Pending");
+                        if (action == "Reopen")
+                            html += StatusLine("Reopened by " + ActedByName(data) + " on " + ActedOnText(data) + ": " + Convert.ToString(data["StatusReason"]));
+                    }
+
+                    litStatus.Text = html;
+                    ddlStatus.Visible = CanSave && !confirmed;
+                    ddlStatus.SelectedValue = "0";
+                    // A name per row for a screen reader (ASP.NET encodes the attribute value)
+                    ddlStatus.Attributes["aria-label"] = "Status of agenda no. " + Convert.ToString(data["AgendaNo"])
+                        + ", subject no. " + Convert.ToString(data["SubjectNo"]);
+                    btnReopen.Visible = CanSave && confirmed;
+
+                    // Step UN6d: a role that can only read sees "View" for the action text. Step FU1: a confirmed row too,
+                    // for every role, the Controller included
+                    if (btnActionText != null)
+                    {
+                        bool canEdit = CanSave && !confirmed;
+                        btnActionText.Text = canEdit ? "Edit" : "View";
+                        btnActionText.ToolTip = canEdit ? "Edit the action text" : "View the action text";
                     }
                 }
             }
@@ -313,6 +408,35 @@ namespace BMMS.Master
             {
                 Utilities.GoToErrPage(className, "grvFollowup_RowDataBound", ex);
             }
+        }
+        #endregion
+
+        #region Status cell texts
+        // Step FU1: the parts of the Status cell, each encoded. The name is "Name (login)" (step UN3), " (inactive)" for
+        // an inactive account; the time is the database server's (ActedOn = GETDATE()).
+        private static string StatusWord(string text)
+        {
+            return "<span class=\"wb-followup-status\">" + HttpUtility.HtmlEncode(text) + "</span>";
+        }
+
+        private static string StatusLine(string text)
+        {
+            return "<span class=\"wb-followup-status-line\">" + HttpUtility.HtmlEncode(text) + "</span>";
+        }
+
+        private static string ActedByName(DataRowView data)
+        {
+            string name = Common.UserDisplayName(Convert.ToString(data["StatusByName"]), Convert.ToString(data["StatusByLogin"]),
+                IsConfirmedValue(data["StatusByActive"]));
+            return name.Length > 0 ? name : "an unknown user";
+        }
+
+        private static string ActedOnText(DataRowView data)
+        {
+            object on = data["StatusOn"];
+            if (on == null || on == DBNull.Value)
+                return "an unknown date";
+            return Convert.ToDateTime(on).ToString(DateTimeFormat, CultureInfo.InvariantCulture);
         }
         #endregion
 
@@ -357,16 +481,35 @@ namespace BMMS.Master
                     pnlActionText.Visible = true;
                     ftxtActionText.Text = HtmlCleaner.Clean(dtActionItem.Rows[0]["ActionText"].ToString());
 
-                    // Step UN6d: Save only for the Controller; another role reads the text, with the read-only line
-                    bool canSave = CanSave;
+                    // Step UN6d: Save only for the Controller; another role reads the text, with the read-only line.
+                    // Step FU1: a confirmed item opens as View for every role (as read now; the server refuses a save of
+                    // a confirmed item too, Reason 26)
+                    bool confirmed = IsConfirmedValue(dtActionItem.Rows[0]["IsConfirmed"]);
+                    bool canSave = CanSave && !confirmed;
                     ftxtActionText.ReadOnly = !canSave;
                     btnActionTextSave.Visible = canSave;
                     btnActionTextCancel.Text = canSave ? "Cancel" : "Close";
                     litActionTextTitle.Text = canSave ? ":: Edit Action Text" : ":: View Action Text";
                     if (canSave)
                         HideActionTextPanelMessage();
+                    else if (CanSave)
+                        ShowActionTextPanelMessage(ActionTextConfirmedReadMessage);
                     else
                         ShowActionTextPanelMessage(ReadOnlyMessage);
+                }
+
+                // Step FU1: Reopen, the Controller only and a confirmed item only (the button is not rendered otherwise;
+                // the server decides the save)
+                if (e.CommandName == "Reopen" && CanSave)
+                {
+                    ViewState["ReopenActionItemId"] = ActionItemId.ToString(CultureInfo.InvariantCulture);
+                    pReopenItem.InnerText = "Agenda No. " + Convert.ToString(dtActionItem.Rows[0]["AgendaNo"])
+                        + ", Subject No. " + Convert.ToString(dtActionItem.Rows[0]["SubjectNo"])
+                        + ", meeting " + Convert.ToString(dtActionItem.Rows[0]["MeetingNo"]);
+                    txtReopenReason.Text = string.Empty;
+                    HideReopenPanelMessage();
+                    pnlReopen.Visible = true;
+                    ScriptManager.GetCurrent(this).SetFocus(txtReopenReason.ClientID);
                 }
             }
             catch (Exception ex)
@@ -375,6 +518,9 @@ namespace BMMS.Master
             }
         }
         #endregion
+
+        // Step FU1: the line inside the Action Text panel when the Controller opens a confirmed item
+        private const string ActionTextConfirmedReadMessage = "This followup is confirmed and can no longer be changed. Reopen it to change the action text.";
 
         #region btnActualResolutionCancel_Click
         protected void btnActualResolutionCancel_Click(object sender, EventArgs e)
@@ -395,6 +541,7 @@ namespace BMMS.Master
         // Step UN6d: the save goes through spr_SaveFollowupActionText (step 46), which decides on the server from the
         // acting user id: only an active Controller; it writes the action text only, as before. Saved or refused, the
         // panel closes with a message; a failed save keeps the panel open with the text typed and says so inside it.
+        // Step FU1 (step 47): a confirmed item is refused (Reason 26), nothing saved.
         protected void btnActionTextSave_Click(object sender, EventArgs e)
         {
             MsgHide();
@@ -435,6 +582,8 @@ namespace BMMS.Master
                 MsgDisplay(ActionTextSavedMessage, MessageKind.Success);
             else if (reason == 8)
                 MsgDisplay(InactiveMessage);
+            else if (reason == 26)
+                MsgDisplay(ActionTextConfirmedMessage);
             else
                 MsgDisplay(NotSavedMessage);
         }
@@ -442,10 +591,11 @@ namespace BMMS.Master
 
 
         #region btnSubmit_Click
-        // Step UN6d: every row of the list in ONE call to spr_SaveFollowupConfirmed (step 46), in one transaction: all
-        // rows are saved or none. The server decides from the acting user id: only an active Controller; one row that
-        // is not allowed (an item that no longer exists) refuses the whole Submit. It writes for each row what the page
-        // wrote before (IsComplied 0, IsConfirmed the tick; a tick sets the item's mapping rows to StatusId 0).
+        // Step FU1 (step 47): ONE call to spr_SaveFollowupConfirmed with only the rows changed from Pending to Confirmed;
+        // rows left Pending and rows already confirmed are not sent. One transaction, all or nothing; the server decides
+        // from the acting user id (only an active Controller), skips a row confirmed in between and refuses the whole
+        // Submit when an item no longer exists. No row changed: nothing is sent. Afterwards the list is read again with
+        // the filters of View.
         protected void btnSubmit_Click(object sender, EventArgs e)
         {
             MsgHide();
@@ -454,30 +604,48 @@ namespace BMMS.Master
             if (!HasSessionUser(out UserId))
                 return;
 
-            List<KeyValuePair<int, bool>> rows = new List<KeyValuePair<int, bool>>();
+            List<int> ids = new List<int>();
             foreach (GridViewRow gr in grvFollowup.Rows)
             {
                 if (gr.RowType != DataControlRowType.DataRow)
                     continue;
 
-                int ActionItemId;
                 Label lblActionItemId = (Label)gr.FindControl("lblActionItemId");
-                CheckBox chkIsConfirmed = (CheckBox)gr.FindControl("chkIsConfirmed");
-                if (lblActionItemId == null || chkIsConfirmed == null || !int.TryParse(lblActionItemId.Text.Trim(), out ActionItemId))
+                Label lblIsConfirmed = (Label)gr.FindControl("lblIsConfirmed");
+                DropDownList ddlStatus = (DropDownList)gr.FindControl("ddlStatus");
+                if (lblActionItemId == null || lblIsConfirmed == null || ddlStatus == null)
+                {
+                    MsgDisplay(NotSavedMessage);
+                    return;
+                }
+
+                // Only a Pending row (as read at View) whose drop-down was changed to Confirmed
+                if (!ddlStatus.Visible || IsConfirmedValue(lblIsConfirmed.Text.Trim()) || ddlStatus.SelectedValue != "1")
+                    continue;
+
+                int ActionItemId;
+                if (!int.TryParse(lblActionItemId.Text.Trim(), out ActionItemId))
                 {
                     // A row whose item cannot be read: nothing is sent, nothing is saved
                     MsgDisplay(NotSavedMessage);
                     return;
                 }
 
-                rows.Add(new KeyValuePair<int, bool>(ActionItemId, chkIsConfirmed.Checked));
+                ids.Add(ActionItemId);
+            }
+
+            if (ids.Count == 0)
+            {
+                MsgDisplay(NothingChangedMessage);
+                return;
             }
 
             int reason;
             int saved;
+            int skipped;
             try
             {
-                reason = ActionItemMgr.SaveFollowupConfirmed(UserId, rows, out saved);
+                reason = ActionItemMgr.SaveFollowupConfirmed(UserId, ids, out saved, out skipped);
             }
             catch (Exception ex)
             {
@@ -487,13 +655,185 @@ namespace BMMS.Master
             }
 
             if (reason == 0)
-                MsgDisplay(ConfirmedSavedMessage, MessageKind.Success);
+            {
+                RebindAfterSave(UserId);
+                MsgDisplay(ConfirmedMessage(saved, skipped), saved > 0 ? MessageKind.Success : MessageKind.Warning);
+            }
             else if (reason == 8)
                 MsgDisplay(InactiveMessage);
             else
                 MsgDisplay(NotSavedMessage);
 
             ScriptManager.GetCurrent(this).SetFocus(ddlCommittee.ClientID);
+        }
+        #endregion
+
+        #region ConfirmedMessage
+        // Step FU1: "3 followups were confirmed." / "1 followup was confirmed." / "No followup was confirmed.", and
+        // "[m] had already been confirmed." for the rows skipped (another Controller, or the same one in another tab)
+        private static string ConfirmedMessage(int saved, int skipped)
+        {
+            string text = saved == 0 ? "No followup was confirmed."
+                        : saved == 1 ? "1 followup was confirmed."
+                        : saved.ToString(CultureInfo.InvariantCulture) + " followups were confirmed.";
+            if (skipped > 0)
+                text += " " + skipped.ToString(CultureInfo.InvariantCulture) + " had already been confirmed.";
+            return text;
+        }
+        #endregion
+
+        #region btnReopenSave_Click
+        // Step FU1 (step 47): the Save of the Reopen panel, one item at once, through spr_ReopenFollowup, which decides on
+        // the server from the acting user id (only an active Controller) and reopens only an item still confirmed. The
+        // reason is trimmed, not blank, at most 500 characters (checked here first; the panel stays open with the text).
+        // Reopened or refused, the panel closes with a message and the list is read again; a failure keeps it open.
+        protected void btnReopenSave_Click(object sender, EventArgs e)
+        {
+            MsgHide();
+
+            int UserId;
+            if (!HasSessionUser(out UserId))
+                return;
+
+            int ActionItemId;
+            if (!CanSave || !int.TryParse(Convert.ToString(ViewState["ReopenActionItemId"]), out ActionItemId))
+            {
+                CloseReopenPanel();
+                MsgDisplay(NotSavedMessage);
+                return;
+            }
+
+            // A line break is posted as CR LF but counted as one character by the box: stored as LF, so the limit is the
+            // same in the browser and here
+            string text = (txtReopenReason.Text ?? string.Empty).Replace("\r\n", "\n").Trim();
+            if (text.Length == 0)
+            {
+                ShowReopenPanelMessage(ReopenBlankMessage);
+                ScriptManager.GetCurrent(this).SetFocus(txtReopenReason.ClientID);
+                return;
+            }
+            if (text.Length > ActionItemMgr.ReopenReasonMaxLength)
+            {
+                ShowReopenPanelMessage(ReopenTooLongMessage);
+                ScriptManager.GetCurrent(this).SetFocus(txtReopenReason.ClientID);
+                return;
+            }
+
+            int reason;
+            try
+            {
+                reason = ActionItemMgr.ReopenFollowup(UserId, ActionItemId, text);
+            }
+            catch (Exception ex)
+            {
+                Utilities.WriteErrorLog(className, "btnReopenSave_Click", ex.ToString());
+                ShowReopenPanelMessage(Common.IsServerBusy(ex) ? ReopenBusyMessage : ReopenFailedMessage);
+                return;
+            }
+
+            CloseReopenPanel();
+
+            if (reason == 0)
+            {
+                // The Status choices not yet submitted (Confirmed on other Pending rows) are kept across the list read
+                List<int> chosen = ChosenConfirmed();
+                RebindAfterSave(UserId);
+                ApplyChosenConfirmed(chosen);
+                MsgDisplay(ReopenedMessage, MessageKind.Success);
+            }
+            else if (reason == 8)
+                MsgDisplay(InactiveMessage);
+            else if (reason == 27)
+                MsgDisplay(ReopenNotConfirmedMessage);
+            else
+                MsgDisplay(NotSavedMessage);
+
+            ScriptManager.GetCurrent(this).SetFocus(ddlCommittee.ClientID);
+        }
+        #endregion
+
+        #region btnReopenCancel_Click
+        protected void btnReopenCancel_Click(object sender, EventArgs e)
+        {
+            CloseReopenPanel();
+        }
+        #endregion
+
+        #region RebindAfterSave
+        // Step FU1: after a done Submit or Reopen, the list read again with the filters of View. A failure of that read
+        // goes to the error page as View does; the save is done by then.
+        private void RebindAfterSave(int UserId)
+        {
+            try
+            {
+                BindFollowup(UserId);
+            }
+            catch (Exception ex)
+            {
+                Utilities.GoToErrPage(className, "RebindAfterSave", ex);
+            }
+        }
+        #endregion
+
+        #region ChosenConfirmed
+        // Step FU1: the ids of the Pending rows whose drop-down is set to Confirmed but not yet submitted
+        private List<int> ChosenConfirmed()
+        {
+            List<int> ids = new List<int>();
+            foreach (GridViewRow gr in grvFollowup.Rows)
+            {
+                if (gr.RowType != DataControlRowType.DataRow)
+                    continue;
+                Label lblActionItemId = (Label)gr.FindControl("lblActionItemId");
+                DropDownList ddlStatus = (DropDownList)gr.FindControl("ddlStatus");
+                int id;
+                if (lblActionItemId != null && ddlStatus != null && ddlStatus.Visible && ddlStatus.SelectedValue == "1"
+                    && int.TryParse(lblActionItemId.Text.Trim(), out id))
+                    ids.Add(id);
+            }
+            return ids;
+        }
+
+        // Step FU1: those choices set again on the rows that are still Pending after the list was read again
+        private void ApplyChosenConfirmed(List<int> ids)
+        {
+            if (ids == null || ids.Count == 0)
+                return;
+            foreach (GridViewRow gr in grvFollowup.Rows)
+            {
+                if (gr.RowType != DataControlRowType.DataRow)
+                    continue;
+                Label lblActionItemId = (Label)gr.FindControl("lblActionItemId");
+                DropDownList ddlStatus = (DropDownList)gr.FindControl("ddlStatus");
+                int id;
+                if (lblActionItemId != null && ddlStatus != null && ddlStatus.Visible
+                    && int.TryParse(lblActionItemId.Text.Trim(), out id) && ids.Contains(id))
+                    ddlStatus.SelectedValue = "1";
+            }
+        }
+        #endregion
+
+        #region CloseReopenPanel
+        // Step FU1: the Reopen panel closed, with no text and no line
+        private void CloseReopenPanel()
+        {
+            pnlReopen.Visible = false;
+            txtReopenReason.Text = string.Empty;
+            pReopenItem.InnerText = string.Empty;
+            ViewState.Remove("ReopenActionItemId");
+            HideReopenPanelMessage();
+        }
+
+        private void ShowReopenPanelMessage(string message)
+        {
+            pReopenPanelMessage.InnerText = message;
+            pReopenPanelMessage.Visible = true;
+        }
+
+        private void HideReopenPanelMessage()
+        {
+            pReopenPanelMessage.InnerText = string.Empty;
+            pReopenPanelMessage.Visible = false;
         }
         #endregion
 
@@ -540,6 +880,8 @@ namespace BMMS.Master
 
 
         #region MsgDisplay
+        // The message box. Only the fixed texts of this page and numbers are written here (InnerHtml), never a text
+        // from the database.
         private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
             divErrLogin.Attributes.Add("class", Common.MessageCss(kind));

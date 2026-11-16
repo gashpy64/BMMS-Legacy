@@ -107,10 +107,10 @@ namespace BMMSBAL
         #endregion
 
         #region SaveFollowupConfirmed
-        // Step UN6d (step 46): the Submit of the Followup page, every row in one call. Rows: the action item id and
-        // the tick (true = Confirmed) of each row of the page. The list is written with XmlWriter, so nothing of it
-        // is ever read as markup. See ActionItemDB.
-        public static int SaveFollowupConfirmed(int ActingUserId, IList<KeyValuePair<int, bool>> Rows, out int Saved)
+        // Step FU1 (step 47): the Submit of the Followup page in one call. ActionItemIds: only the rows the Controller
+        // changed from Pending to Confirmed. The list is written with XmlWriter, so nothing of it is ever read as
+        // markup. See ActionItemDB.
+        public static int SaveFollowupConfirmed(int ActingUserId, IList<int> ActionItemIds, out int Saved, out int Skipped)
         {
             StringBuilder sb = new StringBuilder();
             XmlWriterSettings settings = new XmlWriterSettings();
@@ -118,20 +118,44 @@ namespace BMMSBAL
             using (XmlWriter w = XmlWriter.Create(sb, settings))
             {
                 w.WriteStartElement("items");
-                if (Rows != null)
+                if (ActionItemIds != null)
                 {
-                    foreach (KeyValuePair<int, bool> row in Rows)
+                    foreach (int id in ActionItemIds)
                     {
                         w.WriteStartElement("i");
-                        w.WriteAttributeString("id", row.Key.ToString(CultureInfo.InvariantCulture));
-                        w.WriteAttributeString("c", row.Value ? "1" : "0");
+                        w.WriteAttributeString("id", id.ToString(CultureInfo.InvariantCulture));
                         w.WriteEndElement();
                     }
                 }
                 w.WriteEndElement();
             }
 
-            return ActionItemDB.SaveFollowupConfirmed(ActingUserId, sb.ToString(), out Saved);
+            return ActionItemDB.SaveFollowupConfirmed(ActingUserId, sb.ToString(), out Saved, out Skipped);
+        }
+        #endregion
+
+        #region ReopenFollowup
+        // Step FU1 (step 47): see ActionItemDB. The reason is trimmed; a blank reason or one longer than
+        // ReopenReasonMaxLength is never sent (Reason 4, nothing saved), so the parameter type never cuts a text.
+        public const int ReopenReasonMaxLength = ActionItemDB.ReopenReasonMaxLength;
+
+        public static int ReopenFollowup(int ActingUserId, int ActionItemId, string ReopenReason)
+        {
+            string text = (ReopenReason ?? string.Empty).Trim();
+            if (text.Length == 0 || text.Length > ReopenReasonMaxLength)
+                return 4;
+
+            return ActionItemDB.ReopenFollowup(ActingUserId, ActionItemId, text);
+        }
+        #endregion
+
+        #region GetFollowupList
+        // Step FU1 (step 47): the Followup page's list with the latest status row of each item; see ActionItemDB
+        public static DataTable GetFollowupList(int ActingUserId, int CommitteeId, int MeetingNoSearch, int MeetingId, int FromMeetingId,
+            int ToMeetingId, int DepartmentId, int ConfirmStatus, out int Reason)
+        {
+            return ActionItemDB.GetFollowupList(ActingUserId, CommitteeId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
+                DepartmentId, ConfirmStatus, out Reason);
         }
         #endregion
 

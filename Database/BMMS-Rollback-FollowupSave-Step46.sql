@@ -19,6 +19,9 @@
    to roll back) and changes nothing.
    BMMS-Check-InstalledSteps.sql then shows step 46 Missing.
 
+   Since step 47 (step FU1): it refuses while step 47 is installed. Roll back
+   step 47 first (BMMS-Rollback-FollowupFinal-Step47.sql).
+
    It has no USE line: select the database in SSMS first. It stops if the
    current database name does not start with "BMMS". Plain ASCII. From the
    command line use sqlcmd -I.
@@ -38,6 +41,15 @@ END
 ELSE IF (OBJECT_ID('dbo.spr_SaveFollowupActionText', 'P') IS NULL AND OBJECT_ID('dbo.spr_SaveFollowupConfirmed', 'P') IS NULL)
 BEGIN
     RAISERROR('Step 46 is not installed in "%s" (neither of its two procedures exists): nothing to roll back. Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
+-- Replaced by step 47 (step FU1): roll back step 47 first (BMMS-Rollback-FollowupFinal-Step47.sql puts the step 46
+-- texts back); dropping the step 47 texts here would leave the FU1 build without its procedures
+ELSE IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_SaveFollowupActionText')), '') LIKE '%FollowupFinal-Step47%'
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_SaveFollowupConfirmed')), '') LIKE '%FollowupFinal-Step47%'
+         OR OBJECT_ID('dbo.spr_ReopenFollowup', 'P') IS NOT NULL)
+BEGIN
+    RAISERROR('Step 47 is installed in "%s". Roll back step 47 first (BMMS-Rollback-FollowupFinal-Step47.sql), then this script. Nothing was changed.', 16, 1, @CurrentDatabase);
     SET NOEXEC ON;
 END
 GO

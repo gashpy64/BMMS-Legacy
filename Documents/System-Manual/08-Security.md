@@ -3,10 +3,11 @@
 - Title: Security
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6d (the paragraph on the Followup saves and the Action Item Details panel under "Role and acting-user checks in procedures"); UN6c2b (the paragraph on the summary cards and the Committee filter under "Role and acting-user checks in procedures"); UN6c2a (the paragraph on the approval rule under "Role and acting-user checks in procedures"); UN6c1 (the paragraph on the Dashboard alerts and Action Items under "Role and acting-user checks in procedures"); UN6b (the paragraph on the Dashboard meeting list under "Role and acting-user checks in procedures"); the rest RA1c2
-- Last updated by: UN6d, based on ce7358a
+- Applies to: FU1 (the paragraph "Step 47 (FU1)" under "Role and acting-user checks in procedures": the Followup list, the final confirmed state, Reopen, the reason text and its encoding); UN6d (the paragraph on the Followup saves and the Action Item Details panel under "Role and acting-user checks in procedures"); UN6c2b (the paragraph on the summary cards and the Committee filter under "Role and acting-user checks in procedures"); UN6c2a (the paragraph on the approval rule under "Role and acting-user checks in procedures"); UN6c1 (the paragraph on the Dashboard alerts and Action Items under "Role and acting-user checks in procedures"); UN6b (the paragraph on the Dashboard meeting list under "Role and acting-user checks in procedures"); the rest RA1c2
+- Last updated by: FU1, based on 3d571c4
 - Status: Draft
-- Verified against: for step UN6d: Database/BMMS-Fix-FollowupSave-Step46.sql (both procedures, read in full), BMMS/Master/Followup.aspx.cs and BMMS/DashBoard/DashBoard.aspx.cs (diff), BMMSBAL/ActionItemMgr.cs and BMMSDAL/ActionItemDB.cs (diff), Database/README.md (section Step UN6d, the rule, not the findings); for step UN6c2b: Database/BMMS-Fix-DashboardSummary-Step45.sql (fn_DashboardCommitteeFilter, spr_GetDashboardSummary, the Reason checks of the three replaced procedures), BMMS/UserControl/MeetingSummary.ascx.cs and BMMS/DashBoard/DashBoard.aspx.cs (diff), Database/README.md (section Step UN6c2b and its Known items); and before: for step UN6c2a: Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (fn_AgendaWaitingFor, spr_GetAgendaApprovalState, spr_GetDashboardApprovals, spr_UpdateAgendaByAgendaId, spr_GetDashboardMeetings, read in full), BMMS/DashBoard/DashBoard.aspx.cs (what is sent, what is read back), BMMSDAL/AgendaDB.cs (diff), Database/README.md (section Step UN6c2a, the rule and the hardening, not the findings); for step UN6c1: Database/BMMS-Fix-DashboardAlerts-Step43.sql (the procedures and functions), BMMS/DashBoard/DashBoard.aspx.cs (what is sent and read back),
+- Verified against: for step FU1: BMMS/Master/Followup.aspx and .aspx.cs (the "<" check, HtmlEncode in grvFollowup_RowDataBound, the reason checks, the Reason texts), BMMSBAL/ActionItemMgr.cs and BMMSDAL/ActionItemDB.cs (diff), Database/README.md (section Step FU1, the rules; the procedure texts of step 47 as described there, the script not read line by line);
+  for step UN6d: Database/BMMS-Fix-FollowupSave-Step46.sql (both procedures, read in full), BMMS/Master/Followup.aspx.cs and BMMS/DashBoard/DashBoard.aspx.cs (diff), BMMSBAL/ActionItemMgr.cs and BMMSDAL/ActionItemDB.cs (diff), Database/README.md (section Step UN6d, the rule, not the findings); for step UN6c2b: Database/BMMS-Fix-DashboardSummary-Step45.sql (fn_DashboardCommitteeFilter, spr_GetDashboardSummary, the Reason checks of the three replaced procedures), BMMS/UserControl/MeetingSummary.ascx.cs and BMMS/DashBoard/DashBoard.aspx.cs (diff), Database/README.md (section Step UN6c2b and its Known items); and before: for step UN6c2a: Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (fn_AgendaWaitingFor, spr_GetAgendaApprovalState, spr_GetDashboardApprovals, spr_UpdateAgendaByAgendaId, spr_GetDashboardMeetings, read in full), BMMS/DashBoard/DashBoard.aspx.cs (what is sent, what is read back), BMMSDAL/AgendaDB.cs (diff), Database/README.md (section Step UN6c2a, the rule and the hardening, not the findings); for step UN6c1: Database/BMMS-Fix-DashboardAlerts-Step43.sql (the procedures and functions), BMMS/DashBoard/DashBoard.aspx.cs (what is sent and read back),
   Database/README.md (section Step UN6c1, rules); for step UN6b: Database/BMMS-Fix-DashboardMeetings-Step42.sql (spr_GetDashboardMeetings,
   spr_GetDashboardDepartments, fn_UserDepartmentScope), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (what is
   sent, what is read back, the encoding), BMMSDAL/MeetingDB.cs and DepartmentDB.cs (diff), Database/README.md
@@ -180,6 +181,23 @@ role, and spr_SaveDashboardActionText (step 43, not changed) decides. A role cha
 shows the old buttons until the next sign-in, and a save is then refused or allowed by the new role. PageAccess.xml is
 not changed: the Followup page still opens for controller and md_sect. Step 46 grants nothing and the application
 login keeps EXECUTE on the schema. A failed save is written to the error log and the page shows a fixed message.
+Step 47 (FU1) keeps the same rules and adds three. (1) The Followup list is read through spr_GetFollowupList with the
+acting user id: only an active Controller or MD Secretariat that is not the system account gets rows (Reason 12 for the
+system account, 8 for a missing, 0, NULL or inactive user, 4 for any other role); the result is always one result set,
+empty when refused. (2) A confirmed followup is final on the server, not only on the page: spr_SaveFollowupActionText
+refuses an item that is confirmed (Reason 26) and spr_SaveFollowupConfirmed skips a row that is already confirmed and
+counts it, so a stale page cannot overwrite or confirm twice; the page's own Pending test is for display only. (3) Only
+spr_ReopenFollowup (an active Controller, same Reasons 12, 8 and 4) turns a confirmed item back to Pending, one item
+per call, with a reason that must not be blank (Reason 4); an item that is not confirmed gives Reason 27. Every confirm
+and every reopen writes one row of Action_Item_Status_History (who, when, and for a reopen the reason); no procedure
+updates or deletes those rows. The XML list of spr_SaveFollowupConfirmed now accepts the attribute id only: the
+attribute c that the build of step 46 sent makes the whole call a refusal (Reason 4), so the old build cannot save
+after step 47. The reopen reason is plain text: the page checks its length (500 characters) and refuses a "<" followed
+by a letter, "!", "/" or "?", or "&#" in the browser, because ASP.NET request validation would otherwise send the person
+to the error page; every text from the database that the Status cell shows (names, reason, date) is HTML-encoded with
+HttpUtility.HtmlEncode and written through a Literal. spr_DeleteUserByUserId refuses a user who has history rows
+(Reason 6), so the record of who acted keeps its person. Step 47 grants nothing; the application login keeps EXECUTE on
+the schema.
 [[CONFIRM: lead from old Architecture notes: the acting user is the logged-in user, passed as @ActingUserId; a missing or inactive acting user is refused]]
 [[CONFIRM: lead from old Architecture notes: one protected system account (Users.IsSystem = 1) cannot be edited, deleted, deactivated or given another role, even by itself; only it can change its own password; it takes no part in the workflow (step 18)]]
 [[CONFIRM: lead from old Architecture notes: every protected procedure returns one row Result, Reason, ReasonDetail (1 done, 0 refused); the page turns the Reason into a sentence; a database error is re-raised, not reported as a refusal]]
