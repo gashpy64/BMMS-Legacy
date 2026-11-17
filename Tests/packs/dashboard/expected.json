@@ -269,6 +269,17 @@
     "readOnlyLine": "You can read this action item. Your role cannot change it.",
     "savedMessage": "The action text was saved."
   },
+  "followupFinal": {
+    "item": "QA1-00005-001", "otherItem": "QA1-00005-002",
+    "controller": "controller", "controllerName": "QA Controller (qa_ctrl)",
+    "staleRow": "user", "stalePanel": "manager", "listAccounts": ["controller", "mgmt", "manager", "user"],
+    "confirmedOne": "1 followup was confirmed.",
+    "confirmedLine": "This followup is confirmed and can no longer be changed.",
+    "notSaved": "This followup is confirmed and can no longer be changed. Nothing was saved.",
+    "typed": "QA FU2a text typed after the confirm",
+    "reopenReason": "QA FU2a reopen after the Dashboard check",
+    "reopened": "The followup was reopened."
+  },
   "approvals": {
     "admin": "no panel",
     "controller": { "title": "My approvals (2)", "rows": ["QA1-00001-002 | QA Test Committee | No 00001 | Credit", "QA2-00001-1 | QA Dashboard Committee | No 00001 | Credit"] },

@@ -203,6 +203,9 @@
                                         <ItemTemplate>
                                             <span class="wb-dash-date"><%# HttpUtility.HtmlEncode(FormatDate(Eval("DueDate"))) %></span>
                                             <asp:PlaceHolder ID="phOverdue" runat="server" Visible='<%# IsOverdue(Eval("IsOverdue")) %>'><span class="wb-chip wb-chip-red wb-dash-overdue">Overdue</span></asp:PlaceHolder>
+                                            <%-- Step FU2a: the word "Reopened" for a Pending item whose latest Followup status is a
+                                                 Reopen (IsReopened of step 48); with "Overdue" when both apply --%>
+                                            <asp:PlaceHolder ID="phReopened" runat="server" Visible='<%# IsReopened(Container.DataItem) %>'><span class="wb-chip wb-chip-orange wb-dash-reopened">Reopened</span></asp:PlaceHolder>
                                         </ItemTemplate>
                                         <ItemStyle VerticalAlign="Middle" HorizontalAlign="Center" />
                                     </asp:TemplateField>
@@ -666,6 +669,9 @@
                                         </div>
                                         <div class="divRowRight wb-dash-pfield">
                                             <bmms:RichTextEditor ID="ftxtActionText" runat="server" Width="100%" Height="100px" ReadOnly="true" Label="Action Text" />
+                                            <%-- Step FU2a: the Followup status under the action text, the texts of the Followup page:
+                                                 who confirmed or reopened the item and when (and the reason); plain text --%>
+                                            <p id="pActionItemStatus" runat="server" class="bmms-comment-by wb-dash-status-line" visible="false"></p>
                                         </div>
                                     </div>
                                 </div>

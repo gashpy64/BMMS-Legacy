@@ -1293,6 +1293,25 @@ body.wb .bmms-comment-by-line
 {
 	margin-left: var(--wb-space-1);
 }
+/* Step FU2a: the word "Reopened" beside the due date (after "Overdue" when both apply), in the orange chip
+   (#8A5300 on #FDF3E1, 5.75:1); the two chips wrap onto a second line in a narrow column */
+.wb-dash-reopened
+{
+	margin-left: var(--wb-space-1);
+}
+/* Step FU2a: the Followup status under the action text of the Action Item Details panel (who confirmed or reopened
+   the item, when, and the reason), in the muted caption style of step UN4 (bmms-comment-by), on its own line across
+   the value column; a reason of 500 characters, also one without a space, wraps inside it */
+body.wb .wb-dash-status-line
+{
+	display: block;
+	max-width: 100%;
+	margin: var(--wb-space-1) 0 0 0;
+	white-space: normal;
+	overflow-wrap: anywhere;
+	word-wrap: break-word;
+	word-break: break-word;
+}
 .wb-dash-alerts table.contentTable1 th.wb-dash-alert-when,
 .wb-dash-alerts table.contentTable1 td.wb-dash-alert-when
 {

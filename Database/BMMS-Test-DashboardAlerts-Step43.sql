@@ -25,6 +25,16 @@
    Every other check is as it was (called without the two parameters, the
    procedure gives the rows of step 43).
 
+   Step 48 (step FU2a) replaced fn_DashboardActionItems,
+   spr_GetDashboardActionItems, spr_OpenDashboardActionItem and
+   spr_SaveDashboardActionText: seven status columns after IsOverdue, a
+   confirmed item in the person's scope is opened (and marked read), and its
+   save is refused with Reason 26. With step 48 installed (its marker
+   DashboardFollowupFinal-Step48) this script expects the 35 columns, the
+   confirmed item 6 opened by the Controller and Reason 26 for its save; the
+   table #AI gets the seven columns; without step 48 it expects what step 43
+   gave. Every other check is as it was.
+
    Part 2 works inside ONE transaction that is rolled back, with made-up data
    (names beginning ZZ43):
      - every alert type (CC, CU, MC, MU, AF, MF, AC, AMA, AMR, ACA, ACR) with
@@ -111,6 +121,10 @@ CREATE TABLE #AI (ActionItemId INT, MinutesId INT, ActionText NVARCHAR(MAX), Act
                   ActualResolution NVARCHAR(MAX), CommitteeName NVARCHAR(200), CommitteeCode VARCHAR(50), MeetingDate DATETIME,
                   MeetingTime VARCHAR(50), Venue NVARCHAR(500), UserId INT, ReadStatus INT, DepartmentId INT, Directions NVARCHAR(MAX),
                   IsComplied INT, IsConfirmed INT, IsOverdue INT);
+-- Step 48 installed: the procedures return seven status columns more (INSERT ... EXEC needs the same columns)
+IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_OpenDashboardActionItem')), '') LIKE '%DashboardFollowupFinal-Step48%')
+    ALTER TABLE #AI ADD IsReopened INT, StatusAction VARCHAR(10), StatusReason NVARCHAR(500), StatusOn DATETIME,
+                        StatusByName NVARCHAR(200), StatusByLogin NVARCHAR(200), StatusByActive INT;
 CREATE TABLE #Mail (EmailId NVARCHAR(200));
 
 -- Every identity counter before the test (put back at the end)
@@ -149,18 +163,18 @@ INSERT INTO #T SELECT 'spr_GetDashboardAlerts: the result columns the page reads
        ISNULL(@Cols, 'none');
 SET @Cols = NULL;
 SELECT @Cols = ISNULL(@Cols + ',', '') + name FROM sys.dm_exec_describe_first_result_set_for_object(OBJECT_ID('dbo.spr_GetDashboardActionItems'), 0) ORDER BY column_ordinal;
-INSERT INTO #T SELECT 'spr_GetDashboardActionItems: the columns of View_Action_Item_Users and IsOverdue',
-       'ActionItemId,MinutesId,ActionText,ActionStatus,AgendaId,DecisionTypeId,DueDate,AgendaNo,CommitteeId,MeetingId,DecisionTypeCode,DecisionTypeName,SubjectNo,DepartmentCode,DepartmentName,ActualResolution,CommitteeName,CommitteeCode,MeetingDate,MeetingTime,Venue,UserId,ReadStatus,DepartmentId,Directions,IsComplied,IsConfirmed,IsOverdue',
+INSERT INTO #T SELECT 'spr_GetDashboardActionItems: the columns of View_Action_Item_Users and IsOverdue (with step 48 installed: and the seven status columns)',
+       'ActionItemId,MinutesId,ActionText,ActionStatus,AgendaId,DecisionTypeId,DueDate,AgendaNo,CommitteeId,MeetingId,DecisionTypeCode,DecisionTypeName,SubjectNo,DepartmentCode,DepartmentName,ActualResolution,CommitteeName,CommitteeCode,MeetingDate,MeetingTime,Venue,UserId,ReadStatus,DepartmentId,Directions,IsComplied,IsConfirmed,IsOverdue' + CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetDashboardActionItems')), '') LIKE '%DashboardFollowupFinal-Step48%' THEN ',IsReopened,StatusAction,StatusReason,StatusOn,StatusByName,StatusByLogin,StatusByActive' ELSE '' END,
        ISNULL(@Cols, 'none');
 SET @Cols = NULL;
 SELECT @Cols = ISNULL(@Cols + ',', '') + name FROM sys.dm_exec_describe_first_result_set_for_object(OBJECT_ID('dbo.spr_OpenDashboardActionItem'), 0) ORDER BY column_ordinal;
 INSERT INTO #T SELECT 'spr_OpenDashboardActionItem: the same columns (the details panel reads them)',
-       'ActionItemId,MinutesId,ActionText,ActionStatus,AgendaId,DecisionTypeId,DueDate,AgendaNo,CommitteeId,MeetingId,DecisionTypeCode,DecisionTypeName,SubjectNo,DepartmentCode,DepartmentName,ActualResolution,CommitteeName,CommitteeCode,MeetingDate,MeetingTime,Venue,UserId,ReadStatus,DepartmentId,Directions,IsComplied,IsConfirmed,IsOverdue',
+       'ActionItemId,MinutesId,ActionText,ActionStatus,AgendaId,DecisionTypeId,DueDate,AgendaNo,CommitteeId,MeetingId,DecisionTypeCode,DecisionTypeName,SubjectNo,DepartmentCode,DepartmentName,ActualResolution,CommitteeName,CommitteeCode,MeetingDate,MeetingTime,Venue,UserId,ReadStatus,DepartmentId,Directions,IsComplied,IsConfirmed,IsOverdue' + CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_OpenDashboardActionItem')), '') LIKE '%DashboardFollowupFinal-Step48%' THEN ',IsReopened,StatusAction,StatusReason,StatusOn,StatusByName,StatusByLogin,StatusByActive' ELSE '' END,
        ISNULL(@Cols, 'none');
 SET @Cols = NULL;
 SELECT @Cols = ISNULL(@Cols + ',', '') + c.name FROM sys.columns c WHERE c.object_id = OBJECT_ID('dbo.fn_DashboardActionItems') ORDER BY c.column_id;
-INSERT INTO #T SELECT 'fn_DashboardActionItems: the 27 columns of View_Action_Item_Users and IsOverdue',
-       'ActionItemId,MinutesId,ActionText,ActionStatus,AgendaId,DecisionTypeId,DueDate,AgendaNo,CommitteeId,MeetingId,DecisionTypeCode,DecisionTypeName,SubjectNo,DepartmentCode,DepartmentName,ActualResolution,CommitteeName,CommitteeCode,MeetingDate,MeetingTime,Venue,UserId,ReadStatus,DepartmentId,Directions,IsComplied,IsConfirmed,IsOverdue',
+INSERT INTO #T SELECT 'fn_DashboardActionItems: the 27 columns of View_Action_Item_Users and IsOverdue (with step 48 installed: 35, and the seven status columns)',
+       'ActionItemId,MinutesId,ActionText,ActionStatus,AgendaId,DecisionTypeId,DueDate,AgendaNo,CommitteeId,MeetingId,DecisionTypeCode,DecisionTypeName,SubjectNo,DepartmentCode,DepartmentName,ActualResolution,CommitteeName,CommitteeCode,MeetingDate,MeetingTime,Venue,UserId,ReadStatus,DepartmentId,Directions,IsComplied,IsConfirmed,IsOverdue' + CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.fn_DashboardActionItems')), '') LIKE '%DashboardFollowupFinal-Step48%' THEN ',IsReopened,StatusAction,StatusReason,StatusOn,StatusByName,StatusByLogin,StatusByActive' ELSE '' END,
        ISNULL(@Cols, 'none');
 
 INSERT INTO #T SELECT 'Not changed by step 43 (no marker): spr_GetAlertByUserId, spr_UpdateAlertByAlertUserId, spr_UpdateAlertByUserId, View_Alert, spr_GetActionItemByUserId', '0 of 5',
@@ -906,8 +920,10 @@ BEGIN TRY
          + ' (read ' + CAST(ISNULL((SELECT SUM(ReadStatus) FROM ActionItem_User_Map WHERE ActionItemId = @I1 AND UserId = @UsD), 0) AS VARCHAR(12)) + ')';
     DELETE FROM #AI; SET @Res = NULL; SET @Rsn = NULL;
     INSERT INTO #AI EXEC spr_OpenDashboardActionItem @ActingUserId = @Ctl, @ActionItemId = @I6, @Result = @Res OUTPUT, @Reason = @Rsn OUTPUT;
-    INSERT INTO @T SELECT 'Open: the Controller opens the confirmed item 6: refused, no row',
-           'Result 0, Reason 4, returned 0 (read 0), own rows 0 (read 0)',
+    INSERT INTO @T SELECT 'Open: the Controller opens the confirmed item 6: refused, no row (with step 48 installed: opened read-only, marked read)',
+           CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_OpenDashboardActionItem')), '') LIKE '%DashboardFollowupFinal-Step48%'
+                THEN 'Result 1, Reason 0, returned 1 (read 1), own rows 1 (read 1)'
+                ELSE 'Result 0, Reason 4, returned 0 (read 0), own rows 0 (read 0)' END,
            'Result ' + ISNULL(CAST(@Res AS VARCHAR(2)), '-') + ', Reason ' + ISNULL(CAST(@Rsn AS VARCHAR(3)), '-') + ', returned ' + CAST((SELECT COUNT(*) FROM #AI) AS VARCHAR(12)) + ' (read ' + CAST(ISNULL((SELECT SUM(ReadStatus) FROM #AI), 0) AS VARCHAR(12)) + ')'
          + ', own rows ' + CAST((SELECT COUNT(*) FROM ActionItem_User_Map WHERE ActionItemId = @I6 AND UserId = @Ctl) AS VARCHAR(12))
          + ' (read ' + CAST(ISNULL((SELECT SUM(ReadStatus) FROM ActionItem_User_Map WHERE ActionItemId = @I6 AND UserId = @Ctl), 0) AS VARCHAR(12)) + ')';
@@ -1004,8 +1020,10 @@ BEGIN TRY
            'Result ' + ISNULL(CAST(@Res AS VARCHAR(2)), '-') + ', Reason ' + ISNULL(CAST(@Rsn AS VARCHAR(3)), '-') + ', text: ' + ISNULL((SELECT CAST(ActionText AS VARCHAR(100)) FROM Action_Item WHERE ActionItemId = @I9), 'no item');
     SET @Res = NULL; SET @Rsn = NULL;
     EXEC spr_SaveDashboardActionText @ActingUserId = @Ctl, @ActionItemId = @I6, @ActionText = N'ZZ43 by controller', @Result = @Res OUTPUT, @Reason = @Rsn OUTPUT;
-    INSERT INTO @T SELECT 'Save: the Controller, the confirmed item: refused',
-           'Result 0, Reason 4, text: 6 past but confirmed',
+    INSERT INTO @T SELECT 'Save: the Controller, the confirmed item: refused (with step 48 installed: Reason 26)',
+           CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_SaveDashboardActionText')), '') LIKE '%DashboardFollowupFinal-Step48%'
+                THEN 'Result 0, Reason 26, text: 6 past but confirmed'
+                ELSE 'Result 0, Reason 4, text: 6 past but confirmed' END,
            'Result ' + ISNULL(CAST(@Res AS VARCHAR(2)), '-') + ', Reason ' + ISNULL(CAST(@Rsn AS VARCHAR(3)), '-') + ', text: ' + ISNULL((SELECT CAST(ActionText AS VARCHAR(100)) FROM Action_Item WHERE ActionItemId = @I6), 'no item');
     SET @Res = NULL; SET @Rsn = NULL;
     EXEC spr_SaveDashboardActionText @ActingUserId = @Off, @ActionItemId = @I1, @ActionText = N'ZZ43 by inactive', @Result = @Res OUTPUT, @Reason = @Rsn OUTPUT;

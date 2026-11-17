@@ -3,10 +3,11 @@
 - Title: Testing and Release
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: FU1 (the section "Step 47 (FU1): the Test script, the followup pack and the run"); UN6d (the step 46 Test script section "Step 46 (UN6d): the Followup saves", the followup pack, the dashboard pack check 8, the packs line of the tester table); UN6c2b (the step 45 Test script section, "The dashboard pack since step UN6c2b", the fixture and baseline notes); UN6c2a (the step 44 Test script section, "The dashboard pack since step UN6c2a", check 4 of the dashboard pack, the fixture and baseline notes); UN6c1 (the step 43 Test script section, "The dashboard pack since step UN6c1", the fixture and baseline notes); UN6b (the step 42 Test script section, the dashboard pack, the memory preflight, the fixture's committee QA2, the baseline upkeep note); the rest RA1c2
-- Last updated by: FU1, based on 3d571c4
+- Applies to: FU2a (the section "Step 48 (FU2a): the Test script, the changed expectations of steps 43 and 45, the dashboard pack check 18"); FU1 (the section "Step 47 (FU1): the Test script, the followup pack and the run"); UN6d (the step 46 Test script section "Step 46 (UN6d): the Followup saves", the followup pack, the dashboard pack check 8, the packs line of the tester table); UN6c2b (the step 45 Test script section, "The dashboard pack since step UN6c2b", the fixture and baseline notes); UN6c2a (the step 44 Test script section, "The dashboard pack since step UN6c2a", check 4 of the dashboard pack, the fixture and baseline notes); UN6c1 (the step 43 Test script section, "The dashboard pack since step UN6c1", the fixture and baseline notes); UN6b (the step 42 Test script section, the dashboard pack, the memory preflight, the fixture's committee QA2, the baseline upkeep note); the rest RA1c2
+- Last updated by: FU2a, based on 9336d29
 - Status: Draft
-- Verified against: for step FU1: Database/README.md (section Step FU1: the Test script description, the tester paragraph, the changed expected values, "What to run where"), Tests/packs/followup/README.md (read in full), Tests/README.md and Database/BMMS-Check-InstalledSteps.sql (diff), the Test script result (95 of 95) and the tester run 2026-11-16_133023 as given; the Test script itself and pack.js were not read in full;
+- Verified against: for step FU2a: Database/README.md (section Step FU2a: the Test script description, the changed expected values, the tester paragraph, "What to run where"), Tests/packs/dashboard/README.md (diff), Database/BMMS-Test-DashboardAlerts-Step43.sql and BMMS-Test-DashboardSummary-Step45.sql (diff stat only), the Test script result (43 of 43) and the tester run 2026-11-16_181041 as given; the step 48 Test script and pack.js were not read in full;
+  for step FU1: Database/README.md (section Step FU1: the Test script description, the tester paragraph, the changed expected values, "What to run where"), Tests/packs/followup/README.md (read in full), Tests/README.md and Database/BMMS-Check-InstalledSteps.sql (diff), the Test script result (95 of 95) and the tester run 2026-11-16_133023 as given; the Test script itself and pack.js were not read in full;
   for step UN6d: Database/README.md (section Step UN6d: the Test script description, the tester paragraph, the changed expected values), Tests/packs/followup/README.md and expected.json, Tests/packs/dashboard/README.md and expected.json (diff), Tests/packs/access-matrix/README.md and Tests/README.md (diff), the Test script result (56 of 56) and the tester runs of 2026-11-15 as given; the Test script itself (632 lines) and pack.js were not read in full;
   for step UN6c2b: Database/README.md (section Step UN6c2b: the Test script description, Known items), Tests/packs/dashboard/README.md and Tests/README.md (diff), Database/BMMS-Rollback-AgendaWaitingFor-Step44.sql (diff), the tester run of 2026-11-15 (dashboard pack 388 checks PASSED) and the owner's tests as given; the Test scripts themselves (1329 lines for step 45) were not read in full;
   for step UN6c2a: Database/BMMS-Test-AgendaWaitingFor-Step44.sql (header, parts 1 and 2 up to the comparison and the named cases; the 1352 cases counted from its actor, item and action lists), Tests/packs/dashboard/README.md, expected.json and pack.js (diff), Tests/README.md (diff), Tests/fixture/BMMS-Quality-Fixture*.sql (diff), Database/README.md (section Step UN6c2a, Known items), the tester run of 2026-11-14 07:52:25 and the owner's tests as given; for step UN6c1: Database/BMMS-Test-DashboardAlerts-Step43.sql (header), Tests/packs/dashboard/README.md,
@@ -717,6 +718,54 @@ Result of the step: tester run 2026-11-16_133023 (access-matrix, dashboard, foll
 PASSED, 878 checks (selftest 8, access-matrix 472, dashboard 385, followup 16), error log clean, 288 s. SQL Test script 47
 passed on BMMS_Test (95 of 95). The owner's tests passed (SQL on BMMS_Test; browser as Controller and MD Secretariat, Chrome
 and Edge).
+
+### Step 48 (FU2a): the Test script, the changed expectations of steps 43 and 45, the dashboard pack check 18
+
+BMMS-Test-DashboardFollowupFinal-Step48.sql runs on BMMS_Test only, in a new query window: 43 numbered checks, all PASS
+on 2026-11-16. One transaction, rolled back, with made-up data (prefix ZZ48). It checks the markers, the parameters, the 35
+columns of the four objects, that no feature above compatibility level 100 is used, that no marker of steps 46 and 47 is
+carried, and the Rollback guards; the card per role (Controller, Management, Manager and User: no confirmed item, the
+reopened item with IsReopened 1 and its status columns; MD Secretariat, Admin, the system account, an inactive and no user
+refused); fn_DashboardActionItems against the step 43 text installed under another name, for every user of the database,
+28 columns both ways; the opening of a confirmed item per role (returned, marked read, StatusId 0), outside the scope and
+for the other roles; the save: Reason 26 in the scope, Reason 4 first for Management and the roles without the card, outside
+the scope and for an unknown item, Reason 8; a Pending, a reopened and a confirmed-once item (latest row a Confirm, now
+not confirmed) still save; the caller's transaction left open; afterwards Action_Item, ActionItem_User_Map,
+Action_Item_Status_History and every identity counter are as before.
+
+The Test scripts of steps 43 and 45 follow the step 48 marker (changed with the owner's approval of 2026-11-16):
+
+| Script | Check | Without step 48 | With step 48 |
+|---|---|---|---|
+| BMMS-Test-DashboardAlerts-Step43.sql | table #AI, and the columns of the three read objects | 28 columns | 35 columns |
+| BMMS-Test-DashboardAlerts-Step43.sql | The Controller opens the confirmed item 6 | Reason 4, nothing returned or written | Reason 0, returned, read row written |
+| BMMS-Test-DashboardAlerts-Step43.sql | Save by the Controller, the confirmed item | Reason 4 | Reason 26 |
+| BMMS-Test-DashboardSummary-Step45.sql | table #AI (#AIO unchanged), the columns of spr_GetDashboardActionItems | 28 columns | 35 columns |
+| BMMS-Test-DashboardSummary-Step45.sql | fn_DashboardActionItems SHA-1 | the step 43 text | the step 48 text |
+
+The reason: those scripts read the result sets with INSERT ... EXEC into a table of a fixed number of columns, which
+stops with an error, not a failed check, when the columns change. BMMS-Test-FollowupFinal-Step47.sql and
+BMMS-Test-AgendaWaitingFor-Step44.sql are not changed. Results on BMMS_Test with step 48: Test 48 43 of 43, Test 43 128 of
+128, Test 44 120 of 120, Test 45 66 of 66, Test 47 95 of 95 (Test 46 runs no check while step 47 is installed, as before).
+Also run on BMMS_Test: the Fix, the Fix again, the Rollbacks of steps 43 and 45 (refused), the Rollback of step 48 (texts
+compared by SHA-1), the Rollback of step 48 again (refused), the Fix.
+
+The dashboard pack since step FU2a (Tests/packs/dashboard/README.md): check 18, `followupFinal`, last of the pack. QA
+Test Committee, meeting 00005, agenda 001 is confirmed by qa_ctrl on the Followup page; the card lists it for nobody; a
+stale row of qa_user opens it read-only with the line "This followup is confirmed and can no longer be changed." and who
+confirmed it; Submit in a stale panel of qa_manager gets the Reason 26 message, nothing saved, the panel stays open;
+qa_ctrl reopens it; "Overdue" and "Reopened" show in the row and who reopened it in the panel. The item is left Pending.
+The followup pack, run after it, sees the "Reopened by" line under that row; its expected values are unchanged (the same
+check count, all pass). The access-matrix pack is unchanged. The fixture is unchanged. The tester's baseline for step 48:
+`Update-Baseline.ps1 -ConfirmDatabase BMMS_Quality -FixScript BMMS-Fix-DashboardFollowupFinal-Step48.sql`.
+
+Result of the step: tester run 2026-11-16_181041 (access-matrix, dashboard, followup; baseline with step 48): PASSED, 890
+checks (selftest 8, access-matrix 472, dashboard 397, followup 16), 3 planted failures caught, standing proof held, 0
+error-log lines, 0 outside requests, 345 s. Test script 48 passed on BMMS_Test (43 of 43). The owner's tests passed on
+BMMS_Test (2026-11-17): Chrome and Edge at 1366 and 1024 px (the Reopened chip with Overdue; the status line, also with a
+500-character reason, "Confirmed (before history)" and an inactive name; a stale confirmed row read-only for User, Manager
+and Management; two browsers for the Reason 26 message with the panel kept open; the Followup page unchanged); the error
+log was clean.
 
 ## Reviewer stage
 

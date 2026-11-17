@@ -3,10 +3,11 @@
 - Title: Program to Program: Dashboard and Alerts
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: FU1 (step 47): the Followup page (list, Submit, Reopen, status history) in the new section after the UN6d section; UN6d (step 46): the Action Item Details panel Submit and the Followup page saves; UN6c2b (step 45): the summary cards, the Committee filter on every card, the Action Items filters; UN6c2a (step 44): the My approvals panel, the Waiting for me column and the Approve and Reject buttons; UN6c1 (step 43): the Alerts card, the header count and the Action Items card; UN6b (step 42): the Meetings card; the rest not written yet
-- Last updated by: FU1, based on 3d571c4
+- Applies to: FU2a (step 48): the new section "The Action Items card and panel: a confirmed followup is final, the status line, Reopened"; FU1 (step 47): the Followup page (list, Submit, Reopen, status history) in the new section after the UN6d section; UN6d (step 46): the Action Item Details panel Submit and the Followup page saves; UN6c2b (step 45): the summary cards, the Committee filter on every card, the Action Items filters; UN6c2a (step 44): the My approvals panel, the Waiting for me column and the Approve and Reject buttons; UN6c1 (step 43): the Alerts card, the header count and the Action Items card; UN6b (step 42): the Meetings card; the rest not written yet
+- Last updated by: FU2a, based on 9336d29
 - Status: Draft
-- Verified against: for the step FU1 section: BMMS/Master/Followup.aspx and .aspx.cs (read in full), BMMSBAL/ActionItemMgr.cs and BMMSDAL/ActionItemDB.cs (diff), Database/README.md (section Step FU1 and its Known items), the Test result of step 47 (95 of 95) and the tester run of 2026-11-16 as given;
+- Verified against: for the step FU2a section: BMMS/DashBoard/DashBoard.aspx and .aspx.cs (diff), BMMS/FollowupStatusText.cs, BMMS/Master/Followup.aspx.cs (diff), BMMS/CSS/bmms-workbench.css (diff), Database/BMMS-Fix-DashboardFollowupFinal-Step48.sql (the Reason lines of the three procedures), Database/README.md (section Step FU2a and its Known items), the Test result of step 48 (43 of 43) and the tester run 2026-11-16_181041 as given;
+  for the step FU1 section: BMMS/Master/Followup.aspx and .aspx.cs (read in full), BMMSBAL/ActionItemMgr.cs and BMMSDAL/ActionItemDB.cs (diff), Database/README.md (section Step FU1 and its Known items), the Test result of step 47 (95 of 95) and the tester run of 2026-11-16 as given;
   for the step UN6d section: git diff ce7358a 276e402 of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/Master/Followup.aspx and .aspx.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/BMMS-Fix-FollowupSave-Step46.sql (read in full), Database/README.md (section Step UN6d and its Known items), the Test script result of step 46 (56 of 56) and the tester runs of 2026-11-15 as given;
   for the step UN6c2b section: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs,
   Database/BMMS-Fix-DashboardSummary-Step45.sql (read), Database/README.md (section Step UN6c2b and its Known items), the tester run of 2026-11-15 and the owner's tests as given;
@@ -47,6 +48,10 @@ Committee filter on every card (step UN6c2b)" below.
 
 The Submit of the Action Item Details panel and the saves of the Followup page (Master/Followup.aspx) (step UN6d) are
 in the section "Action Item Details panel and the Followup page saves (step UN6d)" below.
+
+The status line, the "Reopened" chip and the read-only panel of a confirmed followup (step FU2a) are in the section
+"The Action Items card and panel: a confirmed followup is final, the status line, Reopened (step FU2a)" below. It
+replaces the Action Items parts of the sections of steps 43 and 46 where they differ.
 
 [[CONFIRM: the rest of the Agenda Alert panel and the Approve and Reject flow of the
 Dashboard (mail, the finalised agenda) are not written yet (WF2c3)]]
@@ -764,6 +769,119 @@ Drawn from (FU1): BMMS/Master/Followup.aspx and .aspx.cs (read in full), BMMSBAL
 BMMSDAL/ActionItemDB.cs (diff), Database/README.md (section Step FU1 and its Known items; the procedure texts of step
 47 as described there), the Test script result of step 47 (95 of 95 PASS on BMMS_Test), the tester run of 2026-11-16 and
 the owner's tests as given.
+
+## The Action Items card and panel: a confirmed followup is final, the status line, Reopened (step FU2a)
+
+Added in step FU2a (database step 48). Step FU1 made a confirmed followup final on Master/Followup.aspx. The
+Dashboard's Action Items card and Action Item Details panel now follow it: the card still lists no confirmed item,
+but the panel can open one (a stale row, or a panel opened before the confirm) read-only, the Submit of a confirmed
+item is refused for every role with Reason 26, and the card and the panel show who confirmed or reopened an item.
+The page sends the acting user id; the role and the scope are read from the database. This section replaces the
+Action Items parts of the sections of steps 43 and 46 where they differ (the Reason 4 of an open and of a save for
+a confirmed item; the panel buttons). Report/Followup.aspx, Report/FollowupActionTaken.aspx and
+ReportsMgr.GetFollowupReport are not changed (FU2b, later).
+
+### Programs involved
+
+| Program | Kind | Part in the flow |
+|---|---|---|
+| DashBoard/DashBoard.aspx(.cs) | Page | `lnkActionItem_Click` and `SetActionItemPanelMode` (editor and buttons), `ActionItemStatusCaption` and `ShowActionItemStatus` (the line `pActionItemStatus`), `IsReopened` (the chip `phReopened`), `ShowConfirmedAfterSave` (after Reason 26), `btnActionItemApprove_Click` |
+| FollowupStatusText.cs | Class (BMMS namespace) | The one place of the status texts, used by this page and by Master/Followup.aspx.cs: `Caption`, `ConfirmedLine`, `ReopenedLine`, `ActedByName`, `ActedOnText`, `IsSet` |
+| ActionItemMgr, ActionItemDB | BAL, DAL | GetDashboardActionItems, OpenDashboardActionItem, SaveDashboardActionText (the methods are not changed; the result sets carry seven more columns) |
+| fn_DashboardActionItemScope | Inline table function | New in step 48: the scope rule of step 43 without the filter on confirmed items, with the status columns of the latest history row |
+| fn_DashboardActionItems | Inline table function | Replaced: the scope function without the confirmed items; the same rows as before, 35 columns |
+| spr_GetDashboardActionItems, spr_OpenDashboardActionItem, spr_SaveDashboardActionText | Procedures | Replaced in step 48 |
+
+### Main flow
+
+```mermaid
+sequenceDiagram
+    participant U as Signed-in role
+    participant P as DashBoard.aspx.cs
+    participant B as ActionItemMgr
+    participant SI as spr_GetDashboardActionItems
+    participant SO as spr_OpenDashboardActionItem
+    participant SS as spr_SaveDashboardActionText
+    participant FS as fn_DashboardActionItemScope
+    participant T as FollowupStatusText
+
+    U->>P: opens the Dashboard
+    P->>B: GetDashboardActionItems(acting user id, committee id, department id)
+    B->>SI: ActingUserId, CommitteeId, DepartmentId
+    SI-->>P: rows without confirmed items, with IsReopened and the status columns
+    P-->>U: Action Items card, "Reopened" beside the date of a reopened Pending item
+
+    U->>P: opens an item
+    P->>B: OpenDashboardActionItem(acting user id, item id)
+    B->>SO: ActingUserId, ActionItemId
+    SO->>FS: acting user id, database server date
+    FS-->>SO: the item, confirmed or not, if it is in the scope
+    SO-->>P: the item with IsConfirmed and the status columns, the person's read row written
+    P->>T: Caption(IsConfirmed, action, reason, date, name, login, active)
+    T-->>P: the status line, or empty
+    P-->>U: the panel: editable, or read-only with Close and the confirmed line
+
+    U->>P: Submit
+    P->>B: SaveDashboardActionText(acting user id, item id, text)
+    B->>SS: ActingUserId, ActionItemId, ActionText
+    SS->>FS: item under UPDLOCK, HOLDLOCK
+    alt Reason 26 - the item is confirmed
+        SS-->>P: nothing saved
+        P->>B: OpenDashboardActionItem (item read again)
+        P-->>U: panel open, read-only, saved text, status line, "This followup is confirmed and can no longer be changed. Nothing was saved."
+    else Reason 0
+        SS-->>P: text saved
+        P-->>U: panel closed, "The action text was saved."
+    end
+```
+
+| From | To | Data | Notes |
+|---|---|---|---|
+| DashBoard.aspx | ActionItemMgr.GetDashboardActionItems | Acting user id, committee id, department id | Unchanged call; the rows travel in ViewState with the seven new columns (the reason of a reopened item, at most 500 characters, included) |
+| spr_GetDashboardActionItems | DashBoard.aspx | The columns of step 43, and IsReopened, StatusAction, StatusReason, StatusOn, StatusByName, StatusByLogin, StatusByActive | IsReopened is 1 when the latest history row is a Reopen and the item is not confirmed (R19). The page reads the seven columns only when they are there (a database where step 43 or 45 was run again has none: no chip, no line, no error) |
+| DashBoard.aspx | ActionItemMgr.OpenDashboardActionItem | Acting user id, item id | Now returns an item of the person's scope that is confirmed too, with IsConfirmed 1; the person's read row is written as for any item (R21); a row it creates gets StatusId 0 for a confirmed item, 1 otherwise |
+| DashBoard.aspx | FollowupStatusText.Caption | IsConfirmed and the status columns of the opened item | Confirmed: "Confirmed by [name (login)] on [dd-MMM-yyyy HH:mm]" or "Confirmed (before history)"; not confirmed with a Reopen row: "Reopened by [name (login)] on [dd-MMM-yyyy HH:mm]: [reason]"; otherwise no line. " (inactive)" follows the name of an inactive account. The text is plain and the page encodes it (InnerText) |
+| DashBoard.aspx | Panel | IsConfirmed | A confirmed item: editor read-only, Submit and Cancel hidden, Close shown, the line "This followup is confirmed and can no longer be changed." (for every role, in place of Management's read-only line) (R18). A role that only reads and an item not confirmed: the line "You can read this action item. Your role cannot change it." |
+| DashBoard.aspx | ActionItemMgr.SaveDashboardActionText | Acting user id, item id, text | After Reason 26 the page reads the item again so the editor shows the saved text; when that read fails the panel stays open, read-only, with the message and no status line |
+
+### Refusal paths
+
+| Reason | Raised by | Meaning | What the page shows |
+|---|---|---|---|
+| 8 | spr_GetDashboardActionItems, spr_OpenDashboardActionItem, spr_SaveDashboardActionText | The acting user is missing, 0 or inactive | As in step 43 |
+| 4 | spr_SaveDashboardActionText | Role Management, MD Secretariat or Admin (checked first); an item outside the person's scope or unknown, whether confirmed or not | "You cannot change this action item: your role can only read it, or it is not an item of your department. Nothing was saved." |
+| 26 | spr_SaveDashboardActionText | The item is confirmed (in scope); nothing saved, for every role that may save | "This followup is confirmed and can no longer be changed. Nothing was saved." in the open panel (read-only, with the status line) |
+| 4 | spr_OpenDashboardActionItem | A role without the card, or an item outside the scope or unknown (a confirmed item in the scope is no longer refused) | "This item no longer exists." |
+| (none) | The page | A database error while the item is read again after Reason 26 | The panel stays open, read-only, with the Reason 26 message and no status line |
+
+Management has no Submit in the panel, so it cannot reach the Reason 26 message; its save is refused by the role check
+(Reason 4) in any case.
+
+### Where each rule lives
+
+| Rule | C# | Procedure or function |
+|---|---|---|
+| The scope: Controller and Management every item; Manager and User the items of their departments with finalised or confirmed minutes; other roles none; confirmed items included | none | fn_DashboardActionItemScope |
+| The card lists no confirmed item; the rows are those of step 43 (R20) | `LoadActionItemGRV` | fn_DashboardActionItems (the scope function without the confirmed items), spr_GetDashboardActionItems |
+| An item of the scope may be opened, confirmed or not; the read row (StatusId 0 for a confirmed item) | `lnkActionItem_Click` | spr_OpenDashboardActionItem (R21) |
+| A confirmed item cannot be saved, for every role: role checks first (Reason 8, 4), then scope (Reason 4), then Reason 26, then the update; the item is locked (UPDLOCK, HOLDLOCK) in a transaction of the procedure's own only when the caller has none | `btnActionItemApprove_Click` (Reason 26 to `ShowConfirmedAfterSave`) | spr_SaveDashboardActionText (R16) |
+| The panel's look for a confirmed item | `SetActionItemPanelMode`, `CanSaveActionText` | none (R18) |
+| The status line and its texts, the same as the Followup page | `ActionItemStatusCaption`, `ShowActionItemStatus`, FollowupStatusText | the latest history row, read by fn_DashboardActionItemScope (R17) |
+| The "Reopened" chip: a Pending item whose latest history row is a Reopen; with "Overdue" when both apply; no "Confirmed" chip | `IsReopened`, the placeholder `phReopened` | fn_DashboardActionItemScope (IsReopened) (R19) |
+
+### Tables read and written
+
+| Object | Reads | Writes |
+|---|---|---|
+| fn_DashboardActionItemScope | Users, Roles, Action_Item, Minutes, Agenda, Decision_Type, Meeting, Committee, Department, ActionItem_User_Map, Action_Item_Status_History, Users (name and login of the actor), and User_Department through fn_UserDepartmentScope | none |
+| fn_DashboardActionItems, spr_GetDashboardActionItems | the rows of fn_DashboardActionItemScope | none |
+| spr_OpenDashboardActionItem | Users, Roles, and fn_DashboardActionItemScope | ActionItem_User_Map (the person's own row: ReadStatus 1, created when missing with StatusId 0 for a confirmed item, 1 otherwise) |
+| spr_SaveDashboardActionText | Users, Roles, Action_Item (locked), and the scope rule | Action_Item (ActionText) |
+
+Drawn from (FU2a): BMMS/DashBoard/DashBoard.aspx and .aspx.cs (diff), BMMS/FollowupStatusText.cs (read in full),
+BMMS/Master/Followup.aspx.cs (diff), BMMS/CSS/bmms-workbench.css (diff), Database/BMMS-Fix-DashboardFollowupFinal-Step48.sql
+(Reason lines of the three procedures), Database/README.md (section Step FU2a), the Test script result of step 48 (43 of
+43 PASS on BMMS_Test), the tester run 2026-11-16_181041 and the owner's tests as given.
 
 ## Drawn from
 

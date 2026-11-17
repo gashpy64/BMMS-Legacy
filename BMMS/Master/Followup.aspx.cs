@@ -41,7 +41,6 @@ namespace BMMS.Master
         private const string ReopenBusyMessage = "The server is busy and the followup could not be reopened. Nothing was saved. Wait a moment, then try again.";
         private const string ListRefusedMessage = "You cannot read the followups: your role has no access to them.";
         private const string ListInactiveMessage = "Your account is not active. Sign in again.";
-        private const string DateTimeFormat = "dd-MMM-yyyy HH:mm";
 
         #region CanSave
         // Step UN6d: only the Controller may change the followups; every other role that opens the page (MD
@@ -372,18 +371,21 @@ namespace BMMS.Master
                     {
                         // No history row: confirmed before step 47. A latest row that is not a Confirm (confirmed again
                         // by an older build after a rollback): "Confirmed" without who and when
+                        // Step FU2a: the texts from FollowupStatusText, shared with the Dashboard's panel
                         if (action == "Confirm")
-                            html = StatusWord("Confirmed") + StatusLine("Confirmed by " + ActedByName(data) + " on " + ActedOnText(data));
+                            html = StatusWord(FollowupStatusText.ConfirmedWord)
+                                 + StatusLine(FollowupStatusText.ConfirmedLine(data["StatusByName"], data["StatusByLogin"], data["StatusByActive"], data["StatusOn"]));
                         else if (action.Length == 0)
-                            html = StatusWord("Confirmed (before history)");
+                            html = StatusWord(FollowupStatusText.ConfirmedBeforeHistory);
                         else
-                            html = StatusWord("Confirmed");
+                            html = StatusWord(FollowupStatusText.ConfirmedWord);
                     }
                     else
                     {
                         html = CanSave ? string.Empty : StatusWord("Pending");
                         if (action == "Reopen")
-                            html += StatusLine("Reopened by " + ActedByName(data) + " on " + ActedOnText(data) + ": " + Convert.ToString(data["StatusReason"]));
+                            html += StatusLine(FollowupStatusText.ReopenedLine(data["StatusByName"], data["StatusByLogin"], data["StatusByActive"],
+                                data["StatusOn"], data["StatusReason"]));
                     }
 
                     litStatus.Text = html;
@@ -412,8 +414,9 @@ namespace BMMS.Master
         #endregion
 
         #region Status cell texts
-        // Step FU1: the parts of the Status cell, each encoded. The name is "Name (login)" (step UN3), " (inactive)" for
-        // an inactive account; the time is the database server's (ActedOn = GETDATE()).
+        // Step FU1: the parts of the Status cell, each encoded. Step FU2a: the texts themselves (who and when, "Name
+        // (login)" with " (inactive)", the database server's time) come from FollowupStatusText, shared with the
+        // Dashboard's Action Item Details panel.
         private static string StatusWord(string text)
         {
             return "<span class=\"wb-followup-status\">" + HttpUtility.HtmlEncode(text) + "</span>";
@@ -422,21 +425,6 @@ namespace BMMS.Master
         private static string StatusLine(string text)
         {
             return "<span class=\"wb-followup-status-line\">" + HttpUtility.HtmlEncode(text) + "</span>";
-        }
-
-        private static string ActedByName(DataRowView data)
-        {
-            string name = Common.UserDisplayName(Convert.ToString(data["StatusByName"]), Convert.ToString(data["StatusByLogin"]),
-                IsConfirmedValue(data["StatusByActive"]));
-            return name.Length > 0 ? name : "an unknown user";
-        }
-
-        private static string ActedOnText(DataRowView data)
-        {
-            object on = data["StatusOn"];
-            if (on == null || on == DBNull.Value)
-                return "an unknown date";
-            return Convert.ToDateTime(on).ToString(DateTimeFormat, CultureInfo.InvariantCulture);
         }
         #endregion
 

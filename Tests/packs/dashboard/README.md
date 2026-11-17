@@ -137,6 +137,26 @@ the run):
    scale 2): the Scheduled list needed at least 794 px and scrolled inside its card below about 860 px wide; after
    the fix (tighter cells and a status chip that may wrap at 1240 px and below) it fits down to about 770 px, and
    below that it scrolls inside the card with the Meeting column kept in view.
+18. A confirmed followup is final on the Dashboard (step FU2a, `followupFinal`; last of all, because it confirms and
+   reopens a followup). A second sign-in of qa_user loads the Dashboard (the row of QA Test Committee, meeting
+   00005, agenda 001, due three days ago), and a second sign-in of qa_manager opens that item's panel (editable,
+   Submit and Cancel, no status line). Then qa_ctrl confirms the item on the Followup page ("1 followup was
+   confirmed."):
+   - the Action Items card of qa_ctrl, qa_mgmt, qa_manager and qa_user no longer lists it;
+   - the stale row of qa_user opens it read-only: no Submit, no Cancel, Close, the line "This followup is confirmed
+     and can no longer be changed.", the status line "Confirmed by QA Controller (qa_ctrl) on [dd-MMM-yyyy HH:mm]";
+   - in the stale panel of qa_manager a changed text and Submit: "This followup is confirmed and can no longer be
+     changed. Nothing was saved." in the panel, which stays open read-only (Close only) with the saved text, not the
+     text typed, and the same status line; Close closes it without a message.
+   Then qa_ctrl reopens it with a reason ("The followup was reopened."): the row is listed again with "Overdue" and
+   "Reopened" (orange chip), agenda 002 of the same meeting has no "Reopened", and the panel is editable again with
+   the status line "Reopened by QA Controller (qa_ctrl) on [date]: [reason]".
+   The item ends Pending, with a Confirm and a Reopen history row. The followup pack, run after this pack, sees the
+   "Reopened by" line under that row; none of its checks reads that line before its own Reopen.
+   Not in the pack: "Confirmed (before history)" (the fixture has no item confirmed before step 47), a reason of 500
+   characters, the inactive "(inactive)" name, and the panel at the widths: owner checks. The Reason 26 decision
+   itself, every role, and the read row of a confirmed item (StatusId 0) are proven by
+   BMMS-Test-DashboardFollowupFinal-Step48.sql.
 
 The summary values were worked out from the fixture by an independent count (status codes and departments read from
 the tables, not by the step 45 objects): scheduled meetings QA1 00001 to 00003 and QA2 00001.

@@ -81,8 +81,15 @@
        or an alert leaves the mark on Unread and the list holds unread rows only; Read, Show All and Recent then
        show the rest with their own mark.
 
+   18. A confirmed followup is final on the Dashboard (step FU2a; last of all, because it confirms and reopens a
+       followup): a page of qa_user loaded and a panel of qa_manager opened before the Controller confirms the item
+       on the Followup page; the card lists it for nobody; the stale row opens read-only with the line and who
+       confirmed it; Submit in the stale panel gets the Reason 26 message, nothing saved, the panel stays open
+       read-only with the saved text; the Controller reopens it; the row shows "Overdue" and "Reopened" (orange)
+       and the panel who reopened it and why.
+
   It opens pages of the site copy and reads them; a panel it opens is left by opening the Dashboard again. Checks 1 to 5 write
-  nothing but their check records (opening an alert marks it read). Check 6 removes one alert from a list; check 7 marks one action item and one alert as read; check 8 marks action items as read and saves one action text unchanged. The data is the fixture (Tests\fixture), restored and dated afresh before every run.
+  nothing but their check records (opening an alert marks it read). Check 6 removes one alert from a list; check 7 marks one action item and one alert as read; check 8 marks action items as read and saves one action text unchanged; check 18 confirms and reopens QA1-00005-001 (it ends Pending, with a Confirm and a Reopen history row; the followup pack, run after, sees the reopen line under that row). The data is the fixture (Tests\fixture), restored and dated afresh before every run.
 */
 const fs = require('fs');
 const path = require('path');
@@ -343,7 +350,10 @@ async function readActionItems(page) {
     trs.slice(1).forEach((tr) => {
       const td = Array.from(tr.querySelectorAll(':scope > td'));
       if (no < 0 || due < 0 || !td[no] || !td[due] || tr.querySelector('table')) return;
-      rows[txt(td[no])] = { date: txt(td[due].querySelector('.wb-dash-date')), overdue: txt(td[due].querySelector('.wb-dash-overdue')), unread: tr.classList.contains('bmms-row-unread') };
+      // Step FU2a: the word "Reopened" and the colour of its chip (read by check 18 only)
+      const reopened = td[due].querySelector('.wb-dash-reopened');
+      rows[txt(td[no])] = { date: txt(td[due].querySelector('.wb-dash-date')), overdue: txt(td[due].querySelector('.wb-dash-overdue')), unread: tr.classList.contains('bmms-row-unread'),
+        reopened: txt(reopened), reopenedChip: reopened ? (Array.from(reopened.classList).find((c) => /^wb-chip-/.test(c)) || '') : '' };
     });
     return { head, rows, current, list };
   });
@@ -1068,6 +1078,149 @@ async function approvalsHeadingChecks(t, data) {
   }
 }
 
+// 18. Step FU2a (step 48): a confirmed followup is final on the Dashboard too. Two pages opened before the confirm (a
+//     second sign-in of each account, so the stale page stays as it was): the row of one account and the open panel of
+//     another. The Controller confirms the item on the Followup page; the card lists it for nobody; the stale row opens
+//     read-only with the line and who confirmed it; Submit in the stale panel is refused with the Reason 26 message, the
+//     panel stays open read-only with the saved text; the Controller reopens it; the row shows Overdue and Reopened and
+//     the panel who reopened it and why. The item is left Pending (with a Confirm and a Reopen history row).
+const FOLLOWUP = 'Master/Followup.aspx';
+
+async function postBackOn(page, urlPattern, action) {
+  await Promise.all([
+    page.waitForResponse((r) => urlPattern.test(r.url()) && r.request().method() === 'POST', { timeout: 30000 }),
+    action(),
+  ]);
+  await settle(page);
+}
+
+async function readActionPanel(page) {
+  return page.evaluate(() => {
+    const txt = (el) => (el ? el.textContent.replace(/\s+/g, ' ').trim() : '');
+    const shown = (el) => !!el && el.offsetParent !== null;
+    const line = document.querySelector('[id$="pActionItemPanelMessage"]');
+    const status = document.querySelector('[id$="pActionItemStatus"]');
+    const box = document.querySelector('[id$="ftxtActionText_box"]');
+    const errBox = document.querySelector('[id$="divErrLogin"]'); const span = document.querySelector('[id$="spanErrLogin"]');
+    return {
+      open: !!document.querySelector('input[id$="hdnActionItemId"]'),
+      submit: shown(document.querySelector('input[id$="btnActionItemApprove"]')),
+      cancel: shown(document.querySelector('input[id$="btnActionItemCancel"]')),
+      close: shown(document.querySelector('input[id$="btnActionItemClose"]')),
+      line: shown(line) ? txt(line) : '',
+      status: shown(status) ? txt(status) : '',
+      editable: !!box && box.getAttribute('contenteditable') === 'true',
+      text: txt(box),
+      pageMessage: !errBox || !span || /divErrorHide/.test(errBox.className) ? '' : txt(span),
+    };
+  });
+}
+
+async function followupFinalChecks(t, data) {
+  const f = data.followupFinal;
+  const rec = (role, title, expected, seen, address) => {
+    const e = JSON.stringify(expected); const s = JSON.stringify(seen);
+    t.record({ title, role, address: address || DASHBOARD, expected: e, seen: s, pass: e === s });
+  };
+  const DATE = '\\d{2}-[A-Z][a-z]{2}-\\d{4} \\d{2}:\\d{2}';
+  const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const confirmedBy = new RegExp('^Confirmed by ' + esc(f.controllerName) + ' on ' + DATE + '$');
+  const reopenedBy = new RegExp('^Reopened by ' + esc(f.controllerName) + ' on ' + DATE + ': ' + esc(f.reopenReason) + '$');
+  const openItem = async (p) => postBack(p, () => p.locator('table[id$="_grvActionItem"] tr', { hasText: f.item }).locator('a[id*="lnkActionItem"]').click());
+  const listed = async (p) => { const ai = await readActionItems(p); return ai ? Object.keys(ai.rows).includes(f.item) : 'no card'; };
+  const followupRow = (p) => p.locator('table[id$="grvFollowup"] > tbody > tr').filter({ has: p.locator('[id*="lblAgendaNo"]', { hasText: f.item }) });
+  const followupMessage = async (p) => p.evaluate(() => {
+    const box = document.querySelector('[id$="divErrLogin"]'); const span = document.querySelector('[id$="spanErrLogin"]');
+    return !box || !span || /divErrorHide/.test(box.className) ? '' : span.textContent.replace(/\s+/g, ' ').trim();
+  });
+  const followupView = async (p) => {
+    await t.visit(p, FOLLOWUP);
+    await postBackOn(p, /followup\.aspx/i, () => p.locator('input[id$="btnViewFollowup"]').click());
+  };
+
+  const staleRow = await t.signIn(f.staleRow);
+  const stalePanel = await t.signIn(f.stalePanel);
+  try {
+    // Before the confirm: the row on one page, the open panel on another
+    await t.visit(staleRow.page, DASHBOARD);
+    rec(f.staleRow, 'Before the confirm: ' + f.item + ' is in the Action Items card of ' + f.staleRow + ' (this page is kept as it is)', true, await listed(staleRow.page));
+    await t.visit(stalePanel.page, DASHBOARD);
+    await openItem(stalePanel.page);
+    let p = await readActionPanel(stalePanel.page);
+    const savedText = p.text;
+    rec(f.stalePanel, 'Before the confirm: ' + f.stalePanel + ' opens ' + f.item + ': editable, Submit and Cancel, no Close, no line, no status line (never confirmed)',
+      { open: true, submit: true, cancel: true, close: false, line: '', status: '', editable: true },
+      { open: p.open, submit: p.submit, cancel: p.cancel, close: p.close, line: p.line, status: p.status, editable: p.editable });
+
+    // The Controller confirms the item on the Followup page
+    const ctl = await t.session(f.controller);
+    await followupView(ctl);
+    await followupRow(ctl).locator('select[id*="ddlStatus"]').selectOption('1');
+    await postBackOn(ctl, /followup\.aspx/i, () => ctl.locator('input[id$="btnSubmit"]').click());
+    rec(f.controller, 'Followup page: ' + f.controller + ' confirms ' + f.item, f.confirmedOne, await followupMessage(ctl), FOLLOWUP);
+
+    // R20: the card lists it for nobody
+    const seenLists = {}; const wantLists = {};
+    for (const account of f.listAccounts) {
+      const page = await t.session(account);
+      await t.visit(page, DASHBOARD);
+      wantLists[account] = false; seenLists[account] = await listed(page);
+    }
+    rec(f.listAccounts.join(', '), 'After the confirm: ' + f.item + ' is in the Action Items card of nobody', wantLists, seenLists);
+
+    // R18, R17: the stale row opens the confirmed item read-only, with the line and who confirmed it
+    await openItem(staleRow.page);
+    p = await readActionPanel(staleRow.page);
+    rec(f.staleRow, 'The stale row of ' + f.staleRow + ' opens the confirmed item: read-only, no Submit, no Cancel, Close, the line "' + f.confirmedLine + '", the status line who confirmed it and when, no page message',
+      { open: true, submit: false, cancel: false, close: true, editable: false, line: f.confirmedLine, status: true, pageMessage: '' },
+      { open: p.open, submit: p.submit, cancel: p.cancel, close: p.close, editable: p.editable, line: p.line, status: confirmedBy.test(p.status), pageMessage: p.pageMessage });
+    if (!confirmedBy.test(p.status)) rec(f.staleRow, 'The status line as shown (for the record)', 'Confirmed by ' + f.controllerName + ' on [date]', p.status);
+    rec(f.staleRow, 'After opening it, the item is not in the card of ' + f.staleRow + ' (the list was read again)', false, await listed(staleRow.page));
+
+    // R16: Submit in the panel opened before the confirm: Reason 26, nothing saved, the panel stays open read-only
+    await stalePanel.page.locator('[id$="ftxtActionText_box"]').fill(f.typed);
+    await postBack(stalePanel.page, () => stalePanel.page.locator('input[id$="btnActionItemApprove"]').click());
+    p = await readActionPanel(stalePanel.page);
+    rec(f.stalePanel, 'Submit in the panel ' + f.stalePanel + ' opened before the confirm: "' + f.notSaved + '" in the panel; the panel stays open, read-only, Close only; the saved text (not the text typed); who confirmed it; no page message',
+      { open: true, submit: false, cancel: false, close: true, editable: false, line: f.notSaved, status: true, text: savedText, typedLost: true, pageMessage: '' },
+      { open: p.open, submit: p.submit, cancel: p.cancel, close: p.close, editable: p.editable, line: p.line, status: confirmedBy.test(p.status), text: p.text,
+        typedLost: p.text !== f.typed, pageMessage: p.pageMessage });
+    rec(f.stalePanel, 'After the refused Submit, the item is not in the card of ' + f.stalePanel + ' (the list was read again)', false, await listed(stalePanel.page));
+    await postBack(stalePanel.page, () => stalePanel.page.locator('input[id$="btnActionItemClose"]').click());
+    p = await readActionPanel(stalePanel.page);
+    rec(f.stalePanel, 'Close: the panel closes, no message', { open: false, pageMessage: '' }, { open: p.open, pageMessage: p.pageMessage });
+
+    // The Controller reopens it on the Followup page
+    await followupView(ctl);
+    await postBackOn(ctl, /followup\.aspx/i, () => followupRow(ctl).locator('input[id*="btnReopen"]').click());
+    await ctl.locator('textarea[id$="txtReopenReason"]').fill(f.reopenReason);
+    await postBackOn(ctl, /followup\.aspx/i, () => ctl.locator('input[id$="btnReopenSave"]').click());
+    rec(f.controller, 'Followup page: ' + f.controller + ' reopens ' + f.item, f.reopened, await followupMessage(ctl), FOLLOWUP);
+
+    // R19: the row is back with Overdue and Reopened (orange); another item has no Reopened
+    const page = await t.session(f.staleRow);
+    await t.visit(page, DASHBOARD);
+    const ai = await readActionItems(page);
+    const row = ai && ai.rows[f.item];
+    const other = ai && ai.rows[f.otherItem];
+    rec(f.staleRow, 'After the reopen: ' + f.item + ' is in the card again with "Overdue" and "Reopened" (orange chip); ' + f.otherItem + ' has no "Reopened"',
+      { listed: true, overdue: 'Overdue', reopened: 'Reopened', chip: 'wb-chip-orange', other: '' },
+      { listed: !!row, overdue: row ? row.overdue : '', reopened: row ? row.reopened : '', chip: row ? row.reopenedChip : '', other: other ? other.reopened : 'row missing' });
+
+    // R17: the panel of the reopened item: editable again, who reopened it and why
+    await openItem(page);
+    p = await readActionPanel(page);
+    rec(f.staleRow, f.staleRow + ' opens the reopened item: editable, Submit and Cancel, no line, the status line who reopened it, when and why',
+      { open: true, submit: true, cancel: true, close: false, editable: true, line: '', status: true },
+      { open: p.open, submit: p.submit, cancel: p.cancel, close: p.close, editable: p.editable, line: p.line, status: reopenedBy.test(p.status) });
+    if (!reopenedBy.test(p.status)) rec(f.staleRow, 'The status line as shown (for the record)', 'Reopened by ' + f.controllerName + ' on [date]: ' + f.reopenReason, p.status);
+    await t.visit(page, DASHBOARD);
+  } finally {
+    await staleRow.context.close().catch(() => null);
+    await stalePanel.context.close().catch(() => null);
+  }
+}
+
 module.exports = {
   title: 'Dashboard: meetings, colours and statistics per role; layout widths',
   async run(t) {
@@ -1139,5 +1292,7 @@ module.exports = {
     await pastItemChecks(t, data);
     // 14. Step UN6c2b: the My approvals heading keeps its count (last: it opens alerts and action items)
     await approvalsHeadingChecks(t, data);
+    // 18. Step FU2a: a confirmed followup is final on the Dashboard (last of all: it confirms and reopens a followup)
+    await followupFinalChecks(t, data);
   },
 };

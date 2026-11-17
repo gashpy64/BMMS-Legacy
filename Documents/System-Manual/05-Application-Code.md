@@ -3,10 +3,10 @@
 - Title: Application Code
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: FU1 ("The Action Item Details panel and the Followup page saves (step UN6d)": the Followup page bullets, the FU1 bullets for the list, Submit and Reopen); UN6d ("The Action Item Details panel and the Followup page saves (step UN6d)", the Followup.aspx row, the Dashboard Action Items paragraph note); UN6c2b ("The Dashboard summary cards and the Committee filter (step UN6c2b)"); UN6c2a ("The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)" and the layout line of "The Dashboard Meetings card (step UN6b)"); UN6c1 (the Main.Master row and paragraph, "The Dashboard Alerts and Action Items cards (step UN6c1)"); UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
-- Last updated by: FU1, based on 3d571c4
+- Applies to: FU2a ("The Action Item Details panel and the Followup page saves (step UN6d)": the new FU2a paragraph on FollowupStatusText, the panel mode, the status line, the Reopened chip); FU1 ("The Action Item Details panel and the Followup page saves (step UN6d)": the Followup page bullets, the FU1 bullets for the list, Submit and Reopen); UN6d ("The Action Item Details panel and the Followup page saves (step UN6d)", the Followup.aspx row, the Dashboard Action Items paragraph note); UN6c2b ("The Dashboard summary cards and the Committee filter (step UN6c2b)"); UN6c2a ("The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)" and the layout line of "The Dashboard Meetings card (step UN6b)"); UN6c1 (the Main.Master row and paragraph, "The Dashboard Alerts and Action Items cards (step UN6c1)"); UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
+- Last updated by: FU2a, based on 9336d29
 - Status: Draft
-- Verified against: for step FU1: BMMS/Master/Followup.aspx and Followup.aspx.cs (read in full: CanSave, Page_Load, BindFollowup, grvFollowup_RowDataBound, grvFollowup_RowCommand, the save, Submit and Reopen handlers, the script), Database/README.md (section Step FU1); and before: for step UN6d: git diff ce7358a 276e402 of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/Master/Followup.aspx and .aspx.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, BMMS/CSS/CommonHTML.css and bmms-workbench.css; Database/README.md (section Step UN6d and its Known items), the tester runs of 2026-11-15 as given; for step UN6c2b: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs; Database/README.md (section Step UN6c2b, Known items), the tester run of 2026-11-15 as given; for step UN6c2a: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff, and BindAgendaDetails read in full), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (diff), BMMS/CSS/bmms-workbench.css (diff),
+- Verified against: for step FU2a: git diff 9336d29 of BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs, BMMS/Master/Followup.aspx.cs, BMMS/BMMS.csproj and BMMS/CSS/bmms-workbench.css, BMMS/FollowupStatusText.cs (read in full), Database/README.md (section Step FU2a and its Known items), the owner's tests as given; for step FU1: BMMS/Master/Followup.aspx and Followup.aspx.cs (read in full: CanSave, Page_Load, BindFollowup, grvFollowup_RowDataBound, grvFollowup_RowCommand, the save, Submit and Reopen handlers, the script), Database/README.md (section Step FU1); and before: for step UN6d: git diff ce7358a 276e402 of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/Master/Followup.aspx and .aspx.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, BMMS/CSS/CommonHTML.css and bmms-workbench.css; Database/README.md (section Step UN6d and its Known items), the tester runs of 2026-11-15 as given; for step UN6c2b: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs; Database/README.md (section Step UN6c2b, Known items), the tester run of 2026-11-15 as given; for step UN6c2a: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff, and BindAgendaDetails read in full), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (diff), BMMS/CSS/bmms-workbench.css (diff),
   BMMSBAL/AgendaMgr.cs and MeetingMgr.cs (diff), BMMSDAL/AgendaDB.cs and MeetingDB.cs (diff), Database/README.md (section Step UN6c2a, Known items), Tests/packs/dashboard/README.md, the tester run of 2026-11-14 as given; for step UN6c1: BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (read: the Alerts and Action Items regions, the message constants, lnkSource_Click),
   BMMS/MasterPage/Main.Master.cs (alert count region), BMMSBAL/AlertMgr.cs, ActionItemMgr.cs and Common.cs (diff),
   BMMSDAL/AlertDB.cs and ActionItemDB.cs (diff), Database/README.md (section Step UN6c1); for step UN6b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/DashBoard/DashBoard.aspx
@@ -479,6 +479,42 @@ had removed in step H1 (commit ba361c3), so on Followup a list taller than 70 pe
 footer as a narrow column beside the floats (an old fault, not caused by UN6d; the Dashboard and Update Minutes
 measure the same). The stylesheets have no Cache-Control header, so after a stylesheet change reload the page with
 Ctrl+F5.
+
+Step FU2a (database step 48) changed the Dashboard panel and added a shared class; this is what holds now, in
+addition to the bullets above:
+
+- `BMMS/FollowupStatusText.cs` (`public static class FollowupStatusText`, namespace BMMS, added to BMMS.csproj) holds the
+  status texts in one place for the two pages: `Caption` (the one line of the Dashboard's panel: for a confirmed item
+  the Confirm line, "Confirmed (before history)" or "Confirmed"; for an item not confirmed the Reopen line when its latest
+  row is a Reopen, else empty), `ConfirmedLine` ("Confirmed by Name (login) on dd-MMM-yyyy HH:mm"), `ReopenedLine`
+  ("Reopened by Name (login) on dd-MMM-yyyy HH:mm: reason"), `ActedByName` (`Common.UserDisplayName`, " (inactive)",
+  "an unknown user"), `ActedOnText` ("an unknown date" when none), `IsSet` (a flag as IsConfirmed is read: NULL and
+  blank are 0) and the constants `DateTimeFormat`, `ConfirmedWord`, `ConfirmedBeforeHistory`. The texts are plain; the
+  page encodes them. Master/Followup.aspx.cs uses it for the Status cell (its own copies of `ActedByName`, `ActedOnText`
+  and `DateTimeFormat` are removed); the output is the same as in step 47.
+- DashBoard.aspx.cs: `lnkActionItem_Click` now reads `canSave` with `CanSaveActionText(RoleCode)` (controller, manager
+  or user) and, after the item is read, calls `SetActionItemPanelMode(canSave, confirmed, message)`: the editor is
+  writable and Submit and Cancel are shown only when the role may save and the item is not confirmed; otherwise the
+  editor is read-only and only Close is shown, with one line: the message given (the Reason 26 refusal), else for a
+  confirmed item "This followup is confirmed and can no longer be changed." (for every role, in place of the line of a
+  role that only reads), else for a role that only reads "You can read this action item. Your role cannot change it."
+  The status line is the paragraph `pActionItemStatus` (class `bmms-comment-by wb-dash-status-line`, set with
+  `InnerText`, hidden when empty), under the Action Text editor in the value column; `BindActionItemDetails` fills it
+  with `ActionItemStatusCaption`, which reads the seven status columns only when all are present in the row (a
+  database where step 43 or 45 was run again after step 48 has none: no line, no error). It is cleared with the
+  editors and when the panel closes.
+- After Submit with Reason 26 (`ShowConfirmedAfterSave`): the item is read again with
+  `ActionItemMgr.OpenDashboardActionItem` so that the editor shows the saved text and the line shows who confirmed it,
+  the panel stays open in the read-only mode with "This followup is confirmed and can no longer be changed. Nothing was
+  saved." (`ActionItemConfirmedNotSavedMessage`) and the card is read again (`LoadActionItemGRV`). When the read fails
+  (an exception goes to the error log) the panel stays open, read-only, with the message and no status line.
+- The card's Due date column has a second placeholder `phReopened` with the chip `wb-chip wb-chip-orange
+  wb-dash-reopened` ("Reopened"), shown by `IsReopened(Container.DataItem)` when the row has IsReopened 1 (false when the
+  column is not there). It stands after `phOverdue`; both can show. There is no "Confirmed" chip.
+- CSS/bmms-workbench.css: `.wb-dash-reopened` (left margin) and `body.wb .wb-dash-status-line` (block, full width of the
+  value column, wraps also a reason without a space, 500 characters). The orange chip is #8A5300 on #FDF3E1, 5.75:1.
+- The list travels in ViewState with the seven more columns (the reason of a reopened item, at most 500 characters).
+- ActionItemMgr and ActionItemDB are not changed.
 
 Known items (Database/README.md): the Submit writes every listed row with the ticks read at View (a lost update); the
 saves set no UpdatedOn or UpdatedBy and write no audit row; opening a panel for an item that no longer exists, View

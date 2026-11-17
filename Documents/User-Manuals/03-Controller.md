@@ -190,6 +190,16 @@ saved. Try again." or "The server is busy and the action text could not be saved
 moment, then try again.", or "The text is too long. Shorten it or attach the document as a file." Press Submit
 again. If your account is not active BMMS says "Your account is not active. Nothing was saved. Sign in again."
 
+The card never lists a confirmed followup. A pending item that you reopened on the Followup screen has an orange
+"Reopened" label in the Due date column, after "Overdue" when its date has also passed. Under the action text the
+panel shows one grey line: "Reopened by [name (login)] on [date and time]: [reason]", "Confirmed by [name (login)] on
+[date and time]" or "Confirmed (before history)", the same words as on the Followup screen; a long reason wraps. If
+an item was confirmed after the card was read or after you opened the panel, the panel shows the text to read, the
+line "This followup is confirmed and can no longer be changed." and Close only. If you press Submit on such an item,
+BMMS says "This followup is confirmed and can no longer be changed. Nothing was saved." inside the panel, which stays
+open to read with the saved text and the status line. To change a confirmed followup, reopen it on the Followup
+screen first.
+
 The Committee drop-down narrows the Meetings card, the first two summary cards, My approvals and the Action Items
 card. The Alerts card is your own list for every committee; it says "Your own alerts, for every committee. The
 filters at the top do not apply." The Unread alerts card follows no drop-down either.

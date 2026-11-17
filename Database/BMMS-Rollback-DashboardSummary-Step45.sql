@@ -23,7 +23,9 @@
 
    Order of rollbacks: this script comes FIRST. The step 44 Rollback refuses
    to run while step 45 is installed (it would put back the step 42 meeting
-   list and drop spr_GetDashboardApprovals under step 45).
+   list and drop spr_GetDashboardApprovals under step 45). Only the Rollback
+   of step 48 comes before it: this script refuses while step 48 is
+   installed (step FU2a).
 
    Changes no data. Safe to re-run. BMMS-Check-InstalledSteps.sql then shows
    step 45 Missing; steps 16 to 44 stay Installed.
@@ -59,6 +61,17 @@ ELSE IF (OBJECT_ID('dbo.spr_GetDashboardMeetings', 'P') IS NULL OR OBJECT_ID('db
          OR OBJECT_ID('dbo.fn_DashboardActionItems', 'IF') IS NULL)
 BEGIN
     RAISERROR('A procedure or function of steps 43 and 44 is missing in "%s" (spr_GetDashboardMeetings, spr_GetDashboardApprovals, spr_GetDashboardActionItems, fn_AgendaWaitingFor, fn_DashboardActionItems): this is not a database step 45 was installed in. Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
+-- Step 48 (step FU2a) replaced spr_GetDashboardActionItems after step 45: roll it back first
+-- (BMMS-Rollback-DashboardFollowupFinal-Step48.sql)
+ELSE IF (OBJECT_ID('dbo.fn_DashboardActionItemScope', 'IF') IS NOT NULL
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.fn_DashboardActionItems')), '') LIKE '%DashboardFollowupFinal-Step48%'
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetDashboardActionItems')), '') LIKE '%DashboardFollowupFinal-Step48%'
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_OpenDashboardActionItem')), '') LIKE '%DashboardFollowupFinal-Step48%'
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_SaveDashboardActionText')), '') LIKE '%DashboardFollowupFinal-Step48%')
+BEGIN
+    RAISERROR('Step 48 (BMMS-Fix-DashboardFollowupFinal-Step48.sql) is installed in "%s" and replaced spr_GetDashboardActionItems after step 45. Roll back step 48 first (BMMS-Rollback-DashboardFollowupFinal-Step48.sql), then this script. Nothing was changed.', 16, 1, @CurrentDatabase);
     SET NOEXEC ON;
 END
 GO

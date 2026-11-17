@@ -3,10 +3,11 @@
 - Title: Security
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: FU1 (the paragraph "Step 47 (FU1)" under "Role and acting-user checks in procedures": the Followup list, the final confirmed state, Reopen, the reason text and its encoding); UN6d (the paragraph on the Followup saves and the Action Item Details panel under "Role and acting-user checks in procedures"); UN6c2b (the paragraph on the summary cards and the Committee filter under "Role and acting-user checks in procedures"); UN6c2a (the paragraph on the approval rule under "Role and acting-user checks in procedures"); UN6c1 (the paragraph on the Dashboard alerts and Action Items under "Role and acting-user checks in procedures"); UN6b (the paragraph on the Dashboard meeting list under "Role and acting-user checks in procedures"); the rest RA1c2
-- Last updated by: FU1, based on 3d571c4
+- Applies to: FU2a (the paragraph "Step 48 (FU2a)" under "Role and acting-user checks in procedures": role checks before the lock, a confirmed followup final for every role, the status texts); FU1 (the paragraph "Step 47 (FU1)" under "Role and acting-user checks in procedures": the Followup list, the final confirmed state, Reopen, the reason text and its encoding); UN6d (the paragraph on the Followup saves and the Action Item Details panel under "Role and acting-user checks in procedures"); UN6c2b (the paragraph on the summary cards and the Committee filter under "Role and acting-user checks in procedures"); UN6c2a (the paragraph on the approval rule under "Role and acting-user checks in procedures"); UN6c1 (the paragraph on the Dashboard alerts and Action Items under "Role and acting-user checks in procedures"); UN6b (the paragraph on the Dashboard meeting list under "Role and acting-user checks in procedures"); the rest RA1c2
+- Last updated by: FU2a, based on 9336d29
 - Status: Draft
-- Verified against: for step FU1: BMMS/Master/Followup.aspx and .aspx.cs (the "<" check, HtmlEncode in grvFollowup_RowDataBound, the reason checks, the Reason texts), BMMSBAL/ActionItemMgr.cs and BMMSDAL/ActionItemDB.cs (diff), Database/README.md (section Step FU1, the rules; the procedure texts of step 47 as described there, the script not read line by line);
+- Verified against: for step FU2a: Database/BMMS-Fix-DashboardFollowupFinal-Step48.sql (the Reason lines of the three procedures), BMMS/DashBoard/DashBoard.aspx.cs (diff: SetActionItemPanelMode, ShowConfirmedAfterSave, InnerText), Database/README.md (section Step FU2a, the rules, not the findings); the system account refusal is taken from the step 43 rule as described in README, not re-read in the script;
+  for step FU1: BMMS/Master/Followup.aspx and .aspx.cs (the "<" check, HtmlEncode in grvFollowup_RowDataBound, the reason checks, the Reason texts), BMMSBAL/ActionItemMgr.cs and BMMSDAL/ActionItemDB.cs (diff), Database/README.md (section Step FU1, the rules; the procedure texts of step 47 as described there, the script not read line by line);
   for step UN6d: Database/BMMS-Fix-FollowupSave-Step46.sql (both procedures, read in full), BMMS/Master/Followup.aspx.cs and BMMS/DashBoard/DashBoard.aspx.cs (diff), BMMSBAL/ActionItemMgr.cs and BMMSDAL/ActionItemDB.cs (diff), Database/README.md (section Step UN6d, the rule, not the findings); for step UN6c2b: Database/BMMS-Fix-DashboardSummary-Step45.sql (fn_DashboardCommitteeFilter, spr_GetDashboardSummary, the Reason checks of the three replaced procedures), BMMS/UserControl/MeetingSummary.ascx.cs and BMMS/DashBoard/DashBoard.aspx.cs (diff), Database/README.md (section Step UN6c2b and its Known items); and before: for step UN6c2a: Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (fn_AgendaWaitingFor, spr_GetAgendaApprovalState, spr_GetDashboardApprovals, spr_UpdateAgendaByAgendaId, spr_GetDashboardMeetings, read in full), BMMS/DashBoard/DashBoard.aspx.cs (what is sent, what is read back), BMMSDAL/AgendaDB.cs (diff), Database/README.md (section Step UN6c2a, the rule and the hardening, not the findings); for step UN6c1: Database/BMMS-Fix-DashboardAlerts-Step43.sql (the procedures and functions), BMMS/DashBoard/DashBoard.aspx.cs (what is sent and read back),
   Database/README.md (section Step UN6c1, rules); for step UN6b: Database/BMMS-Fix-DashboardMeetings-Step42.sql (spr_GetDashboardMeetings,
   spr_GetDashboardDepartments, fn_UserDepartmentScope), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (what is
@@ -198,6 +199,19 @@ to the error page; every text from the database that the Status cell shows (name
 HttpUtility.HtmlEncode and written through a Literal. spr_DeleteUserByUserId refuses a user who has history rows
 (Reason 6), so the record of who acted keeps its person. Step 47 grants nothing; the application login keeps EXECUTE on
 the schema.
+Step 48 (FU2a) carries the finality of a confirmed followup to the Dashboard, again on the server. spr_SaveDashboardActionText
+checks in this order: the role (Reason 8 for a missing, 0 or inactive user; Reason 4 for Management, MD Secretariat,
+Admin and the system account), then, in one transaction (its own only when the caller has none), the item read under
+UPDLOCK, HOLDLOCK together with the scope rule (an item outside the person's scope, or unknown, whether confirmed or
+not, gives Reason 4, so a confirmed item outside the scope is not revealed), then a confirmed item in scope gives
+Reason 26 and nothing is saved, for every role that may save; only then the UPDATE. The lock closes the gap between the
+test and the write, so a confirm that comes in between is not overwritten. A stale page, a panel opened before the
+confirm or a forged post-back therefore cannot change a confirmed item; what the panel shows (read-only, no Submit) is
+for display only. spr_OpenDashboardActionItem now returns a confirmed item, but only one in the person's scope (the same
+scope function, fn_DashboardActionItemScope; the card itself still lists no confirmed item). Who confirmed or reopened
+an item (name, login, time and the reopen reason, at most 500 characters) is shown only to a person who may open that
+item. Every such text is plain text: the panel sets it with InnerText and so encodes it. Step 48 grants nothing; the
+application login keeps EXECUTE on the schema.
 [[CONFIRM: lead from old Architecture notes: the acting user is the logged-in user, passed as @ActingUserId; a missing or inactive acting user is refused]]
 [[CONFIRM: lead from old Architecture notes: one protected system account (Users.IsSystem = 1) cannot be edited, deleted, deactivated or given another role, even by itself; only it can change its own password; it takes no part in the workflow (step 18)]]
 [[CONFIRM: lead from old Architecture notes: every protected procedure returns one row Result, Reason, ReasonDetail (1 done, 0 refused); the page turns the Reason into a sentence; a database error is re-raised, not reported as a refusal]]

@@ -24,6 +24,9 @@
    build lists an item for everyone who has such a row). Safe to re-run.
    BMMS-Check-InstalledSteps.sql then shows step 43 Missing.
 
+   Order of rollbacks: the Rollbacks of steps 48, 45 and 44 come first. This
+   script refuses while step 48 is installed (step FU2a).
+
    It has no USE line: select the database in SSMS first. It stops if the
    current database name does not start with "BMMS", and when step 43 is not
    installed (nothing to roll back). Plain ASCII. From the command line use
@@ -58,6 +61,16 @@ END
 ELSE IF (OBJECT_ID('dbo.spr_GetAlertMailId', 'P') IS NULL OR OBJECT_ID('dbo.spr_GetAgendaUpdateMailId', 'P') IS NULL)
 BEGIN
     RAISERROR('spr_GetAlertMailId or spr_GetAgendaUpdateMailId is missing in "%s" (steps 18 and 37): this is not a database step 43 was installed in. Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
+-- Step 48 (step FU2a) reads the objects of step 43: roll it back first (BMMS-Rollback-DashboardFollowupFinal-Step48.sql)
+ELSE IF (OBJECT_ID('dbo.fn_DashboardActionItemScope', 'IF') IS NOT NULL
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.fn_DashboardActionItems')), '') LIKE '%DashboardFollowupFinal-Step48%'
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetDashboardActionItems')), '') LIKE '%DashboardFollowupFinal-Step48%'
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_OpenDashboardActionItem')), '') LIKE '%DashboardFollowupFinal-Step48%'
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_SaveDashboardActionText')), '') LIKE '%DashboardFollowupFinal-Step48%')
+BEGIN
+    RAISERROR('Step 48 (BMMS-Fix-DashboardFollowupFinal-Step48.sql) is installed in "%s" and reads the objects of step 43. Roll back step 48 first (BMMS-Rollback-DashboardFollowupFinal-Step48.sql), then step 45, then this script. Nothing was changed.', 16, 1, @CurrentDatabase);
     SET NOEXEC ON;
 END
 GO

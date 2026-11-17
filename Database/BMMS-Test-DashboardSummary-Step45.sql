@@ -21,6 +21,14 @@
    the procedures of this step; the condition the step 44 Rollback refuses
    on (step 45 installed) is met.
 
+   Step 48 (step FU2a) replaced spr_GetDashboardActionItems and
+   fn_DashboardActionItems: seven status columns after IsOverdue, the same
+   rows. With step 48 installed (its marker DashboardFollowupFinal-Step48)
+   this script expects the 35 columns and the step 48 text (SHA-1) of
+   fn_DashboardActionItems, and the table #AI gets the seven columns;
+   without step 48 it expects what step 45 gave. Every other check is as it
+   was.
+
    Part 2, inside ONE transaction that is rolled back (made-up data ZZ45:
    three departments, the six roles, an inactive user, an active, a second
    active and an INACTIVE committee, scheduled meetings dated today, later
@@ -116,6 +124,11 @@ CREATE TABLE #AIO (ActionItemId INT, MinutesId INT, ActionText NVARCHAR(MAX), Ac
                    SubjectNo INT, DepartmentCode VARCHAR(50), DepartmentName NVARCHAR(200), ActualResolution NVARCHAR(MAX), CommitteeName NVARCHAR(200),
                    CommitteeCode VARCHAR(50), MeetingDate DATETIME, MeetingTime VARCHAR(50), Venue NVARCHAR(500), UserId INT, ReadStatus INT,
                    DepartmentId INT, Directions NVARCHAR(MAX), IsComplied INT, IsConfirmed INT, IsOverdue INT);
+-- Step 48 (step FU2a) installed: spr_GetDashboardActionItems returns seven status columns more (INSERT ... EXEC needs
+-- the same columns); #AIO holds the rows of the old text (28 columns) and stays as it is
+IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetDashboardActionItems')), '') LIKE '%DashboardFollowupFinal-Step48%')
+    ALTER TABLE #AI ADD IsReopened INT, StatusAction VARCHAR(10), StatusReason NVARCHAR(500), StatusOn DATETIME,
+                        StatusByName NVARCHAR(200), StatusByLogin NVARCHAR(200), StatusByActive INT;
 
 -- Every identity counter before the test (put back at the end)
 INSERT INTO #Ident (TableName, SavedValue, SeedValue, IncrementValue)
@@ -169,8 +182,10 @@ INSERT INTO #T SELECT 'spr_GetDashboardApprovals: the result columns of before, 
        'RowNo,AgendaId,AgendaNo,SubjectNo,ShortText,AgendaStatusCode,CommitteeId,CommitteeCode,CommitteeName,MeetingId,MeetingNo,MeetingDate,DepartmentId,DepartmentName,AlertId', @Cols;
 SET @Cols = NULL;
 SELECT @Cols = ISNULL(@Cols + ',', '') + name FROM sys.dm_exec_describe_first_result_set_for_object(OBJECT_ID('dbo.spr_GetDashboardActionItems'), 0) ORDER BY column_ordinal;
-INSERT INTO #T SELECT 'spr_GetDashboardActionItems: the columns of View_Action_Item_Users and IsOverdue, as before',
-       'ActionItemId,MinutesId,ActionText,ActionStatus,AgendaId,DecisionTypeId,DueDate,AgendaNo,CommitteeId,MeetingId,DecisionTypeCode,DecisionTypeName,SubjectNo,DepartmentCode,DepartmentName,ActualResolution,CommitteeName,CommitteeCode,MeetingDate,MeetingTime,Venue,UserId,ReadStatus,DepartmentId,Directions,IsComplied,IsConfirmed,IsOverdue', @Cols;
+INSERT INTO #T SELECT 'spr_GetDashboardActionItems: the columns of View_Action_Item_Users and IsOverdue, as before (with step 48 installed: and the seven status columns)',
+       'ActionItemId,MinutesId,ActionText,ActionStatus,AgendaId,DecisionTypeId,DueDate,AgendaNo,CommitteeId,MeetingId,DecisionTypeCode,DecisionTypeName,SubjectNo,DepartmentCode,DepartmentName,ActualResolution,CommitteeName,CommitteeCode,MeetingDate,MeetingTime,Venue,UserId,ReadStatus,DepartmentId,Directions,IsComplied,IsConfirmed,IsOverdue'
+       + CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetDashboardActionItems')), '') LIKE '%DashboardFollowupFinal-Step48%'
+              THEN ',IsReopened,StatusAction,StatusReason,StatusOn,StatusByName,StatusByLogin,StatusByActive' ELSE '' END, @Cols;
 INSERT INTO #T SELECT 'spr_GetDashboardSummary returns no result set (the counts are outputs); the committee function returns the column Allowed', '0 | Allowed',
        CAST((SELECT COUNT(*) FROM sys.dm_exec_describe_first_result_set_for_object(OBJECT_ID('dbo.spr_GetDashboardSummary'), 0)) AS VARCHAR(12)) + ' | '
      + ISNULL(STUFF((SELECT ',' + c.name FROM sys.columns c WHERE c.object_id = OBJECT_ID('dbo.fn_DashboardCommitteeFilter') ORDER BY c.column_id FOR XML PATH('')), 1, 1, ''), '-');
@@ -195,9 +210,12 @@ BEGIN
     SET @ActFnHash = @ActFnHash + CONVERT(VARCHAR(40), HASHBYTES('SHA1', CAST(SUBSTRING(@D, @I, 4000) AS NVARCHAR(4000))), 2);
     SET @I = @I + 4000;
 END
-INSERT INTO #T SELECT 'fn_AgendaStatusGroup and fn_DashboardActionItems are the texts of steps 42 and 43 (SHA-1): one status definition, one action item rule', 'same, same',
+-- Step 48 (step FU2a) replaced fn_DashboardActionItems: with its marker, the step 48 text is expected
+INSERT INTO #T SELECT 'fn_AgendaStatusGroup and fn_DashboardActionItems are the texts of steps 42 and 43 (with step 48 installed: of step 48) (SHA-1): one status definition, one action item rule', 'same, same',
        CASE WHEN @GroupHash = '39AFA7C8133CDBC5CB158861799144F6229E27BA' THEN 'same' ELSE 'differs' END + ', '
-     + CASE WHEN @ActFnHash = '61E1A276292DFC2D87B1D020A7BF22E62EF9D0F1' THEN 'same' ELSE 'differs' END;
+     + CASE WHEN @ActFnHash = CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.fn_DashboardActionItems')), '') LIKE '%DashboardFollowupFinal-Step48%'
+                                   THEN '842025D6BF2609C53F16EC77116538F9D7FCE368'
+                                   ELSE '61E1A276292DFC2D87B1D020A7BF22E62EF9D0F1' END THEN 'same' ELSE 'differs' END;
 
 INSERT INTO #T SELECT 'No feature above compatibility level 100 in the five texts (THROW, IIF, CONCAT, FORMAT, TRY_CONVERT, OFFSET, STRING_AGG, EOMONTH)', '0',
        CAST((SELECT COUNT(*) FROM (VALUES ('fn_DashboardCommitteeFilter'), ('spr_GetDashboardSummary'), ('spr_GetDashboardMeetings'),

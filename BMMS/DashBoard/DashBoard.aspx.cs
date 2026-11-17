@@ -334,6 +334,11 @@ namespace BMMS.DashBoard
         private const string ActionItemSaveBusyMessage = "The server is busy and the action text could not be saved. Nothing was saved. Wait a moment, then try again.";
         private const string ActionItemSavedMessage = "The action text was saved.";   // step UN6d
         private const string ActionItemReadOnlyMessage = "You can read this action item. Your role cannot change it.";   // step UN6d
+        // Step FU2a (step 48): a confirmed followup is final for every role. The line of a confirmed item opened from
+        // the card (a stale row, or a panel opened before the confirm), and the message of a Submit refused for it
+        // (spr_SaveDashboardActionText, Reason 26)
+        private const string ActionItemConfirmedLine = "This followup is confirmed and can no longer be changed.";
+        private const string ActionItemConfirmedNotSavedMessage = "This followup is confirmed and can no longer be changed. Nothing was saved.";
         private const string ActionItemsFailedMessage = "The action items could not be loaded. Reload the page to try again.";
         private const string ActionItemsBusyMessage = "The server is busy and the action items could not be loaded. Wait a moment, then reload the page.";
         private const string ActionItemsInactiveMessage = "The action items are not available: your account is not active. Sign in again.";
@@ -594,16 +599,9 @@ namespace BMMS.DashBoard
             // every other role (in practice Management: MD Secretariat and Admin have no card) sees Close only and the
             // line that it can only read. The buttons follow the session role; the server decides every save
             // (spr_SaveDashboardActionText, step 43).
-            bool canSave = RoleCode == "controller" || RoleCode == "manager" || RoleCode == "user";
-            ftxtActualResolution.ReadOnly = true;
-            ftxtActionText.ReadOnly = !canSave;
-            btnActionItemApprove.Visible = canSave;
-            btnActionItemCancel.Visible = canSave;
-            btnActionItemClose.Visible = !canSave;
-            if (canSave)
-                HideActionItemPanelMessage();
-            else
-                ShowActionItemPanelMessage(ActionItemReadOnlyMessage);
+            // Step FU2a: and the item. A confirmed item (step 48 returns it when it is in the person's scope) opens
+            // read-only for every role (SetActionItemPanelMode, after the item is read).
+            bool canSave = CanSaveActionText(RoleCode);
 
             LinkButton link = (LinkButton)sender;
             GridViewRow gv = (GridViewRow)(link.Parent.Parent);
@@ -623,7 +621,11 @@ namespace BMMS.DashBoard
                         MsgDisplay(ActionItemsInactiveMessage);
                     }
                     else if (reason == 0 && BindActionItemDetails(dtOpened))
+                    {
+                        // Step FU2a (R18): a confirmed item is read-only for every role, with its line
+                        SetActionItemPanelMode(canSave, FollowupStatusText.IsSet(dtOpened.Rows[0]["IsConfirmed"]), null);
                         pnlActionItemDetails.Visible = true;
+                    }
                     else
                         ShowItemGone();
                 }
@@ -656,8 +658,98 @@ namespace BMMS.DashBoard
             //txtDueDate.Text = Convert.ToDateTime(dtActionItem.Rows[0]["DueDate"].ToString()).ToString("dd-MMM-yyyy"); ;
             ftxtActualResolution.Text = HtmlCleaner.Clean(dtActionItem.Rows[0]["ActualResolution"].ToString());
             ftxtActionText.Text = HtmlCleaner.Clean(dtActionItem.Rows[0]["ActionText"].ToString());
+            ShowActionItemStatus(ActionItemStatusCaption(dtActionItem.Rows[0]));   // step FU2a (R17)
 
             return true;
+        }
+        #endregion
+
+        #region Action item status (step FU2a)
+        // The roles whose panel has an editable action text (step UN6d); the server decides every save
+        private static bool CanSaveActionText(string RoleCode)
+        {
+            return RoleCode == "controller" || RoleCode == "manager" || RoleCode == "user";
+        }
+
+        // R18: the panel's editor and buttons. Editable only for a role that may save AND an item that is not
+        // confirmed: then Submit and Cancel. Otherwise the editor is read-only and only Close is shown, with one line:
+        // the message given (the Reason 26 refusal), else for a confirmed item that it is final (for every role, in
+        // place of the line of a role that only reads), else for a role that only reads that it can only read.
+        private void SetActionItemPanelMode(bool canSave, bool confirmed, string message)
+        {
+            bool editable = canSave && !confirmed;
+            ftxtActualResolution.ReadOnly = true;
+            ftxtActionText.ReadOnly = !editable;
+            btnActionItemApprove.Visible = editable;
+            btnActionItemCancel.Visible = editable;
+            btnActionItemClose.Visible = !editable;
+
+            if (!string.IsNullOrEmpty(message))
+                ShowActionItemPanelMessage(message);
+            else if (confirmed)
+                ShowActionItemPanelMessage(ActionItemConfirmedLine);
+            else if (!canSave)
+                ShowActionItemPanelMessage(ActionItemReadOnlyMessage);
+            else
+                HideActionItemPanelMessage();
+        }
+
+        // R17: the status line under the action text, the texts of the Followup page (FollowupStatusText): who
+        // confirmed or reopened the item, when, and the reason. Read only when the seven status columns of step 48
+        // are there (a database where step 43 or 45 was re-run has none: no line, and no error).
+        private static readonly string[] StatusColumns = { "StatusAction", "StatusReason", "StatusOn", "StatusByName", "StatusByLogin", "StatusByActive" };
+
+        private static string ActionItemStatusCaption(DataRow Item)
+        {
+            foreach (string column in StatusColumns)
+            {
+                if (!Item.Table.Columns.Contains(column))
+                    return string.Empty;
+            }
+
+            return FollowupStatusText.Caption(FollowupStatusText.IsSet(Item["IsConfirmed"]), Item["StatusAction"], Item["StatusReason"],
+                Item["StatusOn"], Item["StatusByName"], Item["StatusByLogin"], Item["StatusByActive"]);
+        }
+
+        // Plain text (InnerText encodes it); a 500-character reason wraps (wb-dash-status-line)
+        private void ShowActionItemStatus(string caption)
+        {
+            pActionItemStatus.InnerText = caption ?? string.Empty;
+            pActionItemStatus.Visible = !string.IsNullOrEmpty(caption);
+        }
+
+        // R19: the word "Reopened" in the Due date column, when the row has IsReopened 1 (step 48; none without it)
+        protected static bool IsReopened(object dataItem)
+        {
+            DataRowView row = dataItem as DataRowView;
+            if (row == null || !row.Row.Table.Columns.Contains("IsReopened"))
+                return false;
+            return FollowupStatusText.IsSet(row["IsReopened"]);
+        }
+
+        // R16: a Submit refused with Reason 26 (the item was confirmed meanwhile). The panel stays open, read-only, with
+        // the message; the item is read again (spr_OpenDashboardActionItem, which returns a confirmed item of the
+        // person's scope) so the editor shows the saved text and the status line who confirmed it. When that read
+        // fails the panel stays open read-only with the message and no status line (the text typed stays in view).
+        private void ShowConfirmedAfterSave(int UserId, string RoleCode, int ActionItemId)
+        {
+            bool bound = false;
+            try
+            {
+                int reason;
+                DataTable dtOpened = ActionItemMgr.OpenDashboardActionItem(UserId, ActionItemId, out reason);
+                bound = reason == 0 && BindActionItemDetails(dtOpened);
+            }
+            catch (Exception ex)
+            {
+                Utilities.WriteErrorLog(className, "ShowConfirmedAfterSave", ex.ToString());
+            }
+
+            if (!bound)
+                ShowActionItemStatus(null);
+
+            SetActionItemPanelMode(CanSaveActionText(RoleCode), true, ActionItemConfirmedNotSavedMessage);
+            pnlActionItemDetails.Visible = true;
         }
         #endregion
 
@@ -1291,6 +1383,15 @@ namespace BMMS.DashBoard
                 return;
             }
 
+            // Step FU2a (R16): the item was confirmed meanwhile (Reason 26, nothing saved): the panel stays open,
+            // read-only, with the saved text, who confirmed it and the message; the list is read again (the item leaves it)
+            if (reason == 26)
+            {
+                ShowConfirmedAfterSave(UserId, RoleCode, ActionItemId);
+                LoadActionItemGRV();
+                return;
+            }
+
             pnlActionItemDetails.Visible = false;
             ClearActionItemEditors();   // step A3: saved or refused, the panel closes
             HideActionItemPanelMessage();   // step UN6d
@@ -1383,6 +1484,7 @@ namespace BMMS.DashBoard
         {
             ftxtActualResolution.Text = string.Empty;
             ftxtActionText.Text = string.Empty;
+            ShowActionItemStatus(null);   // step FU2a
         }
         #endregion
 
@@ -1496,6 +1598,7 @@ namespace BMMS.DashBoard
             pnlAgenda.Visible = false;
             pnlActionItemDetails.Visible = false;
             HideActionItemPanelMessage();   // step UN6d: the closed panel keeps no line
+            ShowActionItemStatus(null);   // step FU2a: nor a status line
             pnlMeeting.Visible = false;
             pnlCommittee.Visible = false;
 

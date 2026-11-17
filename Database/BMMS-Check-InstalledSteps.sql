@@ -167,6 +167,16 @@
    spr_DeleteUserByUserId (5 of 6): step 47 reads Partly; run step 47
    again. After BMMS-Rollback-FollowupFinal-Step47.sql it reads Partly, 1 of
    6 (the table is kept with its rows); a later run of step 47 finds it.
+   Step 48 (step FU2a) adds one read-only function
+   (fn_DashboardActionItemScope) and replaces fn_DashboardActionItems,
+   spr_OpenDashboardActionItem, spr_SaveDashboardActionText (step 43) and
+   spr_GetDashboardActionItems (steps 43 and 45), which keep the markers of
+   their earlier steps (so steps 43 and 45 still read Installed): 5
+   markers. Re-running step 43 or 45 afterwards brings back their texts:
+   step 48 reads Partly; run step 48 again. After
+   BMMS-Rollback-DashboardFollowupFinal-Step48.sql it reads Missing (roll
+   back step 48 before step 45 and step 43: their Rollbacks refuse
+   otherwise).
    Step 32 is reserved and not built; it has no row.
    Step D1 (shown as step 100) replaces spr_DeleteMeetingByMeetingId, which
    no numbered script contains: it reads Missing only on a database restored
@@ -494,6 +504,13 @@ FROM (VALUES ('spr_SaveFollowupActionText'), ('spr_SaveFollowupConfirmed'), ('sp
 INSERT INTO @M VALUES
 (47, 'Action_Item_Status_History (table, FollowupFinal-Step47)', CASE WHEN OBJECT_ID('dbo.Action_Item_Status_History', 'U') IS NOT NULL THEN 1 ELSE 0 END);
 
+-- 48. BMMS-Fix-DashboardFollowupFinal-Step48.sql, installed after step 47 (one new function; fn_DashboardActionItems,
+-- spr_GetDashboardActionItems, spr_OpenDashboardActionItem and spr_SaveDashboardActionText replaced)
+INSERT INTO @M
+SELECT 48, o.Name + ' (DashboardFollowupFinal-Step48)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%DashboardFollowupFinal-Step48%' THEN 1 ELSE 0 END
+FROM (VALUES ('fn_DashboardActionItemScope'), ('fn_DashboardActionItems'), ('spr_GetDashboardActionItems'),
+             ('spr_OpenDashboardActionItem'), ('spr_SaveDashboardActionText')) o(Name);
+
 -- D1 (shown as step 100). BMMS-Fix-MeetingDelete-D1.sql; no numbered script contains spr_DeleteMeetingByMeetingId
 INSERT INTO @M VALUES
 (100, 'spr_DeleteMeetingByMeetingId (MeetingDelete-D1)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_DeleteMeetingByMeetingId')), '') LIKE '%MeetingDelete-D1%' THEN 1 ELSE 0 END);
@@ -542,6 +559,7 @@ INSERT INTO @Steps VALUES
 (45, 'BMMS-Fix-DashboardSummary-Step45.sql', 'step 42, 43 or 44 was re-run after step 45 (2 to 4 of 5), or an object is missing: run step 45 again (after step 44)'),
 (46, 'BMMS-Fix-FollowupSave-Step46.sql', 'an object is missing: run step 46 again (after step 45)'),
 (47, 'BMMS-Fix-FollowupFinal-Step47.sql', 'step 46 was re-run (4 of 6), step 2, 6, 10, 13 or 39 was re-run (5 of 6), or step 47 was rolled back (1 of 6: the table stays): run step 47 again (after step 46)'),
+(48, 'BMMS-Fix-DashboardFollowupFinal-Step48.sql', 'step 43 or 45 was re-run after step 48 (1 to 4 of 5), or an object is missing: run step 48 again (after step 47)'),
 (100, 'BMMS-Fix-MeetingDelete-D1.sql (step D1)', '');
 
 SELECT s.Step, s.Script,

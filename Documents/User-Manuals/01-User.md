@@ -105,6 +105,15 @@ saved. Nothing was saved. Wait a moment, then try again.", or "The text is too l
 document as a file." Press Submit again. If your account is not active BMMS says "Your account is not active.
 Nothing was saved. Sign in again."
 
+The card never lists a confirmed followup. A pending item that the Controller reopened has an orange "Reopened"
+label in the Due date column, after "Overdue" when its date has also passed. Under the action text the panel shows
+one grey line: "Reopened by [name (login)] on [date and time]: [reason]", "Confirmed by [name (login)] on [date and
+time]" or "Confirmed (before history)"; a long reason wraps. If an item was confirmed after the card was read or
+after you opened the panel, the panel shows the text to read, the line "This followup is confirmed and can no longer
+be changed." and Close only. If you press Submit on such an item, BMMS says "This followup is confirmed and can no
+longer be changed. Nothing was saved." inside the panel, which stays open to read with the saved text and the status
+line.
+
 The Committee drop-down of other roles narrows their Meetings card (and, for the Controller and the Manager, their
 My approvals card); your Alerts and Action Items cards do not follow any choice of a committee.
 

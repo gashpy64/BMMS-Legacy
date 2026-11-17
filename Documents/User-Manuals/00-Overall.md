@@ -187,6 +187,23 @@ The Controller, the Manager and the User see Submit and Cancel in the Action Ite
 panel closes, the list is read again with the link and filters you had chosen, and BMMS says "The action text was
 saved." If the text could not be saved, the panel stays open with the text and says so on a line inside it.
 
+A confirmed followup is final for every role, so the card never lists one. In the Due date column a pending item
+that the Controller has reopened carries an orange "Reopened" label; when its date has also passed, "Overdue" and
+"Reopened" both show. A confirmed item has no label.
+
+Under the action text, the Action Item Details panel shows one line of the Followup status, in small grey text:
+"Reopened by [name (login)] on [date and time]: [reason]" for a reopened item, "Confirmed by [name (login)] on
+[date and time]" for a confirmed one, or "Confirmed (before history)" for one confirmed before BMMS kept this
+record. These are the same words as on the Followup screen. A long reason wraps onto more lines. An item that is
+not confirmed and was never reopened has no line.
+
+If an item was confirmed after your card was read, or after you opened the panel, the item cannot be changed, for
+any role. When you open it the panel shows the action text to read, the line "This followup is confirmed and can
+no longer be changed.", and the button Close only (no Submit, no Cancel). If you press Submit on an item that has
+just been confirmed, BMMS says "This followup is confirmed and can no longer be changed. Nothing was saved." on the
+line inside the panel; the panel stays open to read, with the saved action text and the status line, and only Close
+is shown. The list is read again and the item leaves it.
+
 If the action items cannot be loaded, the card says "The action items could not be loaded. Reload the page to
 try again." or "The server is busy and the action items could not be loaded. Wait a moment, then reload the
 page." If your account is not active it says "The action items are not available: your account is not
@@ -205,6 +222,10 @@ page itself never scrolls sideways.
 [Screenshot: Dashboard, Meetings card and Alerts card - supplied by Gashpy Software]
 [Screenshot: Dashboard, My approvals panel above the Meetings card with the Waiting for me column - supplied by Gashpy Software]
 [Screenshot: Dashboard, Action Items card with an Overdue item - supplied by Gashpy Software]
+[Screenshot: Dashboard, Action Items card, Due date column with Overdue and Reopened - supplied by Gashpy Software]
+[Screenshot: Dashboard, Action Item Details panel with the status line under the action text - supplied by Gashpy Software]
+[Screenshot: Dashboard, Action Item Details panel of a confirmed item, read-only with Close - supplied by Gashpy Software]
+[Screenshot: Dashboard, the message "This followup is confirmed and can no longer be changed. Nothing was saved." in the panel - supplied by Gashpy Software]
 
 ## MD Secretariat and Management
 
@@ -251,7 +272,9 @@ Both roles see the counts (Items, Approved, Rejected, In progress) over every it
 three summary cards (Items in progress, Items rejected, Unread alerts); MD Secretariat has no cards, and a line
 under the lists says what "In progress" means. Neither role has the My approvals panel or the Waiting for me column.
 See "The Dashboard meeting list, by role" for the columns.
-Management sees every action item that is not confirmed and can open it, but cannot change it. MD
+Management sees every action item that is not confirmed and can open it, but cannot change it (the panel never
+shows Submit, and for a confirmed item it shows the line "This followup is confirmed and can no longer be
+changed."). MD
 Secretariat has no Action Items card. The Committee drop-down narrows the Meetings card, and for Management the
 summary cards and the Action Items card.
 

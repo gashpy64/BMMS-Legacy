@@ -3,10 +3,11 @@
 - Title: Workflow: Meeting Life Cycle
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6c2b (step 45): the decision points for the statistics, the summary cards and the Committee filter; UN6b (step 42): the meeting status on the Dashboard; the rest not written yet
-- Last updated by: UN6c2b, based on 357cdd0
+- Applies to: FU2a (step 48): two decision points on the Action Items card and panel; UN6c2b (step 45): the decision points for the statistics, the summary cards and the Committee filter; UN6b (step 42): the meeting status on the Dashboard; the rest not written yet
+- Last updated by: FU2a, based on 9336d29
 - Status: Draft
-- Verified against: for step UN6c2b: Database/BMMS-Fix-DashboardSummary-Step45.sql (fn_DashboardCommitteeFilter, spr_GetDashboardSummary, spr_GetDashboardMeetings header), Database/README.md (section Step UN6c2b);
+- Verified against: for step FU2a: Database/BMMS-Fix-DashboardFollowupFinal-Step48.sql (the Reason lines), BMMS/DashBoard/DashBoard.aspx.cs (diff), Database/README.md (section Step FU2a);
+  for step UN6c2b: Database/BMMS-Fix-DashboardSummary-Step45.sql (fn_DashboardCommitteeFilter, spr_GetDashboardSummary, spr_GetDashboardMeetings header), Database/README.md (section Step UN6c2b);
   for the Dashboard status (step UN6b): Database/BMMS-Fix-DashboardMeetings-Step42.sql
   (fn_MeetingDashboardState, spr_GetDashboardMeetings), BMMS/UserControl/MeetingSummary.ascx.cs,
   BMMS/DashBoard/DashBoard.aspx.cs (diff: Reload after Approve and Reject), Database/README.md (section Step UN6b),
@@ -99,6 +100,8 @@ Secretariat and Admin).
 | Who has the summary cards, and what do they count? (step 45) | The database | Controller, Management, Manager, User: the items of Scheduled meetings in progress (AC, AMA) and rejected (AMR, ACR), for the committee and department chosen; MD Secretariat and Admin: no cards. Each equals the total of its column in the Scheduled list | spr_GetDashboardSummary; fn_AgendaStatusGroup |
 | Which committee may be chosen? (step 45) | The database | All committees (0), or an active committee; an inactive or unknown one is refused (Reason 4) by the meeting list, the summary, My approvals and the Action Items card | fn_DashboardCommitteeFilter |
 | When are the counts read again? | The Dashboard | After a successful Approve or Reject on the Dashboard | DashBoard.aspx.cs (MeetingSummary1.Reload) |
+| May the action text of a followup be changed on the Dashboard? (step FU2a) | The database, for every role | Not when the followup is confirmed: Reason 26, nothing saved; the role checks (Reason 8, 4) and the scope (Reason 4) come first. A confirmed followup is final until the Controller reopens it on the Followup page | spr_SaveDashboardActionText |
+| Does the Action Items card list a confirmed followup? (step FU2a) | The database | No, for every role; a confirmed item of the person's scope can still be opened (a stale row, or a panel opened before the confirm), read-only. A Pending item whose latest history row is a Reopen carries the chip "Reopened" | fn_DashboardActionItems, spr_OpenDashboardActionItem, fn_DashboardActionItemScope (IsReopened) |
 
 ## Drawn from
 

@@ -3,10 +3,11 @@
 - Title: BMMS Change Log
 - Audience: Gashpy Software (internal)
 - Shipped: No
-- Applies to: FU1
-- Last updated by: FU1, based on 3d571c4
+- Applies to: FU2a; FU1
+- Last updated by: FU2a, based on 9336d29
 - Status: Draft
-- Verified against: for FU1: git diff 3d571c4 (BMMS/Master/Followup.aspx(.cs, .designer.cs), BMMS/CSS/bmms-workbench.css, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/BMMS-Check-InstalledSteps.sql, Tests/README.md, Tests/packs/followup/*), Database/README.md section Step FU1 and Known items; the three step 47 scripts were not read line by line (their content is taken from Database/README.md), the Test result (95 of 95), the tester run 2026-11-16_133023 and the owner's tests as given;
+- Verified against: for FU2a: git diff 9336d29 (BMMS/DashBoard/DashBoard.aspx(.cs, .designer.cs), BMMS/Master/Followup.aspx.cs, BMMS/CSS/bmms-workbench.css, BMMS/BMMS.csproj, Database/BMMS-Check-InstalledSteps.sql, the Rollbacks and Tests of steps 43 and 45, Tests/packs/dashboard/*) and the new files (BMMS/FollowupStatusText.cs read in full; the three step 48 scripts: the Reason lines of the Fix script only), Database/README.md section Step FU2a and Known items, the Test results, the tester run 2026-11-16_181041 and the owner's tests as given;
+  for FU1: git diff 3d571c4 (BMMS/Master/Followup.aspx(.cs, .designer.cs), BMMS/CSS/bmms-workbench.css, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/BMMS-Check-InstalledSteps.sql, Tests/README.md, Tests/packs/followup/*), Database/README.md section Step FU1 and Known items; the three step 47 scripts were not read line by line (their content is taken from Database/README.md), the Test result (95 of 95), the tester run 2026-11-16_133023 and the owner's tests as given;
   for UN6d: git diff ce7358a 276e402 (BMMS/DashBoard/DashBoard.aspx(.cs), BMMS/Master/Followup.aspx(.cs), BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, BMMS/CSS/CommonHTML.css and bmms-workbench.css, Database/BMMS-Fix-FollowupSave-Step46.sql and BMMS-Rollback-FollowupSave-Step46.sql (read in full), BMMS-Check-InstalledSteps.sql, Database/README.md section Step UN6d and Known items, Tests/README.md, Tests/packs/followup/*, Tests/packs/dashboard/README.md and expected.json, Tests/packs/access-matrix/README.md), Claude outputs/un6d-requirements.md, the Test script and tester results and the owner's tests as given; for UN6c2b: git diff f3cbd7e~1 f3cbd7e (BMMS/DashBoard/DashBoard.aspx(.cs), BMMS/UserControl/MeetingSummary.ascx(.cs), BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs and ActionItemDB.cs, Database/BMMS-Fix-DashboardSummary-Step45.sql (read), BMMS-Rollback-AgendaWaitingFor-Step44.sql, BMMS-Check-InstalledSteps.sql, Database/README.md section Step UN6c2b and Known items, Tests/README.md, Tests/packs/dashboard/README.md), the tester run of 2026-11-15 and the owner's tests as given; for UN6c2a: git diff HEAD (493cb45) and the new files (BMMS/DashBoard/DashBoard.aspx(.cs, .designer.cs),
   BMMS/UserControl/MeetingSummary.ascx(.cs), BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and MeetingMgr.cs,
   BMMSDAL/AgendaDB.cs and MeetingDB.cs, Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (read in full),
@@ -41,6 +42,41 @@
 One entry per step, newest first. Each entry names the step, its tag and what changed for users,
 for installers and in the database. Release entries (tags vX.Y.Z) collect the steps since the
 previous release.
+
+## FU2a - A confirmed followup is final on the Dashboard too; who confirmed or reopened it; "Reopened" in the Action Items card (tag not yet set, 2026-11-17; database step 48; code not yet committed, based on 9336d29)
+
+- For users: Dashboard, Action Items card and Action Item Details panel. In the Due date column a pending item that the
+  Controller reopened carries an orange "Reopened" label, with "Overdue" when both apply; there is no "Confirmed" label,
+  and the card still lists no confirmed item. The panel shows one line under the action text: "Reopened by [Name (login)]
+  on [dd-MMM-yyyy HH:mm]: [reason]", "Confirmed by [Name (login)] on [dd-MMM-yyyy HH:mm]" or "Confirmed (before history)",
+  the same texts as on the Followup page (a long reason wraps). A confirmed item that is reached from a stale card row, or
+  from a panel opened before the confirm, opens read-only for every role (also Management): the editor is read-only,
+  Submit and Cancel are hidden, Close is shown and the line reads "This followup is confirmed and can no longer be
+  changed." (it replaces "This item no longer exists."). Submit on an item confirmed in the meantime is refused for
+  every role: "This followup is confirmed and can no longer be changed. Nothing was saved."; the panel stays open,
+  read-only, with the saved text and the status line. Opening a confirmed item marks it read for that person, as any
+  item. Described in the Overall manual (Dashboard) and the User, Manager and Controller manuals (Dashboard).
+- For developers: new class BMMS/FollowupStatusText.cs (added to BMMS.csproj), used by Master/Followup.aspx.cs and
+  DashBoard.aspx.cs; DashBoard.aspx.cs: `SetActionItemPanelMode`, `CanSaveActionText`, `ActionItemStatusCaption`,
+  `ShowActionItemStatus`, `IsReopened`, `ShowConfirmedAfterSave`; the markup has the paragraph `pActionItemStatus` and the
+  placeholder `phReopened`; CSS `.wb-dash-reopened` and `.wb-dash-status-line`. ActionItemMgr and ActionItemDB are not
+  changed. See System-Manual/05 and Data-Flow/03-Program-to-Program/09.
+- For installers: install step 48 and deploy the build together. Run BMMS-Fix-DashboardFollowupFinal-Step48.sql after
+  steps 43, 45 and 47 (marker DashboardFollowupFinal-Step48, 5 markers in the Check script), on BMMS_Test first. The step adds
+  fn_DashboardActionItemScope and replaces fn_DashboardActionItems, spr_GetDashboardActionItems, spr_OpenDashboardActionItem
+  and spr_SaveDashboardActionText (the markers of steps 43 and 45 are kept; the three read objects return 35 columns instead
+  of 28). The Rollback puts the step 43 and 45 texts back; the Rollbacks of steps 43 and 45 refuse while step 48 is
+  installed; a re-run of step 43 or 45 removes step 48 (run step 48 again). Tester baseline: Update-Baseline.ps1 with
+  step 48.
+- In the database: the new Reason 26 of spr_SaveDashboardActionText (a confirmed item, nothing saved, for every role that
+  may save; the role checks and the scope come first, under UPDLOCK and HOLDLOCK); spr_OpenDashboardActionItem returns a
+  confirmed item of the person's scope (a read row it creates gets StatusId 0 then). The Dashboard has no count of action
+  items, so no count changes. Out of scope (step FU2b): Report/Followup.aspx, Report/FollowupActionTaken.aspx and
+  ReportsMgr.GetFollowupReport.
+- Tests: Test script 48 43 of 43, Test 43 128 of 128, Test 44 120 of 120, Test 45 66 of 66, Test 47 95 of 95 on BMMS_Test
+  (the expected values of the Test scripts of steps 43 and 45 follow the step 48 marker). Tester run 2026-11-16_181041
+  (access-matrix, dashboard, followup): PASSED, 890 checks; the dashboard pack has the new check 18. The owner's browser tests
+  passed on BMMS_Test (2026-11-17, Chrome and Edge at 1366 and 1024 px).
 
 ## FU1 - A confirmed followup becomes final; Reopen with a reason; who confirmed and when (tag not yet set, 2026-11-16; database step 47; code not yet committed, based on 3d571c4)
 
