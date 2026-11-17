@@ -32,20 +32,14 @@ namespace BMMSDAL
     public class ActionItemDB
     {
 
-        #region GetFollowup
-        public static DataTable GetFollowup(string SQL_Query_Text)
-        {
-            return CommonDB.GetDataTableFromQuery(SQL_Query_Text);
-        }
-        #endregion
-
-        #region GetFollowupReportForManagement
-        // Step RA1b (BMMS-Fix-ReportAccess-Step41.sql): the Followup rows for Management, with the filters of the
-        // Controller's query (ReportsMgr.GetFollowupReport) plus MinutesStatus and MinutesStatusMark. The procedure
-        // checks the acting user in the database: Reason 8 (missing or inactive) or 4 (not Management), then no
-        // rows. Reason comes back 0 when allowed.
-        public static DataTable GetFollowupReportForManagement(int CommitteeId, int MeetingNoSearch, int MeetingId, int FromMeetingId,
-            int ToMeetingId, int DepartmentId, int ConfirmStatus, int ActingUserId, out int Reason)
+        #region GetFollowupReport
+        // Step FU2b (BMMS-Fix-FollowupReports-Step49.sql): Followup and Followup Summary, the Controller and Management,
+        // in place of the query built in ReportsMgr before (Controller) and spr_GetFollowupReportForManagement (step 41,
+        // Management). The procedure reads the role from the acting user id: Reason 8 (missing, inactive or the system
+        // account) or 4 (another role), then no rows; 0 when allowed. The View_Action_Item columns, MinutesStatus and
+        // MinutesStatusMark (Management; NULL for the Controller) and the six status columns of the latest history row.
+        public static DataTable GetFollowupReport(int ActingUserId, int CommitteeId, int MeetingNoSearch, int MeetingId, int FromMeetingId,
+            int ToMeetingId, int DepartmentId, int ConfirmStatus, out int Reason)
         {
             SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
             result.Direction = ParameterDirection.Output;
@@ -53,18 +47,52 @@ namespace BMMSDAL
             reason.Direction = ParameterDirection.Output;
 
             SqlParameter[] parameter = new SqlParameter[10];
-            parameter[0] = new SqlParameter("@CommitteeId", CommitteeId);
-            parameter[1] = new SqlParameter("@MeetingNoSearch", MeetingNoSearch);
-            parameter[2] = new SqlParameter("@MeetingId", MeetingId);
-            parameter[3] = new SqlParameter("@FromMeetingId", FromMeetingId);
-            parameter[4] = new SqlParameter("@ToMeetingId", ToMeetingId);
-            parameter[5] = new SqlParameter("@DepartmentId", DepartmentId);
-            parameter[6] = new SqlParameter("@ConfirmStatus", ConfirmStatus);
-            parameter[7] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = new SqlParameter("@CommitteeId", CommitteeId);
+            parameter[2] = new SqlParameter("@MeetingNoSearch", MeetingNoSearch);
+            parameter[3] = new SqlParameter("@MeetingId", MeetingId);
+            parameter[4] = new SqlParameter("@FromMeetingId", FromMeetingId);
+            parameter[5] = new SqlParameter("@ToMeetingId", ToMeetingId);
+            parameter[6] = new SqlParameter("@DepartmentId", DepartmentId);
+            parameter[7] = new SqlParameter("@ConfirmStatus", ConfirmStatus);
             parameter[8] = result;
             parameter[9] = reason;
 
-            DataTable dt = CommonDB.GetDataTable("spr_GetFollowupReportForManagement", parameter);
+            DataTable dt = CommonDB.GetDataTable("spr_GetFollowupReport", parameter);
+            Reason = MinutesDB.RefusalReason(result, reason);
+            return dt;
+        }
+        #endregion
+
+        #region GetFollowupByDepartmentReport
+        // Step FU2b (BMMS-Fix-FollowupReports-Step49.sql): Followup by Department, the Controller only, in place of
+        // spr_GetActionItemByMeetingIdDeptId and the page's filters: the committee, the meeting numbers, the department
+        // (-1: every department) and the subject range (whole numbers; null: no range), with the six status columns.
+        // Reason 8 (missing, inactive or the system account) or 4 (every role but the Controller), then no rows.
+        public static DataTable GetFollowupByDepartmentReport(int ActingUserId, int CommitteeId, int MeetingNoFrom, int MeetingNoTo,
+            int DepartmentId, int? SubjectNoFrom, int? SubjectNoTo, out int Reason)
+        {
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+            SqlParameter subjectFrom = new SqlParameter("@SubjectNoFrom", SqlDbType.Int);
+            subjectFrom.Value = SubjectNoFrom.HasValue ? (object)SubjectNoFrom.Value : DBNull.Value;
+            SqlParameter subjectTo = new SqlParameter("@SubjectNoTo", SqlDbType.Int);
+            subjectTo.Value = SubjectNoTo.HasValue ? (object)SubjectNoTo.Value : DBNull.Value;
+
+            SqlParameter[] parameter = new SqlParameter[9];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = new SqlParameter("@CommitteeId", CommitteeId);
+            parameter[2] = new SqlParameter("@MeetingNoFrom", MeetingNoFrom);
+            parameter[3] = new SqlParameter("@MeetingNoTo", MeetingNoTo);
+            parameter[4] = new SqlParameter("@DepartmentId", DepartmentId);
+            parameter[5] = subjectFrom;
+            parameter[6] = subjectTo;
+            parameter[7] = result;
+            parameter[8] = reason;
+
+            DataTable dt = CommonDB.GetDataTable("spr_GetFollowupByDepartmentReport", parameter);
             Reason = MinutesDB.RefusalReason(result, reason);
             return dt;
         }
@@ -175,19 +203,6 @@ namespace BMMSDAL
             parameter[1] = new SqlParameter("@IsConfirmed", IsConfirmed);
 
             return CommonDB.GetDataTable("spr_GetActionItemByMeetingId", parameter); ;
-        }
-        #endregion
-
-        #region GetActionItemByMeetingIdDeptId
-        public static DataTable GetActionItemByMeetingIdDeptId(int CommitteeId, int MeetingNoFrom, int MeetingNoTo, int DepartmentId)
-        {
-            SqlParameter[] parameter = new SqlParameter[4];
-            parameter[0] = new SqlParameter("@CommitteeId", CommitteeId);
-            parameter[1] = new SqlParameter("@MeetingNoFrom", MeetingNoFrom);
-            parameter[2] = new SqlParameter("@MeetingNoTo", MeetingNoTo);
-            parameter[3] = new SqlParameter("@DepartmentId", DepartmentId);
-
-            return CommonDB.GetDataTable("spr_GetActionItemByMeetingIdDeptId", parameter); ;
         }
         #endregion
 

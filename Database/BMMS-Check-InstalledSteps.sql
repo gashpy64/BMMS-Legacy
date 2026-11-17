@@ -177,6 +177,15 @@
    BMMS-Rollback-DashboardFollowupFinal-Step48.sql it reads Missing (roll
    back step 48 before step 45 and step 43: their Rollbacks refuse
    otherwise).
+   Step 49 (step FU2b) adds one read-only function (fn_FollowupStatusLatest)
+   and two read-only procedures (spr_GetFollowupReport,
+   spr_GetFollowupByDepartmentReport) and replaces spr_GetFollowupList and
+   spr_ReopenFollowup (step 47), which keep the marker of step 47 (so step
+   47 still reads Installed): 5 markers. Re-running step 47 afterwards
+   brings back the step 47 texts of the two: step 49 reads Partly (3 of 5);
+   run step 49 again. After BMMS-Rollback-FollowupReports-Step49.sql it
+   reads Missing (roll back step 49 before step 47: the step 47 Rollback
+   refuses otherwise).
    Step 32 is reserved and not built; it has no row.
    Step D1 (shown as step 100) replaces spr_DeleteMeetingByMeetingId, which
    no numbered script contains: it reads Missing only on a database restored
@@ -511,6 +520,13 @@ SELECT 48, o.Name + ' (DashboardFollowupFinal-Step48)', CASE WHEN ISNULL(OBJECT_
 FROM (VALUES ('fn_DashboardActionItemScope'), ('fn_DashboardActionItems'), ('spr_GetDashboardActionItems'),
              ('spr_OpenDashboardActionItem'), ('spr_SaveDashboardActionText')) o(Name);
 
+-- 49. BMMS-Fix-FollowupReports-Step49.sql, installed after step 48 (three new objects; spr_GetFollowupList and
+-- spr_ReopenFollowup of step 47 replaced)
+INSERT INTO @M
+SELECT 49, o.Name + ' (FollowupReports-Step49)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%FollowupReports-Step49%' THEN 1 ELSE 0 END
+FROM (VALUES ('fn_FollowupStatusLatest'), ('spr_GetFollowupReport'), ('spr_GetFollowupByDepartmentReport'),
+             ('spr_GetFollowupList'), ('spr_ReopenFollowup')) o(Name);
+
 -- D1 (shown as step 100). BMMS-Fix-MeetingDelete-D1.sql; no numbered script contains spr_DeleteMeetingByMeetingId
 INSERT INTO @M VALUES
 (100, 'spr_DeleteMeetingByMeetingId (MeetingDelete-D1)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_DeleteMeetingByMeetingId')), '') LIKE '%MeetingDelete-D1%' THEN 1 ELSE 0 END);
@@ -560,6 +576,7 @@ INSERT INTO @Steps VALUES
 (46, 'BMMS-Fix-FollowupSave-Step46.sql', 'an object is missing: run step 46 again (after step 45)'),
 (47, 'BMMS-Fix-FollowupFinal-Step47.sql', 'step 46 was re-run (4 of 6), step 2, 6, 10, 13 or 39 was re-run (5 of 6), or step 47 was rolled back (1 of 6: the table stays): run step 47 again (after step 46)'),
 (48, 'BMMS-Fix-DashboardFollowupFinal-Step48.sql', 'step 43 or 45 was re-run after step 48 (1 to 4 of 5), or an object is missing: run step 48 again (after step 47)'),
+(49, 'BMMS-Fix-FollowupReports-Step49.sql', 'step 47 was re-run after step 49 (3 of 5), or an object is missing: run step 49 again (after step 48)'),
 (100, 'BMMS-Fix-MeetingDelete-D1.sql (step D1)', '');
 
 SELECT s.Step, s.Script,

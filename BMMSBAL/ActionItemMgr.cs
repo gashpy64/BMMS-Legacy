@@ -77,10 +77,14 @@ namespace BMMSBAL
         }
         #endregion
 
-        #region GetActionItemByMeetingIdDeptId
-        public static DataTable GetActionItemByMeetingIdDeptId(int CommitteeId, int MeetingNoFrom, int MeetingNoTo, int DepartmentId)
+        #region GetFollowupByDepartmentReport
+        // Step FU2b (step 49): Followup by Department, the Controller only; see ActionItemDB. The subject range is two
+        // whole numbers or none (null).
+        public static DataTable GetFollowupByDepartmentReport(int ActingUserId, int CommitteeId, int MeetingNoFrom, int MeetingNoTo,
+            int DepartmentId, int? SubjectNoFrom, int? SubjectNoTo, out int Reason)
         {
-            return ActionItemDB.GetActionItemByMeetingIdDeptId(CommitteeId, MeetingNoFrom, MeetingNoTo, DepartmentId);
+            return ActionItemDB.GetFollowupByDepartmentReport(ActingUserId, CommitteeId, MeetingNoFrom, MeetingNoTo, DepartmentId,
+                SubjectNoFrom, SubjectNoTo, out Reason);
         }
         #endregion
 
@@ -142,10 +146,34 @@ namespace BMMSBAL
         public static int ReopenFollowup(int ActingUserId, int ActionItemId, string ReopenReason)
         {
             string text = (ReopenReason ?? string.Empty).Trim();
-            if (text.Length == 0 || text.Length > ReopenReasonMaxLength)
+            if (IsBlankReopenReason(text) || text.Length > ReopenReasonMaxLength)
                 return 4;
 
             return ActionItemDB.ReopenFollowup(ActingUserId, ActionItemId, text);
+        }
+
+        // Step FU2b (step 49, owner decision RA-3): the one list of characters that make a reopen reason blank, the
+        // same as in spr_ReopenFollowup (BMMS-Fix-FollowupReports-Step49.sql): U+0009 to U+000D, U+0020, U+0085,
+        // U+00A0, U+1680, U+2000 to U+200B, U+2028, U+2029, U+202F, U+205F, U+3000, U+FEFF. A build check compares the
+        // two lists.
+        public static readonly char[] ReopenBlankCharacters =
+        {
+            (char)0x0009, (char)0x000A, (char)0x000B, (char)0x000C, (char)0x000D, (char)0x0020, (char)0x0085, (char)0x00A0, (char)0x1680,
+            (char)0x2000, (char)0x2001, (char)0x2002, (char)0x2003, (char)0x2004, (char)0x2005, (char)0x2006, (char)0x2007, (char)0x2008,
+            (char)0x2009, (char)0x200A, (char)0x200B, (char)0x2028, (char)0x2029, (char)0x202F, (char)0x205F, (char)0x3000, (char)0xFEFF
+        };
+
+        // A reason is blank when nothing is left after the characters of the list are taken out (null and "" too)
+        public static bool IsBlankReopenReason(string Reason)
+        {
+            if (string.IsNullOrEmpty(Reason))
+                return true;
+            foreach (char c in Reason)
+            {
+                if (Array.IndexOf(ReopenBlankCharacters, c) < 0)
+                    return false;
+            }
+            return true;
         }
         #endregion
 

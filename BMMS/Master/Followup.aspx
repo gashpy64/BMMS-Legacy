@@ -350,6 +350,13 @@
             var line = document.getElementById("pReopenCheck");
             if (!box || !line) return true;
             if (/<[a-zA-Z!\/?]/.test(box.value) || /&#/.test(box.value)) {
+                // Step FU2b (RA-2): one message only: the server's line of an earlier Save ("Enter the reason for
+                // reopening.") is cleared
+                var server = document.getElementById("<%= pReopenPanelMessage.ClientID %>");
+                if (server) {
+                    server.textContent = "";
+                    server.style.display = "none";
+                }
                 line.textContent = "Remove the \"<\" or \"&#\" from the reason, then save again.";
                 line.hidden = false;
                 box.focus();

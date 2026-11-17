@@ -203,6 +203,15 @@
                                                 </ItemTemplate>
                                                 <ItemStyle CssClass="contentTabletd" HorizontalAlign="Left" VerticalAlign="Middle" />
                                             </asp:TemplateField>
+                                            <%-- Step FU2b: the Followup status of the item, as the Followup page shows it: the word and the
+                                                 line of who confirmed or reopened it. Headed "Followup status", as on the Followup report. Built and encoded in
+                                                 StatusCellHtml --%>
+                                            <asp:TemplateField HeaderText="Followup status">
+                                                <ItemTemplate>
+                                                    <asp:Literal ID="litStatus" runat="server" Mode="PassThrough" Text='<%# StatusCellHtml(Container.DataItem) %>'></asp:Literal>
+                                                </ItemTemplate>
+                                                <ItemStyle Width="220px" CssClass="contentTabletd wb-followup-status-cell" HorizontalAlign="Left" VerticalAlign="Middle" />
+                                            </asp:TemplateField>
                                         </Columns>
                                         <EmptyDataTemplate>
                                             <div class="divNoRecord">

@@ -51,6 +51,13 @@
    mapping and history tables are unchanged and every identity counter is
    put back.
 
+   Step 49 (step FU2b) replaced spr_GetFollowupList (AgendaNo before
+   ActionItemId in its order) and spr_ReopenFollowup (one list of blank
+   characters; the blank reason of this script is still blank). With step 49
+   installed (its marker FollowupReports-Step49) the copy of the old query
+   used for parity orders by AgendaNo before ActionItemId too. Every other
+   check is as it was.
+
    It has no USE line: select the TEST database in SSMS first. Written for
    compatibility level 100. Plain ASCII. From the command line use sqlcmd -I.
    ============================================================================ */
@@ -164,6 +171,8 @@ GO
 -- The query BMMSBAL/ReportsMgr.cs GetFollowupReport builds (the page's list before step 47), built the same way for
 -- the same filters. Its ORDER BY (CommitteeId, MeetingId, DepartmentId, IsConfirmed) leaves the order of rows equal in
 -- those four to the server; ActionItemId is added for them, as spr_GetFollowupList does.
+-- Step 49 (step FU2b, owner decision RA-1, expected value approved 2026-11-17): with the marker FollowupReports-Step49
+-- in spr_GetFollowupList it orders by AgendaNo before ActionItemId, and so does this copy; without it, as step 47.
 CREATE PROCEDURE #ZZ47Old
 @Committee INT, @Search INT, @Meeting INT, @From INT, @To INT, @Dept INT, @Confirm INT,
 @Ids NVARCHAR(MAX) OUTPUT, @Rows INT OUTPUT
@@ -173,7 +182,9 @@ BEGIN
     DECLARE @Sql NVARCHAR(MAX);
     DECLARE @O TABLE (Seq BIGINT PRIMARY KEY, ActionItemId INT);
 
-    SET @Sql = N'SELECT ROW_NUMBER() OVER (ORDER BY CommitteeId, MeetingId, DepartmentId, IsConfirmed, ActionItemId) AS Seq, ActionItemId FROM View_Action_Item WHERE 1=1';
+    SET @Sql = N'SELECT ROW_NUMBER() OVER (ORDER BY CommitteeId, MeetingId, DepartmentId, IsConfirmed, '
+             + CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetFollowupList')), '') LIKE '%FollowupReports-Step49%' THEN N'AgendaNo, ' ELSE N'' END
+             + N'ActionItemId) AS Seq, ActionItemId FROM View_Action_Item WHERE 1=1';
     IF (@Committee > 0)
     BEGIN
         SET @Sql = @Sql + N' AND CommitteeId = ' + CAST(@Committee AS NVARCHAR(12));

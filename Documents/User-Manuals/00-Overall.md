@@ -240,8 +240,27 @@ menu with three items:
   meeting. The list on screen has a last column "Minutes status". The status line and the note stay
   in Print, Export to Pdf and Export to Word.
 - Followup - the follow-up decisions of the meetings, with the minutes status of each item (a draft
-  item also carries the bordered note). The Cancel button returns you to the same report.
-- Followup Summary - the same decisions as a table with a "Minutes status" column.
+  item also carries the bordered note) and the followup status of each item (see below). The Cancel
+  button returns you to the same report.
+- Followup Summary - the same decisions as a table with a "Followup status" column and a "Minutes
+  status" column.
+
+The Confirmed Status choice on the Followup report has three options: Both, Confirmed and Pending. In
+the list on screen (View) each item has a "Followup status" column. It shows "Pending" or "Confirmed",
+and under it a line that says who confirmed or reopened the item: "Confirmed by [name] ([login]) on
+[date and time]" or "Reopened by [name] ([login]) on [date and time]: [reason]", the same texts as the
+Followup screen. An item confirmed before BMMS kept this history shows "Confirmed (before history)"; the
+name of a user whose account is no longer active is marked, and a user who cannot be found shows as
+"an unknown user". In the Followup Summary the column shows the word only. The generated Followup report
+has a "FOLLOWUP STATUS" block under each item's action taken, and the printed Followup Summary has a
+"Followup status" column with the word only. Your "Minutes status" column stays beside the Followup
+status column. If you are not allowed to see a report you see "You are not allowed to see this report.",
+and if your session has ended "Your session is no longer valid. Please log in again."; no rows are
+shown, and the same applies to Export.
+
+[Screenshot: Followup as Management, the list with the Followup status and Minutes status columns - supplied by Gashpy Software]
+[Screenshot: Followup Summary, the list with the Followup status column - supplied by Gashpy Software]
+[Screenshot: Followup report, an item with the FOLLOWUP STATUS block - supplied by Gashpy Software]
 
 If the committee has no meeting with minutes, the Minutes report says "No meetings with minutes for
 this committee." If your session has ended you see "Your session is no longer valid. Please log in

@@ -22,6 +22,8 @@
    that build calls spr_ReopenFollowup and spr_GetFollowupList and sends the
    Submit without the attribute c, which the step 46 text refuses. The build
    of UN6d works with the restored texts. Roll back step 47 before step 46.
+   The Rollback of step 49 comes before this script: it refuses while step 49
+   is installed (step FU2b).
 
    Changes no data. A second run refuses (step 47 is not installed: nothing
    to roll back) and changes nothing. BMMS-Check-InstalledSteps.sql then
@@ -49,6 +51,17 @@ ELSE IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_SaveFollowupActionText')), 
          AND OBJECT_ID('dbo.spr_ReopenFollowup', 'P') IS NULL AND OBJECT_ID('dbo.spr_GetFollowupList', 'P') IS NULL)
 BEGIN
     RAISERROR('Step 47 is not installed in "%s" (no object carries the marker FollowupFinal-Step47): nothing to roll back. Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
+-- Step 49 (step FU2b) replaced spr_GetFollowupList and spr_ReopenFollowup after step 47 and reads the history table:
+-- roll it back first (BMMS-Rollback-FollowupReports-Step49.sql)
+ELSE IF (OBJECT_ID('dbo.fn_FollowupStatusLatest', 'IF') IS NOT NULL
+         OR OBJECT_ID('dbo.spr_GetFollowupReport', 'P') IS NOT NULL
+         OR OBJECT_ID('dbo.spr_GetFollowupByDepartmentReport', 'P') IS NOT NULL
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetFollowupList')), '') LIKE '%FollowupReports-Step49%'
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_ReopenFollowup')), '') LIKE '%FollowupReports-Step49%')
+BEGIN
+    RAISERROR('Step 49 (BMMS-Fix-FollowupReports-Step49.sql) is installed in "%s" and replaced spr_GetFollowupList and spr_ReopenFollowup after step 47. Roll back step 49 first (BMMS-Rollback-FollowupReports-Step49.sql), then this script. Nothing was changed.', 16, 1, @CurrentDatabase);
     SET NOEXEC ON;
 END
 GO

@@ -17,9 +17,14 @@ namespace BMMS.Report
     // range; View shows the grid, Print builds the report for ViewReport.aspx (Print, Export to Pdf, Export to Word).
     // Controller only, checked with the role read from the database (as RA1a and RA1b). The Send Mail code, whose
     // button was commented out, was removed in RA1c2.
+    // Step FU2b (BMMS-Fix-FollowupReports-Step49.sql): the rows come from spr_GetFollowupByDepartmentReport with the
+    // acting user (the Controller only, the role read in the database), the committee and the subject range in the
+    // procedure (whole numbers), and each item's Followup status (who confirmed or reopened it) in the grid and the
+    // report. A refusal (Reason 8 or 4) shows ReportsMgr.ReportRefusedMessage, as on the Followup report.
     public partial class FollowupActionTaken : System.Web.UI.Page
     {
         private string className = "FollowupActionTaken";
+        private int reportReason = 0;
 
         #region Page_Load
         protected void Page_Load(object sender, EventArgs e)
@@ -59,7 +64,9 @@ namespace BMMS.Report
 
                 DataTable dtFollowup = GetFollowup();
 
-                if (dtFollowup.Rows.Count <= 0)
+                if (reportReason != 0)
+                    MsgDisplay(ReportsMgr.ReportRefusedMessage(reportReason));
+                else if (dtFollowup.Rows.Count <= 0)
                 {
                     MsgDisplay(Convert.ToString(Session["NoRecord"]));
                     ScriptManager.GetCurrent(this).SetFocus(ddlMeetingNoFrom.ClientID);
@@ -142,8 +149,13 @@ namespace BMMS.Report
                         htmlTxt += "<td>";
                         htmlTxt += HttpUtility.HtmlEncode(dtFollowupFilter.Rows[j]["SubjectNo"].ToString());
                         htmlTxt += "</td>";
-                        htmlTxt += "<td>";
+                        htmlTxt += "<td style='word-wrap:break-word; overflow-wrap:break-word;'>";
                         htmlTxt += HttpUtility.HtmlEncode(dtFollowupFilter.Rows[j]["ShortText"].ToString());
+                        // Step FU2b: the Followup status under the subject (the texts of the Followup page), encoded
+                        htmlTxt += "<br /><b>" + HttpUtility.HtmlEncode(StatusWordOf(dtFollowupFilter.Rows[j])) + "</b>";
+                        string statusLine = StatusLineOf(dtFollowupFilter.Rows[j]);
+                        if (statusLine.Length > 0)
+                            htmlTxt += "<br /><span style='font-size:10pt;'>" + HttpUtility.HtmlEncode(statusLine) + "</span>";
                         htmlTxt += "</td>";
                         htmlTxt += "</tr>";
                     }
@@ -235,11 +247,17 @@ namespace BMMS.Report
         #region GetCommitteeFollowupRows
         // Step RA1c2: the follow-up rows of the chosen committee, meeting (or range of meetings) and department
         // (-1: all departments), or an empty table while no committee or meeting is chosen.
-        // spr_GetActionItemByMeetingIdDeptId selects by meeting number and department only (it does not use
-        // @CommitteeId), and meeting numbers start again in every committee, so the rows of the other committees
-        // are left out here (no database step).
+        // Step FU2b: through spr_GetFollowupByDepartmentReport (step 49), which takes the committee itself (the
+        // RowFilter of RA1c2 is gone), the subject range as two whole numbers (null: no range) and the acting user;
+        // reportReason is its Reason (0 allowed; 8 or 4 refused, then no rows).
         private DataTable GetCommitteeFollowupRows(int DepartmentId)
         {
+            return GetCommitteeFollowupRows(DepartmentId, null, null);
+        }
+
+        private DataTable GetCommitteeFollowupRows(int DepartmentId, int? SubjectNoFrom, int? SubjectNoTo)
+        {
+            reportReason = 0;
             int committeeId, meetingNoFrom, meetingNoTo;
 
             if (!int.TryParse(ddlCommittee.SelectedValue, out committeeId) || committeeId <= 0)
@@ -254,11 +272,12 @@ namespace BMMS.Report
                     return new DataTable();
             }
 
-            DataTable dt = ActionItemMgr.GetActionItemByMeetingIdDeptId(committeeId, meetingNoFrom, meetingNoTo, DepartmentId);
+            int userId;
+            if (!int.TryParse(Convert.ToString(Session["UserId"]), out userId))
+                userId = 0;   // no session user: the procedure answers Reason 8
 
-            DataView dv = new DataView(dt);
-            dv.RowFilter = "CommitteeId = " + committeeId;
-            return dv.ToTable("dtFollowup");
+            return ActionItemMgr.GetFollowupByDepartmentReport(userId, committeeId, meetingNoFrom, meetingNoTo, DepartmentId,
+                SubjectNoFrom, SubjectNoTo, out reportReason);
         }
 
         // A number shown in a list (meeting number "00001", subject number); -1 when it is not a number
@@ -291,6 +310,15 @@ namespace BMMS.Report
             pnlPrintReport.Visible = false;
 
             DataTable dtRows = GetCommitteeFollowupRows(SelectedDepartmentId());
+
+            // Step FU2b: refused by the procedure (Reason 8 or 4): its message, no subjects
+            if (reportReason != 0)
+            {
+                MsgDisplay(ReportsMgr.ReportRefusedMessage(reportReason));
+                ddlSubjectNoFrom.Enabled = false;
+                ddlSubjectNoTo.Enabled = false;
+                return;
+            }
 
             if (dtRows.Rows.Count <= 0)
             {
@@ -389,7 +417,8 @@ namespace BMMS.Report
                 // only unconfirmed items, and a range counted the items of every committee)
                 else if (GetCommitteeFollowupRows(-1).Rows.Count <= 0)
                 {
-                    MsgDisplay("Followup not generated for this meeting.");
+                    // Step FU2b: a refusal (Reason 8 or 4) shows its own message
+                    MsgDisplay(reportReason != 0 ? ReportsMgr.ReportRefusedMessage(reportReason) : "Followup not generated for this meeting.");
                     ScriptManager.GetCurrent(this).SetFocus(ddlMeetingNoFrom.ClientID);
                     result = false;
                 }
@@ -417,6 +446,15 @@ namespace BMMS.Report
                     pnlPrintReport.Visible = false;
 
                     DataTable dtFollowup = GetFollowup();
+
+                    // Step FU2b: refused by the procedure (Reason 8 or 4): its message, no grid
+                    if (reportReason != 0)
+                    {
+                        pnlViewReport.Visible = false;
+                        MsgDisplay(ReportsMgr.ReportRefusedMessage(reportReason));
+                        return;
+                    }
+
                     grvFollowup.DataSource = dtFollowup;
                     grvFollowup.DataBind();
 
@@ -462,22 +500,59 @@ namespace BMMS.Report
         #region GetFollowup
         // The rows of the grid and of the report: the committee's follow-up items of the chosen meetings and
         // department, and with "Between" the chosen subject range. Kept in ViewState for the grid's sorting.
+        // Step FU2b: the subject range goes to the procedure as two whole numbers (both parsed here; no RowFilter)
         private DataTable GetFollowup()
         {
-            DataTable dtFollowup = GetCommitteeFollowupRows(SelectedDepartmentId());
-
-            int subjectFrom, subjectTo;
-            if (rdoMeatingNoSearch.SelectedValue == "0" && rdoSubjectNoSearch.SelectedValue == "1" && dtFollowup.Rows.Count > 0
-                && int.TryParse(ddlSubjectNoFrom.SelectedValue, out subjectFrom) && int.TryParse(ddlSubjectNoTo.SelectedValue, out subjectTo))
+            int? subjectFrom = null, subjectTo = null;
+            int from, to;
+            if (rdoMeatingNoSearch.SelectedValue == "0" && rdoSubjectNoSearch.SelectedValue == "1"
+                && int.TryParse(ddlSubjectNoFrom.SelectedValue, out from) && int.TryParse(ddlSubjectNoTo.SelectedValue, out to))
             {
-                DataView dv = new DataView(dtFollowup);
-                dv.RowFilter = "SubjectNo >= " + subjectFrom + " AND SubjectNo <= " + subjectTo;
-                dtFollowup = dv.ToTable("dtFollowup");
+                subjectFrom = from;
+                subjectTo = to;
             }
+
+            DataTable dtFollowup = GetCommitteeFollowupRows(SelectedDepartmentId(), subjectFrom, subjectTo);
 
             ViewState["dtFollowup"] = dtFollowup;
             return dtFollowup;
         }
+
+        #region Followup status (step FU2b)
+        // The status of one row, the texts of the Followup page (FollowupStatusText): the word ("Pending", "Confirmed",
+        // "Confirmed (before history)") and the line of who confirmed or reopened it (and the reason). Plain text:
+        // the callers encode it.
+        private static string StatusWordOf(DataRow Row)
+        {
+            return FollowupStatusText.Word(FollowupStatusText.IsSet(Row["IsConfirmed"]), StatusValue(Row, "StatusAction"), false);
+        }
+
+        private static string StatusLineOf(DataRow Row)
+        {
+            return FollowupStatusText.Line(FollowupStatusText.IsSet(Row["IsConfirmed"]), StatusValue(Row, "StatusAction"),
+                StatusValue(Row, "StatusReason"), StatusValue(Row, "StatusOn"), StatusValue(Row, "StatusByName"),
+                StatusValue(Row, "StatusByLogin"), StatusValue(Row, "StatusByActive"));
+        }
+
+        private static object StatusValue(DataRow Row, string Column)
+        {
+            return Row.Table.Columns.Contains(Column) ? Row[Column] : DBNull.Value;
+        }
+
+        // The Status cell of the View grid: the word and the line, each encoded, in the classes of the Followup page
+        protected string StatusCellHtml(object DataItem)
+        {
+            DataRowView row = DataItem as DataRowView;
+            if (row == null)
+                return string.Empty;
+
+            string html = "<span class=\"wb-followup-status\">" + HttpUtility.HtmlEncode(StatusWordOf(row.Row)) + "</span>";
+            string line = StatusLineOf(row.Row);
+            if (line.Length > 0)
+                html += "<span class=\"wb-followup-status-line\">" + HttpUtility.HtmlEncode(line) + "</span>";
+            return html;
+        }
+        #endregion
         #endregion
 
         #region MsgDisplay

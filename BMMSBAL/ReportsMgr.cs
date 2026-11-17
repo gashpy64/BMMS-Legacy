@@ -35,15 +35,8 @@ namespace BMMSBAL
                 SubjectNoSearch, FromSubjectNo, ToSubjectNo, ActingUserId, out Reason);
         }
 
-        public static DataTable GetFollowupReportForManagement(int CommitteeId, int MeetingNoSearch, int MeetingId, int FromMeetingId,
-            int ToMeetingId, int DepartmentId, int ConfirmStatus, int ActingUserId, out int Reason)
-        {
-            return ActionItemDB.GetFollowupReportForManagement(CommitteeId, MeetingNoSearch, MeetingId, FromMeetingId,
-                ToMeetingId, DepartmentId, ConfirmStatus, ActingUserId, out Reason);
-        }
-
-        // The mark of a report row; "" when the row has no MinutesStatusMark (the Controller's Followup, the
-        // finalised-only reports)
+        // The mark of a report row; "" when the row has no MinutesStatusMark (the Controller's Followup, whose rows
+        // carry it as NULL since step 49, the finalised-only reports)
         public static string StatusMarkOf(DataRow Row)
         {
             if (Row == null || !Row.Table.Columns.Contains("MinutesStatusMark") || Row["MinutesStatusMark"] == DBNull.Value)
@@ -54,34 +47,17 @@ namespace BMMSBAL
 
 
         #region GetFollowupReport
-        public static DataTable GetFollowupReport(DateTime FromMeetingDate, DateTime ToMeetingDate, int CommitteeId,
-            int MeetingNoSearch, int MeetingId, int FromMeetingId, int ToMeetingId, int DepartmentId, int ConfirmStatus)
+        // Step FU2b (BMMS-Fix-FollowupReports-Step49.sql): Followup and Followup Summary for the Controller and
+        // Management, through spr_GetFollowupReport with the acting user (the role is read in the database: Reason 8
+        // missing, inactive or the system account; Reason 4 another role; then no rows). The same rows, filters and
+        // order as the query built here before (and spr_GetFollowupReportForManagement for Management), with AgendaNo,
+        // ActionItemId for rows the old order left to the server, and the status columns of the latest history row.
+        // The From and To meeting dates of the page are not used, as before.
+        public static DataTable GetFollowupReport(int ActingUserId, int CommitteeId, int MeetingNoSearch, int MeetingId, int FromMeetingId,
+            int ToMeetingId, int DepartmentId, int ConfirmStatus, out int Reason)
         {
-            string SQL_Query_Text = string.Empty;
-
-            SQL_Query_Text += "SELECT * FROM View_Action_Item WHERE 1=1";
-
-            if (CommitteeId > 0)
-            {
-                SQL_Query_Text += " AND CommitteeId = " + CommitteeId;
-
-                if (MeetingNoSearch == 0)
-                    if (MeetingId > 0)
-                        SQL_Query_Text += " AND MeetingId = " + MeetingId;
-
-                if (MeetingNoSearch == 1)
-                    SQL_Query_Text += " AND (MeetingId BETWEEN " + FromMeetingId + " AND " + ToMeetingId + ")";
-            }
-
-            if (DepartmentId > 0)
-                SQL_Query_Text += " AND DepartmentId = " + DepartmentId;
-
-            if (ConfirmStatus >= 0)
-                SQL_Query_Text += " AND IsConfirmed = " + ConfirmStatus;
-
-            SQL_Query_Text += " ORDER BY CommitteeId, MeetingId, DepartmentId, IsConfirmed;";
-
-            return ActionItemDB.GetFollowup(SQL_Query_Text);
+            return ActionItemDB.GetFollowupReport(ActingUserId, CommitteeId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
+                DepartmentId, ConfirmStatus, out Reason);
         }
         #endregion
 

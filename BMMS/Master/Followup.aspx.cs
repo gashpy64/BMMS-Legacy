@@ -694,7 +694,8 @@ namespace BMMS.Master
             // A line break is posted as CR LF but counted as one character by the box: stored as LF, so the limit is the
             // same in the browser and here
             string text = (txtReopenReason.Text ?? string.Empty).Replace("\r\n", "\n").Trim();
-            if (text.Length == 0)
+            // Step FU2b (RA-3): blank by the one list of blank characters, the same as spr_ReopenFollowup (step 49)
+            if (ActionItemMgr.IsBlankReopenReason(text))
             {
                 ShowReopenPanelMessage(ReopenBlankMessage);
                 ScriptManager.GetCurrent(this).SetFocus(txtReopenReason.ClientID);

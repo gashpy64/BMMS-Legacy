@@ -20,17 +20,18 @@ namespace BMMS.Report
         private string className = "followup_report";
         private string reportCode = string.Empty;
 
-        // Step RA1b: Management's path (role read from the database in Page_Load for every request)
+        // Step RA1b: Management's path (role read from the database in Page_Load for every request). Step FU2b: it
+        // decides the minutes status (column, lines, Summary column); both roles read spr_GetFollowupReport (step 49)
         private bool forManagement = false;
-        private int managementReason = 0;
+        private int reportReason = 0;
 
         #region Page_Load
         protected void Page_Load(object sender, EventArgs e)
         {
 
             // Step RA1b: Followup and Followup Summary for the Controller and Management, checked on the server with the
-            // role read from the database; any other report code (or none) is refused. Management reads its rows
-            // through spr_GetFollowupReportForManagement (with the minutes status); the Controller's path is unchanged.
+            // role read from the database; any other report code (or none) is refused. Step FU2b: both roles read their
+            // rows through spr_GetFollowupReport (step 49); Management's rows carry the minutes status.
             string fc = Request.QueryString["fc"];
             if (fc != "followup" && fc != "summary")
                 BMMS.Security.PageAccessModule.RefuseRequest("unknown report code");
@@ -230,11 +231,11 @@ namespace BMMS.Report
             {
                 GetReportDetails();
 
-                // Step RA1b: the Management procedure refused (Reason 8 or 4): its message, no grid
-                if (forManagement && managementReason != 0)
+                // Step RA1b: the procedure refused (Reason 8 or 4): its message, no grid. Step FU2b: for both roles
+                if (reportReason != 0)
                 {
                     pnlViewFollowup.Visible = false;
-                    MsgDisplay(ReportsMgr.ReportRefusedMessage(managementReason));
+                    MsgDisplay(ReportsMgr.ReportRefusedMessage(reportReason));
                     return;
                 }
 
@@ -258,6 +259,62 @@ namespace BMMS.Report
         {
             DataRowView row = DataItem as DataRowView;
             return row == null ? string.Empty : HttpUtility.HtmlEncode(ReportsMgr.StatusMarkOf(row.Row));
+        }
+        #endregion
+
+        #region Followup status (step FU2b)
+        // The status of one row, the texts of the Followup page (FollowupStatusText): the word ("Pending", "Confirmed",
+        // "Confirmed (before history)") and the line of who confirmed or reopened it (and the reason). The Followup
+        // Summary shows the word Pending or Confirmed only. Plain text: the callers encode it.
+        private bool IsSummary
+        {
+            get { return Convert.ToString(ViewState["reportCode"]) == "summary"; }
+        }
+
+        private static string StatusWordOf(DataRow Row, bool WordOnly)
+        {
+            return FollowupStatusText.Word(FollowupStatusText.IsSet(Row["IsConfirmed"]), StatusValue(Row, "StatusAction"), WordOnly);
+        }
+
+        private static string StatusLineOf(DataRow Row)
+        {
+            return FollowupStatusText.Line(FollowupStatusText.IsSet(Row["IsConfirmed"]), StatusValue(Row, "StatusAction"),
+                StatusValue(Row, "StatusReason"), StatusValue(Row, "StatusOn"), StatusValue(Row, "StatusByName"),
+                StatusValue(Row, "StatusByLogin"), StatusValue(Row, "StatusByActive"));
+        }
+
+        private static object StatusValue(DataRow Row, string Column)
+        {
+            return Row.Table.Columns.Contains(Column) ? Row[Column] : DBNull.Value;
+        }
+
+        // The Status cell of the View grid: the word and the line (Followup) or the word only (Summary), each encoded,
+        // in the classes of the Followup page's Status cell
+        protected string StatusCellHtml(object DataItem)
+        {
+            DataRowView row = DataItem as DataRowView;
+            if (row == null)
+                return string.Empty;
+
+            string html = "<span class=\"wb-followup-status\">" + HttpUtility.HtmlEncode(StatusWordOf(row.Row, IsSummary)) + "</span>";
+            string line = IsSummary ? string.Empty : StatusLineOf(row.Row);
+            if (line.Length > 0)
+                html += "<span class=\"wb-followup-status-line\">" + HttpUtility.HtmlEncode(line) + "</span>";
+            return html;
+        }
+
+        // The status block of an item in the Followup report (Print, Export to Pdf, Export to Word): the heading, the word
+        // in bold and the line under it; a long reason wraps inside the report's width
+        private static string StatusBlockHtml(DataRow Row)
+        {
+            string line = StatusLineOf(Row);
+            string html = "<div style='float:left; width:100%; text-align:left; font-weight:bold;'>FOLLOWUP STATUS</div>";
+            html += "<div style='float:left; width:100%; text-align:left; word-wrap:break-word; overflow-wrap:break-word;'>";
+            html += "<b>" + HttpUtility.HtmlEncode(StatusWordOf(Row, false)) + "</b>";
+            if (line.Length > 0)
+                html += "<br />" + HttpUtility.HtmlEncode(line);
+            html += "<br /><br /><br /></div>";
+            return html;
         }
         #endregion
 
@@ -285,10 +342,10 @@ namespace BMMS.Report
                     DataTable dtReportsDetails = new DataTable();
                     dtReportsDetails = GetReportDetails();
 
-                    if (forManagement && managementReason != 0)
+                    if (reportReason != 0)
                     {
-                        // Step RA1b: the Management procedure refused (Reason 8 or 4)
-                        MsgDisplay(ReportsMgr.ReportRefusedMessage(managementReason));
+                        // Step RA1b: the procedure refused (Reason 8 or 4). Step FU2b: for both roles
+                        MsgDisplay(ReportsMgr.ReportRefusedMessage(reportReason));
                     }
                     else if (dtReportsDetails.Rows.Count <= 0)
                     {
@@ -388,15 +445,11 @@ namespace BMMS.Report
             int DepartmentId = int.Parse(ddlDepartment.SelectedValue.ToString().Trim());
             int ConfirmStatus = int.Parse(rdoConfirmStatus.SelectedValue.ToString().Trim());
 
-            DataTable dtFollowup;
-            if (forManagement)
-                // Step RA1b: Management, with the minutes status (BMMS-Fix-ReportAccess-Step41.sql); the From and To
-                // dates are not used, as in the Controller's query
-                dtFollowup = ReportsMgr.GetFollowupReportForManagement(CommitteeId, MeetingNoSearch, MeetingId, FromMeetingId,
-                    ToMeetingId, DepartmentId, ConfirmStatus, int.Parse(Session["UserId"].ToString()), out managementReason);
-            else
-                dtFollowup = ReportsMgr.GetFollowupReport(FromMeetingDate, ToMeetingDate, CommitteeId,
-                    MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId, DepartmentId, ConfirmStatus);
+            // Step FU2b (BMMS-Fix-FollowupReports-Step49.sql): one procedure for the Controller and Management, with the
+            // acting user; the role is read in the database (Reason 8 or 4: no rows). Management's rows carry the minutes
+            // status. The From and To dates are not used, as before.
+            DataTable dtFollowup = ReportsMgr.GetFollowupReport(int.Parse(Session["UserId"].ToString()), CommitteeId,
+                MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId, DepartmentId, ConfirmStatus, out reportReason);
 
             ViewState["dtFollowup"] = dtFollowup;
 
@@ -441,8 +494,9 @@ namespace BMMS.Report
                         htmlTxt += "   (" + Convert.ToDateTime(dtFollowupFilter.Rows[j]["MeetingDate"].ToString()).ToString("dd-MMM-yyyy") + ")";
                         htmlTxt += "</b><br /><br /></div>";
 
-                        // Step RA1b: Management's Followup shows the minutes status of each item; a draft also the bordered note
-                        string statusMark = ReportsMgr.StatusMarkOf(dtFollowupFilter.Rows[j]);
+                        // Step RA1b: Management's Followup shows the minutes status of each item; a draft also the bordered note.
+                        // Step FU2b: by the role read from the database (the Controller's rows carry no mark)
+                        string statusMark = forManagement ? ReportsMgr.StatusMarkOf(dtFollowupFilter.Rows[j]) : string.Empty;
                         if (statusMark.Length > 0)
                         {
                             htmlTxt += HTML_Report.MinutesStatusLine(statusMark);
@@ -461,7 +515,10 @@ namespace BMMS.Report
                         htmlTxt += "<div style='float:left; width:100%;text-aligh:justify;font-weight:bold;'>";
                         htmlTxt += "ACTION TAKEN";
                         htmlTxt += "<br />" + HTML_Report.ReplaceRichTextFont(HtmlCleaner.Clean(dtFollowupFilter.Rows[j]["ActionText"].ToString()));
-                        htmlTxt += "<br /><br /><br /></div>";
+                        htmlTxt += "<br /><br /></div>";
+
+                        // Step FU2b: who confirmed or reopened the item (the texts of the Followup page)
+                        htmlTxt += StatusBlockHtml(dtFollowupFilter.Rows[j]);
 
                     }
 
@@ -526,8 +583,12 @@ namespace BMMS.Report
                     htmlTxt += "</td>";
                     htmlTxt += "<td style='text-align:center; font-weight:bold;'>Subject";
                     htmlTxt += "</td>";
-                    // Step RA1b: Management's Followup Summary has a Minutes status column
-                    bool withStatus = dtFollowupFilter.Columns.Contains("MinutesStatusMark");
+                    // Step FU2b: the Followup status of each item, the word Pending or Confirmed only
+                    htmlTxt += "<td style='text-align:center; font-weight:bold;'>Followup status";
+                    htmlTxt += "</td>";
+                    // Step RA1b: Management's Followup Summary has a Minutes status column. Step FU2b: by the role read
+                    // from the database (every row has the column since step 49)
+                    bool withStatus = forManagement;
                     if (withStatus)
                     {
                         htmlTxt += "<td style='text-align:center; font-weight:bold;'>Minutes status";
@@ -562,6 +623,8 @@ namespace BMMS.Report
                         htmlTxt += "<td style='text-align:center;'>" + HttpUtility.HtmlEncode(dtFollowupFilter.Rows[j]["SubjectNo"].ToString());
                         htmlTxt += "</td>";
                         htmlTxt += "<td style='text-align:left;'>" + HttpUtility.HtmlEncode(dtFollowupFilter.Rows[j]["ShortText"].ToString());
+                        htmlTxt += "</td>";
+                        htmlTxt += "<td style='text-align:left;'>" + HttpUtility.HtmlEncode(StatusWordOf(dtFollowupFilter.Rows[j], true));
                         htmlTxt += "</td>";
                         if (withStatus)
                         {
@@ -605,7 +668,10 @@ namespace BMMS.Report
             DataTable dtFollowup = new DataTable();
             dtFollowup = GetReportDetails();
 
-            if (dtFollowup.Rows.Count <= 0)
+            // Step FU2b: a refusal is not "no record" (this handler has no button in the page)
+            if (reportReason != 0)
+                MsgDisplay(ReportsMgr.ReportRefusedMessage(reportReason));
+            else if (dtFollowup.Rows.Count <= 0)
             {
                 MsgDisplay(Session["NoRecord"].ToString());
                 ScriptManager.GetCurrent(this).SetFocus(ddlMeetingNoFrom.ClientID);

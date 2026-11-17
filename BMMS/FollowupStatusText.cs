@@ -61,6 +61,38 @@ namespace BMMS
             return "Reopened by " + ActedByName(name, login, active) + " on " + ActedOnText(on) + ": " + Convert.ToString(reason);
         }
 
+        /// <summary>Step FU2b: the word of an item that is not confirmed.</summary>
+        public const string PendingWord = "Pending";
+
+        /// <summary>
+        /// Step FU2b (the Followup reports): the status word, as the Followup page shows it: "Pending"; for a confirmed
+        /// item "Confirmed", or "Confirmed (before history)" when it has no history row. With WordOnly (Followup
+        /// Summary) only "Pending" or "Confirmed".
+        /// </summary>
+        public static string Word(bool confirmed, object action, bool WordOnly)
+        {
+            if (!confirmed)
+                return PendingWord;
+            if (!WordOnly && Convert.ToString(action).Length == 0)
+                return ConfirmedBeforeHistory;
+            return ConfirmedWord;
+        }
+
+        /// <summary>
+        /// Step FU2b (the Followup reports): the line under the word, as the Followup page shows it: the Confirm line
+        /// for a confirmed item whose latest row is a Confirm, the Reopen line for an item that is not confirmed and
+        /// whose latest row is a Reopen, else empty (no line).
+        /// </summary>
+        public static string Line(bool confirmed, object action, object reason, object on, object name, object login, object active)
+        {
+            string act = Convert.ToString(action);
+            if (confirmed && act == "Confirm")
+                return ConfirmedLine(name, login, active, on);
+            if (!confirmed && act == "Reopen")
+                return ReopenedLine(name, login, active, on, reason);
+            return string.Empty;
+        }
+
         /// <summary>
         /// The one status line of an item (the Dashboard's panel): for a confirmed item the Confirm line, "Confirmed
         /// (before history)" or "Confirmed"; for an item that is not confirmed the Reopen line when its latest row is

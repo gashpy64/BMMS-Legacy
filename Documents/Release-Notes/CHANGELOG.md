@@ -3,10 +3,11 @@
 - Title: BMMS Change Log
 - Audience: Gashpy Software (internal)
 - Shipped: No
-- Applies to: FU2a; FU1
-- Last updated by: FU2a, based on 9336d29
+- Applies to: FU2b; FU2a; FU1
+- Last updated by: FU2b, based on c4300b5
 - Status: Draft
-- Verified against: for FU2a: git diff 9336d29 (BMMS/DashBoard/DashBoard.aspx(.cs, .designer.cs), BMMS/Master/Followup.aspx.cs, BMMS/CSS/bmms-workbench.css, BMMS/BMMS.csproj, Database/BMMS-Check-InstalledSteps.sql, the Rollbacks and Tests of steps 43 and 45, Tests/packs/dashboard/*) and the new files (BMMS/FollowupStatusText.cs read in full; the three step 48 scripts: the Reason lines of the Fix script only), Database/README.md section Step FU2a and Known items, the Test results, the tester run 2026-11-16_181041 and the owner's tests as given;
+- Verified against: for FU2b: git diff c4300b5 (BMMS/Report/Followup.aspx(.cs) and FollowupActionTaken.aspx(.cs), BMMS/Master/Followup.aspx(.cs), BMMS/FollowupStatusText.cs, BMMSBAL/ReportsMgr.cs and ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/BMMS-Check-InstalledSteps.sql, the Rollback and Test of step 47, Database/README.md section Step FU2b and Known items), Database/BMMS-Fix-FollowupReports-Step49.sql (read), the Test results, the tester runs 2026-11-17_133514 and 2026-11-17_135000 and the owner's tests as given;
+  for FU2a: git diff 9336d29 (BMMS/DashBoard/DashBoard.aspx(.cs, .designer.cs), BMMS/Master/Followup.aspx.cs, BMMS/CSS/bmms-workbench.css, BMMS/BMMS.csproj, Database/BMMS-Check-InstalledSteps.sql, the Rollbacks and Tests of steps 43 and 45, Tests/packs/dashboard/*) and the new files (BMMS/FollowupStatusText.cs read in full; the three step 48 scripts: the Reason lines of the Fix script only), Database/README.md section Step FU2a and Known items, the Test results, the tester run 2026-11-16_181041 and the owner's tests as given;
   for FU1: git diff 3d571c4 (BMMS/Master/Followup.aspx(.cs, .designer.cs), BMMS/CSS/bmms-workbench.css, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/BMMS-Check-InstalledSteps.sql, Tests/README.md, Tests/packs/followup/*), Database/README.md section Step FU1 and Known items; the three step 47 scripts were not read line by line (their content is taken from Database/README.md), the Test result (95 of 95), the tester run 2026-11-16_133023 and the owner's tests as given;
   for UN6d: git diff ce7358a 276e402 (BMMS/DashBoard/DashBoard.aspx(.cs), BMMS/Master/Followup.aspx(.cs), BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, BMMS/CSS/CommonHTML.css and bmms-workbench.css, Database/BMMS-Fix-FollowupSave-Step46.sql and BMMS-Rollback-FollowupSave-Step46.sql (read in full), BMMS-Check-InstalledSteps.sql, Database/README.md section Step UN6d and Known items, Tests/README.md, Tests/packs/followup/*, Tests/packs/dashboard/README.md and expected.json, Tests/packs/access-matrix/README.md), Claude outputs/un6d-requirements.md, the Test script and tester results and the owner's tests as given; for UN6c2b: git diff f3cbd7e~1 f3cbd7e (BMMS/DashBoard/DashBoard.aspx(.cs), BMMS/UserControl/MeetingSummary.ascx(.cs), BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs and ActionItemDB.cs, Database/BMMS-Fix-DashboardSummary-Step45.sql (read), BMMS-Rollback-AgendaWaitingFor-Step44.sql, BMMS-Check-InstalledSteps.sql, Database/README.md section Step UN6c2b and Known items, Tests/README.md, Tests/packs/dashboard/README.md), the tester run of 2026-11-15 and the owner's tests as given; for UN6c2a: git diff HEAD (493cb45) and the new files (BMMS/DashBoard/DashBoard.aspx(.cs, .designer.cs),
   BMMS/UserControl/MeetingSummary.ascx(.cs), BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and MeetingMgr.cs,
@@ -42,6 +43,42 @@
 One entry per step, newest first. Each entry names the step, its tag and what changed for users,
 for installers and in the database. Release entries (tags vX.Y.Z) collect the steps since the
 previous release.
+
+## FU2b - The Followup reports show who confirmed or reopened each followup (tag not yet set, 2026-11-17; database step 49; code not yet committed, based on c4300b5)
+
+- For users: Followup, Followup Summary (Controller and Management) and Followup by Department (Controller). The Confirmed
+  Status choice is Both, Confirmed, Pending ("Not Confirmed" is now "Pending"). The View grids have a "Followup status"
+  column: the word "Pending" or "Confirmed" and a line "Confirmed by [name] ([login]) on [dd-MMM-yyyy HH:mm]" or "Reopened
+  by [name] ([login]) on [date]: [reason]", the same texts as the Followup page ("Confirmed (before history)", an inactive
+  name marked, "an unknown user"); the Summary shows the word only. The generated Followup report has a FOLLOWUP STATUS block
+  per item, the printed Summary a "Followup status" column (the word), Followup by Department the word and line under the
+  subject (View and print). Management keeps its "Minutes status" column. A refused request (role not allowed, or a missing,
+  inactive or system account) shows "You are not allowed to see this report." or "Your session is no longer valid. Please log
+  in again." and no rows, Export included; Followup by Department is for the Controller only. The rows, order and filters are
+  as before, with agenda number, then action item, for rows equal on the other keys (also on the Followup page's list). The
+  Reopen reason that holds only blank characters (including tab, line breaks, no-break and zero-width spaces; 27 characters)
+  is refused with "Enter the reason for reopening."; when the browser check of the reason fires only one message shows.
+  Described in the Overall manual (Management) and the Controller manual.
+- For developers: ReportsMgr.GetFollowupReport and ActionItemDB.GetFollowupReport call spr_GetFollowupReport for both roles;
+  ActionItemMgr.GetFollowupByDepartmentReport and ActionItemDB.GetFollowupByDepartmentReport call
+  spr_GetFollowupByDepartmentReport; removed: ActionItemDB.GetFollowup(string), GetFollowupReportForManagement,
+  GetActionItemByMeetingIdDeptId and their BAL wrappers. New: FollowupStatusText.Word and Line, ActionItemMgr.IsBlankReopenReason
+  and ReopenBlankCharacters. Report/Followup.aspx.cs: StatusCellHtml, StatusBlockHtml, the minutes status by the role read from the
+  database. See System-Manual/05 and Data-Flow/03-Program-to-Program/10.
+- For installers: install step 49 and deploy the build together. Run BMMS-Fix-FollowupReports-Step49.sql after steps 41, 47 and
+  48 (marker FollowupReports-Step49, 5 markers in the Check script), on BMMS_Test first. It adds fn_FollowupStatusLatest,
+  spr_GetFollowupReport and spr_GetFollowupByDepartmentReport and replaces spr_GetFollowupList and spr_ReopenFollowup (they keep
+  the step 47 marker). The Rollback puts the step 47 texts back; the Rollback of step 47 refuses while step 49 is installed; a
+  re-run of step 47 removes step 49 (Partly, 3 of 5): run step 49 again. Tester baseline: Update-Baseline.ps1 with step 49.
+- Tests: Test 49 33 of 33, Test 41 44, Test 43 128, Test 44 120, Test 45 66, Test 47 95, Test 48 43 on BMMS_Test. Tester on
+  BMMS_Quality: run 2026-11-17_133514 PASSED 904 (selftest 8, access-matrix 472, dashboard 397, followup 16, followup-reports
+  14); after the header change run 2026-11-17_135000 PASSED 19. Owner's tests passed 2026-11-17.
+- Known items (Database/README.md): a 500-character reason without spaces in the Word export; spr_GetFollowupReportForManagement
+  and spr_GetActionItemByMeetingIdDeptId have no caller (drop list).
+  The Word export opens in Web Layout, where a long word without spaces runs past the window edge (Print Layout wraps it
+  inside the margins; baseline, every report; no code change in FU2b). Also listed: the bold action text and the style typo in
+  the Followup report (baseline), the Followup page's "Nothing was saved." message after an Action Text save, and a method
+  count in System-Manual/05.
 
 ## FU2a - A confirmed followup is final on the Dashboard too; who confirmed or reopened it; "Reopened" in the Action Items card (tag not yet set, 2026-11-17; database step 48; code not yet committed, based on 9336d29)
 

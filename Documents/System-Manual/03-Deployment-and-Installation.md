@@ -3,10 +3,11 @@
 - Title: Deployment and Installation
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: FU2a (step 48: the run order and the section "Installing step 48 on a test database"); FU1 (step 47: the run order, rollback and the section "Installing step 47 on a test database"); UN6d (step 46: the run order, rollback and the section "Installing step 46 on a test database"); UN6c2b (step 45: the run order, rollback and the section "Installing step 45 on a test database"); UN6c2a (step 44: the run order, rollback and the section "Installing step 44 on a test database"); UN6c1 (step 43: the run order, rollback and the section "Installing step 43 on a test database"); UN6b (step 42: the run order, rollback and the section "Installing step 42 on a test database"); WF3a2 (section "The tester's baseline after a new database step"); the rest RA1b (step 41)
-- Last updated by: FU2a, based on 9336d29
+- Applies to: FU2b (step 49: the run order and the section "Installing step 49 on a test database"); FU2a (step 48: the run order and the section "Installing step 48 on a test database"); FU1 (step 47: the run order, rollback and the section "Installing step 47 on a test database"); UN6d (step 46: the run order, rollback and the section "Installing step 46 on a test database"); UN6c2b (step 45: the run order, rollback and the section "Installing step 45 on a test database"); UN6c2a (step 44: the run order, rollback and the section "Installing step 44 on a test database"); UN6c1 (step 43: the run order, rollback and the section "Installing step 43 on a test database"); UN6b (step 42: the run order, rollback and the section "Installing step 42 on a test database"); WF3a2 (section "The tester's baseline after a new database step"); the rest RA1b (step 41)
+- Last updated by: FU2b, based on c4300b5
 - Status: Draft
-- Verified against: for FU2a (step 48): Database/README.md (section Step FU2a, "What to run where"), BMMS-Check-InstalledSteps.sql (diff), the Rollback scripts of steps 43 and 45 (diff); the Fix, Rollback and Test scripts of step 48 were not read line by line (only the Reason lines of the Fix script);
+- Verified against: for FU2b (step 49): Database/BMMS-Fix-FollowupReports-Step49.sql (header and guards, read), Database/BMMS-Rollback-FollowupFinal-Step47.sql (diff: the guard), BMMS-Check-InstalledSteps.sql (diff), Database/README.md (section Step FU2b, "What to run where", the re-run lines); the Rollback script of step 49 and the Test script were not read line by line;
+  for FU2a (step 48): Database/README.md (section Step FU2a, "What to run where"), BMMS-Check-InstalledSteps.sql (diff), the Rollback scripts of steps 43 and 45 (diff); the Fix, Rollback and Test scripts of step 48 were not read line by line (only the Reason lines of the Fix script);
   for FU1 (step 47): Database/README.md (section Step FU1, "What to run where"), BMMS-Check-InstalledSteps.sql (diff), Tests/README.md (diff); the Fix, Rollback and Test scripts of step 47 were not read line by line;
   for UN6d (step 46): Database/BMMS-Fix-FollowupSave-Step46.sql and BMMS-Rollback-FollowupSave-Step46.sql (read in full), BMMS-Check-InstalledSteps.sql (diff), Database/README.md (section Step UN6d, "What to run where"), the Test script result (56 of 56) and the tester runs of 2026-11-15 as given;
   for UN6c2b (step 45): Database/BMMS-Fix-DashboardSummary-Step45.sql (guards, messages), BMMS-Rollback-DashboardSummary-Step45.sql (guards, messages), BMMS-Rollback-AgendaWaitingFor-Step44.sql (diff), BMMS-Check-InstalledSteps.sql (diff), Database/README.md (section Step UN6c2b, "What to run where"), the owner's test result and the tester run of 2026-11-15 as given;
@@ -251,8 +252,9 @@ The out-of-number-order installs, in the order to install:
 2. Step 23, after step 28 was built (the list in the README stays in number order; step 24 was
    installed before it on the databases that followed the README order).
 3. Steps 29, 30 and 31, last of the numbered group, in that order.
-4. Step D1, then 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47 and 48 in number order. Step 48 is the last step;
-   it stops unless steps 43, 45 and 47 are installed, and the Rollbacks of steps 43 and 45 refuse while step 48 is installed.
+4. Step D1, then 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48 and 49 in number order. Step 49 is the last step;
+   it stops unless steps 41, 47 and 48 are installed, and the Rollback of step 47 refuses while step 49 is installed (roll step 49
+   back first). If step 47 is re-run, run step 49 again. Step 48 stops unless steps 43, 45 and 47 are installed, and the Rollbacks of steps 43 and 45 refuse while step 48 is installed.
    Step 47 stops unless step 46 is installed. Rollbacks run in the reverse order: the step 44 Rollback refuses while step 45 is installed. The step 46
    Rollback drops its two procedures only, but refuses while step 47 is installed; the step 47 Rollback drops its two
    procedures, restores the older texts and keeps the table Action_Item_Status_History. Step 46 stops unless step 45 is installed. Step 45 stops unless step 44 is installed. Step 44
@@ -1003,3 +1005,37 @@ Test script on `BMMS`), then deploys the build. Steps 42 to 47 come first there.
 
 Drawn from (step 48): Database/README.md (section Step FU2a, "What to run where"), BMMS-Check-InstalledSteps.sql (diff),
 the guards named in the Rollback scripts of steps 43 and 45 (diff). The three step 48 scripts were not read line by line.
+
+## Installing step 49 on a test database
+
+A worked example with the step 49 scripts (step FU2b: the Followup reports show who confirmed or reopened each followup).
+The server is `<server>` and the database is `BMMS_Test`. The step adds the function fn_FollowupStatusLatest and the procedures
+spr_GetFollowupReport and spr_GetFollowupByDepartmentReport, and replaces spr_GetFollowupList and spr_ReopenFollowup of step 47
+(the new texts keep the step 47 marker and add the step 49 marker). It stops unless steps 41, 47 and 48 are installed, and when
+one of the two replaced texts is neither the step 47 text (SHA-1) nor the step 49 text. It grants nothing (the application login
+holds EXECUTE on the schema) and changes no data; it is safe to run again. Install step 49 and deploy the FU2b build together:
+the build reads the two new procedures.
+
+1. Check the state. Select `BMMS_Test` and run BMMS-Check-InstalledSteps.sql. Steps 41, 47 and 48 should read Installed and
+   step 49 Missing.
+2. Run the Fix script (`sqlcmd -S <server> -d BMMS_Test -I -i Database/BMMS-Fix-FollowupReports-Step49.sql`).
+3. Run the Test script on `BMMS_Test` only, in a new query window: `Database/BMMS-Test-FollowupReports-Step49.sql`. All 33
+   numbered checks must PASS. Then run BMMS-Test-ReportAccess-Step41.sql (44), BMMS-Test-DashboardAlerts-Step43.sql (128),
+   BMMS-Test-AgendaWaitingFor-Step44.sql (120), BMMS-Test-DashboardSummary-Step45.sql (66), BMMS-Test-FollowupFinal-Step47.sql
+   (95) and BMMS-Test-DashboardFollowupFinal-Step48.sql (43). The Test script of step 47 orders its old-query copy by the step 49
+   marker (see chapter 10).
+4. Run BMMS-Check-InstalledSteps.sql again. Step 49 should read Installed, 5 of 5 markers; step 47 Installed, 6 of 6.
+5. Bring the tester's baseline up to date: `pwsh -NoProfile -File Tests\_runner\Update-Baseline.ps1 -ConfirmDatabase
+   BMMS_Quality -FixScript BMMS-Fix-FollowupReports-Step49.sql`.
+6. Deploy the build together with step 49, then make the browser checks of Database/README.md (section Step FU2b).
+7. To undo: roll back the build first, then run `Database/BMMS-Rollback-FollowupReports-Step49.sql`. It checks that the two
+   procedures are the step 49 (or step 47) texts, puts the step 47 texts back letter for letter (SHA-1 checked) and drops the
+   three new objects. The Check script then reads step 49 Missing and step 47 Installed. A second run is refused.
+8. Re-run rule: re-running step 47 puts back its two texts (the Check script reads step 49 Partly, 3 of 5): run step 49 again.
+   The Rollback of step 47 refuses while step 49 is installed. A re-run of step 46 needs step 47 first, then step 49.
+
+On `BMMS`, the Consultant runs the Check script, the Fix script and the Check script again after the backup (there is no
+Test script on `BMMS`), then deploys the build. Steps 42 to 48 come first there.
+
+Drawn from (step 49): Database/BMMS-Fix-FollowupReports-Step49.sql (header and guards), Database/README.md (section Step FU2b,
+"What to run where"), BMMS-Check-InstalledSteps.sql (diff), BMMS-Rollback-FollowupFinal-Step47.sql (diff).

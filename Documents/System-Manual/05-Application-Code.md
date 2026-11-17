@@ -3,10 +3,10 @@
 - Title: Application Code
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: FU2a ("The Action Item Details panel and the Followup page saves (step UN6d)": the new FU2a paragraph on FollowupStatusText, the panel mode, the status line, the Reopened chip); FU1 ("The Action Item Details panel and the Followup page saves (step UN6d)": the Followup page bullets, the FU1 bullets for the list, Submit and Reopen); UN6d ("The Action Item Details panel and the Followup page saves (step UN6d)", the Followup.aspx row, the Dashboard Action Items paragraph note); UN6c2b ("The Dashboard summary cards and the Committee filter (step UN6c2b)"); UN6c2a ("The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)" and the layout line of "The Dashboard Meetings card (step UN6b)"); UN6c1 (the Main.Master row and paragraph, "The Dashboard Alerts and Action Items cards (step UN6c1)"); UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
-- Last updated by: FU2a, based on 9336d29
+- Applies to: FU2b (the new section "The Followup reports (step FU2b)" and the Followup by Department note in "Pages in no menu and the unlisted page"); FU2a ("The Action Item Details panel and the Followup page saves (step UN6d)": the new FU2a paragraph on FollowupStatusText, the panel mode, the status line, the Reopened chip); FU1 ("The Action Item Details panel and the Followup page saves (step UN6d)": the Followup page bullets, the FU1 bullets for the list, Submit and Reopen); UN6d ("The Action Item Details panel and the Followup page saves (step UN6d)", the Followup.aspx row, the Dashboard Action Items paragraph note); UN6c2b ("The Dashboard summary cards and the Committee filter (step UN6c2b)"); UN6c2a ("The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)" and the layout line of "The Dashboard Meetings card (step UN6b)"); UN6c1 (the Main.Master row and paragraph, "The Dashboard Alerts and Action Items cards (step UN6c1)"); UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
+- Last updated by: FU2b, based on c4300b5
 - Status: Draft
-- Verified against: for step FU2a: git diff 9336d29 of BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs, BMMS/Master/Followup.aspx.cs, BMMS/BMMS.csproj and BMMS/CSS/bmms-workbench.css, BMMS/FollowupStatusText.cs (read in full), Database/README.md (section Step FU2a and its Known items), the owner's tests as given; for step FU1: BMMS/Master/Followup.aspx and Followup.aspx.cs (read in full: CanSave, Page_Load, BindFollowup, grvFollowup_RowDataBound, grvFollowup_RowCommand, the save, Submit and Reopen handlers, the script), Database/README.md (section Step FU1); and before: for step UN6d: git diff ce7358a 276e402 of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/Master/Followup.aspx and .aspx.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, BMMS/CSS/CommonHTML.css and bmms-workbench.css; Database/README.md (section Step UN6d and its Known items), the tester runs of 2026-11-15 as given; for step UN6c2b: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs; Database/README.md (section Step UN6c2b, Known items), the tester run of 2026-11-15 as given; for step UN6c2a: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff, and BindAgendaDetails read in full), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (diff), BMMS/CSS/bmms-workbench.css (diff),
+- Verified against: for step FU2b: git diff c4300b5 of BMMS/Report/Followup.aspx(.cs), BMMS/Report/FollowupActionTaken.aspx(.cs), BMMS/Master/Followup.aspx(.cs), BMMS/FollowupStatusText.cs, BMMSBAL/ReportsMgr.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/README.md (section Step FU2b and its Known items), the owner's tests as given; for step FU2a: git diff 9336d29 of BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs, BMMS/Master/Followup.aspx.cs, BMMS/BMMS.csproj and BMMS/CSS/bmms-workbench.css, BMMS/FollowupStatusText.cs (read in full), Database/README.md (section Step FU2a and its Known items), the owner's tests as given; for step FU1: BMMS/Master/Followup.aspx and Followup.aspx.cs (read in full: CanSave, Page_Load, BindFollowup, grvFollowup_RowDataBound, grvFollowup_RowCommand, the save, Submit and Reopen handlers, the script), Database/README.md (section Step FU1); and before: for step UN6d: git diff ce7358a 276e402 of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/Master/Followup.aspx and .aspx.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, BMMS/CSS/CommonHTML.css and bmms-workbench.css; Database/README.md (section Step UN6d and its Known items), the tester runs of 2026-11-15 as given; for step UN6c2b: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs; Database/README.md (section Step UN6c2b, Known items), the tester run of 2026-11-15 as given; for step UN6c2a: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff, and BindAgendaDetails read in full), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (diff), BMMS/CSS/bmms-workbench.css (diff),
   BMMSBAL/AgendaMgr.cs and MeetingMgr.cs (diff), BMMSDAL/AgendaDB.cs and MeetingDB.cs (diff), Database/README.md (section Step UN6c2a, Known items), Tests/packs/dashboard/README.md, the tester run of 2026-11-14 as given; for step UN6c1: BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (read: the Alerts and Action Items regions, the message constants, lnkSource_Click),
   BMMS/MasterPage/Main.Master.cs (alert count region), BMMSBAL/AlertMgr.cs, ActionItemMgr.cs and Common.cs (diff),
   BMMSDAL/AlertDB.cs and ActionItemDB.cs (diff), Database/README.md (section Step UN6c1); for step UN6b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/DashBoard/DashBoard.aspx
@@ -525,6 +525,53 @@ Drawn from: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff)
 and .aspx.designer.cs (diff), BMMSBAL/ActionItemMgr.cs and BMMSDAL/ActionItemDB.cs (diff), BMMS/CSS/CommonHTML.css and
 bmms-workbench.css (diff), Database/README.md (section Step UN6d and its Known items).
 
+### The Followup reports (step FU2b)
+
+Step FU2b (database step 49) changed Report/Followup.aspx (Followup and Followup Summary), Report/FollowupActionTaken.aspx
+(Followup by Department), the data and business layers behind them, and the reopen reason check of Master/Followup.aspx.
+
+- Data layer. `ActionItemDB.GetFollowupReport(ActingUserId, CommitteeId, MeetingNoSearch, MeetingId, FromMeetingId,
+  ToMeetingId, DepartmentId, ConfirmStatus, out Reason)` calls `spr_GetFollowupReport`;
+  `ActionItemDB.GetFollowupByDepartmentReport(ActingUserId, CommitteeId, MeetingNoFrom, MeetingNoTo, DepartmentId,
+  int? SubjectNoFrom, int? SubjectNoTo, out Reason)` calls `spr_GetFollowupByDepartmentReport` (a null subject number is sent as
+  DBNull). Both use stored procedures and parameters only; `Reason` comes from `MinutesDB.RefusalReason`. Removed:
+  `ActionItemDB.GetFollowup(string)` (the one path that ran a text it was given, the string SQL of the reports),
+  `ActionItemDB.GetFollowupReportForManagement` and `ActionItemDB.GetActionItemByMeetingIdDeptId`.
+- Business layer. `ReportsMgr.GetFollowupReport` has the acting user and `out Reason` and no longer builds SQL text;
+  `ReportsMgr.GetFollowupReportForManagement` is removed. `ActionItemMgr.GetFollowupByDepartmentReport` replaces
+  `ActionItemMgr.GetActionItemByMeetingIdDeptId`. `ActionItemMgr.ReopenBlankCharacters` (27 characters written as code points)
+  and `ActionItemMgr.IsBlankReopenReason(string)` are the one list of blank characters for a reopen reason; `ReopenFollowup`
+  and the Reopen Save of Master/Followup.aspx.cs both use it, and `spr_ReopenFollowup` has the same list.
+- `FollowupStatusText`: new `PendingWord`, `Word(confirmed, action, WordOnly)` ("Pending", "Confirmed", "Confirmed (before
+  history)"; with WordOnly only "Pending" or "Confirmed") and `Line(confirmed, action, reason, on, name, login, active)` (the
+  Confirm line for a confirmed item whose latest row is a Confirm, the Reopen line for an item not confirmed whose latest row is
+  a Reopen, else empty).
+- Report/Followup.aspx(.cs). Both roles call `ReportsMgr.GetFollowupReport(UserId, ...)`; `reportReason` (was
+  `managementReason`) not 0 shows `ReportsMgr.ReportRefusedMessage(reportReason)` and no grid, in View, Generate and the other
+  handler. The Confirmed Status choice "Not Confirmed" is "Pending" (value 0). The grid has a TemplateField headed "Followup
+  status" (a Literal filled by `StatusCellHtml`: the word and the line, each HtmlEncoded, in the classes `wb-followup-status` and
+  `wb-followup-status-line`; the Summary has the word only; the cell is 220 px wide). The generated Followup report adds
+  `StatusBlockHtml` (FOLLOWUP STATUS, the word in bold, the line under it, wrapping) after ACTION TAKEN; the printed Summary has a
+  "Followup status" column with the word (`StatusWordOf(row, true)`). The minutes status (grid column, "Minutes status" lines,
+  Summary column) follows `forManagement`, which is read from the database in Page_Load (`HasRole("mgmt")`), no longer whether the
+  rows hold the mark column. The From and To meeting dates are still not used.
+- Report/FollowupActionTaken.aspx(.cs). `GetCommitteeFollowupRows(DepartmentId, SubjectNoFrom, SubjectNoTo)` calls
+  `ActionItemMgr.GetFollowupByDepartmentReport` with the session's UserId (0 when there is none: the procedure answers Reason
+  8); the two RowFilters (committee, subject range) are gone, and `GetFollowup` parses both subject numbers with `int.TryParse`
+  before it sends them. `reportReason` not 0 shows the refusal message in the grid, the subject lists (disabled), Generate Report
+  and the check of Submit. The grid has the same "Followup status" column; the report's Subject cell holds the word in bold and the
+  line (10 pt) under the subject, HtmlEncoded.
+- Master/Followup.aspx: the script that checks the reopen reason ("<" followed by a letter, "!", "/" or "?", or "&#") first
+  clears and hides the server's message line (`pReopenPanelMessage`), so one message shows. Its Reopen Save uses
+  `ActionItemMgr.IsBlankReopenReason`.
+
+Known items (Database/README.md): the From and To dates; `btnSendMail_Click` and `CreateBodyText` of Report/Followup.aspx are
+still in the page and unreachable; a 500-character reason without spaces in the Word export is an owner check.
+
+Drawn from: BMMS/Report/Followup.aspx(.cs) and FollowupActionTaken.aspx(.cs) (diff), BMMS/Master/Followup.aspx(.cs) (diff),
+BMMS/FollowupStatusText.cs (diff), BMMSBAL/ReportsMgr.cs and ActionItemMgr.cs (diff), BMMSDAL/ActionItemDB.cs (diff),
+Database/README.md (section Step FU2b).
+
 ### Pages in no menu and the unlisted page
 
 - Report/FollowupActionTaken.aspx was in no menu until step RA1c2. It is now the last entry of the Controller's
@@ -536,9 +583,9 @@ bmms-workbench.css (diff), Database/README.md (section Step UN6d and its Known i
   page (`btnSendMail_Click`, `CreateBodyText`, `CreatePDF`, the download panel), whose button was commented out,
   was removed. Two fixes of the report:
   - Committee filter: `spr_GetActionItemByMeetingIdDeptId` selects by meeting number and department and
-    ignores `@CommitteeId`, and meeting numbers start again in every committee, so the page filters the rows by
-    `CommitteeId` itself (`GetCommitteeFollowupRows`; the grid, the report, the Subject No lists and the check
-    "no record" use it). No database step.
+    ignores `@CommitteeId`, and meeting numbers start again in every committee, so the page filtered the rows by
+    `CommitteeId` itself (`GetCommitteeFollowupRows`). Since step FU2b (step 49) this is done in the database: see
+    "The Followup reports (step FU2b)" below.
   - PDF border: the report table was written with `border='1px'`, which the PDF converter rejects (it reads the
     border as a number), so Export to Pdf in the report window printed its fallback sentence; it is now
     `border='1'`, and the stray `<style>@media print` block of the report HTML was removed. Export to Pdf cannot
@@ -709,7 +756,7 @@ and calls `CommonDB` with the procedure name as a string; it does not read the r
 |---|---|
 | `CommonDB.GetDataTable(name, parameters)` | Opens a new connection, runs the stored procedure (`CommandType.StoredProcedure`), fills a `DataTable` with `SqlDataAdapter` and closes the connection |
 | `CommonDB.ExecuteProcedure(name, parameters)` | The same with `ExecuteNonQuery`; returns the affected-row count and no result set |
-| `CommonDB.GetDataTableFromQuery(sql)` | Runs a text query (`CommandType.Text`) with no parameters; the callers are `ReportsMgr` (3), `ActionItemDB` (the follow-up query), `UtilitiesDB.GetDatabaseName`, `UserDB` (`HasUserHistory`), `MinutesDB.HasDueDateParameter` and `AgendaDB` (the last three check the parameters of a procedure) |
+| `CommonDB.GetDataTableFromQuery(sql)` | Runs a text query (`CommandType.Text`) with no parameters; the callers are `ReportsMgr` (3; `ActionItemDB.GetFollowup`, the follow-up query, was removed in step FU2b), `UtilitiesDB.GetDatabaseName`, `UserDB` (`HasUserHistory`), `MinutesDB.HasDueDateParameter` and `AgendaDB` (the last three check the parameters of a procedure) |
 | `ConnectDB.GetConnectionString()` | Returns the connection string named `ConnectionString` of the application's configuration; the connection strings are read from a separate file that Web.config names (chapter 01, 06). The value is never written in a document |
 | `ConnectDB.GetConnectedDatabaseName()` | Opens a connection and returns `SqlConnection.Database` (used for the footer) |
 

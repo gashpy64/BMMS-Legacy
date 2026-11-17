@@ -122,7 +122,7 @@
                                                 <asp:RadioButtonList ID="rdoConfirmStatus" runat="server" RepeatDirection="Horizontal">
                                                     <asp:ListItem Text="Both" Value="-1" Selected="True"></asp:ListItem>
                                                     <asp:ListItem Text="Confirmed" Value="1"></asp:ListItem>
-                                                    <asp:ListItem Text="Not Confirmed" Value="0"></asp:ListItem>
+                                                    <asp:ListItem Text="Pending" Value="0"></asp:ListItem>
                                                 </asp:RadioButtonList>
                                             </td>
                                         </tr>
@@ -228,6 +228,16 @@
                                                     <asp:Label ID="lblShortText" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("ShortText")) %>'></asp:Label>
                                                 </ItemTemplate>
                                                 <ItemStyle CssClass="contentTabletd" HorizontalAlign="justify" VerticalAlign="Top" />
+                                            </asp:TemplateField>
+                                            <%-- Step FU2b: the Followup status of the item, as the Followup page shows it: the word and the line
+                                                 of who confirmed or reopened it (Followup); the word Pending or Confirmed only (Followup
+                                                 Summary). Headed "Followup status", as the printed Summary's column (and not to be taken for Minutes
+                                                 status). Built and encoded in StatusCellHtml --%>
+                                            <asp:TemplateField HeaderText="Followup status">
+                                                <ItemTemplate>
+                                                    <asp:Literal ID="litStatus" runat="server" Mode="PassThrough" Text='<%# StatusCellHtml(Container.DataItem) %>'></asp:Literal>
+                                                </ItemTemplate>
+                                                <ItemStyle Width="220px" CssClass="contentTabletd wb-followup-status-cell" HorizontalAlign="Left" VerticalAlign="Top" />
                                             </asp:TemplateField>
                                             <%-- Step RA1b: shown only in Management's Followup (the minutes status of the item) --%>
                                             <asp:TemplateField HeaderText="Minutes status" Visible="false">

@@ -29,7 +29,27 @@ whose agenda is not finalised yet has no minutes and is not listed; if the commi
 meeting you see "No meetings with minutes for this committee."
 
 Minutes Extract is different: it shows finalised and confirmed minutes only, as before. Followup
-and Followup Summary are unchanged for you and show no minutes status.
+and Followup Summary show no minutes status for you, but they show the followup status of each item:
+
+- The Confirmed Status choice has three options: Both, Confirmed and Pending.
+- In the list on screen (View) each item has a "Followup status" column. It shows "Pending" or "Confirmed",
+  and under it a line that says who confirmed or reopened the item: "Confirmed by [name] ([login]) on
+  [date and time]" (for example 17-Nov-2026 14:05) or "Reopened by [name] ([login]) on [date and time]:
+  [reason]". These are the same texts as on the Followup screen. A followup that was confirmed before BMMS
+  kept this history shows "Confirmed (before history)". The name of a user whose account is no longer active is
+  marked, and a user who cannot be found shows as "an unknown user". A Pending item that was never reopened
+  shows the word only.
+- In Followup Summary the column shows the word only.
+- The generated Followup report has a "FOLLOWUP STATUS" block under the action taken of each item: the word in
+  bold and, under it, the line. The printed Followup Summary has a "Followup status" column with the word only.
+- The rows, their filters and their order are as before; items that tie on every other key are listed by agenda
+  number, then by action item.
+- If you are not allowed to see a report you see "You are not allowed to see this report.", and if your session has
+  ended "Your session is no longer valid. Please log in again."; no rows are shown, and the same applies to Export.
+
+[Screenshot: Followup report as the Controller, the list with the Followup status column - supplied by Gashpy Software]
+[Screenshot: Followup Summary as the Controller, the list with the Followup status column - supplied by Gashpy Software]
+[Screenshot: Followup report, an item with the FOLLOWUP STATUS block, confirmed and reopened - supplied by Gashpy Software]
 
 The Reports menu also has "Followup by Department", after Followup Summary. It is for you only: a
 Manager who opens it gets "Access denied". It lists the subjects that have a follow-up item, for one
@@ -45,7 +65,15 @@ committee at a time:
    use Export to Pdf or Export to Word.
 
 The list and the report show only the meetings of the committee you chose. Each row has the meeting,
-the agenda and subject numbers, the department and the agenda short text.
+the agenda and subject numbers, the department and the agenda short text. In the list on screen (View) the last
+column is "Followup status", with the word "Pending" or "Confirmed" and the line of who confirmed or reopened the
+item, as in Followup. In the printed report the same word and line stand under the subject. The subject range
+you choose is applied when the list is made, and the rows are listed by subject number, then by agenda number.
+If you are not allowed to see the report you see "You are not allowed to see this report.", and if your session
+has ended "Your session is no longer valid. Please log in again."; no rows are shown.
+
+[Screenshot: Followup by Department, the list with the Followup status column - supplied by Gashpy Software]
+[Screenshot: Followup by Department, the printed report with the status under the subject - supplied by Gashpy Software]
 
 Export to Pdf cannot print Tamil or Hindi text. If the report holds such text, use Export to Word or
 Print instead.
@@ -258,10 +286,11 @@ Messages and what to do:
   Confirmed; choose Confirmed on at least one row.
 - "This followup is confirmed and can no longer be changed. Nothing was saved. Click View to read the list again.":
   somebody confirmed the decision while you had its action text open; your change was not saved; press View.
-- "Enter the reason for reopening.": the reason is empty; type it and press Save.
+- "Enter the reason for reopening.": the reason is empty, or holds only blank characters (spaces, tabs, line breaks
+  and other invisible spaces); type it and press Save.
 - "The reason can be at most 500 characters.": shorten the reason; the panel stays open with your text.
 - "Remove the "<" or "&#" from the reason, then save again.": the reason holds a "<" followed by a letter, "!", "/"
-  or "?", or the characters "&#"; BMMS does not send it. Remove them and press Save.
+  or "?", or the characters "&#"; BMMS does not send it. Remove them and press Save. Only this message is shown.
 - "This followup is no longer confirmed. Nothing was saved. Click View to read the list again.": someone else
   reopened the decision first; press View.
 - "The followup could not be reopened. Nothing was saved. Try again." or "The server is busy and the followup could
