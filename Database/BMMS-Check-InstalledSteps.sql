@@ -186,6 +186,11 @@
    run step 49 again. After BMMS-Rollback-FollowupReports-Step49.sql it
    reads Missing (roll back step 49 before step 47: the step 47 Rollback
    refuses otherwise).
+   Step 50 (step UN6e) adds three nonclustered indexes and no procedure
+   text: one marker per index (name, table, key and included columns in
+   order), present only when the index has exactly that definition. A
+   re-run of an earlier step does not touch it. After
+   BMMS-Rollback-Indexes-Step50.sql it reads Missing.
    Step 32 is reserved and not built; it has no row.
    Step D1 (shown as step 100) replaces spr_DeleteMeetingByMeetingId, which
    no numbered script contains: it reads Missing only on a database restored
@@ -527,6 +532,28 @@ SELECT 49, o.Name + ' (FollowupReports-Step49)', CASE WHEN ISNULL(OBJECT_DEFINIT
 FROM (VALUES ('fn_FollowupStatusLatest'), ('spr_GetFollowupReport'), ('spr_GetFollowupByDepartmentReport'),
              ('spr_GetFollowupList'), ('spr_ReopenFollowup')) o(Name);
 
+-- 50. BMMS-Fix-Indexes-Step50.sql, installed after step 49 (three nonclustered indexes; no procedure text). One marker per
+-- index: present when the index of that name on that table has exactly these key columns (in order) and included columns
+INSERT INTO @M
+SELECT 50, w.IndexName + ' on ' + w.TableName + ' (' + w.Keys + ')' + CASE WHEN w.Incl = '' THEN '' ELSE ' INCLUDE (' + w.Incl + ')' END
+           + ' (Indexes-Step50)',
+       CASE WHEN EXISTS (
+           SELECT 1 FROM sys.indexes i
+           WHERE i.object_id = OBJECT_ID('dbo.' + w.TableName) AND i.name COLLATE DATABASE_DEFAULT = w.IndexName
+             AND i.type_desc = 'NONCLUSTERED' AND i.is_unique = 0 AND i.has_filter = 0 AND i.is_disabled = 0
+             AND ISNULL(STUFF((SELECT ', ' + c.name + CASE WHEN ic.is_descending_key = 1 THEN ' DESC' ELSE '' END
+                               FROM sys.index_columns ic JOIN sys.columns c ON c.object_id = ic.object_id AND c.column_id = ic.column_id
+                               WHERE ic.object_id = i.object_id AND ic.index_id = i.index_id AND ic.key_ordinal > 0
+                               ORDER BY ic.key_ordinal FOR XML PATH('')), 1, 2, ''), '') COLLATE DATABASE_DEFAULT = w.Keys
+             AND ISNULL(STUFF((SELECT ', ' + c.name
+                               FROM sys.index_columns ic JOIN sys.columns c ON c.object_id = ic.object_id AND c.column_id = ic.column_id
+                               WHERE ic.object_id = i.object_id AND ic.index_id = i.index_id AND ic.is_included_column = 1
+                               ORDER BY ic.index_column_id FOR XML PATH('')), 1, 2, ''), '') COLLATE DATABASE_DEFAULT = w.Incl)
+       THEN 1 ELSE 0 END
+FROM (VALUES ('IX_Alert_User_Map_UserId_StatusId', 'Alert_User_Map', 'UserId, StatusId', 'ReadStatus, AlertId'),
+             ('IX_Alert_Master_SourceType_SourceTypeId', 'Alert_Master', 'SourceType, SourceTypeId', ''),
+             ('IX_Agenda_MeetingId', 'Agenda', 'MeetingId', 'DepartmentId, AgendaStatusCode')) w(IndexName, TableName, Keys, Incl);
+
 -- D1 (shown as step 100). BMMS-Fix-MeetingDelete-D1.sql; no numbered script contains spr_DeleteMeetingByMeetingId
 INSERT INTO @M VALUES
 (100, 'spr_DeleteMeetingByMeetingId (MeetingDelete-D1)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_DeleteMeetingByMeetingId')), '') LIKE '%MeetingDelete-D1%' THEN 1 ELSE 0 END);
@@ -577,6 +604,7 @@ INSERT INTO @Steps VALUES
 (47, 'BMMS-Fix-FollowupFinal-Step47.sql', 'step 46 was re-run (4 of 6), step 2, 6, 10, 13 or 39 was re-run (5 of 6), or step 47 was rolled back (1 of 6: the table stays): run step 47 again (after step 46)'),
 (48, 'BMMS-Fix-DashboardFollowupFinal-Step48.sql', 'step 43 or 45 was re-run after step 48 (1 to 4 of 5), or an object is missing: run step 48 again (after step 47)'),
 (49, 'BMMS-Fix-FollowupReports-Step49.sql', 'step 47 was re-run after step 49 (3 of 5), or an object is missing: run step 49 again (after step 48)'),
+(50, 'BMMS-Fix-Indexes-Step50.sql', 'an index is missing or was changed by hand: run step 50 again (it stops and names an index of the same name with another definition)'),
 (100, 'BMMS-Fix-MeetingDelete-D1.sql (step D1)', '');
 
 SELECT s.Step, s.Script,

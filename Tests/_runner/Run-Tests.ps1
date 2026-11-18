@@ -26,6 +26,8 @@
     8. Stops the site copy (unless -LeaveSiteRunning was given), collects the new log lines,
        writes the results:
        Tests\_results\<date_time>\results.md (for reading) and results.json.
+       The folder name is printed at the start and at the end ("Results folder: ...") and written,
+       alone, to Tests\_results\latest.txt at the start (step WF3a3).
 
   With the access-matrix pack (step WF3a2), between 6 and 7: the standing proof. The runner adds one
   role to one entry of Tests\_site\XML\PageAccess.xml (planted.json of the pack; never the working
@@ -105,6 +107,12 @@ function Set-QaPlantedChange([object]$Def) {
 
 try {
     New-Item -ItemType Directory -Force -Path $dir | Out-Null
+    # Step WF3a3: the results folder is named at the start (the first lines of the output reach the caller even when
+    # a long run moves to the background) and in Tests\_results\latest.txt (the run folder name only), which the
+    # tester agent may read; results.md in that folder is written when the run ends.
+    Write-Host "Results folder: Tests\_results\$runId"
+    try { [IO.File]::WriteAllText((Join-Path $QaResultsRoot 'latest.txt'), $runId) }
+    catch { Write-Host "WARNING: Tests\_results\latest.txt could not be written: $($_.Exception.Message)" }
 
     # ----- which packs ------------------------------------------------------------------------
     $packs = @()
@@ -493,6 +501,7 @@ try {
 Write-Host ''
 Write-Host "RESULT: $($run.result). $($run.summary)"
 Write-Host "Results: Tests\_results\$runId\results.md"
+Write-Host "Results folder: Tests\_results\$runId"
 if ($siteLeft) { Write-Host "The site copy is still running on $QaBaseUrl. To stop it: pwsh -NoProfile -File Tests/_runner/Run-Tests.ps1 -StopSite" }
 if ($run.result -eq 'FAILED') { Write-Host "Screenshots: Tests\_results\$runId\screenshots" }
 exit $exitCode

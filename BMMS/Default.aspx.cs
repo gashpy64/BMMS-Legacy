@@ -24,6 +24,9 @@ namespace BMMS
         {
             InitSetup();
 
+            // Step UN6e: ?v=<stamp> on the stylesheet links of the header (AssetVersion.cs)
+            AssetVersion.Register(this);
+
             if (!Page.IsPostBack)
             {
                 InitCtrlAttributes();

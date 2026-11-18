@@ -3,10 +3,10 @@
 - Title: Database
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: FU2b (step 49: fn_FollowupStatusLatest, spr_GetFollowupReport, spr_GetFollowupByDepartmentReport, spr_GetFollowupList and spr_ReopenFollowup replaced, Reason 4 and 8 on the report procedures, the report queries no longer built in the code); FU2a (step 48: Action items and follow-up (fn_DashboardActionItemScope, the three Dashboard action item procedures and fn_DashboardActionItems replaced), the function table, Reason 26 on the Dashboard); FU1 (step 47: the table Action_Item_Status_History, the two Followup save procedures replaced, spr_ReopenFollowup and spr_GetFollowupList, Reason 26 and 27, Reason 4, 8, 12 and 6 extended); UN6d (step 46: Action items and follow-up (the two Followup save procedures, spr_UpdateActionItem without a caller), Reason 4, 8 and 12); UN6c2b (step 45: Alerts and the dashboard (spr_GetDashboardSummary, the changed Action Items and Approvals procedures), Meeting (spr_GetDashboardMeetings), the functions, Reason 4, 8 and 12); UN6c2a (step 44: Approval, Meeting (spr_GetDashboardMeetings), Alerts and the dashboard, functions, Reason 4, 8, 12 and 14); UN6c1 (step 43: Alerts and the dashboard, Action items and follow-up, the two mail procedures, functions, Reason 4 and 8, not-called procedures); UN6b (step 42: the Meeting, Alerts and the dashboard, functions, Reason codes and not-called tables); the rest RA1b (step 41)
-- Last updated by: FU2b, based on c4300b5
+- Applies to: UN6e (step 50: the new section "Indexes added by step 50 (UN6e)" under "Tables and keys" and a row of "Which script added a key or table"); FU2b (step 49: fn_FollowupStatusLatest, spr_GetFollowupReport, spr_GetFollowupByDepartmentReport, spr_GetFollowupList and spr_ReopenFollowup replaced, Reason 4 and 8 on the report procedures, the report queries no longer built in the code); FU2a (step 48: Action items and follow-up (fn_DashboardActionItemScope, the three Dashboard action item procedures and fn_DashboardActionItems replaced), the function table, Reason 26 on the Dashboard); FU1 (step 47: the table Action_Item_Status_History, the two Followup save procedures replaced, spr_ReopenFollowup and spr_GetFollowupList, Reason 26 and 27, Reason 4, 8, 12 and 6 extended); UN6d (step 46: Action items and follow-up (the two Followup save procedures, spr_UpdateActionItem without a caller), Reason 4, 8 and 12); UN6c2b (step 45: Alerts and the dashboard (spr_GetDashboardSummary, the changed Action Items and Approvals procedures), Meeting (spr_GetDashboardMeetings), the functions, Reason 4, 8 and 12); UN6c2a (step 44: Approval, Meeting (spr_GetDashboardMeetings), Alerts and the dashboard, functions, Reason 4, 8, 12 and 14); UN6c1 (step 43: Alerts and the dashboard, Action items and follow-up, the two mail procedures, functions, Reason 4 and 8, not-called procedures); UN6b (step 42: the Meeting, Alerts and the dashboard, functions, Reason codes and not-called tables); the rest RA1b (step 41)
+- Last updated by: UN6e, based on dbc48ca
 - Status: Draft
-- Verified against: for step 49 (FU2b): Database/BMMS-Fix-FollowupReports-Step49.sql (read in full for the three new objects and spr_ReopenFollowup; the SHA-1 guards in the header part), BMMS-Check-InstalledSteps.sql (diff), BMMS-Rollback-FollowupFinal-Step47.sql (diff), BMMSDAL/ActionItemDB.cs and BMMSBAL/ReportsMgr.cs and ActionItemMgr.cs (diff), Database/README.md (section Step FU2b), the Test result (49: 33 of 33) as given; the Rollback and Test scripts of step 49 were not read line by line;
+- Verified against: for step 50 (UN6e): Database/BMMS-Fix-Indexes-Step50.sql (header and the start of the script), BMMS-Check-InstalledSteps.sql (diff), Database/README.md (section Step UN6e: the table of reads, the scripts, the results), the Test results as given; the Rollback and Test scripts of step 50 were not read line by line; for step 49 (FU2b): Database/BMMS-Fix-FollowupReports-Step49.sql (read in full for the three new objects and spr_ReopenFollowup; the SHA-1 guards in the header part), BMMS-Check-InstalledSteps.sql (diff), BMMS-Rollback-FollowupFinal-Step47.sql (diff), BMMSDAL/ActionItemDB.cs and BMMSBAL/ReportsMgr.cs and ActionItemMgr.cs (diff), Database/README.md (section Step FU2b), the Test result (49: 33 of 33) as given; the Rollback and Test scripts of step 49 were not read line by line;
   for step 48 (FU2a): Database/BMMS-Fix-DashboardFollowupFinal-Step48.sql (the Reason lines of the three procedures, the header comments), Database/README.md (section Step FU2a: the objects, the Rollback guards, the changed expected values), BMMS-Check-InstalledSteps.sql (diff), the Test result (48: 43 of 43; 43: 128; 44: 120; 45: 66; 47: 95) as given;
   for step 47 (FU1): Database/BMMS-Fix-FollowupFinal-Step47.sql, BMMS-Rollback-FollowupFinal-Step47.sql and BMMS-Test-FollowupFinal-Step47.sql (as described in Database/README.md, section Step FU1, and its Known items; the scripts themselves were not read line by line), BMMS-Check-InstalledSteps.sql (diff), BMMSDAL/ActionItemDB.cs and BMMSBAL/ActionItemMgr.cs (diff), BMMS/Master/Followup.aspx and .aspx.cs (message texts), the Test result (95 of 95) and the tester run of 2026-11-16 as given;
   for step 46 (UN6d): Database/BMMS-Fix-FollowupSave-Step46.sql (both procedures, read in full), BMMS-Rollback-FollowupSave-Step46.sql, BMMS-Check-InstalledSteps.sql (diff), BMMSDAL/ActionItemDB.cs and BMMSBAL/ActionItemMgr.cs (diff), BMMS/Master/Followup.aspx.cs (message texts), Database/README.md (section Step UN6d and its Known items), the Test script result (56 of 56) as given;
@@ -368,11 +368,62 @@ which are not the numbered database steps; the file names are given here.
 | Member_Type.IsReserved, MemberScope, the two checks and the two unique indexes | Database/BMMS-Fix-MemberTypes-Step21.sql (step 21) | "Table Member_Type, new columns" |
 | Audit_Trial_Login.Login_Name | Database/BMMS-Fix-LoginName-Step34.sql (step 34) | adds the column |
 | User_Role and User_Department with their checks, defaults and indexes | Database/BMMS-Fix-UserHistory-Step39.sql (step 39, UD1a) | "Role and department history" |
+| Three nonclustered indexes on Alert_User_Map, Alert_Master and Agenda | Database/BMMS-Fix-Indexes-Step50.sql (step 50, UN6e) | "Indexes for the Dashboard lists"; see "Indexes added by step 50" below |
 
 The keys on the master and code tables (for example Agenda to Agenda_Status, Users to Department,
 Minutes to Agenda) are not added by any script read for this chapter; they come from the original
 database design. [[CONFIRM: that these keys belong to the original database; no script or history
 for them was read]]
+
+### Indexes added by step 50 (UN6e)
+
+Before step 50 these tables had only their clustered primary keys: Alert_User_Map, Alert_Master, ActionItem_User_Map, Agenda,
+Minutes, Meeting, Users and Action_Item. Two indexes already served the latest-row reads:
+IX_Action_Item_Status_History_ActionItemId (ActionItemId, StatusHistoryId; step 47; fn_FollowupStatusLatest,
+fn_DashboardActionItemScope, spr_GetFollowupList) and IX_User_Department_UserId (UserId, EffectiveFrom; step 39;
+fn_UserDepartmentScope). Neither got a new index.
+
+Step 50 adds three nonclustered indexes and changes no primary key, table, procedure or function. Nothing in a procedure text
+changes, so there is no procedure marker; one marker per index in BMMS-Check-InstalledSteps.sql (name, table, key and included
+columns in order) is present only when the index has exactly that definition.
+
+| Index | Key and included columns | Serves | Reads of its table, before to after (worst role) |
+|---|---|---|---|
+| IX_Alert_User_Map_UserId_StatusId | (UserId, StatusId) INCLUDE (ReadStatus, AlertId) | fn_DashboardAlerts (step 43), fn_AgendaWaitingFor (step 44) | Alerts 102 to 30 (every role); My approvals and Meetings, Manager, 553 to 73 |
+| IX_Alert_Master_SourceType_SourceTypeId | (SourceType, SourceTypeId) | spr_GetDashboardApprovals, fn_AgendaWaitingFor (step 44) | My approvals, Manager, 414 to 42; Meetings, Manager, 352 to 32 |
+| IX_Agenda_MeetingId | (MeetingId) INCLUDE (DepartmentId, AgendaStatusCode) | spr_GetDashboardMeetings, spr_GetDashboardSummary (steps 42, 45) | Meetings, Manager, 6,229 to 315, User 6,136 to 222; Summary 93 to 7 |
+
+How they were chosen. Logical reads (SET STATISTICS IO) of the Dashboard procedures and spr_GetFollowupList, as a Controller, a
+Manager and a User, on a copy of BMMS_Test filled to about one year of use (317 meetings, 1,570 agenda items, 1,380 minutes, 455
+action items, 1,914 alerts, 10,634 Alert_User_Map rows), one candidate at a time after a warm-up. Rule: a candidate is kept when
+it at least halves the reads of its table in a path the Dashboard or the Followup page calls. Total reads with the three kept:
+Meetings Manager 7,577 to 863, User 6,536 to 622; My approvals Manager 1,171 to 319; Alerts 381 to 309; Summary 177 to 91; the
+other calls unchanged.
+
+Measured and not kept (no index made):
+
+| Candidate | Why dropped |
+|---|---|
+| Agenda (AgendaStatusCode) INCLUDE (MeetingId, DepartmentId) | Alone 6,229 to 576; with the three kept, no change |
+| ActionItem_User_Map (UserId) | Serves procedures that are not a Dashboard path (spr_UpdateActionItemByUserId, spr_DeleteUserByUserId); 7 to 2 |
+| ActionItem_User_Map (ActionItemId, UserId) INCLUDE (ReadStatus) | Worse: Controller 7 to 681 |
+| Minutes (AgendaId) | Worse: 26 to 749 (the Followup list) |
+| Meeting (MeetingDate) | 242 to 237 (fn_MeetingDashboardState reads every meeting) |
+| Users (ManagerId) | No change |
+| Action_Item (MinutesId) | Worse: 67 to 3,897 |
+
+Scripts. BMMS-Fix-Indexes-Step50.sql stops, creating nothing, when an index of the same name on that table has another
+definition (key columns and their order, included columns, unique, filtered, clustered, disabled; the script never drops it) or
+when another index on that table has the same first key column; a second gate (a temporary table) lets the creates run only when
+those checks ran to their end. An index already there with the same definition is left alone ("already present"), so the Fix is
+re-runnable. It stops unless step 49 is installed, uses no ONLINE option, compression or filter (Express, compatibility level
+100) and changes no data. BMMS-Rollback-Indexes-Step50.sql drops the three, each only when it has the step 50 definition (it
+refuses otherwise and drops nothing); a second run is skipped. BMMS-Test-Indexes-Step50.sql (BMMS_Test only, read only) has 9
+numbered checks: each index with exactly its definition, no other index on its table with the same first key column, the
+clustered primary keys of the three tables unchanged. Re-running an earlier step's Fix script does not remove the indexes.
+
+Drawn from: Database/BMMS-Fix-Indexes-Step50.sql (header and first part), BMMS-Check-InstalledSteps.sql (diff), Database/README.md
+(section Step UN6e). The Rollback and Test scripts were not read line by line.
 
 ### UD1a statements in Documents/Data-Flow/00-Notation.md, checked against the catalog
 

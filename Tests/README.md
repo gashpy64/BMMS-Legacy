@@ -5,8 +5,15 @@ pass or fail with screenshots. It complements the owner's tests; it does not rep
 It never changes the product, and it never uses BMMS or BMMS_Test.
 
 - Database: `BMMS_Quality` only. The name is fixed in `Tests\_runner\Tester.Common.ps1`.
+- Server: the default SQL Server instance of this laptop (., SQL Server 2025 Developer, Mixed Mode). Your own BMMS,
+  BMMS_Test and BMMS_New stay on .\SQLEXPRESS; the tester never connects to that instance. BMMS_Quality on . is made
+  from a COPY_ONLY backup of BMMS_Test on .\SQLEXPRESS. The two instances' service accounts cannot read each other's
+  backup folder, so the backup goes through a folder both can use. On ., bmms_app is a login of its own, linked to its
+  user in BMMS_Quality, with a password nobody keeps (the tester never signs in as it).
 - Site: a copy of the working tree in `Tests\_site`, on http://localhost:18573
-  (your own site stays on port 49573 with BMMS_Test).
+  (your own site stays on port 49573 with BMMS_Test). The folder `BMMS\App_Data` must exist in the working tree
+  (empty is enough): a fresh clone lacks it (git keeps no empty folder), and the site sync then refuses the run
+  ("Tests\_site is not the same as the working tree ... App_Data"). Create it once with `mkdir BMMS\App_Data`.
 - SQL logins: the site copy signs in to SQL Server as `bmms_site`, and the runner restores and
   checks as `bmms_tester`. Neither can open any database but BMMS_Quality; the runner asks the
   server to confirm that before every run. Your application login `bmms_app` is not used.
@@ -40,6 +47,11 @@ pwsh -NoProfile -File Tests/_runner/Run-Tests.ps1 -Pack access-matrix
 - `-Pack followup` (step UN6d): the Followup page by role: the MD Secretariat reads only (no Save, no Submit, the ticks
   disabled, the read-only line), the Controller's Save and Submit with their success messages. Its rules, files and
   checks: `Tests\packs\followup\README.md`.
+- `-Pack page-assets` (step UN6e): on ten pages (the sign-in page, the Dashboard of the Controller, a Manager and a
+  User, and Followup, Agenda, Update Minutes, Committee, Meeting and the first-sign-in password page of the Controller)
+  every local stylesheet link ends with `?v=` and the first 8 hex characters of the SHA-256 of its file in
+  `Tests\_site`; the ViewState of the Controller's Dashboard is not over its limit. About half a minute. Its rules,
+  files and checks: `Tests\packs\page-assets\README.md`.
 - `-Pack access-matrix -ProofFullMatrix` (you only; the tester agent cannot use it): the standing
   proof over every row instead of two. Exactly one cell must change. Use it when the pack itself
   changes.
@@ -68,6 +80,12 @@ In the development workflow the `tester` agent runs the same command and returns
 ## How to read the results
 
 Each run writes a folder `Tests\_results\<date_time>\`. Open `results.md`.
+
+The runner prints the folder at its start and at its end ("Results folder: Tests\_results\<date_time>") and writes
+its name, alone, to `Tests\_results\latest.txt` at the start (step WF3a3). `results.md` is written when the run ends.
+A long run of the tester agent can move to the background after about three minutes even with its 600 s timeout; its
+last lines then go to a file outside `Tests\_results` that the agent may not read, so the agent takes the folder from
+the first lines or from `latest.txt` and reads `results.md` there when the run has ended.
 
 | Result | Meaning | What to do |
 |---|---|---|

@@ -3,7 +3,7 @@
 
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="cc1" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-    <link rel="stylesheet" href="../JScript/ColorPicker/js_color_picker_v2.css" media="screen">
+    <link rel="stylesheet" href="../JScript/ColorPicker/js_color_picker_v2.css" media="screen" runat="server" />
 
     <script src="../JScript/ColorPicker/color_functions.js"></script>
 

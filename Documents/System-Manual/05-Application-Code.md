@@ -3,10 +3,10 @@
 - Title: Application Code
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: FU2b (the new section "The Followup reports (step FU2b)" and the Followup by Department note in "Pages in no menu and the unlisted page"); FU2a ("The Action Item Details panel and the Followup page saves (step UN6d)": the new FU2a paragraph on FollowupStatusText, the panel mode, the status line, the Reopened chip); FU1 ("The Action Item Details panel and the Followup page saves (step UN6d)": the Followup page bullets, the FU1 bullets for the list, Submit and Reopen); UN6d ("The Action Item Details panel and the Followup page saves (step UN6d)", the Followup.aspx row, the Dashboard Action Items paragraph note); UN6c2b ("The Dashboard summary cards and the Committee filter (step UN6c2b)"); UN6c2a ("The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)" and the layout line of "The Dashboard Meetings card (step UN6b)"); UN6c1 (the Main.Master row and paragraph, "The Dashboard Alerts and Action Items cards (step UN6c1)"); UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
-- Last updated by: FU2b, based on c4300b5
+- Applies to: UN6e (the new sections "Lists are not kept in ViewState (step UN6e)" and "Stylesheet version stamp (step UN6e)", the Action Items paragraph of "The Dashboard Alerts and Action Items cards (step UN6c1)" and the Ctrl+F5 sentence and the list sentence of "The Action Item Details panel and the Followup page saves (step UN6d)"); FU2b (the new section "The Followup reports (step FU2b)" and the Followup by Department note in "Pages in no menu and the unlisted page"); FU2a ("The Action Item Details panel and the Followup page saves (step UN6d)": the new FU2a paragraph on FollowupStatusText, the panel mode, the status line, the Reopened chip); FU1 ("The Action Item Details panel and the Followup page saves (step UN6d)": the Followup page bullets, the FU1 bullets for the list, Submit and Reopen); UN6d ("The Action Item Details panel and the Followup page saves (step UN6d)", the Followup.aspx row, the Dashboard Action Items paragraph note); UN6c2b ("The Dashboard summary cards and the Committee filter (step UN6c2b)"); UN6c2a ("The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)" and the layout line of "The Dashboard Meetings card (step UN6b)"); UN6c1 (the Main.Master row and paragraph, "The Dashboard Alerts and Action Items cards (step UN6c1)"); UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
+- Last updated by: UN6e, based on dbc48ca
 - Status: Draft
-- Verified against: for step FU2b: git diff c4300b5 of BMMS/Report/Followup.aspx(.cs), BMMS/Report/FollowupActionTaken.aspx(.cs), BMMS/Master/Followup.aspx(.cs), BMMS/FollowupStatusText.cs, BMMSBAL/ReportsMgr.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/README.md (section Step FU2b and its Known items), the owner's tests as given; for step FU2a: git diff 9336d29 of BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs, BMMS/Master/Followup.aspx.cs, BMMS/BMMS.csproj and BMMS/CSS/bmms-workbench.css, BMMS/FollowupStatusText.cs (read in full), Database/README.md (section Step FU2a and its Known items), the owner's tests as given; for step FU1: BMMS/Master/Followup.aspx and Followup.aspx.cs (read in full: CanSave, Page_Load, BindFollowup, grvFollowup_RowDataBound, grvFollowup_RowCommand, the save, Submit and Reopen handlers, the script), Database/README.md (section Step FU1); and before: for step UN6d: git diff ce7358a 276e402 of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/Master/Followup.aspx and .aspx.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, BMMS/CSS/CommonHTML.css and bmms-workbench.css; Database/README.md (section Step UN6d and its Known items), the tester runs of 2026-11-15 as given; for step UN6c2b: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs; Database/README.md (section Step UN6c2b, Known items), the tester run of 2026-11-15 as given; for step UN6c2a: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff, and BindAgendaDetails read in full), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (diff), BMMS/CSS/bmms-workbench.css (diff),
+- Verified against: for step UN6e: BMMS/AssetVersion.cs (read in full), BMMS/DashBoard/DashBoard.aspx.cs, BMMS/MasterPage/Main.Master.cs, MainNoMenu.Master.cs, BMMS/Default.aspx.cs, BMMS/Master/Committee.aspx and BMMS.csproj (diff), Database/README.md (section Step UN6e and its Known items), Tests/packs/page-assets/README.md, the owner's tests and the tester run 2026-11-18_123549 as given; the .aspx changes of Agenda, MinutesUpdate and Meeting were taken from Database/README.md, not read in the diff; for step FU2b: git diff c4300b5 of BMMS/Report/Followup.aspx(.cs), BMMS/Report/FollowupActionTaken.aspx(.cs), BMMS/Master/Followup.aspx(.cs), BMMS/FollowupStatusText.cs, BMMSBAL/ReportsMgr.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/README.md (section Step FU2b and its Known items), the owner's tests as given; for step FU2a: git diff 9336d29 of BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs, BMMS/Master/Followup.aspx.cs, BMMS/BMMS.csproj and BMMS/CSS/bmms-workbench.css, BMMS/FollowupStatusText.cs (read in full), Database/README.md (section Step FU2a and its Known items), the owner's tests as given; for step FU1: BMMS/Master/Followup.aspx and Followup.aspx.cs (read in full: CanSave, Page_Load, BindFollowup, grvFollowup_RowDataBound, grvFollowup_RowCommand, the save, Submit and Reopen handlers, the script), Database/README.md (section Step FU1); and before: for step UN6d: git diff ce7358a 276e402 of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/Master/Followup.aspx and .aspx.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, BMMS/CSS/CommonHTML.css and bmms-workbench.css; Database/README.md (section Step UN6d and its Known items), the tester runs of 2026-11-15 as given; for step UN6c2b: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs; Database/README.md (section Step UN6c2b, Known items), the tester run of 2026-11-15 as given; for step UN6c2a: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff, and BindAgendaDetails read in full), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (diff), BMMS/CSS/bmms-workbench.css (diff),
   BMMSBAL/AgendaMgr.cs and MeetingMgr.cs (diff), BMMSDAL/AgendaDB.cs and MeetingDB.cs (diff), Database/README.md (section Step UN6c2a, Known items), Tests/packs/dashboard/README.md, the tester run of 2026-11-14 as given; for step UN6c1: BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (read: the Alerts and Action Items regions, the message constants, lnkSource_Click),
   BMMS/MasterPage/Main.Master.cs (alert count region), BMMSBAL/AlertMgr.cs, ActionItemMgr.cs and Common.cs (diff),
   BMMSDAL/AlertDB.cs and ActionItemDB.cs (diff), Database/README.md (section Step UN6c1); for step UN6b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/DashBoard/DashBoard.aspx
@@ -243,8 +243,9 @@ acting user id from `Session["UserId"]`, never a role.
 - Action Items card (`LoadActionItemGRV`): `ActionItemMgr.GetDashboardActionItems(userId, out reason)`. Reason 4
   (MD Secretariat, Admin) hides the card (`cardActionItems`); Reason 8 and failures show a message in the card
   ("The action items are not available: your account is not active. Sign in again." and the two "could not be
-  loaded" texts). The whole list is kept in ViewState and the three links Show All, Read and Unread filter it in the
-  page by `ActionMode` (A, R, U; ViewState); `LoadActionItemGRV` sets the mark from `ActionMode`, so the link
+  loaded" texts). The whole list comes back on every load and the three links Show All, Read and Unread filter it in the
+  page by `ActionMode` (A, R, U; ViewState); since step UN6e the list itself is not kept in ViewState (see "Lists are not
+  kept in ViewState (step UN6e)"); `LoadActionItemGRV` sets the mark from `ActionMode`, so the link
   chosen stays chosen when an item is opened or the page is changed. New column "Due date" with a red "Overdue"
   chip when `IsOverdue` is true; "Meeting Date" is shown as dd-MMM-yyyy.
 - Opening an item calls `ActionItemMgr.OpenDashboardActionItem` and Submit calls
@@ -477,8 +478,9 @@ in Followup.aspx, change both together). CSS/CommonHTML.css: the rule for `#cont
 (`:has(.MyPopupOuter)`) now has `display: flow-root`; it took away the containment of floats that `overflow: visible`
 had removed in step H1 (commit ba361c3), so on Followup a list taller than 70 percent of the window no longer left the
 footer as a narrow column beside the floats (an old fault, not caused by UN6d; the Dashboard and Update Minutes
-measure the same). The stylesheets have no Cache-Control header, so after a stylesheet change reload the page with
-Ctrl+F5.
+measure the same). The stylesheets have no Cache-Control header; before step UN6e a stylesheet change needed Ctrl+F5.
+Since step UN6e every local stylesheet link carries a version stamp (see "Stylesheet version stamp (step UN6e)"), and
+Ctrl+F5 is a fallback only.
 
 Step FU2a (database step 48) changed the Dashboard panel and added a shared class; this is what holds now, in
 addition to the bullets above:
@@ -513,7 +515,8 @@ addition to the bullets above:
   column is not there). It stands after `phOverdue`; both can show. There is no "Confirmed" chip.
 - CSS/bmms-workbench.css: `.wb-dash-reopened` (left margin) and `body.wb .wb-dash-status-line` (block, full width of the
   value column, wraps also a reason without a space, 500 characters). The orange chip is #8A5300 on #FDF3E1, 5.75:1.
-- The list travels in ViewState with the seven more columns (the reason of a reopened item, at most 500 characters).
+- The list came back with the seven more columns (the reason of a reopened item, at most 500 characters). Until step UN6e
+  it travelled in ViewState; it no longer does.
 - ActionItemMgr and ActionItemDB are not changed.
 
 Known items (Database/README.md): the Submit writes every listed row with the ticks read at View (a lost update); the
@@ -571,6 +574,59 @@ still in the page and unreachable; a 500-character reason without spaces in the 
 Drawn from: BMMS/Report/Followup.aspx(.cs) and FollowupActionTaken.aspx(.cs) (diff), BMMS/Master/Followup.aspx(.cs) (diff),
 BMMS/FollowupStatusText.cs (diff), BMMSBAL/ReportsMgr.cs and ActionItemMgr.cs (diff), BMMSDAL/ActionItemDB.cs (diff),
 Database/README.md (section Step FU2b).
+
+### Lists are not kept in ViewState (step UN6e)
+
+Rule (owner decision R29, Dashboard and Followup only): a list is not kept in ViewState. Stage A is built, stage B is not.
+
+- Stage A, Dashboard.aspx.cs. `LoadActionItemGRV` no longer writes `ViewState["dtActionItem"]`, and the places that cleared
+  it (a refused filter choice, Reason 4, Reason 8, a failure, an exception) no longer have to. `OnPagingAction` sets the page
+  index and calls `LoadActionItemGRV()`, which reads the list again through `ActionItemMgr.GetDashboardActionItems` (so
+  spr_GetDashboardActionItems) with the acting user id and the Committee and Department filters. The Show All, Read and Unread
+  links and every save already read it again. `BindActionItemGRV` shows the last page there is when the list changed so that
+  the page asked for no longer exists. ViewState keeps `ActionMode`, the page number, the filters and the panel flags; the
+  grids keep only their own row state. There is no message between pages, and rows, order, paging, bold unread, the due date
+  and the status lines are as before. When the read at a paging step fails, the card shows the failure message of
+  `LoadActionItemGRV` ("The action items could not be loaded. Reload the page to try again.").
+- Stage B, not built (owner decision): display-only row controls without ViewState, with every list read again before the
+  page is drawn. The Followup page is unchanged: it keeps every row of its grid.
+- Users see no change.
+- Size of the `__VIEWSTATE` field in characters, as measured for the step (a scratch copy of the site against two throwaway
+  database copies; Database/README.md, section Step UN6e): the Controller's Dashboard on a copy of BMMS_Test 23,316 before and
+  7,788 after; on a copy filled to about one year of use 899,196 before and 21,908 after (Manager 61,496 and 22,992, User
+  59,680 and 21,176); Followup of a Controller with a committee of about 110 followups 85,016, unchanged. After stage A the
+  filled-copy Dashboard is still over the proposed 20 KB (20,480), what is left being the grids' row state; whether to build
+  stage B waits for the owner (Known items).
+- The tester guards the rule: the pack page-assets fails when the Controller's Dashboard `__VIEWSTATE` is over 12,900
+  characters (see chapter 10, "The page-assets pack (step UN6e)").
+
+### Stylesheet version stamp (step UN6e)
+
+BMMS/AssetVersion.cs (new; listed in BMMS.csproj) is the shared helper. `AssetVersion.Register(page, containers)` is called
+from the Page_Load of Main.Master and MainNoMenu.Master (the page header and the ContentPlaceHolder1 content) and of
+Default.aspx (the header). It adds a `PreRenderComplete` handler that goes through the direct children of the header and of
+each container: every `<link rel="stylesheet">` with a local `.css` address (no query, no fragment, no colon, no leading
+double slash, no backslash) gets `?v=` and the first 8 hex characters (lower case) of the SHA-256 of the file.
+
+- The address is resolved from the control that holds the link (`ResolveUrl`, `Server.MapPath`), so a path in a content page is
+  relative to that page.
+- The stamp is computed once per file and kept for the life of the application (a static, case-insensitive dictionary). A
+  changed file gets its new stamp when the application restarts, which a deployment does; a stylesheet changed or added
+  without a restart keeps the old stamp until the application recycles.
+- A missing or unreadable file, or an address that cannot be mapped, keeps its link without `?v=`: no error and no line in
+  the error log (the missing result is cached too).
+- Content links need `runat="server"` to be controls: the link of bmms-forms.css in Master/Agenda.aspx and MinutesUpdate.aspx
+  and of ColorPicker/js_color_picker_v2.css in Master/Committee.aspx and Meeting.aspx got it for this step. The two master
+  pages carry the other links; the pages with their own links are Default.aspx and these four.
+- Local `.js` links (BrowserSecurity.js, ColorPicker/color_functions.js and js_color_picker_v2.js) are not stamped (an option
+  only; Known items).
+- Effect: the browser fetches a stylesheet again when it changed and keeps it otherwise, so nobody has to clear the browser
+  cache after a CSS change; Ctrl+F5 is a fallback only. MainMaster.css is linked twice by both master pages (the second link
+  does nothing; Known items).
+
+Drawn from: BMMS/AssetVersion.cs (read in full), BMMS/MasterPage/Main.Master.cs, MainNoMenu.Master.cs and BMMS/Default.aspx.cs
+(diff), BMMS/DashBoard/DashBoard.aspx.cs (diff), BMMS/Master/Agenda.aspx, MinutesUpdate.aspx, Committee.aspx and Meeting.aspx
+(diff), BMMS/BMMS.csproj (diff), Database/README.md (section Step UN6e and its Known items), Tests/packs/page-assets/README.md.
 
 ### Pages in no menu and the unlisted page
 

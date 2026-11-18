@@ -5,7 +5,7 @@
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="cc1" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <%-- Step A2b: card layout (bmms-forms.css). Layout only: every control ID, handler and visibility rule is as before. --%>
-    <link href="../CSS/bmms-forms.css" rel="stylesheet" type="text/css" />
+    <link href="../CSS/bmms-forms.css" rel="stylesheet" type="text/css" runat="server" />
 
     <script language="javascript" type="text/javascript">
     function UploadClick(btnUploadId)

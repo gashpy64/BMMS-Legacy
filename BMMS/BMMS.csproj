@@ -330,6 +330,7 @@
     <Compile Include="Master\Department.aspx.designer.cs">
       <DependentUpon>Department.aspx</DependentUpon>
     </Compile>
+    <Compile Include="AssetVersion.cs" />
     <Compile Include="FollowupStatusText.cs" />
     <Compile Include="PageAccessModule.cs" />
     <Compile Include="RichTextEditor.cs" />

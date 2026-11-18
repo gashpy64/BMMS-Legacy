@@ -3,10 +3,10 @@
 - Title: Deployment and Installation
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: FU2b (step 49: the run order and the section "Installing step 49 on a test database"); FU2a (step 48: the run order and the section "Installing step 48 on a test database"); FU1 (step 47: the run order, rollback and the section "Installing step 47 on a test database"); UN6d (step 46: the run order, rollback and the section "Installing step 46 on a test database"); UN6c2b (step 45: the run order, rollback and the section "Installing step 45 on a test database"); UN6c2a (step 44: the run order, rollback and the section "Installing step 44 on a test database"); UN6c1 (step 43: the run order, rollback and the section "Installing step 43 on a test database"); UN6b (step 42: the run order, rollback and the section "Installing step 42 on a test database"); WF3a2 (section "The tester's baseline after a new database step"); the rest RA1b (step 41)
-- Last updated by: FU2b, based on c4300b5
+- Applies to: UN6e (step 50: the run order and the section "Installing step 50 on a test database"); FU2b (step 49: the run order and the section "Installing step 49 on a test database"); FU2a (step 48: the run order and the section "Installing step 48 on a test database"); FU1 (step 47: the run order, rollback and the section "Installing step 47 on a test database"); UN6d (step 46: the run order, rollback and the section "Installing step 46 on a test database"); UN6c2b (step 45: the run order, rollback and the section "Installing step 45 on a test database"); UN6c2a (step 44: the run order, rollback and the section "Installing step 44 on a test database"); UN6c1 (step 43: the run order, rollback and the section "Installing step 43 on a test database"); UN6b (step 42: the run order, rollback and the section "Installing step 42 on a test database"); WF3a2 (section "The tester's baseline after a new database step"); the rest RA1b (step 41)
+- Last updated by: UN6e, based on dbc48ca
 - Status: Draft
-- Verified against: for FU2b (step 49): Database/BMMS-Fix-FollowupReports-Step49.sql (header and guards, read), Database/BMMS-Rollback-FollowupFinal-Step47.sql (diff: the guard), BMMS-Check-InstalledSteps.sql (diff), Database/README.md (section Step FU2b, "What to run where", the re-run lines); the Rollback script of step 49 and the Test script were not read line by line;
+- Verified against: for UN6e (step 50): Database/BMMS-Fix-Indexes-Step50.sql (header), BMMS-Check-InstalledSteps.sql (diff), Database/README.md (section Step UN6e, "What to run where"), the Test results as given; the Rollback and Test scripts of step 50 were not read line by line; for FU2b (step 49): Database/BMMS-Fix-FollowupReports-Step49.sql (header and guards, read), Database/BMMS-Rollback-FollowupFinal-Step47.sql (diff: the guard), BMMS-Check-InstalledSteps.sql (diff), Database/README.md (section Step FU2b, "What to run where", the re-run lines); the Rollback script of step 49 and the Test script were not read line by line;
   for FU2a (step 48): Database/README.md (section Step FU2a, "What to run where"), BMMS-Check-InstalledSteps.sql (diff), the Rollback scripts of steps 43 and 45 (diff); the Fix, Rollback and Test scripts of step 48 were not read line by line (only the Reason lines of the Fix script);
   for FU1 (step 47): Database/README.md (section Step FU1, "What to run where"), BMMS-Check-InstalledSteps.sql (diff), Tests/README.md (diff); the Fix, Rollback and Test scripts of step 47 were not read line by line;
   for UN6d (step 46): Database/BMMS-Fix-FollowupSave-Step46.sql and BMMS-Rollback-FollowupSave-Step46.sql (read in full), BMMS-Check-InstalledSteps.sql (diff), Database/README.md (section Step UN6d, "What to run where"), the Test script result (56 of 56) and the tester runs of 2026-11-15 as given;
@@ -252,7 +252,8 @@ The out-of-number-order installs, in the order to install:
 2. Step 23, after step 28 was built (the list in the README stays in number order; step 24 was
    installed before it on the databases that followed the README order).
 3. Steps 29, 30 and 31, last of the numbered group, in that order.
-4. Step D1, then 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48 and 49 in number order. Step 49 is the last step;
+4. Step D1, then 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49 and 50 in number order. Step 50 (three indexes, no procedure text) stops unless step 49 is installed; its Rollback
+   drops only its own indexes, and a re-run of an earlier step does not remove them. Step 49 is the last step with procedure text;
    it stops unless steps 41, 47 and 48 are installed, and the Rollback of step 47 refuses while step 49 is installed (roll step 49
    back first). If step 47 is re-run, run step 49 again. Step 48 stops unless steps 43, 45 and 47 are installed, and the Rollbacks of steps 43 and 45 refuse while step 48 is installed.
    Step 47 stops unless step 46 is installed. Rollbacks run in the reverse order: the step 44 Rollback refuses while step 45 is installed. The step 46
@@ -1039,3 +1040,35 @@ Test script on `BMMS`), then deploys the build. Steps 42 to 48 come first there.
 
 Drawn from (step 49): Database/BMMS-Fix-FollowupReports-Step49.sql (header and guards), Database/README.md (section Step FU2b,
 "What to run where"), BMMS-Check-InstalledSteps.sql (diff), BMMS-Rollback-FollowupFinal-Step47.sql (diff).
+
+## Installing step 50 on a test database
+
+A worked example with the step 50 scripts (step UN6e: three nonclustered indexes for the Dashboard lists). The server is
+`<server>` and the database is `BMMS_Test`. The step creates the indexes IX_Alert_User_Map_UserId_StatusId,
+IX_Alert_Master_SourceType_SourceTypeId and IX_Agenda_MeetingId (chapter 04, "Indexes added by step 50") and nothing else: no
+primary key, table, procedure or function, and no data. It is installed after step 49 and stops otherwise. The build of the step
+does not need it, so either order with the build works.
+
+1. Check the state. Select `BMMS_Test` and run BMMS-Check-InstalledSteps.sql. Step 49 should read Installed and step 50 Missing.
+2. Run the Fix script (`sqlcmd -S <server> -d BMMS_Test -I -i Database/BMMS-Fix-Indexes-Step50.sql`). It prints "Created ..." three
+   times. Run it again: "already present" three times. It stops, creating nothing, when an index of the same name on that table
+   has another definition (it never drops it) or when another index there has the same first key column.
+3. Run the Test script on `BMMS_Test` only, in a new query window: `Database/BMMS-Test-Indexes-Step50.sql`. All 9 numbered checks
+   must PASS. Then run the Test scripts of steps 42 (71), 43 (128), 44 (120), 45 (66), 47 (95), 48 (43) and 49 (33).
+4. Run BMMS-Check-InstalledSteps.sql again. Step 50 should read Installed, 3 of 3 markers, every other row unchanged.
+5. Bring the tester's baseline up to date: `pwsh -NoProfile -File Tests\_runner\Update-Baseline.ps1 -ConfirmDatabase
+   BMMS_Quality -FixScript BMMS-Fix-Indexes-Step50.sql`.
+6. Deploy the build, then make the browser checks of Database/README.md (section Step UN6e). After the deployment no browser
+   cache has to be cleared for a stylesheet change: the stylesheet links carry a version stamp that is renewed when the
+   application restarts (chapter 05, "Stylesheet version stamp (step UN6e)"); Ctrl+F5 is a fallback only.
+7. To undo: `Database/BMMS-Rollback-Indexes-Step50.sql` drops the three indexes, and only when each has the step 50 definition (it
+   refuses otherwise and drops nothing). The Check script then reads step 50 Missing. A second run is skipped. The build can be
+   rolled back on its own.
+8. Re-run rule: step 50 has no procedure text, so re-running the Fix script of an earlier step does not remove the indexes and
+   step 50 keeps reading Installed. If an index is missing or was changed by hand, run step 50 again.
+
+On `BMMS`, the Consultant runs the Check script, the Fix script and the Check script again after the backup (there is no Test
+script on `BMMS`), then deploys the build. Steps 42 to 49 come first there.
+
+Drawn from (step 50): Database/BMMS-Fix-Indexes-Step50.sql (header), Database/README.md (section Step UN6e, "What to run where"),
+BMMS-Check-InstalledSteps.sql (diff).

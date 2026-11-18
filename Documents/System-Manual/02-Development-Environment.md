@@ -3,10 +3,10 @@
 - Title: Development Environment
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6b (the memory reading in "The tester: what the development machine needs"); the rest WF3a2
-- Last updated by: UN6b, based on 0736c7f
+- Applies to: UN6e (the SQL Server row and the App_Data row of "The tester: what the development machine needs"); UN6b (the memory reading in "The tester: what the development machine needs"); the rest WF3a2
+- Last updated by: UN6e, based on dbc48ca
 - Status: Draft
-- Verified against: for step UN6b: Tests/_runner/Tester.Common.ps1 (diff: Get-QaMemory, QaMemoryWarnMB),
+- Verified against: for step UN6e: Tests/README.md (diff: the Server and Site lines), Database/README.md (section Step UN6e, Tester); for step UN6b: Tests/_runner/Tester.Common.ps1 (diff: Get-QaMemory, QaMemoryWarnMB),
   Run-Tests.ps1 (diff, preflight), Tests/README.md (diff, the memory warning row); for the development workflow (steps 1, 5, 6, 7 and 9) and the agents: CLAUDE.md (diff),
   .claude/agents/tester.md; for the section "The tester: what the development machine needs": Tests/package.json,
   Tests/README.md, Tests/_runner/Tester.Common.ps1 and Run-Tests.ps1 (tool lookup), Tests/lib/run.js,
@@ -81,7 +81,8 @@ development machine:
 | Chrome | The installed Google Chrome, started headless through playwright-core (`channel: 'chrome'` in Tests/lib/run.js) |
 | MSBuild | Found with vswhere from the Visual Studio Installer, else at a fixed Visual Studio 18 Community path; the runner builds BMMS/BMMS.csproj into Tests/_build (the projects' own bin and obj are not written) |
 | IIS Express | `C:\Program Files (x86)\IIS Express\iisexpress.exe`, run on port 18573 with the .NET 4 runtime |
-| SQL Server | The local default instance (the tester's server name is fixed as `.`), with sysadmin rights for the owner's Windows login for the one-time setup |
+| SQL Server | The local default instance (the tester's server name is fixed as `.`), with sysadmin rights for the owner's Windows login for the one-time setup. Since step UN6e (Tests/README.md) the two instances are named: the owner's BMMS, BMMS_Test and BMMS_New stay on `.\SQLEXPRESS`, which the tester never connects to; BMMS_Quality on `.` is made from a COPY_ONLY backup of BMMS_Test taken on `.\SQLEXPRESS` and passed through a folder both instances' service accounts can use (neither can read the other's backup folder); on `.` bmms_app is a login of its own, linked to its user in BMMS_Quality, with a password nobody keeps |
+| Folder `BMMS\App_Data` | Must exist in the working tree (empty is enough). A fresh clone lacks it, because git keeps no empty folder, and the site sync then refuses the run; create it once with `mkdir BMMS\App_Data` |
 | Database BMMS_Quality | A restore of BMMS_Test with every database step installed, then cleared, given its fixture and baselined by Tests/_runner/Setup-Quality.ps1. It is separate from BMMS and BMMS_Test, which the tester never uses |
 | Two SQL logins | bmms_tester (owner of BMMS_Quality) and bmms_site (the site copy's login), made by the setup; neither has a server role or access to another database. bmms_app must already be linked in BMMS_Quality with db_backupoperator, db_datareader and db_datawriter |
 | Port 18573 | Must be free when a run starts (the runner refuses otherwise). Port 49673 was tried first and lies in the Windows range for outgoing connections |

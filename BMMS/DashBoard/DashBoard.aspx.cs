@@ -387,7 +387,6 @@ namespace BMMS.DashBoard
                 if (reason == 4 && HasActionItemsCard)
                 {
                     // The role has the card: the choice of the filters was refused
-                    ViewState["dtActionItem"] = null;
                     cardActionItems.Visible = true;
                     ShowActionItemsMessage(ActionItemsFilterMessage + MeetingSummary1.ChoiceHint);
                     return;
@@ -396,7 +395,6 @@ namespace BMMS.DashBoard
                 if (reason == 4)
                 {
                     // The server's answer, not the role in the session: this role has no Action Items card
-                    ViewState["dtActionItem"] = null;
                     cardActionItems.Visible = false;
                     return;
                 }
@@ -407,20 +405,18 @@ namespace BMMS.DashBoard
 
                 if (reason != 0)
                 {
-                    ViewState["dtActionItem"] = null;
                     ShowActionItemsMessage(reason == 8 ? ActionItemsInactiveMessage : ActionItemsFailedMessage);
                     return;
                 }
 
                 pActionItemsMessage.Visible = false;
                 grvActionItem.Visible = true;
-                ViewState["dtActionItem"] = dtActionItem;
+                // Step UN6e: the list is not kept in ViewState; paging and the three links read it again (OnPagingAction)
                 BindActionItemGRV(dtActionItem);
             }
             catch (Exception ex)
             {
                 Utilities.WriteErrorLog(className, "LoadActionItemGRV", ex.ToString());
-                ViewState["dtActionItem"] = null;
                 cardActionItems.Visible = true;
                 ShowActionItemsMessage(Common.IsServerBusy(ex) ? ActionItemsBusyMessage : ActionItemsFailedMessage);
             }
@@ -1047,9 +1043,11 @@ namespace BMMS.DashBoard
         #region OnPagingAction
         protected void OnPagingAction(object sender, GridViewPageEventArgs e)
         {
-            // The page asked for, of the list in the mode chosen (not of the whole list)
+            // The page asked for, of the list in the mode chosen (not of the whole list). Step UN6e: the list is read
+            // again through spr_GetDashboardActionItems with the acting user and the filters (it is not kept in
+            // ViewState); a page that no longer exists shows the last page there is (BindActionItemGRV)
             grvActionItem.PageIndex = e.NewPageIndex;
-            BindActionItemGRV((DataTable)ViewState["dtActionItem"]);
+            LoadActionItemGRV();
         }
         #endregion
 

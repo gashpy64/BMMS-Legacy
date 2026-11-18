@@ -3,10 +3,10 @@
 - Title: BMMS Change Log
 - Audience: Gashpy Software (internal)
 - Shipped: No
-- Applies to: FU2b; FU2a; FU1
-- Last updated by: FU2b, based on c4300b5
+- Applies to: UN6e; FU2b; FU2a; FU1
+- Last updated by: UN6e, based on dbc48ca
 - Status: Draft
-- Verified against: for FU2b: git diff c4300b5 (BMMS/Report/Followup.aspx(.cs) and FollowupActionTaken.aspx(.cs), BMMS/Master/Followup.aspx(.cs), BMMS/FollowupStatusText.cs, BMMSBAL/ReportsMgr.cs and ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/BMMS-Check-InstalledSteps.sql, the Rollback and Test of step 47, Database/README.md section Step FU2b and Known items), Database/BMMS-Fix-FollowupReports-Step49.sql (read), the Test results, the tester runs 2026-11-17_133514 and 2026-11-17_135000 and the owner's tests as given;
+- Verified against: for UN6e: git diff dbc48ca (BMMS/DashBoard/DashBoard.aspx.cs, BMMS/MasterPage/Main.Master.cs and MainNoMenu.Master.cs, BMMS/Default.aspx.cs, BMMS/Master/Committee.aspx, BMMS.csproj, Database/BMMS-Check-InstalledSteps.sql, Tests/README.md, Tests/_runner/Run-Tests.ps1) and the new files (BMMS/AssetVersion.cs read in full; BMMS-Fix-Indexes-Step50.sql header; Tests/packs/page-assets/README.md), Database/README.md section Step UN6e and Known items, the owner's tests and the tester run 2026-11-18_123549 as given; for FU2b: git diff c4300b5 (BMMS/Report/Followup.aspx(.cs) and FollowupActionTaken.aspx(.cs), BMMS/Master/Followup.aspx(.cs), BMMS/FollowupStatusText.cs, BMMSBAL/ReportsMgr.cs and ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/BMMS-Check-InstalledSteps.sql, the Rollback and Test of step 47, Database/README.md section Step FU2b and Known items), Database/BMMS-Fix-FollowupReports-Step49.sql (read), the Test results, the tester runs 2026-11-17_133514 and 2026-11-17_135000 and the owner's tests as given;
   for FU2a: git diff 9336d29 (BMMS/DashBoard/DashBoard.aspx(.cs, .designer.cs), BMMS/Master/Followup.aspx.cs, BMMS/CSS/bmms-workbench.css, BMMS/BMMS.csproj, Database/BMMS-Check-InstalledSteps.sql, the Rollbacks and Tests of steps 43 and 45, Tests/packs/dashboard/*) and the new files (BMMS/FollowupStatusText.cs read in full; the three step 48 scripts: the Reason lines of the Fix script only), Database/README.md section Step FU2a and Known items, the Test results, the tester run 2026-11-16_181041 and the owner's tests as given;
   for FU1: git diff 3d571c4 (BMMS/Master/Followup.aspx(.cs, .designer.cs), BMMS/CSS/bmms-workbench.css, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/BMMS-Check-InstalledSteps.sql, Tests/README.md, Tests/packs/followup/*), Database/README.md section Step FU1 and Known items; the three step 47 scripts were not read line by line (their content is taken from Database/README.md), the Test result (95 of 95), the tester run 2026-11-16_133023 and the owner's tests as given;
   for UN6d: git diff ce7358a 276e402 (BMMS/DashBoard/DashBoard.aspx(.cs), BMMS/Master/Followup.aspx(.cs), BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, BMMS/CSS/CommonHTML.css and bmms-workbench.css, Database/BMMS-Fix-FollowupSave-Step46.sql and BMMS-Rollback-FollowupSave-Step46.sql (read in full), BMMS-Check-InstalledSteps.sql, Database/README.md section Step UN6d and Known items, Tests/README.md, Tests/packs/followup/*, Tests/packs/dashboard/README.md and expected.json, Tests/packs/access-matrix/README.md), Claude outputs/un6d-requirements.md, the Test script and tester results and the owner's tests as given; for UN6c2b: git diff f3cbd7e~1 f3cbd7e (BMMS/DashBoard/DashBoard.aspx(.cs), BMMS/UserControl/MeetingSummary.ascx(.cs), BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs and ActionItemDB.cs, Database/BMMS-Fix-DashboardSummary-Step45.sql (read), BMMS-Rollback-AgendaWaitingFor-Step44.sql, BMMS-Check-InstalledSteps.sql, Database/README.md section Step UN6c2b and Known items, Tests/README.md, Tests/packs/dashboard/README.md), the tester run of 2026-11-15 and the owner's tests as given; for UN6c2a: git diff HEAD (493cb45) and the new files (BMMS/DashBoard/DashBoard.aspx(.cs, .designer.cs),
@@ -43,6 +43,39 @@
 One entry per step, newest first. Each entry names the step, its tag and what changed for users,
 for installers and in the database. Release entries (tags vX.Y.Z) collect the steps since the
 previous release.
+
+## UN6e - Indexes for the Dashboard lists, the Action Items list out of ViewState, a version stamp on the stylesheet links, the tester names its results folder (tag not yet set, 2026-11-18; database step 50; code not yet committed, based on dbc48ca)
+
+- For users: nothing changes on screen. The Dashboard (Controller, Manager, User), the Followup page and the Followup reports look
+  and work as before. After a stylesheet change the browser fetches the new file by itself; nobody has to clear the cache.
+- For installers: database step 50 (BMMS-Fix-Indexes-Step50.sql), installed after step 49. It creates three nonclustered indexes:
+  IX_Alert_User_Map_UserId_StatusId, IX_Alert_Master_SourceType_SourceTypeId and IX_Agenda_MeetingId. It changes no primary key,
+  table, procedure, function or data. The Fix is re-runnable and stops on an index of the same name with another definition (or
+  another index with the same first key column). BMMS-Rollback-Indexes-Step50.sql drops only these three, and only with the step 50
+  definition. There is no procedure text, so re-running an earlier step does not remove step 50 (the Check script has one marker
+  per index). The build does not need step 50; either order. After a stylesheet change no browser cache has to be cleared; Ctrl+F5
+  is a fallback only.
+- In the database (R28): the indexes were chosen by logical reads on a copy of BMMS_Test filled to about one year of use; a candidate
+  is kept when it at least halves the reads of its table in a path the Dashboard or the Followup page calls. Examples: Meetings card,
+  Manager, 7,577 to 863 reads in all; My approvals, Manager, 1,171 to 319; Alerts 381 to 309; Summary 177 to 91. Seven other
+  candidates were measured and dropped (chapter 04, "Indexes added by step 50 (UN6e)").
+- For developers (R29, stage A): the Dashboard's Action Items list is no longer kept in ViewState (DashBoard.aspx.cs; paging reads it
+  again with the acting user and the filters; the grids keep only their row state). Controller's Dashboard on the filled copy:
+  899,196 to 21,908 characters of ViewState; on a copy of BMMS_Test 23,316 to 7,788. Stage B (display-only row controls without
+  ViewState) is not built (owner decision); the Followup page is unchanged.
+- For developers (R30): BMMS/AssetVersion.cs; every local stylesheet link of both master pages, Default.aspx and the content links of
+  Agenda, MinutesUpdate, Committee and Meeting gets ?v= and the first 8 hex characters of the SHA-256 of the file, computed once per
+  file and kept for the life of the application (a deployment or recycle refreshes it). A missing file gives a link without ?v=, no
+  error and no log line. Local .js links are not stamped.
+- For the tester (R31, WF3a3): the runner prints "Results folder: Tests\_results\<run>" at the start and the end and writes
+  `Tests\_results\latest.txt`; the guard and agent files are unchanged. `Tests\README.md` has the two-SQL-instance wording and the
+  note that `BMMS\App_Data` must exist. New pack page-assets: the stylesheet stamps on ten pages and the Controller's Dashboard
+  ViewState at most 12,900 characters (the fixture value 10,312 plus about 25 percent; the old code gives 24,288).
+- Results: owner's tests passed on BMMS_Test on 2026-11-18 (Test 50 9 of 9; 42 71, 43 128, 44 120, 45 66, 47 95, 48 43, 49 33;
+  Check: step 50 Installed 3 of 3; browser in Chrome and Edge at 100 percent). Tester run 2026-11-18_123549: PASSED, 915 checks
+  (selftest 8, access-matrix 472, dashboard 397, followup 16, followup-reports 14, page-assets 11).
+- Documents: System-Manual 02, 03, 04, 05 and 10, Data-Flow 09-Dashboard-and-Alerts (two rows), this entry and the README register
+  note. No user manual changed (nothing is visible); no screenshots.
 
 ## FU2b - The Followup reports show who confirmed or reopened each followup (tag not yet set, 2026-11-17; database step 49; code not yet committed, based on c4300b5)
 

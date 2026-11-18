@@ -3,10 +3,10 @@
 - Title: BMMS Documents - index, register and rules
 - Audience: Gashpy Software (owner, developers, doc-writer)
 - Shipped: No
-- Applies to: FU2b (register entries of 00-Overall and 03-Controller); FU2a (register entries of 00-Overall, 01-User, 02-Manager and 03-Controller); FU1 (register entries of 00-Overall, 03-Controller and Glossary); UN6d
-- Last updated by: FU2b, based on c4300b5 (register entries of 00-Overall and 03-Controller only)
+- Applies to: UN6e (no register entry changed: no user manual changed, nothing is visible); FU2b (register entries of 00-Overall and 03-Controller); FU2a (register entries of 00-Overall, 01-User, 02-Manager and 03-Controller); FU1 (register entries of 00-Overall, 03-Controller and Glossary); UN6d
+- Last updated by: UN6e, based on dbc48ca (header only; the register entries are those of FU2b, FU2a and the steps before)
 - Status: Draft
-- Verified against: the register entries of the manuals and the Glossary: see there; CLAUDE.md, .claude/agents/doc-writer.md, Documents/_build/*.ps1, Tests/README.md
+- Verified against: for UN6e: the step's diff and the user-manual search (no manual describes ViewState, stylesheets, indexes or the tester); the register entries of the manuals and the Glossary: see there; CLAUDE.md, .claude/agents/doc-writer.md, Documents/_build/*.ps1, Tests/README.md
   (the update matrix lines for the tester)
 - To confirm:
 

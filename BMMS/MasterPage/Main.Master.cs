@@ -18,6 +18,9 @@ namespace BMMS.MasterPage
         {
             InitSetup();
 
+            // Step UN6e: ?v=<stamp> on the stylesheet links of the header and of the page's content (AssetVersion.cs)
+            AssetVersion.Register(Page, ContentPlaceHolder1);
+
             if (!IsPostBack)
             {
                 

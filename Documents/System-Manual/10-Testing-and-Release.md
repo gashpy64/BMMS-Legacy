@@ -3,10 +3,10 @@
 - Title: Testing and Release
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: FU2b (the section "Step 49 (FU2b): the Test script, the changed expectation of step 47, the followup-reports pack"); FU2a (the section "Step 48 (FU2a): the Test script, the changed expectations of steps 43 and 45, the dashboard pack check 18"); FU1 (the section "Step 47 (FU1): the Test script, the followup pack and the run"); UN6d (the step 46 Test script section "Step 46 (UN6d): the Followup saves", the followup pack, the dashboard pack check 8, the packs line of the tester table); UN6c2b (the step 45 Test script section, "The dashboard pack since step UN6c2b", the fixture and baseline notes); UN6c2a (the step 44 Test script section, "The dashboard pack since step UN6c2a", check 4 of the dashboard pack, the fixture and baseline notes); UN6c1 (the step 43 Test script section, "The dashboard pack since step UN6c1", the fixture and baseline notes); UN6b (the step 42 Test script section, the dashboard pack, the memory preflight, the fixture's committee QA2, the baseline upkeep note); the rest RA1c2
-- Last updated by: FU2b, based on c4300b5
+- Applies to: UN6e (the section "Step 50 (UN6e): the Test script, the page-assets pack, the results folder (WF3a3)" and the packs row of "What it is"); FU2b (the section "Step 49 (FU2b): the Test script, the changed expectation of step 47, the followup-reports pack"); FU2a (the section "Step 48 (FU2a): the Test script, the changed expectations of steps 43 and 45, the dashboard pack check 18"); FU1 (the section "Step 47 (FU1): the Test script, the followup pack and the run"); UN6d (the step 46 Test script section "Step 46 (UN6d): the Followup saves", the followup pack, the dashboard pack check 8, the packs line of the tester table); UN6c2b (the step 45 Test script section, "The dashboard pack since step UN6c2b", the fixture and baseline notes); UN6c2a (the step 44 Test script section, "The dashboard pack since step UN6c2a", check 4 of the dashboard pack, the fixture and baseline notes); UN6c1 (the step 43 Test script section, "The dashboard pack since step UN6c1", the fixture and baseline notes); UN6b (the step 42 Test script section, the dashboard pack, the memory preflight, the fixture's committee QA2, the baseline upkeep note); the rest RA1c2
+- Last updated by: UN6e, based on dbc48ca
 - Status: Draft
-- Verified against: for step FU2b: Database/README.md (section Step FU2b: the Test script description, the changed expected value, the tester paragraph, "What to run where"), Tests/packs/followup-reports/README.md (read), BMMS-Test-FollowupFinal-Step47.sql (diff), the Test results and the tester runs 2026-11-17_133514 and 2026-11-17_135000 as given; the step 49 Test script and pack.js were not read in full;
+- Verified against: for step UN6e: Database/README.md (section Step UN6e: the Test script description, the results, the tester paragraph and WF3a3), Tests/README.md and Tests/_runner/Run-Tests.ps1 (diff), Tests/packs/page-assets/README.md (read), the Test results and the tester run 2026-11-18_123549 as given; the step 50 Test script and the pack.js and expected.json of page-assets were not read in full; for step FU2b: Database/README.md (section Step FU2b: the Test script description, the changed expected value, the tester paragraph, "What to run where"), Tests/packs/followup-reports/README.md (read), BMMS-Test-FollowupFinal-Step47.sql (diff), the Test results and the tester runs 2026-11-17_133514 and 2026-11-17_135000 as given; the step 49 Test script and pack.js were not read in full;
   for step FU2a: Database/README.md (section Step FU2a: the Test script description, the changed expected values, the tester paragraph, "What to run where"), Tests/packs/dashboard/README.md (diff), Database/BMMS-Test-DashboardAlerts-Step43.sql and BMMS-Test-DashboardSummary-Step45.sql (diff stat only), the Test script result (43 of 43) and the tester run 2026-11-16_181041 as given; the step 48 Test script and pack.js were not read in full;
   for step FU1: Database/README.md (section Step FU1: the Test script description, the tester paragraph, the changed expected values, "What to run where"), Tests/packs/followup/README.md (read in full), Tests/README.md and Database/BMMS-Check-InstalledSteps.sql (diff), the Test script result (95 of 95) and the tester run 2026-11-16_133023 as given; the Test script itself and pack.js were not read in full;
   for step UN6d: Database/README.md (section Step UN6d: the Test script description, the tester paragraph, the changed expected values), Tests/packs/followup/README.md and expected.json, Tests/packs/dashboard/README.md and expected.json (diff), Tests/packs/access-matrix/README.md and Tests/README.md (diff), the Test script result (56 of 56) and the tester runs of 2026-11-15 as given; the Test script itself (632 lines) and pack.js were not read in full;
@@ -166,7 +166,7 @@ Database/README.md, section "Step WF3a1". What the development machine needs is 
 | SQL logins | Two, made by the setup. bmms_tester owns BMMS_Quality; the runner restores and checks as this login. bmms_site is the site copy's login: a user in BMMS_Quality with db_datareader, db_datawriter, db_backupoperator and EXECUTE on the dbo schema. Neither has a server role or access to any other database. Before every run the runner asks the server, as each login, what it can reach, and refuses when that is more than BMMS_Quality (any other database, BMMS or BMMS_Test, a server role, CONTROL SERVER, IMPERSONATE). Since WF3a2 the server permissions are an allow-list: in effect only CONNECT SQL and VIEW ANY DATABASE, and granted to the login only CONNECT SQL, otherwise the run is refused; the check is made again after the restore (Run-Tests.ps1), and Update-Baseline.ps1 makes it after the Fix scripts and before the baseline backup. The application login bmms_app is not used |
 | Browser | The installed Chrome, headless, driven by Node scripts (playwright-core). Requests to any host other than localhost are aborted and listed |
 | Mail | BMMS_Quality has the safe default (localhost, port 25); no real mail can be sent |
-| Packs | One folder per pack under Tests/packs (pack.js and data files). The packs are selftest (WF3a1), access-matrix (WF3a2), dashboard (UN6b) and followup (UN6d). A pack is Node code: it is written in a step's build and reviewed there, and the tester cannot change it |
+| Packs | One folder per pack under Tests/packs (pack.js and data files). The packs are selftest (WF3a1), access-matrix (WF3a2), dashboard (UN6b), followup (UN6d), followup-reports (FU2b) and page-assets (UN6e). A pack is Node code: it is written in a step's build and reviewed there, and the tester cannot change it |
 
 ### How it is run
 
@@ -809,6 +809,69 @@ Result of the step: tester run 2026-11-17_133514 (access-matrix, dashboard, foll
 PASSED, 904 checks (selftest 8, access-matrix 472, dashboard 397, followup 16, followup-reports 14); after the header change
 ("Followup status") run 2026-11-17_135000 (selftest and followup-reports): PASSED, 19. The owner's tests passed on 2026-11-17
 (SQL on BMMS_Test and the browser).
+
+### Step 50 (UN6e): the Test script, the page-assets pack, the results folder (WF3a3)
+
+BMMS-Test-Indexes-Step50.sql runs on BMMS_Test only and is read only: 9 numbered checks, all PASS on 2026-11-18. It checks that
+each of the three indexes has exactly its definition, that no other index on its table has the same first key column, and that
+the clustered primary keys of the three tables are unchanged. No expected value of an older Test script changed. Results on
+BMMS_Test with step 50: Test 50 9 of 9, Test 42 71 of 71, Test 43 128 of 128, Test 44 120 of 120, Test 45 66 of 66, Test 47
+95 of 95, Test 48 43 of 43, Test 49 33 of 33. BMMS-Check-InstalledSteps.sql: step 50 Missing before the Fix, Installed 3 of 3
+after, every other row unchanged. The tester's baseline for step 50: `Update-Baseline.ps1 -ConfirmDatabase BMMS_Quality -FixScript
+BMMS-Fix-Indexes-Step50.sql`.
+
+On the filled copy used to measure the indexes (chapter 04, "Indexes added by step 50"), Test 44 gave 119 of 120 there: its
+check 15 sees 55 rows with and without step 50, which Database/README.md puts down to the fill data (it maps alerts of copied
+agenda items to every user) and not to the indexes. It is not a result on BMMS_Test.
+
+#### The page-assets pack (step UN6e)
+
+Tests/packs/page-assets (pack.js, expected.json, README.md; run with `-Pack page-assets`, about half a minute). It opens ten pages
+(the sign-in page; the Dashboard as qa_ctrl, qa_manager and qa_user; Followup, Agenda, Update Minutes, Committee, Meeting and
+ChangePasswordFirst as qa_ctrl, the last one opened and not submitted) and runs 11 checks:
+
+- One check per page: its local stylesheet links (`<link rel="stylesheet">` of this site whose path ends in `.css`) are exactly
+  the files listed in expected.json, in the order of the page (MainMaster.css twice, since both master pages link it twice),
+  each with `?v=` and the first 8 hex characters of the SHA-256 of that file in Tests/_site. The pack computes the expected stamps
+  from the site copy, so a changed stylesheet needs no change of expected.json; a stylesheet added to or removed from a page does.
+  The AJAX toolkit's calendar stylesheet (a WebResource.axd handler) and links to another host are not counted.
+- One check on the ViewState: the Dashboard of qa_ctrl as first loaded has a `__VIEWSTATE` of at most 12,900 characters. The limit
+  is the fixture value 10,312 (run 2026-11-18_121946) plus about 25 percent (owner decision 2026-11-18). The code before UN6e
+  (dbc48ca) gives 24,288 for the same page, measured on a scratch build against a copy of the tester's baseline, so the limit
+  catches the stored Action Items list coming back. The first limit, 9,800, came from a copy of BMMS_Test and failed in the
+  first tester run, because the fixture's Dashboard is larger.
+
+The pack changes no data. It is listed in the packs row of "What it is" and in Tests/README.md. The other packs are unchanged.
+
+#### The results folder and latest.txt (step WF3a3)
+
+Tests/_runner/Run-Tests.ps1 prints "Results folder: Tests\_results\<run>" as the first output of a run (right after the results
+folder is made) and again at the end, after the result line, and writes the run folder name alone, with nothing else, to
+`Tests\_results\latest.txt` at the start. If latest.txt cannot be written the runner prints a WARNING and goes on. results.md is
+written when the run ends. Why: each tester run of FU1, FU2a and FU2b still moved to the background after about three minutes
+although the call had the 600 s timeout; the last lines of the runner (the result word and the folder) then went to a task
+output file that the tester guard does not let the agent read, and a listing of Tests\_results is refused too, so the agent could
+not learn the folder name and guessed it. The first lines of the output do reach the agent, and latest.txt is a file under
+Tests\_results that the guard allows, so either one names the folder. The guard (.claude/hooks/tester-guard.ps1) and the agent
+instructions (.claude/agents/tester.md) are unchanged; the agent could be told to read latest.txt, which needs a new Claude Code
+session before the next tester run (Known items in Database/README.md).
+
+Two more notes from Tests/README.md for the machine of the tester: the tester's server is the default SQL Server instance (`.`),
+while the owner's BMMS, BMMS_Test and BMMS_New stay on the `.\SQLEXPRESS` instance, which the tester never connects to; BMMS_Quality
+is made from a COPY_ONLY backup of BMMS_Test taken on `.\SQLEXPRESS` and handed over through a folder both instances' service
+accounts can use, because neither can read the other's backup folder. And the folder `BMMS\App_Data` must exist in the working tree
+(empty is enough): a fresh clone lacks it, because git keeps no empty folder, and the site sync then refuses the run with "Tests\_site
+is not the same as the working tree ... App_Data". Create it once with `mkdir BMMS\App_Data`.
+
+Stylesheet changes and the cache: since step UN6e a stylesheet change shows without clearing the browser cache, because the
+links carry a version stamp that changes with the file when the application restarts (chapter 05, "Stylesheet version stamp (step
+UN6e)"). Ctrl+F5, which the check of step UN6d (above) needed, is a fallback only.
+
+Result of the step: tester run 2026-11-18_123549 (selftest, access-matrix, dashboard, followup, followup-reports, page-assets;
+baseline with step 50): PASSED, 915 checks (selftest 8, access-matrix 472, dashboard 397, followup 16, followup-reports 14,
+page-assets 11). The owner's tests passed on 2026-11-18 (SQL on BMMS_Test and the browser, Chrome and Edge at 100 percent: the
+Dashboard as Controller, Manager and User unchanged; every CSS link ends in ?v= and 8 hex characters; the stamp changed after a CSS
+edit and a recycle; the Followup page and report unchanged; no new error log entry).
 
 ## Reviewer stage
 
