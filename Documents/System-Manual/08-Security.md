@@ -3,10 +3,11 @@
 - Title: Security
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: FU2b (the paragraph "Step 49 (FU2b)" under "Role and acting-user checks in procedures": the report procedures with the acting user, the refusals, no string SQL on the Followup reports, the one list of blank reopen characters); FU2a (the paragraph "Step 48 (FU2a)" under "Role and acting-user checks in procedures": role checks before the lock, a confirmed followup final for every role, the status texts); FU1 (the paragraph "Step 47 (FU1)" under "Role and acting-user checks in procedures": the Followup list, the final confirmed state, Reopen, the reason text and its encoding); UN6d (the paragraph on the Followup saves and the Action Item Details panel under "Role and acting-user checks in procedures"); UN6c2b (the paragraph on the summary cards and the Committee filter under "Role and acting-user checks in procedures"); UN6c2a (the paragraph on the approval rule under "Role and acting-user checks in procedures"); UN6c1 (the paragraph on the Dashboard alerts and Action Items under "Role and acting-user checks in procedures"); UN6b (the paragraph on the Dashboard meeting list under "Role and acting-user checks in procedures"); the rest RA1c2
-- Last updated by: FU2b, based on c4300b5
+- Applies to: RA1d (step 51: section "Page access": layer 1b, the session check on every request, and the former security lead replaced by "Session check since step RA1d"); FU2b (the paragraph "Step 49 (FU2b)" under "Role and acting-user checks in procedures": the report procedures with the acting user, the refusals, no string SQL on the Followup reports, the one list of blank reopen characters); FU2a (the paragraph "Step 48 (FU2a)" under "Role and acting-user checks in procedures": role checks before the lock, a confirmed followup final for every role, the status texts); FU1 (the paragraph "Step 47 (FU1)" under "Role and acting-user checks in procedures": the Followup list, the final confirmed state, Reopen, the reason text and its encoding); UN6d (the paragraph on the Followup saves and the Action Item Details panel under "Role and acting-user checks in procedures"); UN6c2b (the paragraph on the summary cards and the Committee filter under "Role and acting-user checks in procedures"); UN6c2a (the paragraph on the approval rule under "Role and acting-user checks in procedures"); UN6c1 (the paragraph on the Dashboard alerts and Action Items under "Role and acting-user checks in procedures"); UN6b (the paragraph on the Dashboard meeting list under "Role and acting-user checks in procedures"); the rest RA1c2
+- Last updated by: RA1d, based on d642746
 - Status: Draft
-- Verified against: for step FU2b: Database/BMMS-Fix-FollowupReports-Step49.sql (the role and Reason lines of the three new procedures and spr_ReopenFollowup, read), BMMS/Report/Followup.aspx.cs and FollowupActionTaken.aspx.cs (diff: the refusals, HtmlEncode of the status texts), BMMSBAL/ActionItemMgr.cs, ReportsMgr.cs and BMMSDAL/ActionItemDB.cs (diff: GetFollowup(string) removed), Database/README.md (section Step FU2b, the rules, not the findings);
+- Verified against: for step RA1d: BMMS/PageAccessModule.cs, BMMS/Default.aspx.cs, BMMS/Global.asax.cs (diff), BMMSBAL/UserMgr.cs and BMMSDAL/UserDB.cs (diff), Database/BMMS-Fix-SessionCheck-Step51.sql (read in full), Database/README.md (section Step RA1d: the rules, not the findings), Tests/packs/session-check/README.md, the Test and tester results as given;
+  for step FU2b: Database/BMMS-Fix-FollowupReports-Step49.sql (the role and Reason lines of the three new procedures and spr_ReopenFollowup, read), BMMS/Report/Followup.aspx.cs and FollowupActionTaken.aspx.cs (diff: the refusals, HtmlEncode of the status texts), BMMSBAL/ActionItemMgr.cs, ReportsMgr.cs and BMMSDAL/ActionItemDB.cs (diff: GetFollowup(string) removed), Database/README.md (section Step FU2b, the rules, not the findings);
   for step FU2a: Database/BMMS-Fix-DashboardFollowupFinal-Step48.sql (the Reason lines of the three procedures), BMMS/DashBoard/DashBoard.aspx.cs (diff: SetActionItemPanelMode, ShowConfirmedAfterSave, InnerText), Database/README.md (section Step FU2a, the rules, not the findings); the system account refusal is taken from the step 43 rule as described in README, not re-read in the script;
   for step FU1: BMMS/Master/Followup.aspx and .aspx.cs (the "<" check, HtmlEncode in grvFollowup_RowDataBound, the reason checks, the Reason texts), BMMSBAL/ActionItemMgr.cs and BMMSDAL/ActionItemDB.cs (diff), Database/README.md (section Step FU1, the rules; the procedure texts of step 47 as described there, the script not read line by line);
   for step UN6d: Database/BMMS-Fix-FollowupSave-Step46.sql (both procedures, read in full), BMMS/Master/Followup.aspx.cs and BMMS/DashBoard/DashBoard.aspx.cs (diff), BMMSBAL/ActionItemMgr.cs and BMMSDAL/ActionItemDB.cs (diff), Database/README.md (section Step UN6d, the rule, not the findings); for step UN6c2b: Database/BMMS-Fix-DashboardSummary-Step45.sql (fn_DashboardCommitteeFilter, spr_GetDashboardSummary, the Reason checks of the three replaced procedures), BMMS/UserControl/MeetingSummary.ascx.cs and BMMS/DashBoard/DashBoard.aspx.cs (diff), Database/README.md (section Step UN6c2b and its Known items); and before: for step UN6c2a: Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (fn_AgendaWaitingFor, spr_GetAgendaApprovalState, spr_GetDashboardApprovals, spr_UpdateAgendaByAgendaId, spr_GetDashboardMeetings, read in full), BMMS/DashBoard/DashBoard.aspx.cs (what is sent, what is read back), BMMSDAL/AgendaDB.cs (diff), Database/README.md (section Step UN6c2a, the rule and the hardening, not the findings); for step UN6c1: Database/BMMS-Fix-DashboardAlerts-Step43.sql (the procedures and functions), BMMS/DashBoard/DashBoard.aspx.cs (what is sent and read back),
@@ -22,8 +23,7 @@
   paragraphs BMMS/PageAccessModule.cs, BMMS/XML/PageAccess.xml, BMMS/UserControl/MenuUserControl.ascx,
   the Page_Load of the nine pages, Database/BMMS-Fix-RoleAccess-Step40.sql (fn_UserChangeRefusal),
   BMMSBAL/UserMgr.cs and MemberTypeMgr.cs
-- To confirm: chapter not written yet (WF2b2); the step that closes the session-role lead
-  (RA1d); the minimum SQL Server version (THROW in 24
+- To confirm: chapter not written yet (WF2b2); the minimum SQL Server version (THROW in 24
   procedures, pointer to chapter 04); leads from the old Architecture notes to verify;
   lead from the old Errata notes: values still stored in the old Triple DES format (empty-string
   key, fixed IV) in the live database
@@ -44,7 +44,8 @@ The old Triple DES routine in BMMSBAL/Common.cs (DecryptVal and its encrypt coun
 How a page is protected (read from the code for step RA1a; the rest of this section is still to be written).
 
 - Layer 1, by address: BMMS.Security.PageAccessModule checks every .aspx request against
-  BMMS/XML/PageAccess.xml (login required, account active, `Session["RoleCode"]` in the page's roles). In
+  BMMS/XML/PageAccess.xml (login required, the session still matching the database (see "Session check since step
+  RA1d" below), `Session["RoleCode"]` in the page's roles). In
   `Enforce` mode a refused request gets the "Access denied" page (HTTP 403) and a DENIED line in
   `App_Data\PageAccessLog.txt`.
 - Layer 2, by the page: since step RA1a the nine pages that only an Admin may use call
@@ -95,11 +96,42 @@ How a page is protected (read from the code for step RA1a; the rest of this sect
   does not stay behind), and the grid labels of meeting number, time, agenda number, subject number and department
   name are HTML-encoded. This is the tenth page that checks the role in the database (the nine of RA1a),
   beside the report pages of RA1b.
-- Security lead (not fixed; owner decision, a later step RA1d closes it): only these nine pages check the role
-  in the database (since step RA1b also Reports.aspx, Followup.aspx and ViewReport.aspx for the roles named above,
-  and since RA1c2 FollowupActionTaken.aspx). Every other page follows the role stored in the session until sign-out, so after a role
-  change an open session keeps the old role on those pages, and the menu keeps the old links until the next
-  sign-in. [[CONFIRM: the step that closes this (named RA1d by the owner); its date and scope are not in the repository]]
+- Session check since step RA1d (step 51), which closes the earlier gap that only the pages above read the role
+  from the database and every other page followed `Session["RoleCode"]` until sign-out:
+  - What is checked: every .aspx request that PageAccess.xml does not open to visitors, with its postbacks and
+    UpdatePanel postbacks, the report pop-up Report/ViewReport.aspx, the PDF and Word exports and
+    ChangePasswordFirst.aspx. Not checked: Default.aspx, Logout.aspx, Error/ErrorPage.aspx (public in
+    PageAccess.xml), WebResource.axd, ScriptResource.axd and static files. The module sees paths ending in .aspx
+    only; the project has no .ashx, .asmx or .svc, and a handler type added later must be added to the check in the
+    same step.
+  - What is compared: at sign-in the session keeps the role (`Session["RoleCode"]`) and a department stamp
+    (`Session["DepartmentSet"]`: Users.DepartmentId, "|", the user's open department rows of step 39 with the home
+    department marked, for example "4|4h,5"), both from spr_GetUserAccessState. On every request the module reads
+    the same procedure once (the result is kept for the request, and RequireRole and HasRole reuse it, so there is
+    one database call per checked request) and compares: user missing, user inactive, role different (trimmed, case
+    ignored), department set different or missing from the session. The protected system account follows the same
+    rule.
+  - On a difference: one SESSION-ENDED line in `App_Data\PageAccessLog.txt` (user, role, page, "UserId [n]; [reason]",
+    the reason being "missing", "inactive", "role X to Y" or "departments changed"); `Session.Abandon` without
+    `Clear`, so Session_End still finds the UserId and closes the open login rows as at sign-out; the session cookie
+    (the cookieName of the sessionState section, ASP.NET_SessionId by default) is expired; the redirect to the
+    sign-in page with `?status=inactive` (missing or inactive) or `?status=changed` (role or departments). Default.aspx
+    compares the value with these two fixed codes and shows a fixed text ("Your account is inactive. Contact the
+    administrator." or "Your access has changed. Please sign in again."); any other value shows nothing and is never
+    written to the page. An UpdatePanel postback gets the redirect in the ASP.NET AJAX form and the pop-up and the
+    exports get it before any byte of the page or file. Unsaved work is lost.
+  - On a database error during the check: the session is kept, the page does not run, the safe error page is shown
+    (HTTP 500; the error bar for an UpdatePanel postback), the error is written to the error log and one
+    SESSION-CHECK-ERROR line to the page access log; the next request checks again (fail closed for that request
+    only). Sign-in keeps "Database not connected". Before step RA1d a database error let the request through.
+  - Logged values: every value written to the page access log is cleaned of control characters (tab, line breaks), so a
+    line always has six columns.
+  - Session_End (Global.asax.cs) calls the audit procedure inside a try/catch that writes the error log, and reads
+    the UserId with int.TryParse (a UserId that does not parse or is not above 0 skips the call).
+  - Unchanged: who may open which page. The menu still hides links by `Session["RoleCode"]` and is not a check; after
+    a change the session ends before the menu is built.
+  - Deployment: step 51 must be installed before this build, or every signed-in request fails closed. Roll back the
+    build first, then the Rollback script of step 51.
 
 ## Role and acting-user checks in procedures
 

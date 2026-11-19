@@ -3,10 +3,10 @@
 - Title: BMMS Documents - index, register and rules
 - Audience: Gashpy Software (owner, developers, doc-writer)
 - Shipped: No
-- Applies to: UN6e (no register entry changed: no user manual changed, nothing is visible); FU2b (register entries of 00-Overall and 03-Controller); FU2a (register entries of 00-Overall, 01-User, 02-Manager and 03-Controller); FU1 (register entries of 00-Overall, 03-Controller and Glossary); UN6d
-- Last updated by: UN6e, based on dbc48ca (header only; the register entries are those of FU2b, FU2a and the steps before)
+- Applies to: RA1d (header; the register entry of 00-Overall gets one To confirm point, no manual text changed); UN6e (no register entry changed: no user manual changed, nothing is visible); FU2b (register entries of 00-Overall and 03-Controller); FU2a (register entries of 00-Overall, 01-User, 02-Manager and 03-Controller); FU1 (register entries of 00-Overall, 03-Controller and Glossary); UN6d
+- Last updated by: RA1d, based on d642746 (header, and the To confirm of the 00-Overall entry; the other register entries are those of FU2b, FU2a and the steps before)
 - Status: Draft
-- Verified against: for UN6e: the step's diff and the user-manual search (no manual describes ViewState, stylesheets, indexes or the tester); the register entries of the manuals and the Glossary: see there; CLAUDE.md, .claude/agents/doc-writer.md, Documents/_build/*.ps1, Tests/README.md
+- Verified against: for RA1d: the step's diff and the user-manual search (the sign-in message "Your access has changed. Please sign in again." is in no manual; the sections "Signing in and your password" and "Common problems" of the role manuals are not written yet), BMMS/Default.aspx.cs (the message texts); for UN6e: the step's diff and the user-manual search (no manual describes ViewState, stylesheets, indexes or the tester); the register entries of the manuals and the Glossary: see there; CLAUDE.md, .claude/agents/doc-writer.md, Documents/_build/*.ps1, Tests/README.md
   (the update matrix lines for the tester)
 - To confirm:
 
@@ -140,7 +140,7 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
   (Reports menu of Management), BMMS/Report/Reports.aspx(.cs), BMMS/Report/Followup.aspx(.cs),
   BMMS/Report/ViewReport.aspx.cs, BMMS/XML/PageAccess.xml, BMMSBAL/ReportsMgr.cs (message texts),
   BMMSBAL/HTML_Report.cs (status line, draft note), Database/BMMS-Fix-ReportAccess-Step41.sql
-- To confirm: the text of FU2b (the Followup status column, its word and line, the FOLLOWUP STATUS block, the refusal messages) was written from the code and not compared with a screenshot (three screenshot placeholders); the Action Items text of FU2a (the Reopened label, the status line, the read-only panel of a confirmed item, the message after Submit) was written from the code and not compared with a screenshot (four screenshot placeholders); manual not written yet (WF2d1), except the section "MD Secretariat and Management" and the two
+- To confirm: for the sign-in sections of the role manuals (written in WF2d): since step RA1d a person whose role, departments or status the Admin changed is taken to the sign-in page at the next click, with "Your access has changed. Please sign in again." (role or departments changed) or "Your account is inactive. Contact the administrator." (inactive); unsaved work is lost; the text and where it belongs (Signing in, Common problems) are for the owner to place, and there are two screenshot needs (see the shot list of RA1d); the text of FU2b (the Followup status column, its word and line, the FOLLOWUP STATUS block, the refusal messages) was written from the code and not compared with a screenshot (three screenshot placeholders); the Action Items text of FU2a (the Reopened label, the status line, the read-only panel of a confirmed item, the message after Submit) was written from the code and not compared with a screenshot (four screenshot placeholders); manual not written yet (WF2d1), except the section "MD Secretariat and Management" and the two
   Dashboard sections of UN6b (the Alerts card and Action Items card text of UN6c1 was written from the code and not
   compared with a screenshot; "the alerts of the Controller's own decisions" and "the Manager's own decisions" word the
   rule that a Controller does not list the controller approved and rejected alerts and a Manager the manager approved

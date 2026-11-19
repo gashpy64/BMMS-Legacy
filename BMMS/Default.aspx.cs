@@ -32,14 +32,20 @@ namespace BMMS
                 InitCtrlAttributes();
                 ScriptManager.GetCurrent(this).SetFocus(txtLoginName.ClientID);
 
-                // Sent here by PageAccessModule: the account was deactivated while logged in
-                if (Request.QueryString["status"] == "inactive")
+                // Sent here by PageAccessModule: the account was deactivated while logged in, or (step RA1d) the role
+                // or the departments changed. The value is only compared with the two fixed codes and never shown.
+                string status = Request.QueryString["status"];
+                if (status == BMMS.Security.PageAccessModule.StatusInactive)
                     MsgDisplay(InactiveMessage);
+                else if (status == BMMS.Security.PageAccessModule.StatusChanged)
+                    MsgDisplay(AccessChangedMessage);
             }
         }
         #endregion
 
         private const string InactiveMessage = "Your account is inactive. Contact the administrator.";
+        // Step RA1d: the session was ended because the role or the departments changed
+        private const string AccessChangedMessage = "Your access has changed. Please sign in again.";
 
         #region InitSetup()
         private void InitSetup()
@@ -114,6 +120,18 @@ namespace BMMS
                 else
                 {
                     int loggedInUserId = int.Parse(dtUser.Rows[0]["UserId"].ToString());
+
+                    // Step RA1d: what PageAccessModule compares on every request (spr_GetUserAccessState, step 51), read
+                    // before anything is recorded. A database error is "Database not connected" (the catch below).
+                    UserAccessState access = UserMgr.GetUserAccessState(loggedInUserId);
+                    if (access == null || !access.IsActive)
+                    {
+                        errMsg = InactiveMessage;
+                        ScriptManager.GetCurrent(this).SetFocus(txtLoginName.ClientID);
+                        MsgDisplay(errMsg);
+                        return;
+                    }
+
                     UserMgr.RecordLogin(loggedInUserId, User_IP_Address, Server_Url);
 
                     // Upgrade an old-format password to the new hash on first successful login
@@ -124,8 +142,10 @@ namespace BMMS
                     Session["UserName"] = dtUser.Rows[0]["UserName"].ToString();
                     Session["LoginName"] = dtUser.Rows[0]["LoginName"].ToString();
                     Session["DesignName"] = dtUser.Rows[0]["DesignationName"].ToString();
-                    Session["RoleCode"] = dtUser.Rows[0]["RoleCode"].ToString();
-                    Session["RoleName"] = dtUser.Rows[0]["RoleName"].ToString();
+                    // Step RA1d: the role and the department set from the same read the module compares with
+                    Session["RoleCode"] = access.RoleCode;
+                    Session["RoleName"] = access.RoleName;
+                    Session[BMMS.Security.PageAccessModule.SessionDepartmentSetKey] = access.DepartmentSet;
                     Session["NoRecord"] = Common.GetAppSetting("NoRecord");
                     // The protected system account (BMMS-Fix-SystemAccount-Stage3.sql): "1" or "0"
                     Session["IsSystem"] = dtUser.Columns.Contains("IsSystem") && Convert.ToBoolean(dtUser.Rows[0]["IsSystem"]) ? "1" : "0";

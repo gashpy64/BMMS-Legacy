@@ -6,6 +6,43 @@ using BMMSDAL;
 
 namespace BMMSBAL
 {
+    #region UserAccessState
+    /// <summary>
+    /// Step RA1d (BMMS-Fix-SessionCheck-Step51.sql): what a signed-in session is compared with on every request.
+    /// Read at sign-in (Default.aspx) and by PageAccessModule on every checked request.
+    /// DepartmentSet is Users.DepartmentId, "|", the open User_Department rows by DepartmentId, the home row
+    /// marked "h" (for example "4|4h,5"): any change of the home department or of an open row gives another text.
+    /// </summary>
+    public class UserAccessState
+    {
+        public int UserId;
+        public string RoleCode = string.Empty;
+        public string RoleName = string.Empty;
+        public bool IsActive;
+        public bool IsSystem;
+        public string DepartmentSet = string.Empty;
+
+        /// <summary>null when the procedure returned no row (the user is not in View_Users).</summary>
+        public static UserAccessState FromTable(DataTable dt)
+        {
+            if (dt == null || dt.Rows.Count == 0)
+                return null;
+            if (!dt.Columns.Contains("RoleCode") || !dt.Columns.Contains("AccountStatus") || !dt.Columns.Contains("DepartmentSet"))
+                throw new InvalidOperationException("spr_GetUserAccessState returned other columns. Run Database/BMMS-Fix-SessionCheck-Step51.sql.");
+
+            DataRow row = dt.Rows[0];
+            UserAccessState s = new UserAccessState();
+            s.UserId = Convert.ToInt32(row["UserId"]);
+            s.RoleCode = Convert.ToString(row["RoleCode"]).Trim();
+            s.RoleName = Convert.ToString(row["RoleName"]).Trim();
+            s.IsActive = Convert.ToString(row["AccountStatus"]) == "1";
+            s.IsSystem = Convert.ToString(row["IsSystem"]) == "1";
+            s.DepartmentSet = Convert.ToString(row["DepartmentSet"]);
+            return s;
+        }
+    }
+    #endregion
+
     #region UserChangeResult
     /// <summary>
     /// Answer of the protected user procedures (BMMS-Fix-UserProtection-Stage1.sql).
@@ -384,6 +421,15 @@ namespace BMMSBAL
         public static int GetUserStatusByUserId(int UserId)
         {
             return UserDB.GetUserStatusByUserId(UserId);
+        }
+        #endregion
+
+        #region GetUserAccessState
+        // Step RA1d: the role, status, system flag and department set of one user, read from the database
+        // (spr_GetUserAccessState, step 51); null when the user is not in View_Users. A database error is thrown.
+        public static UserAccessState GetUserAccessState(int UserId)
+        {
+            return UserAccessState.FromTable(UserDB.GetUserAccessState(UserId));
         }
         #endregion
 

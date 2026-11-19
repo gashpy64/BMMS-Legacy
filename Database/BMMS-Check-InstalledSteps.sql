@@ -191,6 +191,10 @@
    order), present only when the index has exactly that definition. A
    re-run of an earlier step does not touch it. After
    BMMS-Rollback-Indexes-Step50.sql it reads Missing.
+   Step 51 (step RA1d) adds one read-only procedure (spr_GetUserAccessState),
+   read on every signed-in page request, and replaces nothing: 1 marker. No
+   earlier step touches it, so a re-run of an earlier step leaves step 51
+   Installed. After BMMS-Rollback-SessionCheck-Step51.sql it reads Missing.
    Step 32 is reserved and not built; it has no row.
    Step D1 (shown as step 100) replaces spr_DeleteMeetingByMeetingId, which
    no numbered script contains: it reads Missing only on a database restored
@@ -554,6 +558,10 @@ FROM (VALUES ('IX_Alert_User_Map_UserId_StatusId', 'Alert_User_Map', 'UserId, St
              ('IX_Alert_Master_SourceType_SourceTypeId', 'Alert_Master', 'SourceType, SourceTypeId', ''),
              ('IX_Agenda_MeetingId', 'Agenda', 'MeetingId', 'DepartmentId, AgendaStatusCode')) w(IndexName, TableName, Keys, Incl);
 
+-- 51. BMMS-Fix-SessionCheck-Step51.sql, installed after step 50 (one new read-only procedure; nothing is replaced)
+INSERT INTO @M VALUES
+(51, 'spr_GetUserAccessState (SessionCheck-Step51)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetUserAccessState')), '') LIKE '%SessionCheck-Step51%' THEN 1 ELSE 0 END);
+
 -- D1 (shown as step 100). BMMS-Fix-MeetingDelete-D1.sql; no numbered script contains spr_DeleteMeetingByMeetingId
 INSERT INTO @M VALUES
 (100, 'spr_DeleteMeetingByMeetingId (MeetingDelete-D1)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_DeleteMeetingByMeetingId')), '') LIKE '%MeetingDelete-D1%' THEN 1 ELSE 0 END);
@@ -605,6 +613,7 @@ INSERT INTO @Steps VALUES
 (48, 'BMMS-Fix-DashboardFollowupFinal-Step48.sql', 'step 43 or 45 was re-run after step 48 (1 to 4 of 5), or an object is missing: run step 48 again (after step 47)'),
 (49, 'BMMS-Fix-FollowupReports-Step49.sql', 'step 47 was re-run after step 49 (3 of 5), or an object is missing: run step 49 again (after step 48)'),
 (50, 'BMMS-Fix-Indexes-Step50.sql', 'an index is missing or was changed by hand: run step 50 again (it stops and names an index of the same name with another definition)'),
+(51, 'BMMS-Fix-SessionCheck-Step51.sql', 'the procedure is missing: run step 51 again (after step 50), BEFORE the build of step RA1d'),
 (100, 'BMMS-Fix-MeetingDelete-D1.sql (step D1)', '');
 
 SELECT s.Step, s.Script,

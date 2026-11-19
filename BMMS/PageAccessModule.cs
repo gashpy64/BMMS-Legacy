@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using System.Web;
 using System.Web.Caching;
+using System.Web.Configuration;
 using System.Xml;
 
 namespace BMMS.Security
@@ -18,9 +19,13 @@ namespace BMMS.Security
     ///      login page (this also protects the pages that never called
     ///      Common.InitSetup: ResetDatabase, BackupDatabase, ResetPassword,
     ///      SMTPServerConfig, ViewReport).
-    ///      The user must also still be active (Users.AccountStatus = 1, read on
-    ///      every request); otherwise the session is cleared and the login page
-    ///      says the account is inactive.
+    ///      Step RA1d: the session must still match the database (spr_GetUserAccessState,
+    ///      step 51, read once per request): the user exists and is active, and the role
+    ///      and the department set are those taken at sign-in. Otherwise the session ends
+    ///      (SESSION-ENDED in the log, Session.Abandon, the session cookie expired) and the
+    ///      sign-in page says why with a fixed text. A database error ends nothing: the
+    ///      page does not run, the safe error page is shown (SESSION-CHECK-ERROR in the log)
+    ///      and the next request checks again.
     ///   3. The user's role (Session["RoleCode"]) must be listed for the page.
     ///      A page that is not in the policy at all is treated as not allowed.
     ///
@@ -38,6 +43,24 @@ namespace BMMS.Security
     {
         private const string CacheKey = "BMMS.PageAccess.Policy";
         private static readonly object LogLock = new object();
+
+        /// <summary>
+        /// Step RA1d: the session key of the department set taken at sign-in (UserAccessState.DepartmentSet),
+        /// set by Default.aspx and compared on every checked request.
+        /// </summary>
+        public const string SessionDepartmentSetKey = "DepartmentSet";
+
+        // Step RA1d: the codes the sign-in page maps to its fixed texts (Default.aspx); never any other value
+        public const string StatusInactive = "inactive";
+        public const string StatusChanged = "changed";
+
+        // Step RA1d: this request's read of spr_GetUserAccessState (HttpContext.Items), reused by RequireRole and HasRole
+        private const string AccessReadKey = "BMMS.PageAccess.AccessState";
+
+        private sealed class AccessRead
+        {
+            public BMMSBAL.UserAccessState State;   // null: the user is not in View_Users
+        }
 
         private sealed class Policy
         {
@@ -80,12 +103,21 @@ namespace BMMS.Security
                 return;
             }
 
-            // --- 1b. the account must still be active (BMMS-Fix-UserStatus-Stage2a.sql) ---
-            if (!IsActiveUser(ctx))
+            // --- 1b. step RA1d: the session still matches the database (status, role, department set) ---------
+            AccessRead read = ReadAccessState(ctx);
+            if (read == null)
             {
-                ctx.Session.Clear();
-                ctx.Session.Abandon();
-                RedirectToLogin(app, ctx, "?status=inactive");
+                // Database error (in the error log): fail closed for this request only; the session is kept
+                Log(ctx, "SESSION-CHECK-ERROR", page, Convert.ToString(ctx.Session["RoleCode"]),
+                    "UserId " + Convert.ToString(ctx.Session["UserId"]) + "; database error; the session is kept");
+                BMMS.Global.WriteSafeAnswer(ctx, 500);
+                return;
+            }
+
+            string endReason, status;
+            if (!SessionMatches(ctx, read.State, out endReason, out status))
+            {
+                EndSession(app, ctx, page, endReason, status);
                 return;
             }
 
@@ -172,11 +204,18 @@ namespace BMMS.Security
         // The role code of the session's user when that user is active (Users.AccountStatus = 1), read from the
         // database (View_Users through UserMgr.GetUserDataTableByUserId); "" for no user, an inactive user or a
         // database error (written to the error log under the caller's name).
+        // Step RA1d: the module has already read View_Users for this request (spr_GetUserAccessState, the same
+        // view and columns) and ended the session if it did not match; that read is reused, so the nine RA1a
+        // pages make no second call. Without it (a request the module did not check) the old read is made.
         private static string ReadDatabaseRole(HttpContext ctx, string caller)
         {
             int userId;
             if (!int.TryParse(Convert.ToString(ctx.Session["UserId"]), out userId) || userId <= 0)
                 return string.Empty;
+
+            AccessRead read = ctx.Items[AccessReadKey] as AccessRead;
+            if (read != null && read.State != null && read.State.UserId == userId)
+                return read.State.IsActive ? read.State.RoleCode : string.Empty;
 
             try
             {
@@ -211,24 +250,105 @@ namespace BMMS.Security
             return h != null && h.IndexOf("Delta=true", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
-        // Read on every request, so a user deactivated while logged in is sent out at the next page.
-        // A database error lets the request through (written to the error log): the page itself
-        // then fails as it would without this check, instead of logging everyone out.
-        private static bool IsActiveUser(HttpContext ctx)
+        // Step RA1d: one call to spr_GetUserAccessState for the session's user, kept in HttpContext.Items for the
+        // rest of the request. null on a database error (written to the error log); AccessRead.State null when the
+        // user is not in View_Users.
+        private static AccessRead ReadAccessState(HttpContext ctx)
         {
+            AccessRead read = ctx.Items[AccessReadKey] as AccessRead;
+            if (read != null)
+                return read;
+
+            read = new AccessRead();
             int userId;
             if (!int.TryParse(Convert.ToString(ctx.Session["UserId"]), out userId) || userId <= 0)
-                return false;
+            {
+                ctx.Items[AccessReadKey] = read;
+                return read;
+            }
 
             try
             {
-                return BMMSBAL.UserMgr.GetUserStatusByUserId(userId) == 1;
+                read.State = BMMSBAL.UserMgr.GetUserAccessState(userId);
             }
             catch (Exception ex)
             {
-                BMMSBAL.Utilities.WriteErrorLog("PageAccessModule", "IsActiveUser", ex.ToString());
-                return true;
+                BMMSBAL.Utilities.WriteErrorLog("PageAccessModule", "SessionCheck", ex.ToString());
+                return null;
             }
+            ctx.Items[AccessReadKey] = read;
+            return read;
+        }
+
+        // Step RA1d: true when the session still matches the database. Otherwise the reason for the log
+        // (missing / inactive / role X to Y / departments changed) and the code for the sign-in page.
+        private static bool SessionMatches(HttpContext ctx, BMMSBAL.UserAccessState state, out string reason, out string status)
+        {
+            reason = string.Empty;
+            status = string.Empty;
+
+            if (state == null)
+            {
+                reason = "missing";
+                status = StatusInactive;
+                return false;
+            }
+            if (!state.IsActive)
+            {
+                reason = "inactive";
+                status = StatusInactive;
+                return false;
+            }
+
+            string sessionRole = (Convert.ToString(ctx.Session["RoleCode"]) ?? string.Empty).Trim();
+            string sessionSet = ctx.Session[SessionDepartmentSetKey] as string;
+            bool roleChanged = !string.Equals(sessionRole, state.RoleCode, StringComparison.OrdinalIgnoreCase);
+            // A session without the stamp (none survives a deployment: the sessions are InProc) counts as changed
+            bool setChanged = sessionSet == null || !string.Equals(sessionSet, state.DepartmentSet, StringComparison.Ordinal);
+
+            if (!roleChanged && !setChanged)
+                return true;
+
+            if (roleChanged)
+                reason = "role " + sessionRole + " to " + state.RoleCode;
+            if (setChanged)
+                reason = (reason.Length > 0 ? reason + "; " : string.Empty) + "departments changed";
+            status = StatusChanged;
+            return false;
+        }
+
+        // Step RA1d: ends the session of a user whose access changed. The log line first (it reads the session),
+        // then Session.Abandon without Clear, so Global.Session_End still has the UserId and closes the open
+        // login rows (Audit_Trial_Login) as at sign-out. The session cookie is expired, so the sign-in page
+        // starts with a new session id. Authentication is Windows: there is no forms cookie to clear.
+        private static void EndSession(HttpApplication app, HttpContext ctx, string page, string reason, string status)
+        {
+            Log(ctx, "SESSION-ENDED", page, Convert.ToString(ctx.Session["RoleCode"]),
+                "UserId " + Convert.ToString(ctx.Session["UserId"]) + "; " + reason);
+
+            ctx.Session.Abandon();
+            RedirectToLogin(app, ctx, "?status=" + status);
+
+            // After the redirect: RedirectToLogin clears the response for an UpdatePanel postback
+            HttpCookie expired = new HttpCookie(SessionCookieName(), string.Empty);
+            expired.Expires = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            expired.HttpOnly = true;
+            expired.Path = "/";
+            ctx.Response.Cookies.Add(expired);
+        }
+
+        private static string SessionCookieName()
+        {
+            try
+            {
+                SessionStateSection section = WebConfigurationManager.GetSection("system.web/sessionState") as SessionStateSection;
+                if (section != null && !string.IsNullOrEmpty(section.CookieName))
+                    return section.CookieName;
+            }
+            catch (Exception)
+            {
+            }
+            return "ASP.NET_SessionId";
         }
 
         private static void RedirectToLogin(HttpApplication app, HttpContext ctx)
@@ -338,6 +458,29 @@ namespace BMMS.Security
             return BMMSBAL.Common.UserDisplayName(name, login, true);
         }
 
+        // Step RA1d: a logged value never holds a control character (tab, line break, ...), so one request is
+        // always one line of six columns. A value without one is written as before.
+        private static string Clean(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return value ?? string.Empty;
+
+            StringBuilder sb = null;
+            for (int i = 0; i < value.Length; i++)
+            {
+                if (char.IsControl(value[i]))
+                {
+                    if (sb == null) sb = new StringBuilder(value, 0, i, value.Length);
+                    sb.Append(' ');
+                }
+                else if (sb != null)
+                {
+                    sb.Append(value[i]);
+                }
+            }
+            return sb == null ? value : sb.ToString();
+        }
+
         // Written to App_Data, which IIS/ASP.NET never serves to browsers.
         private static void Log(HttpContext ctx, string action, string page, string role, string reason)
         {
@@ -346,8 +489,8 @@ namespace BMMS.Security
                 string dir = ctx.Server.MapPath("~/App_Data");
                 Directory.CreateDirectory(dir);
                 string user = LogUser(ctx);
-                string line = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\t" + action + "\t" + user + "\t" + role +
-                              "\t" + page + "\t" + reason + Environment.NewLine;
+                string line = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\t" + action + "\t" + Clean(user) + "\t" + Clean(role) +
+                              "\t" + Clean(page) + "\t" + Clean(reason) + Environment.NewLine;
                 lock (LogLock)
                 {
                     File.AppendAllText(Path.Combine(dir, "PageAccessLog.txt"), line, Encoding.UTF8);

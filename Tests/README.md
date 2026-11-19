@@ -52,6 +52,12 @@ pwsh -NoProfile -File Tests/_runner/Run-Tests.ps1 -Pack access-matrix
   every local stylesheet link ends with `?v=` and the first 8 hex characters of the SHA-256 of its file in
   `Tests\_site`; the ViewState of the Controller's Dashboard is not over its limit. About half a minute. Its rules,
   files and checks: `Tests\packs\page-assets\README.md`.
+- `-Pack session-check` (step RA1d): while qa_mdsec, qa_manager2 and qa_user2 are signed in, qa_admin changes a
+  role, adds a department and deactivates a user in User Master; each one's next click (for qa_manager2 a
+  Dashboard filter, an UpdatePanel postback) lands on the sign-in page with its fixed message and a new
+  ASP.NET_SessionId cookie, and the page access log has one SESSION-ENDED line each; qa_ctrl, unchanged, is never
+  interrupted. The three users are put back at the end, also after a failure, and a user left changed fails a
+  check. Run it as the last pack of a run. Its rules and checks: `Tests\packs\session-check\README.md`.
 - `-Pack access-matrix -ProofFullMatrix` (you only; the tester agent cannot use it): the standing
   proof over every row instead of two. Exactly one cell must change. Use it when the pack itself
   changes.

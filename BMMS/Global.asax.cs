@@ -22,15 +22,28 @@ namespace BMMS
 
         }
 
+        // Runs when a session times out or is abandoned (Logout clears it first; PageAccessModule ends a session whose
+        // access changed without clearing it, step RA1d): closes the user's open login rows. Step RA1d: an error here
+        // (for example the database is not reachable) is written to the error log instead of being lost. A UserId that
+        // is not a whole number above 0 is skipped (no audit call); any UserId an int holds is read in full.
         protected void Session_End(Object sender, EventArgs e)
         {
-            if (Session["UserId"] != null)
+            try
             {
-                int UserId = Convert.ToInt16(Session["UserId"].ToString());
-                Utilities.AddEditAuditTrialLogin(UserId);
+                int UserId;
+                if (Session["UserId"] != null && int.TryParse(Session["UserId"].ToString(), out UserId) && UserId > 0)
+                    Utilities.AddEditAuditTrialLogin(UserId);
             }
-
-
+            catch (Exception ex)
+            {
+                try
+                {
+                    Utilities.WriteErrorLog("Global", "Session_End", ex.ToString());
+                }
+                catch (Exception)
+                {
+                }
+            }
         }
 
         #region Application_Error
@@ -92,7 +105,8 @@ namespace BMMS
             }
         }
 
-        private static void WriteSafeAnswer(HttpContext context, int status)
+        // Also used by PageAccessModule (step RA1d) for a database error during the session check
+        internal static void WriteSafeAnswer(HttpContext context, int status)
         {
             HttpResponse response = context.Response;
 

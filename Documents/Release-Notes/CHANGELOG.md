@@ -3,10 +3,10 @@
 - Title: BMMS Change Log
 - Audience: Gashpy Software (internal)
 - Shipped: No
-- Applies to: UN6e; FU2b; FU2a; FU1
-- Last updated by: UN6e, based on dbc48ca
+- Applies to: RA1d; UN6e; FU2b; FU2a; FU1
+- Last updated by: RA1d, based on d642746
 - Status: Draft
-- Verified against: for UN6e: git diff dbc48ca (BMMS/DashBoard/DashBoard.aspx.cs, BMMS/MasterPage/Main.Master.cs and MainNoMenu.Master.cs, BMMS/Default.aspx.cs, BMMS/Master/Committee.aspx, BMMS.csproj, Database/BMMS-Check-InstalledSteps.sql, Tests/README.md, Tests/_runner/Run-Tests.ps1) and the new files (BMMS/AssetVersion.cs read in full; BMMS-Fix-Indexes-Step50.sql header; Tests/packs/page-assets/README.md), Database/README.md section Step UN6e and Known items, the owner's tests and the tester run 2026-11-18_123549 as given; for FU2b: git diff c4300b5 (BMMS/Report/Followup.aspx(.cs) and FollowupActionTaken.aspx(.cs), BMMS/Master/Followup.aspx(.cs), BMMS/FollowupStatusText.cs, BMMSBAL/ReportsMgr.cs and ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/BMMS-Check-InstalledSteps.sql, the Rollback and Test of step 47, Database/README.md section Step FU2b and Known items), Database/BMMS-Fix-FollowupReports-Step49.sql (read), the Test results, the tester runs 2026-11-17_133514 and 2026-11-17_135000 and the owner's tests as given;
+- Verified against: for RA1d: git diff d642746 (BMMS/PageAccessModule.cs, BMMS/Default.aspx.cs, BMMS/Global.asax.cs, BMMSBAL/UserMgr.cs, BMMSDAL/UserDB.cs, Database/BMMS-Check-InstalledSteps.sql, Database/BMMS-Test-SystemAccount-Stage3.sql, Tests/README.md, Database/README.md) and the new files (Database/BMMS-Fix-SessionCheck-Step51.sql read in full; the Rollback and Test scripts of step 51 not read line by line; Tests/packs/session-check/README.md), Database/README.md section Step RA1d and Known items, the Test results, the tester run 2026-11-19_104149 and the owner's tests as given; for UN6e: git diff dbc48ca (BMMS/DashBoard/DashBoard.aspx.cs, BMMS/MasterPage/Main.Master.cs and MainNoMenu.Master.cs, BMMS/Default.aspx.cs, BMMS/Master/Committee.aspx, BMMS.csproj, Database/BMMS-Check-InstalledSteps.sql, Tests/README.md, Tests/_runner/Run-Tests.ps1) and the new files (BMMS/AssetVersion.cs read in full; BMMS-Fix-Indexes-Step50.sql header; Tests/packs/page-assets/README.md), Database/README.md section Step UN6e and Known items, the owner's tests and the tester run 2026-11-18_123549 as given; for FU2b: git diff c4300b5 (BMMS/Report/Followup.aspx(.cs) and FollowupActionTaken.aspx(.cs), BMMS/Master/Followup.aspx(.cs), BMMS/FollowupStatusText.cs, BMMSBAL/ReportsMgr.cs and ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/BMMS-Check-InstalledSteps.sql, the Rollback and Test of step 47, Database/README.md section Step FU2b and Known items), Database/BMMS-Fix-FollowupReports-Step49.sql (read), the Test results, the tester runs 2026-11-17_133514 and 2026-11-17_135000 and the owner's tests as given;
   for FU2a: git diff 9336d29 (BMMS/DashBoard/DashBoard.aspx(.cs, .designer.cs), BMMS/Master/Followup.aspx.cs, BMMS/CSS/bmms-workbench.css, BMMS/BMMS.csproj, Database/BMMS-Check-InstalledSteps.sql, the Rollbacks and Tests of steps 43 and 45, Tests/packs/dashboard/*) and the new files (BMMS/FollowupStatusText.cs read in full; the three step 48 scripts: the Reason lines of the Fix script only), Database/README.md section Step FU2a and Known items, the Test results, the tester run 2026-11-16_181041 and the owner's tests as given;
   for FU1: git diff 3d571c4 (BMMS/Master/Followup.aspx(.cs, .designer.cs), BMMS/CSS/bmms-workbench.css, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/BMMS-Check-InstalledSteps.sql, Tests/README.md, Tests/packs/followup/*), Database/README.md section Step FU1 and Known items; the three step 47 scripts were not read line by line (their content is taken from Database/README.md), the Test result (95 of 95), the tester run 2026-11-16_133023 and the owner's tests as given;
   for UN6d: git diff ce7358a 276e402 (BMMS/DashBoard/DashBoard.aspx(.cs), BMMS/Master/Followup.aspx(.cs), BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, BMMS/CSS/CommonHTML.css and bmms-workbench.css, Database/BMMS-Fix-FollowupSave-Step46.sql and BMMS-Rollback-FollowupSave-Step46.sql (read in full), BMMS-Check-InstalledSteps.sql, Database/README.md section Step UN6d and Known items, Tests/README.md, Tests/packs/followup/*, Tests/packs/dashboard/README.md and expected.json, Tests/packs/access-matrix/README.md), Claude outputs/un6d-requirements.md, the Test script and tester results and the owner's tests as given; for UN6c2b: git diff f3cbd7e~1 f3cbd7e (BMMS/DashBoard/DashBoard.aspx(.cs), BMMS/UserControl/MeetingSummary.ascx(.cs), BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs and ActionItemDB.cs, Database/BMMS-Fix-DashboardSummary-Step45.sql (read), BMMS-Rollback-AgendaWaitingFor-Step44.sql, BMMS-Check-InstalledSteps.sql, Database/README.md section Step UN6c2b and Known items, Tests/README.md, Tests/packs/dashboard/README.md), the tester run of 2026-11-15 and the owner's tests as given; for UN6c2a: git diff HEAD (493cb45) and the new files (BMMS/DashBoard/DashBoard.aspx(.cs, .designer.cs),
@@ -43,6 +43,53 @@
 One entry per step, newest first. Each entry names the step, its tag and what changed for users,
 for installers and in the database. Release entries (tags vX.Y.Z) collect the steps since the
 previous release.
+
+## RA1d - A signed-in user whose role, departments or status changed is signed out at the next click (tag not yet set, 2026-11-19; database step 51; code not yet committed, based on d642746)
+
+- For users: when the Admin changes your role or your departments, or deactivates your account, your next click takes you to the
+  sign-in page. A changed role or department shows "Your access has changed. Please sign in again."; a deactivated or missing
+  account shows "Your account is inactive. Contact the administrator." Work that was not saved is lost. This holds for every page,
+  for the buttons that refresh part of a page, for the report window and for the PDF and Word exports. Nothing changes for a user
+  whose access did not change, and nothing changes in who can open which page. If the database cannot be reached during the check,
+  you stay signed in, the page shows the error page (or the error bar for a part-page refresh) and the next click checks again.
+  The Admin's own account follows the same rule; so does the protected system account.
+- For installers: database step 51 (BMMS-Fix-SessionCheck-Step51.sql), installed after step 50, needs steps 18, 39 and 40. INSTALL
+  IT BEFORE THIS BUILD: without it every signed-in request fails closed and nobody can work. The real BMMS database on the Work
+  Laptop is at step 37 and this build is not to be run against it. Rollback: roll back the build first, then
+  BMMS-Rollback-SessionCheck-Step51.sql. A re-run of an earlier step leaves step 51 Installed (one marker, SessionCheck-Step51).
+  App_Data/PageAccessLog.txt now also receives SESSION-ENDED lines (user id, login, page, reason: "role X to Y", "departments
+  changed", "inactive" or "missing") and SESSION-CHECK-ERROR lines.
+- In the database: one new read-only procedure, spr_GetUserAccessState (@UserId): UserId, RoleCode, RoleName, AccountStatus,
+  IsSystem and DepartmentSet (Users.DepartmentId, a vertical bar, the open department rows with the home one marked "h"). No table,
+  view or data change; nothing granted.
+- For developers: the session keeps the role and a department stamp from sign-in (Session["DepartmentSet"]); PageAccessModule reads
+  the procedure once per request, compares, and on a difference logs, calls Session.Abandon (so Session_End closes the login rows),
+  expires the session cookie and redirects with `?status=changed` or `?status=inactive`; Default.aspx maps these two fixed codes to
+  fixed texts. RequireRole and HasRole reuse the module's read, so there is still one database call per request. Values written to
+  the page access log are cleaned of control characters. Session_End runs its audit call inside a try/catch with an error log line and
+  reads the UserId with int.TryParse. Closes the lead of RA1a (pages other than the nine followed the session role until sign-out).
+- For the tester: new pack session-check (BMMS_Quality only, run last): the Admin changes qa_mdsec's role, adds Credit to qa_manager2
+  and deactivates qa_user2; each user's next click lands on the sign-in page with its message and a new ASP.NET_SessionId cookie;
+  qa_ctrl, unchanged, is never interrupted; the users are put back in a finally block. The tester's baseline is brought up to date with
+  Update-Baseline.ps1 and step 51. Test only: BMMS-Test-SystemAccount-Stage3.sql check 44 now expects "0 0" (step 43 leaves the Admin
+  out of functional mails by design).
+- Results: BMMS_Test: Test 51 18 of 18; Step 39 58 of 58; UserProtection-Stage1 142 of 142; UserStatus-Stage2a 50 of 50;
+  UserStatus-Stage2b 63 of 63; Step 40 43 of 43; SystemAccount-Stage3 51 of 51. Tester run 2026-11-19_104149: PASSED, 510 checks,
+  507 passed and 0 failed (the 3 others are the self-test's planted wrong expectations, all caught): selftest 8, access-matrix 472
+  (440 matrix cells, all ok), page-assets 11, session-check 19; 0 new error log lines. The owner's tests passed on BMMS_Test on 2026-11-19: the Check script (step 51 Installed, 1 of 1),
+  Test 51 18 of 18 and SystemAccount-Stage3 51 of 51; the browser tests: a role changed, a department changed, a user
+  made inactive, an Admin made a User while on Department Master (SESSION-ENDED, not DENIED-PAGE), the Dashboard filter
+  redirect, two tabs, the report window and the Word export refused, the database offline (the safe error page, the
+  session kept, three SESSION-CHECK-ERROR lines) and back online without a new sign-in; the error log held only the lines
+  of the offline test.
+- Open points (Database/README.md, Known items): the Audit Trail shows an ended session as a normal sign-out; the sign-out closes the
+  open login rows of the user's other browsers too; the sign-in page opens inside the report window when that is the next request;
+  PageAccessModule checks .aspx paths only (a future .ashx or .asmx must be added); the session id is not renewed at sign-in; the
+  expired cookie is not Secure; check 44 of the SystemAccount test would also pass on an empty list; the error page does not say that
+  the session is still valid; eight pages still read the user id with Convert.ToInt16 (they fail for a user id above 32767).
+- Documents: System-Manual 03, 04, 05, 08 and 10, Data-Flow 03-Program-to-Program/01-Login-and-Session, this entry and the header of
+  the README. No user manual changed: the sign-in and common-problem sections of the manuals are not written yet (WF2d); the text
+  for them is in the To confirm of the 00-Overall register entry in the README. Shot list: the sign-in page with each of the two messages.
 
 ## UN6e - Indexes for the Dashboard lists, the Action Items list out of ViewState, a version stamp on the stylesheet links, the tester names its results folder (tag not yet set, 2026-11-18; database step 50; code not yet committed, based on dbc48ca)
 

@@ -210,6 +210,19 @@ namespace BMMSDAL
         }
         #endregion
 
+        #region GetUserAccessState
+        // Step RA1d (BMMS-Fix-SessionCheck-Step51.sql): what a signed-in session is compared with on every request.
+        // No row: the user is not in View_Users. One row: UserId, RoleCode, RoleName, AccountStatus, IsSystem,
+        // DepartmentSet (Users.DepartmentId, "|", the open User_Department rows, the home row marked "h").
+        public static DataTable GetUserAccessState(int UserId)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@UserId", UserId);
+
+            return CommonDB.GetDataTable("spr_GetUserAccessState", parameter);
+        }
+        #endregion
+
         #region SetUserStatusByUserId
         public static DataTable SetUserStatusByUserId(int UserId, int AccountStatus, int ActingUserId)
         {

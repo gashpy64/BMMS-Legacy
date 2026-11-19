@@ -3,10 +3,11 @@
 - Title: Application Code
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6e (the new sections "Lists are not kept in ViewState (step UN6e)" and "Stylesheet version stamp (step UN6e)", the Action Items paragraph of "The Dashboard Alerts and Action Items cards (step UN6c1)" and the Ctrl+F5 sentence and the list sentence of "The Action Item Details panel and the Followup page saves (step UN6d)"); FU2b (the new section "The Followup reports (step FU2b)" and the Followup by Department note in "Pages in no menu and the unlisted page"); FU2a ("The Action Item Details panel and the Followup page saves (step UN6d)": the new FU2a paragraph on FollowupStatusText, the panel mode, the status line, the Reopened chip); FU1 ("The Action Item Details panel and the Followup page saves (step UN6d)": the Followup page bullets, the FU1 bullets for the list, Submit and Reopen); UN6d ("The Action Item Details panel and the Followup page saves (step UN6d)", the Followup.aspx row, the Dashboard Action Items paragraph note); UN6c2b ("The Dashboard summary cards and the Committee filter (step UN6c2b)"); UN6c2a ("The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)" and the layout line of "The Dashboard Meetings card (step UN6b)"); UN6c1 (the Main.Master row and paragraph, "The Dashboard Alerts and Action Items cards (step UN6c1)"); UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
-- Last updated by: UN6e, based on dbc48ca
+- Applies to: RA1d (the Default.aspx row, "Set at login", "Cleared at logout", the keys table row DepartmentSet and the bullets of "PageAccessModule": the session check, the log, the cleaning of logged values); UN6e (the new sections "Lists are not kept in ViewState (step UN6e)" and "Stylesheet version stamp (step UN6e)", the Action Items paragraph of "The Dashboard Alerts and Action Items cards (step UN6c1)" and the Ctrl+F5 sentence and the list sentence of "The Action Item Details panel and the Followup page saves (step UN6d)"); FU2b (the new section "The Followup reports (step FU2b)" and the Followup by Department note in "Pages in no menu and the unlisted page"); FU2a ("The Action Item Details panel and the Followup page saves (step UN6d)": the new FU2a paragraph on FollowupStatusText, the panel mode, the status line, the Reopened chip); FU1 ("The Action Item Details panel and the Followup page saves (step UN6d)": the Followup page bullets, the FU1 bullets for the list, Submit and Reopen); UN6d ("The Action Item Details panel and the Followup page saves (step UN6d)", the Followup.aspx row, the Dashboard Action Items paragraph note); UN6c2b ("The Dashboard summary cards and the Committee filter (step UN6c2b)"); UN6c2a ("The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)" and the layout line of "The Dashboard Meetings card (step UN6b)"); UN6c1 (the Main.Master row and paragraph, "The Dashboard Alerts and Action Items cards (step UN6c1)"); UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
+- Last updated by: RA1d, based on d642746
 - Status: Draft
-- Verified against: for step UN6e: BMMS/AssetVersion.cs (read in full), BMMS/DashBoard/DashBoard.aspx.cs, BMMS/MasterPage/Main.Master.cs, MainNoMenu.Master.cs, BMMS/Default.aspx.cs, BMMS/Master/Committee.aspx and BMMS.csproj (diff), Database/README.md (section Step UN6e and its Known items), Tests/packs/page-assets/README.md, the owner's tests and the tester run 2026-11-18_123549 as given; the .aspx changes of Agenda, MinutesUpdate and Meeting were taken from Database/README.md, not read in the diff; for step FU2b: git diff c4300b5 of BMMS/Report/Followup.aspx(.cs), BMMS/Report/FollowupActionTaken.aspx(.cs), BMMS/Master/Followup.aspx(.cs), BMMS/FollowupStatusText.cs, BMMSBAL/ReportsMgr.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/README.md (section Step FU2b and its Known items), the owner's tests as given; for step FU2a: git diff 9336d29 of BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs, BMMS/Master/Followup.aspx.cs, BMMS/BMMS.csproj and BMMS/CSS/bmms-workbench.css, BMMS/FollowupStatusText.cs (read in full), Database/README.md (section Step FU2a and its Known items), the owner's tests as given; for step FU1: BMMS/Master/Followup.aspx and Followup.aspx.cs (read in full: CanSave, Page_Load, BindFollowup, grvFollowup_RowDataBound, grvFollowup_RowCommand, the save, Submit and Reopen handlers, the script), Database/README.md (section Step FU1); and before: for step UN6d: git diff ce7358a 276e402 of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/Master/Followup.aspx and .aspx.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, BMMS/CSS/CommonHTML.css and bmms-workbench.css; Database/README.md (section Step UN6d and its Known items), the tester runs of 2026-11-15 as given; for step UN6c2b: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs; Database/README.md (section Step UN6c2b, Known items), the tester run of 2026-11-15 as given; for step UN6c2a: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff, and BindAgendaDetails read in full), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (diff), BMMS/CSS/bmms-workbench.css (diff),
+- Verified against: for step RA1d: BMMS/PageAccessModule.cs, BMMS/Default.aspx.cs and BMMS/Global.asax.cs (diff), BMMSBAL/UserMgr.cs and BMMSDAL/UserDB.cs (diff), Database/README.md (section Step RA1d), Tests/packs/session-check/README.md;
+  for step UN6e: BMMS/AssetVersion.cs (read in full), BMMS/DashBoard/DashBoard.aspx.cs, BMMS/MasterPage/Main.Master.cs, MainNoMenu.Master.cs, BMMS/Default.aspx.cs, BMMS/Master/Committee.aspx and BMMS.csproj (diff), Database/README.md (section Step UN6e and its Known items), Tests/packs/page-assets/README.md, the owner's tests and the tester run 2026-11-18_123549 as given; the .aspx changes of Agenda, MinutesUpdate and Meeting were taken from Database/README.md, not read in the diff; for step FU2b: git diff c4300b5 of BMMS/Report/Followup.aspx(.cs), BMMS/Report/FollowupActionTaken.aspx(.cs), BMMS/Master/Followup.aspx(.cs), BMMS/FollowupStatusText.cs, BMMSBAL/ReportsMgr.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/README.md (section Step FU2b and its Known items), the owner's tests as given; for step FU2a: git diff 9336d29 of BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs, BMMS/Master/Followup.aspx.cs, BMMS/BMMS.csproj and BMMS/CSS/bmms-workbench.css, BMMS/FollowupStatusText.cs (read in full), Database/README.md (section Step FU2a and its Known items), the owner's tests as given; for step FU1: BMMS/Master/Followup.aspx and Followup.aspx.cs (read in full: CanSave, Page_Load, BindFollowup, grvFollowup_RowDataBound, grvFollowup_RowCommand, the save, Submit and Reopen handlers, the script), Database/README.md (section Step FU1); and before: for step UN6d: git diff ce7358a 276e402 of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/Master/Followup.aspx and .aspx.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, BMMS/CSS/CommonHTML.css and bmms-workbench.css; Database/README.md (section Step UN6d and its Known items), the tester runs of 2026-11-15 as given; for step UN6c2b: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs; Database/README.md (section Step UN6c2b, Known items), the tester run of 2026-11-15 as given; for step UN6c2a: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff, and BindAgendaDetails read in full), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (diff), BMMS/CSS/bmms-workbench.css (diff),
   BMMSBAL/AgendaMgr.cs and MeetingMgr.cs (diff), BMMSDAL/AgendaDB.cs and MeetingDB.cs (diff), Database/README.md (section Step UN6c2a, Known items), Tests/packs/dashboard/README.md, the tester run of 2026-11-14 as given; for step UN6c1: BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (read: the Alerts and Action Items regions, the message constants, lnkSource_Click),
   BMMS/MasterPage/Main.Master.cs (alert count region), BMMSBAL/AlertMgr.cs, ActionItemMgr.cs and Common.cs (diff),
   BMMSDAL/AlertDB.cs and ActionItemDB.cs (diff), Database/README.md (section Step UN6c1); for step UN6b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/DashBoard/DashBoard.aspx
@@ -82,7 +83,7 @@ How the tables are read:
 
 | Page | Purpose | Roles | Notes |
 |---|---|---|---|
-| Default.aspx | Login. Checks the login ID and password, opens the session, sends the user to the Dashboard, or to ChangePasswordFirst after a first sign-in with the default password | Public | No master page; `?status=inactive` shows "Your account is inactive. Contact the administrator." |
+| Default.aspx | Login. Checks the login ID and password, opens the session, sends the user to the Dashboard, or to ChangePasswordFirst after a first sign-in with the default password | Public | No master page; `?status=inactive` shows "Your account is inactive. Contact the administrator."; `?status=changed` (step RA1d) shows "Your access has changed. Please sign in again."; any other value shows nothing |
 | Logout.aspx | Records the end of the login in the access log, clears the session and returns to Default.aspx | Public | No master page; reached by the Logout button of the masters (PostBackUrl) |
 | ChangePasswordFirst.aspx | "Change Password" for the first sign-in (MainNoMenu.Master) | `*` | Reached from Default.aspx only |
 | DashBoard/DashBoard.aspx | Alerts, action items, committee, meeting and agenda alerts, approval of agenda items; the landing page of every role; menu entry "Home" for every role except Admin and MD Secretariat | `*` | Hosts the MeetingSummary user control; the code-behind has more than 1,000 lines. Since step UN6b the layout is cards in the grid `.wb-dash` (since step UN6c2a: Meetings three parts of four of the content width beside Alerts, the My approvals panel above them for a Controller and a Manager, Action Items below; one column at 1240 px and below); the Alerts card has two columns, "Alert" (the Source link with the alert type, committee and department below it, separated by a vertical bar with a space on each side) and "Date" (dd-MMM-yyyy with HH:mm below it; "Created on" until step UN6c1); the list behaviour, the links and the control IDs are unchanged. After a successful Approve or Reject the page calls `MeetingSummary1.Reload()` and loads the My approvals panel again (see "The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)") |
@@ -970,6 +971,7 @@ keeps a user logged in after the session ends.
 | `RoleName` | Default.aspx.cs | Header of the masters | |
 | `DesignName` | Default.aspx.cs | A search finds no reader | |
 | `IsSystem` | Default.aspx.cs | `Common.IsSystemAccountSession` | "1" for the protected system account, otherwise "0" |
+| `DepartmentSet` | Default.aspx.cs (from `UserMgr.GetUserAccessState`, step RA1d) | PageAccessModule (compared on every request) | The department stamp: Users.DepartmentId, a vertical bar, the open department rows, the home one marked "h" (as in the procedure's output, chapter 04). `RoleCode` and `RoleName` come from the same read |
 | `NoRecord` | Default.aspx.cs (text of the AppSettings key `NoRecord`) | The empty row of the grids (aspx files) | |
 | `LoginCount` | Default.aspx.cs | Nothing | Counts failed passwords in the session; the call that would lock the user is commented out |
 | `PageTitle`, `PageURL` | `Common.InitSetup` (`PageURL` also by Default.aspx.cs) | The masters (`PageTitle`) | `PageURL` is no longer used by the error page's Exit |
@@ -980,14 +982,18 @@ Set at login (Default.aspx.cs, `btnLogin_Click`): the login page reads the user 
 (`UserMgr.GetUserByLoginName`), then checks in this order: a user who does not exist or a wrong password gives
 "Invalid User Id / Password" (the same text for both); a password that is right for an inactive account gives
 "Your account is inactive. Contact the administrator." (checked after the password so the text does not reveal
-that the login exists); otherwise `UserMgr.RecordLogin` writes the access-log row, the session keys are set and the
-user goes to ChangePasswordFirst.aspx (password equals the default) or to the Dashboard. A database error
-gives "Database not connected" and an error log entry.
+that the login exists); otherwise (step RA1d) `UserMgr.GetUserAccessState` reads the role, status and department set
+(a user missing or inactive at that moment gets the inactive text), `UserMgr.RecordLogin` writes the access-log row,
+the session keys are set (`RoleCode` and `RoleName` from the access-state read, and `DepartmentSet`) and the user goes
+to ChangePasswordFirst.aspx (password equals the default) or to the Dashboard. A database error gives "Database not
+connected" and an error log entry.
 
 Cleared at logout: Logout.aspx.cs writes the end of the login (`Utilities.AddEditAuditTrialLogin`), then calls
-`Session.Clear()` and `Session.Abandon()` and redirects to Default.aspx. PageAccessModule does the same for an
-account that was deactivated. When the session ends by timeout, `Session_End` in Global.asax.cs writes the same
-audit row for the user in the session.
+`Session.Clear()` and `Session.Abandon()` and redirects to Default.aspx. Since step RA1d PageAccessModule ends a
+session whose access changed with `Session.Abandon()` only (no `Clear`), so `Session_End` in Global.asax.cs still
+finds the UserId and writes the same audit row; the same happens when the session ends by timeout. `Session_End` runs
+its audit call inside a try/catch that writes the error log, and reads the UserId with `int.TryParse` (a value that does
+not parse, or is not above 0, skips the call).
 
 ```mermaid
 flowchart TD
@@ -1024,19 +1030,28 @@ The request flow is in chapter 01 ("Request life cycle"). The points a developer
 - Public pages (`<public>`): Default.aspx, Logout.aspx and Error/ErrorPage.aspx. Every other page needs a
   logged-in user in both modes (`Common.IsLoggedIn`: a `UserId` in the session); if there is none the request is
   redirected to Default.aspx, or answered in the AJAX "pageRedirect" format for an UpdatePanel postback.
-- Active-user check. On every request for a page that is not public, `UserMgr.GetUserStatusByUserId` reads the
-  account status from the database; a status other than 1 clears the session and redirects to
-  `Default.aspx?status=inactive`. If the read fails the request is let through and the error is written to the
-  error log, so a database outage does not log everyone out.
+- Session check (step RA1d, replacing the active-user check of step 14). On every request for a page that is not
+  public, `ReadAccessState` makes one call, `UserMgr.GetUserAccessState` (spr_GetUserAccessState, step 51), and keeps
+  the result in `HttpContext.Items` for the rest of the request. `SessionMatches` then compares it with the session:
+  user missing ("missing"), status other than 1 ("inactive"), `RoleCode` different (trimmed, case ignored: "role X to
+  Y"), `DepartmentSet` different or absent ("departments changed"). On a difference `EndSession` writes one
+  SESSION-ENDED line (user id and reason), calls `Session.Abandon()`, redirects to `Default.aspx?status=changed` (role
+  or departments) or `?status=inactive` (missing or inactive; the constants `StatusChanged` and `StatusInactive`), and
+  expires the session cookie after the redirect (the cookie name is read from the sessionState section, default
+  ASP.NET_SessionId). `RedirectToLogin` gives an UpdatePanel postback the AJAX pageRedirect answer. If the read fails the
+  error is written to the error log, one SESSION-CHECK-ERROR line is written, the session is kept and the request
+  ends with the safe error page (`Global.WriteSafeAnswer`, HTTP 500; for an UpdatePanel postback the error bar); the
+  next request checks again. Before step RA1d a failed read let the request through. `RequireRole` and `HasRole` reuse
+  the read of the same request, so there is still one database call per request.
 - Role check. The role in `Session["RoleCode"]` must be in the page's `roles` (case-insensitive; `*` is every
   logged-in user). A page that is not in PageAccess.xml is not allowed.
 - Modes. In `Enforce` the module writes a DENIED line and answers with the "Access denied" page and HTTP 403
   ("Your role does not have access to this page." and a link back to the Dashboard). In `LogOnly` (any
   `mode` value other than `Enforce`) nothing is blocked for a role reason and a WOULD-DENY line is written.
-  When the policy file cannot be read, only the login and active-user checks apply and a POLICY-NOT-LOADED line is
+  When the policy file cannot be read, only the login and session checks apply and a POLICY-NOT-LOADED line is
   written. The policy is cached and reloaded when the file changes; a failed load is cached for 30 seconds.
 - The log. Lines are appended to `App_Data\PageAccessLog.txt` (tab-separated: time, action, user as
-  "Name (login)", role, page, reason). App_Data is not served by IIS. A write failure never breaks the request.
+  "Name (login)", role, page, reason; since step RA1d every value is cleaned of control characters, so a line always has six columns; the actions include SESSION-ENDED and SESSION-CHECK-ERROR). App_Data is not served by IIS. A write failure never breaks the request.
   No code removes or rotates the file (a Grep for file deletion finds only the logo, the Send Mail attachment and
   the unused Word code).
 - The page check `RequireRole` (step RA1a). `PageAccessModule.RequireRole(params string[] roles)` is a second check
@@ -1049,8 +1064,8 @@ The request flow is in chapter 01 ("Request life cycle"). The points a developer
   denies (fail closed) and is written to the error log. It is called outside any try/catch, as the first line of
   `Page_Load` of nine pages: Master/User, Department, Designation, MemberType, SubjectType, DecisionType,
   ResetPassword, BackupDatabase and Report/AuditTrail, each with `RequireRole("admin")`; and again first in the
-  Reset Password and Backup Database button handlers. Every other page follows `Session["RoleCode"]` until
-  sign-out (see chapter 08, "Page access").
+  Reset Password and Backup Database button handlers. Since step RA1d a role changed
+  during the session also ends the session before any page runs (the session check above); see chapter 08, "Page access".
 - The logged-in check by user id (step UN2) replaced a test of the person's name: before it, pages tested
   `Session["UserName"]`, which is display text and not an identity.
 - The menu and the module are two lists to keep in step: MenuUserControl.ascx shows links by role, and

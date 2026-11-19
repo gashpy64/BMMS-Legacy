@@ -372,7 +372,9 @@ BEGIN TRY
          + CASE WHEN EXISTS (SELECT 1 FROM Alert_User_Map WHERE AlertUserId = @SavedAlertRow AND UserId = @Sys) THEN 'kept' ELSE 'gone' END;
 
     DELETE FROM @ML; INSERT INTO @ML EXEC spr_GetAlertMailId @Code = 'ACA', @UserId = @CtlA, @AgendaId = @AgA;
-    INSERT INTO @T SELECT 'Mail ACA: the system account''s saved row is not mailed, the ordinary Admin is', '0 1',
+    -- Step 43 (UN6c1, owner-tested 2026-11-13) replaced spr_GetAlertMailId and leaves the Admin role out of functional
+    -- mails by design, so the ordinary Admin is no longer mailed either: expected "0 0" (was "0 1" before step 43)
+    INSERT INTO @T SELECT 'Mail ACA: neither the system account''s saved row nor the ordinary Admin is mailed (step 43: no functional mails for Admin)', '0 0',
            CAST((SELECT COUNT(*) FROM @ML WHERE EmailId = 'zz18system@example.invalid') AS VARCHAR(12)) + ' '
          + CAST((SELECT COUNT(*) FROM @ML WHERE EmailId = 'zz18adma@example.invalid') AS VARCHAR(12));
 

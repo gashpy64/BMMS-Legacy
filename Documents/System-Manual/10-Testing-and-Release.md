@@ -3,10 +3,10 @@
 - Title: Testing and Release
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6e (the section "Step 50 (UN6e): the Test script, the page-assets pack, the results folder (WF3a3)" and the packs row of "What it is"); FU2b (the section "Step 49 (FU2b): the Test script, the changed expectation of step 47, the followup-reports pack"); FU2a (the section "Step 48 (FU2a): the Test script, the changed expectations of steps 43 and 45, the dashboard pack check 18"); FU1 (the section "Step 47 (FU1): the Test script, the followup pack and the run"); UN6d (the step 46 Test script section "Step 46 (UN6d): the Followup saves", the followup pack, the dashboard pack check 8, the packs line of the tester table); UN6c2b (the step 45 Test script section, "The dashboard pack since step UN6c2b", the fixture and baseline notes); UN6c2a (the step 44 Test script section, "The dashboard pack since step UN6c2a", check 4 of the dashboard pack, the fixture and baseline notes); UN6c1 (the step 43 Test script section, "The dashboard pack since step UN6c1", the fixture and baseline notes); UN6b (the step 42 Test script section, the dashboard pack, the memory preflight, the fixture's committee QA2, the baseline upkeep note); the rest RA1c2
-- Last updated by: UN6e, based on dbc48ca
+- Applies to: RA1d (the new section "Step 51 (RA1d): the Test script, the changed expectation of step 18, the session-check pack" and the packs row of "What it is"); UN6e (the section "Step 50 (UN6e): the Test script, the page-assets pack, the results folder (WF3a3)" and the packs row of "What it is"); FU2b (the section "Step 49 (FU2b): the Test script, the changed expectation of step 47, the followup-reports pack"); FU2a (the section "Step 48 (FU2a): the Test script, the changed expectations of steps 43 and 45, the dashboard pack check 18"); FU1 (the section "Step 47 (FU1): the Test script, the followup pack and the run"); UN6d (the step 46 Test script section "Step 46 (UN6d): the Followup saves", the followup pack, the dashboard pack check 8, the packs line of the tester table); UN6c2b (the step 45 Test script section, "The dashboard pack since step UN6c2b", the fixture and baseline notes); UN6c2a (the step 44 Test script section, "The dashboard pack since step UN6c2a", check 4 of the dashboard pack, the fixture and baseline notes); UN6c1 (the step 43 Test script section, "The dashboard pack since step UN6c1", the fixture and baseline notes); UN6b (the step 42 Test script section, the dashboard pack, the memory preflight, the fixture's committee QA2, the baseline upkeep note); the rest RA1c2
+- Last updated by: RA1d, based on d642746
 - Status: Draft
-- Verified against: for step UN6e: Database/README.md (section Step UN6e: the Test script description, the results, the tester paragraph and WF3a3), Tests/README.md and Tests/_runner/Run-Tests.ps1 (diff), Tests/packs/page-assets/README.md (read), the Test results and the tester run 2026-11-18_123549 as given; the step 50 Test script and the pack.js and expected.json of page-assets were not read in full; for step FU2b: Database/README.md (section Step FU2b: the Test script description, the changed expected value, the tester paragraph, "What to run where"), Tests/packs/followup-reports/README.md (read), BMMS-Test-FollowupFinal-Step47.sql (diff), the Test results and the tester runs 2026-11-17_133514 and 2026-11-17_135000 as given; the step 49 Test script and pack.js were not read in full;
+- Verified against: for step RA1d: Database/README.md (section Step RA1d: the Test script description, the results, the tester paragraph, "What to run where"), Tests/README.md (diff), Tests/packs/session-check/README.md (read), Tests/packs/session-check/pack.js (not read in full), BMMS-Test-SystemAccount-Stage3.sql (diff), BMMS-Test-SessionCheck-Step51.sql (as described in Database/README.md, not read line by line), the Test results, the tester run 2026-11-19_104149 and the owner's tests as given; for step UN6e: Database/README.md (section Step UN6e: the Test script description, the results, the tester paragraph and WF3a3), Tests/README.md and Tests/_runner/Run-Tests.ps1 (diff), Tests/packs/page-assets/README.md (read), the Test results and the tester run 2026-11-18_123549 as given; the step 50 Test script and the pack.js and expected.json of page-assets were not read in full; for step FU2b: Database/README.md (section Step FU2b: the Test script description, the changed expected value, the tester paragraph, "What to run where"), Tests/packs/followup-reports/README.md (read), BMMS-Test-FollowupFinal-Step47.sql (diff), the Test results and the tester runs 2026-11-17_133514 and 2026-11-17_135000 as given; the step 49 Test script and pack.js were not read in full;
   for step FU2a: Database/README.md (section Step FU2a: the Test script description, the changed expected values, the tester paragraph, "What to run where"), Tests/packs/dashboard/README.md (diff), Database/BMMS-Test-DashboardAlerts-Step43.sql and BMMS-Test-DashboardSummary-Step45.sql (diff stat only), the Test script result (43 of 43) and the tester run 2026-11-16_181041 as given; the step 48 Test script and pack.js were not read in full;
   for step FU1: Database/README.md (section Step FU1: the Test script description, the tester paragraph, the changed expected values, "What to run where"), Tests/packs/followup/README.md (read in full), Tests/README.md and Database/BMMS-Check-InstalledSteps.sql (diff), the Test script result (95 of 95) and the tester run 2026-11-16_133023 as given; the Test script itself and pack.js were not read in full;
   for step UN6d: Database/README.md (section Step UN6d: the Test script description, the tester paragraph, the changed expected values), Tests/packs/followup/README.md and expected.json, Tests/packs/dashboard/README.md and expected.json (diff), Tests/packs/access-matrix/README.md and Tests/README.md (diff), the Test script result (56 of 56) and the tester runs of 2026-11-15 as given; the Test script itself (632 lines) and pack.js were not read in full;
@@ -166,7 +166,7 @@ Database/README.md, section "Step WF3a1". What the development machine needs is 
 | SQL logins | Two, made by the setup. bmms_tester owns BMMS_Quality; the runner restores and checks as this login. bmms_site is the site copy's login: a user in BMMS_Quality with db_datareader, db_datawriter, db_backupoperator and EXECUTE on the dbo schema. Neither has a server role or access to any other database. Before every run the runner asks the server, as each login, what it can reach, and refuses when that is more than BMMS_Quality (any other database, BMMS or BMMS_Test, a server role, CONTROL SERVER, IMPERSONATE). Since WF3a2 the server permissions are an allow-list: in effect only CONNECT SQL and VIEW ANY DATABASE, and granted to the login only CONNECT SQL, otherwise the run is refused; the check is made again after the restore (Run-Tests.ps1), and Update-Baseline.ps1 makes it after the Fix scripts and before the baseline backup. The application login bmms_app is not used |
 | Browser | The installed Chrome, headless, driven by Node scripts (playwright-core). Requests to any host other than localhost are aborted and listed |
 | Mail | BMMS_Quality has the safe default (localhost, port 25); no real mail can be sent |
-| Packs | One folder per pack under Tests/packs (pack.js and data files). The packs are selftest (WF3a1), access-matrix (WF3a2), dashboard (UN6b), followup (UN6d), followup-reports (FU2b) and page-assets (UN6e). A pack is Node code: it is written in a step's build and reviewed there, and the tester cannot change it |
+| Packs | One folder per pack under Tests/packs (pack.js and data files). The packs are selftest (WF3a1), access-matrix (WF3a2), dashboard (UN6b), followup (UN6d), followup-reports (FU2b), page-assets (UN6e) and session-check (RA1d, run last). A pack is Node code: it is written in a step's build and reviewed there, and the tester cannot change it |
 
 ### How it is run
 
@@ -872,6 +872,59 @@ baseline with step 50): PASSED, 915 checks (selftest 8, access-matrix 472, dashb
 page-assets 11). The owner's tests passed on 2026-11-18 (SQL on BMMS_Test and the browser, Chrome and Edge at 100 percent: the
 Dashboard as Controller, Manager and User unchanged; every CSS link ends in ?v= and 8 hex characters; the stamp changed after a CSS
 edit and a recycle; the Followup page and report unchanged; no new error log entry).
+
+### Step 51 (RA1d): the Test script, the changed expectation of step 18, the session-check pack
+
+BMMS-Test-SessionCheck-Step51.sql runs on BMMS_Test only: 18 numbered checks, all PASS. It checks the marker and the one parameter,
+the result columns (no Password, no EmailId), that no feature above compatibility level 100 is used, EXECUTE for every database
+user who can run spr_GetUserStatusByUserId, and, in one transaction that is rolled back, a made-up Manager written through
+spr_AddEditUser and spr_SetUserStatusByUserId: the state unchanged (the same text twice), a department added, a department
+removed, the home department moved in the same set, Users.DepartmentId changed alone, the role changed, the user deactivated, a
+missing UserId and UserId 0 (no row) and the system account (IsSystem 1); afterwards Users, User_Role and User_Department are
+as before. Results on BMMS_Test with step 51: Test 51 18 of 18, Test 39 58 of 58, UserProtection-Stage1 142 of 142,
+UserStatus-Stage2a 50 of 50, UserStatus-Stage2b 63 of 63, Test 40 43 of 43, SystemAccount-Stage3 51 of 51.
+BMMS-Check-InstalledSteps.sql: step 51 Missing before the Fix, Installed 1 of 1 after.
+
+One expected value changed, test only: BMMS-Test-SystemAccount-Stage3.sql check 44 (Mail ACA) now expects "0 0" (the system
+account's saved row and the ordinary Admin both get no mail); it expected "0 1". Step 43 replaced spr_GetAlertMailId and leaves the
+Admin role out of functional mails by design, so the check had failed since step 43, also with step 51 rolled back; the script
+carries a comment naming step 43. Nothing else in it changed.
+
+#### The session-check pack (step RA1d)
+
+Tests/packs/session-check (pack.js, README.md; run with `-Pack session-check`; BMMS_Quality only, and run as the last pack of a run
+because it changes three fixture users and puts them back). While qa_mdsec, qa_manager2, qa_user2 and qa_ctrl are signed in, qa_admin
+changes qa_mdsec to Management, adds Credit to qa_manager2 and deactivates qa_user2 in User Master (the real Admin page, so the
+real procedures). Checks:
+
+- Before any change the three users read as the fixture has them; a user found changed fails the check and the pack changes nothing.
+- Each user's next click ends on the sign-in page with its fixed message ("Your access has changed. Please sign in again." for
+  the role change and the added department; "Your account is inactive. Contact the administrator." for the deactivation). For
+  qa_manager2 the next request is a Dashboard filter, an UpdatePanel postback, with no script error in the page. After each ended
+  session the browser holds another ASP.NET_SessionId cookie.
+- qa_ctrl, unchanged, opens Meeting, Reports (Minutes) and the Dashboard between the changes and is never interrupted.
+- The page access log of the site copy holds exactly one SESSION-ENDED line for each of the three (with the reason role,
+  departments changed or inactive), none for qa_ctrl or qa_admin and no SESSION-CHECK-ERROR line.
+- Finally, also after a failed check, in a finally block: the three users are put back through User Master and must read as at
+  the start; one that could not be put back fails the check and is named.
+
+The department change adds Credit and does not remove Secretarial: the fixture's qa_manager2 is the last active Manager of
+Secretarial with an item waiting, and step 39 refuses removing it (Reason 24). Not covered by the pack, so left to the owner's browser
+steps: a database error during the check (the tester cannot stop SQL Server), the report pop-up and the Word and PDF exports after a
+change, and a second browser tab.
+
+The tester's baseline for step 51: `Update-Baseline.ps1 -ConfirmDatabase BMMS_Quality -FixScript BMMS-Fix-SessionCheck-Step51.sql`.
+
+Result of the step: tester run 2026-11-19_104149: PASSED, 510 checks, 507 passed and 0 failed (the 3 others are the
+self-test's planted wrong expectations, all caught): selftest 8, access-matrix 472 (440 matrix cells, all ok; the standing proof
+holds), page-assets 11, session-check 19; the error log had 0 new lines.
+
+Owner's tests: passed on BMMS_Test on 2026-11-19: the Check script (step 51 Installed, 1 of 1),
+Test 51 18 of 18 and SystemAccount-Stage3 51 of 51; the browser tests: a role changed, a department changed, a user
+made inactive, an Admin made a User while on Department Master (SESSION-ENDED, not DENIED-PAGE), the Dashboard filter
+redirect, two tabs, the report window and the Word export refused, the database offline (the safe error page, the
+session kept, three SESSION-CHECK-ERROR lines) and back online without a new sign-in; the error log held only the lines
+of the offline test.
 
 ## Reviewer stage
 
