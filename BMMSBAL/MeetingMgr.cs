@@ -93,6 +93,8 @@ namespace BMMSBAL
                     return Common.GetAppSetting("delete_reference");
                 case MeetingChangeReason.DueDateBeforeMeetingDate:
                     return MeetingChangeReason.DueDateBeforeMeetingDateMessage(ReasonDetail);
+                case MeetingChangeReason.DecisionAfterMeetingDate:
+                    return MeetingChangeReason.DecisionAfterMeetingDateMessage;
                 default:
                     return "Record Not Saved";
             }
@@ -124,6 +126,12 @@ namespace BMMSBAL
         public const int MeetingDatePassed = 20;       // step D1: meeting delete after the meeting date (database server date)
         public const int MeetingInUse = 21;            // step D1: meeting delete while it has members, agenda items or attendance; ReasonDetail names them
         public const int DueDateBeforeMeetingDate = 22; // step 38 (UN6a): a Followup due date before the meeting date; ReasonDetail the meeting date
+        public const int DecisionAfterMeetingDate = 28; // step 52 (MR1): a Manager's approve or reject after the meeting date (database server date)
+
+        /// <summary>Step MR1 (BMMS-Fix-ManagerRelease-Step52.sql): a Manager's approve or reject after the meeting date. The
+        /// same text as the Dashboard's own meeting-date check (step M6a), which normally stops the request first.</summary>
+        public const string DecisionAfterMeetingDateMessage =
+            "The meeting date has passed, so this item can no longer be approved or rejected. It will be rejected when the agenda is finalized.";
 
         /// <summary>Step UN6a: Update Minutes, a Followup due date before the meeting date (BMMS-Fix-MinutesDueDate-Step38.sql).
         /// MeetingDate is the date as text (dd-MMM-yyyy); empty when it is not known.</summary>

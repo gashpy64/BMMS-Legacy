@@ -56,8 +56,9 @@ pwsh -NoProfile -File Tests/_runner/Run-Tests.ps1 -Pack access-matrix
   role, adds a department and deactivates a user in User Master; each one's next click (for qa_manager2 a
   Dashboard filter, an UpdatePanel postback) lands on the sign-in page with its fixed message and a new
   ASP.NET_SessionId cookie, and the page access log has one SESSION-ENDED line each; qa_ctrl, unchanged, is never
-  interrupted. The three users are put back at the end, also after a failure, and a user left changed fails a
-  check. Run it as the last pack of a run. Its rules and checks: `Tests\packs\session-check\README.md`.
+  interrupted. Step MR1: qa_admin's change of qa_manager to User is refused with the lines of the open and the past
+  items, and nothing changes. The users are put back at the end, also after a failure, and a user left changed
+  fails a check. Run it as the last pack of a run. Its rules and checks: `Tests\packs\session-check\README.md`.
 - `-Pack access-matrix -ProofFullMatrix` (you only; the tester agent cannot use it): the standing
   proof over every row instead of two. Exactly one cell must change. Use it when the pack itself
   changes.

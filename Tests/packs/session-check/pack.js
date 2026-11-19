@@ -19,6 +19,10 @@
     After each ended session the ASP.NET_SessionId cookie of that browser differs from the one before (the ended
     session's cookie was expired): after a fresh sign-in for qa_mdsec and qa_manager2; on the sign-in page for
     qa_user2, who cannot sign in.
+    4b. Step MR1 (database step 52): the Admin tries to make qa_manager a User. Refused (rule 12): the message box
+       has the header, the line of the 2 items routed to qa_manager that are still open for approval, the line of
+       the 1 item of a past meeting whose agenda was never finalized, and "Nothing was changed."; no department
+       line (Credit has another active Manager). qa_manager stays a Manager.
     5. qa_ctrl, unchanged, opens a page after every change and is never sent to the sign-in page; no
        SESSION-ENDED line for qa_ctrl or qa_admin.
     6. Finally (also after a failure): the three users are put back through User Master, and User Master must
@@ -33,6 +37,14 @@ const USERS = 'Master/User.aspx';
 const DASH = 'DashBoard/DashBoard.aspx';
 const CHANGED_TEXT = 'Your access has changed. Please sign in again.';
 const SESSION_COOKIE = 'ASP.NET_SessionId';
+// Step MR1: the Reason 24 message, one line per part (BMMSBAL/UserMgr.cs, LastManagerMessage)
+const MANAGER_NEEDED_LINES = [
+  'Not saved: this Manager is still needed.',
+  '2 items routed to them are still open for approval: approve or reject them first.',
+  '1 item routed to them belongs to meetings whose date has passed and whose agenda was never finalized: the Controller should '
+    + 'finalize the agenda of those meetings first (finalizing rejects the items not yet approved).',
+  'Nothing was changed.',
+];
 const INACTIVE_TEXT = 'Your account is inactive. Contact the administrator.';
 
 async function fullPost(page, action) {
@@ -65,6 +77,15 @@ async function pageMessage(page) {
   return page.evaluate(() => {
     const span = document.querySelector('[id$="spanErrLogin"]');
     return span ? span.textContent.replace(/\s+/g, ' ').trim() : '';
+  });
+}
+
+// The message box as lines (the parts of a message are separated by <br />)
+async function messageLines(page) {
+  return page.evaluate(() => {
+    const span = document.querySelector('[id$="spanErrLogin"]');
+    if (!span) return [];
+    return span.innerText.split(/\n/).map((x) => x.replace(/\s+/g, ' ').trim()).filter((x) => x !== '');
   });
 }
 
@@ -127,11 +148,13 @@ module.exports = {
   title: 'Session check: a change of role, departments or status ends the session at the next click',
   async run(t) {
     const acc = t.creds.accounts;
-    const L = { mdsec: acc.mdsec.login, manager2: acc.manager2.login, user2: acc.user2.login, ctrl: acc.controller.login, admin: acc.admin.login };
+    const L = { mdsec: acc.mdsec.login, manager2: acc.manager2.login, user2: acc.user2.login, ctrl: acc.controller.login, admin: acc.admin.login,
+      manager: acc.manager.login };
     const fixture = {
       [L.mdsec]: { role: 'MD Secretariat', active: true, departments: [] },
       [L.manager2]: { role: 'Manager', active: true, departments: ['HRD', 'Secretarial'], only: 2 },
       [L.user2]: { role: 'User', active: true, departments: [] },
+      [L.manager]: { role: 'Manager', active: true, departments: ['Credit'], only: 1 },   // step MR1 (4b)
     };
     const rec = (role, title, expected, seen, extra) => {
       const e = JSON.stringify(expected); const s = JSON.stringify(seen);
@@ -145,9 +168,10 @@ module.exports = {
     const before = await readUsers(admin);
     const start = {};
     Object.keys(fixture).forEach((login) => { start[login] = ok(before[login], fixture[login]); });
-    rec('admin', 'Before any change: User Master shows qa_mdsec, qa_manager2 and qa_user2 as the fixture has them (a fixture user left changed by an earlier pack of this run fails here)',
-      { [L.mdsec]: true, [L.manager2]: true, [L.user2]: true }, start, { detail: JSON.stringify(before[L.mdsec]) + ' ' + JSON.stringify(before[L.manager2]) + ' ' + JSON.stringify(before[L.user2]) });
-    if (!start[L.mdsec] || !start[L.manager2] || !start[L.user2]) return;
+    rec('admin', 'Before any change: User Master shows qa_mdsec, qa_manager2, qa_user2 and qa_manager as the fixture has them (a fixture user left changed by an earlier pack of this run fails here)',
+      { [L.mdsec]: true, [L.manager2]: true, [L.user2]: true, [L.manager]: true }, start,
+      { detail: JSON.stringify(before[L.mdsec]) + ' ' + JSON.stringify(before[L.manager2]) + ' ' + JSON.stringify(before[L.user2]) + ' ' + JSON.stringify(before[L.manager]) });
+    if (!start[L.mdsec] || !start[L.manager2] || !start[L.user2] || !start[L.manager]) return;
 
     const changed = { role: false, dept: false, status: false };
     try {
@@ -239,6 +263,18 @@ module.exports = {
       await t.endSession('user2');
       await ctrlClick(DASH, 'after the deactivation');
 
+      // 4b. Step MR1: rule 12 refuses qa_manager's change to User; the message names the open and the past items
+      await openUsers(t, admin);
+      await editUser(admin, L.manager);
+      await setRole(admin, 'User');
+      await fullPost(admin, () => admin.locator('input[id$="btnSave"]').click());
+      const refusal = await messageLines(admin);
+      const shot = await t.shot(admin, 'manager-still-needed');
+      await openUsers(t, admin);
+      const managerNow = (await readUsers(admin))[L.manager];
+      rec('admin', 'The Admin makes qa_manager a User: refused, the message with the open (2) and the past (1) items and no department line; qa_manager still a Manager',
+        { lines: MANAGER_NEEDED_LINES, role: 'Manager' }, { lines: refusal, role: managerNow ? managerNow.role : '' }, { screenshot: shot });
+
       // The page access log: one SESSION-ENDED line per ended session, with its reason; none for the others
       const lines = t.logSince(mark);
       const one = (login, pattern) => {
@@ -246,10 +282,11 @@ module.exports = {
         return l.length === 1 && pattern.test(l[0]) && /\tUserId \d+; /.test(l[0]);
       };
       rec('admin', 'PageAccessLog: exactly one SESSION-ENDED line per ended session (user id, login, page, reason); none for qa_ctrl and qa_admin',
-        { [L.mdsec]: true, [L.manager2]: true, [L.user2]: true, [L.ctrl]: 0, [L.admin]: 0, checkErrors: 0 },
+        { [L.mdsec]: true, [L.manager2]: true, [L.user2]: true, [L.ctrl]: 0, [L.admin]: 0, checkErrors: 0, [L.manager]: 0 },
         { [L.mdsec]: one(L.mdsec, /role md_sect to mgmt$/), [L.manager2]: one(L.manager2, /departments changed$/), [L.user2]: one(L.user2, /inactive$/),
           [L.ctrl]: endedLines(lines, L.ctrl).length, [L.admin]: endedLines(lines, L.admin).length,
-          checkErrors: lines.filter((l) => /\tSESSION-CHECK-ERROR\t/.test(l)).length },
+          checkErrors: lines.filter((l) => /\tSESSION-CHECK-ERROR\t/.test(l)).length,
+          [L.manager]: endedLines(lines, L.manager).length },
         { accessLog: lines });
     } finally {
       // 6. Put the three users back, whatever happened above
@@ -268,13 +305,19 @@ module.exports = {
       if (!ok(now[L.user2], fixture[L.user2])) {
         await attempt(L.user2, async () => { await openUsers(t, admin); await setStatus(admin, L.user2); });
       }
+      now = await readUsers(admin).catch(() => ({}));
+      if (!ok(now[L.manager], fixture[L.manager])) {
+        // Step MR1: only if the refusal of 4b did not hold; Credit is ticked by the page for the Manager role
+        await attempt(L.manager, async () => { await openUsers(t, admin); await editUser(admin, L.manager); await setRole(admin, 'Manager'); await save(admin); });
+      }
       await attempt('admin page', async () => { await openUsers(t, admin); });
       const after = await readUsers(admin).catch(() => ({}));
       const same = (login) => JSON.stringify(after[login] || null) === JSON.stringify(before[login]);
-      rec('admin', 'Finally: qa_mdsec, qa_manager2 and qa_user2 are as before the pack (a user left changed is named here)',
-        { [L.mdsec]: true, [L.manager2]: true, [L.user2]: true, problems: [] },
-        { [L.mdsec]: same(L.mdsec), [L.manager2]: same(L.manager2), [L.user2]: same(L.user2), problems },
-        { detail: 'changed during the pack: ' + JSON.stringify(changed) + '; after: ' + JSON.stringify(after[L.mdsec]) + ' ' + JSON.stringify(after[L.manager2]) + ' ' + JSON.stringify(after[L.user2]) });
+      rec('admin', 'Finally: qa_mdsec, qa_manager2, qa_user2 and qa_manager are as before the pack (a user left changed is named here)',
+        { [L.mdsec]: true, [L.manager2]: true, [L.user2]: true, [L.manager]: true, problems: [] },
+        { [L.mdsec]: same(L.mdsec), [L.manager2]: same(L.manager2), [L.user2]: same(L.user2), [L.manager]: same(L.manager), problems },
+        { detail: 'changed during the pack: ' + JSON.stringify(changed) + '; after: ' + JSON.stringify(after[L.mdsec]) + ' ' + JSON.stringify(after[L.manager2]) + ' '
+          + JSON.stringify(after[L.user2]) + ' ' + JSON.stringify(after[L.manager]) });
     }
   },
 };

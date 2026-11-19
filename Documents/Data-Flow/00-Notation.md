@@ -3,8 +3,8 @@
 - Title: Data-Flow Notation
 - Audience: Developers, installers, Gashpy Software
 - Shipped: No
-- Applies to: user-ud1a
-- Last updated by: WF2a, based on 021e946
+- Applies to: MR1 (one table row of the example: Reason 24); user-ud1a
+- Last updated by: MR1, based on e1b90dc (the Reason 24 row; the rest as WF2a)
 - Status: Draft
 - Verified against: the example below: BMMS/Master/User.aspx.cs (btnSave, UserMgr.AddEditUser),
   BMMSBAL/UserMgr.cs (AddEditUser, UserChangeResult), BMMSDAL/UserDB.cs (AddEditUser calls
@@ -107,7 +107,7 @@ flowchart TD
 | spr_AddEditUser | User_Department | Department history rows | Home department plus the extra departments of a Manager |
 | spr_AddEditUser | UserDB.AddEditUser | Result, Reason, ReasonDetail | |
 | UserMgr.AddEditUser | User Master | UserChangeResult | Turned into the message shown |
-| spr_AddEditUser | User Master | Reason 24 | Refusal: the user is the last active Manager of a department with waiting items, or items are routed to the user |
+| spr_AddEditUser | User Master | Reason 24 | Refusal: the user is the last active Manager of a department with waiting items, or items are routed to the user (since step 52 with the detail open/past counts, and the same refusal on Deactivate in spr_SetUserStatusByUserId) |
 
 Drawn from: BMMS/Master/User.aspx.cs (Save), BMMSBAL/UserMgr.cs (AddEditUser), BMMSDAL/UserDB.cs
 (AddEditUser), Database/BMMS-Fix-UserHistory-Step39.sql (spr_AddEditUser, fn_ManagerReleaseRefusal).

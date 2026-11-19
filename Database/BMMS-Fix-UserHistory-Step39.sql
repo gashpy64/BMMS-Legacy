@@ -145,6 +145,14 @@ BEGIN
     RAISERROR('Current database is "%s". Select the BMMS database (or its test copy) and run again. Nothing was changed.', 16, 1, @CurrentDatabase);
     SET NOEXEC ON;
 END
+-- Step 52 (step MR1) replaced fn_ManagerReleaseRefusal, spr_AddEditUser and spr_SetUserStatusByUserId again: a re-run
+-- of this script would put the step 39 texts back without a word (ManagerRelease-Step52)
+ELSE IF (EXISTS (SELECT 1 FROM (VALUES ('fn_ManagerReleaseRefusal'), ('spr_AddEditUser'), ('spr_SetUserStatusByUserId')) o(Name)
+                 WHERE ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%ManagerRelease-Step52%'))
+BEGIN
+    RAISERROR('Step 52 is installed in "%s": it replaced three procedures of this step. Run BMMS-Rollback-ManagerRelease-Step52.sql first, then this script, then BMMS-Fix-ManagerRelease-Step52.sql again. Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
 ELSE IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_AddEditUser')), '') NOT LIKE '%UserProtection-Stage1%'
          OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_SetUserStatusByUserId')), '') NOT LIKE '%UserProtection-Stage1%'
          OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_DeleteUserByUserId')), '') NOT LIKE '%UserProtection-Stage1%')

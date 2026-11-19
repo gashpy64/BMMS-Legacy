@@ -371,13 +371,15 @@ BEGIN TRY
     SET @L = CAST(@DC AS VARCHAR(12));
     DELETE FROM @R; INSERT INTO @R EXEC #ZZ39_Edit @UserId = @M1, @RoleId = @rMgr, @DepartmentId = @DC, @List = @L, @PassList = 1, @Actor = @Adm;
     EXEC #ZZ39_State @UserId = @M1, @Text = @S OUTPUT;
+    -- Step 52 (MR1): the Reason 24 ReasonDetail is 'open:<n>|past:<n>|<department part>' (expected value changed)
     INSERT INTO @T SELECT 'Edit removes A, of which he is the last active Manager with an item waiting',
-           'Result 0, Reason 24, last active Manager of ZZ step 39 department A (1 item waiting) | role manager; open ZZ39A,ZZ39C*; closed 3/0/0', (SELECT Txt FROM @R) + ' | ' + @S;
+           'Result 0, Reason 24, open:0|past:0|last active Manager of ZZ step 39 department A (1 item waiting) | role manager; open ZZ39A,ZZ39C*; closed 3/0/0', (SELECT Txt FROM @R) + ' | ' + @S;
 
     DELETE FROM @R; INSERT INTO @R EXEC #ZZ39_Edit @UserId = @M1, @RoleId = @rUser, @DepartmentId = @DC, @List = @L, @PassList = 1, @Actor = @Adm;
     EXEC #ZZ39_State @UserId = @M1, @Text = @S OUTPUT;
+    -- Step 52 (MR1): the Reason 24 ReasonDetail is 'open:<n>|past:<n>|<department part>' (expected value changed)
     INSERT INTO @T SELECT 'Role change Manager to User: last Manager of A, and the item routed to him',
-           'Result 0, Reason 24, last active Manager of ZZ step 39 department A (1 item waiting); 1 item waiting for their own approval | role manager; open ZZ39A,ZZ39C*; closed 3/0/0',
+           'Result 0, Reason 24, open:1|past:0|last active Manager of ZZ step 39 department A (1 item waiting) | role manager; open ZZ39A,ZZ39C*; closed 3/0/0',
            (SELECT Txt FROM @R) + ' | ' + @S;
 
     SET @L = CAST(@DA AS VARCHAR(12));
@@ -387,8 +389,9 @@ BEGIN TRY
 
     SET @L = CAST(@DC AS VARCHAR(12));
     DELETE FROM @R; INSERT INTO @R EXEC #ZZ39_Edit @UserId = @M1, @RoleId = @rUser, @DepartmentId = @DC, @List = @L, @PassList = 1, @Actor = @Adm;
+    -- Step 52 (MR1): the Reason 24 ReasonDetail is 'open:<n>|past:<n>|<department part>' (expected value changed)
     INSERT INTO @T SELECT 'Role change with a second Manager in A: still the item routed to him',
-           'Result 0, Reason 24, 1 item waiting for their own approval', (SELECT Txt FROM @R);
+           'Result 0, Reason 24, open:1|past:0|', (SELECT Txt FROM @R);
 
     UPDATE Users SET ManagerId = @M2 WHERE UserId = @U1;
     DELETE FROM @R; INSERT INTO @R EXEC #ZZ39_Edit @UserId = @M1, @RoleId = @rUser, @DepartmentId = @DC, @List = @L, @PassList = 1, @Actor = @Adm;
@@ -409,8 +412,9 @@ BEGIN TRY
 
     SET @L = CAST(@DB AS VARCHAR(12));
     DELETE FROM @R; INSERT INTO @R EXEC #ZZ39_Edit @UserId = @M2, @RoleId = @rMgr, @DepartmentId = @DB, @List = @L, @PassList = 1, @Actor = @Adm;
+    -- Step 52 (MR1): the Reason 24 ReasonDetail is 'open:<n>|past:<n>|<department part>' (expected value changed)
     INSERT INTO @T SELECT 'Edit moves him from A (last active Manager, item waiting) to B: the department only is named',
-           'Result 0, Reason 24, last active Manager of ZZ step 39 department A (1 item waiting)', (SELECT Txt FROM @R);
+           'Result 0, Reason 24, open:0|past:0|last active Manager of ZZ step 39 department A (1 item waiting)', (SELECT Txt FROM @R);
 
     -- An older caller (no @DepartmentIds) keeps the Manager's mappings and writes no row
     SET @L = CAST(@DA AS VARCHAR(12)) + ',' + CAST(@DB AS VARCHAR(12));
@@ -427,6 +431,17 @@ BEGIN TRY
     ---------------------------------------------------------------------------
     -- Deactivate and Activate
     ---------------------------------------------------------------------------
+    -- Step 52 (MR1, owner 2026-11-19): Deactivate of an active Manager follows rule 12 as a role change does. M2 is the
+    -- last active Manager of A, where item ZZ39-001 waits, and it is routed to him (U1 reports to M2 since above): the
+    -- Deactivate is refused (new check). The item is then marked decided (AMA) for the checks of Deactivate and Activate
+    -- below, which are those of step 39 and unchanged, and put back at AC after them.
+    DELETE FROM @R; INSERT INTO @R EXEC spr_SetUserStatusByUserId @UserId = @M2, @AccountStatus = 0, @ActingUserId = @Adm;
+    EXEC #ZZ39_State @UserId = @M2, @Text = @S OUTPUT;
+    INSERT INTO @T SELECT 'Step 52: Deactivate refused while he is the last Manager of A with an item waiting and the item is routed to him (rule 12)',
+           'Result 0, Reason 24, open:1|past:0|last active Manager of ZZ step 39 department A (1 item waiting) | role manager; open ZZ39A*,ZZ39B; closed 1/0/0',
+           (SELECT Txt FROM @R) + ' | ' + @S;
+    UPDATE Agenda SET AgendaStatusCode = 'AMA' WHERE AgendaId = @Ag;
+
     DELETE FROM @R; INSERT INTO @R EXEC spr_SetUserStatusByUserId @UserId = @M2, @AccountStatus = 0, @ActingUserId = @Adm;
     EXEC #ZZ39_State @UserId = @M2, @Text = @S OUTPUT;
     INSERT INTO @T SELECT 'Deactivate closes every row (D)', 'Result 1, Reason 0 | role -; open -; closed 1/2/0', (SELECT Txt FROM @R) + ' | ' + @S;
@@ -449,6 +464,7 @@ BEGIN TRY
            (SELECT Txt FROM @R) + ' | status ' + CAST((SELECT AccountStatus FROM Users WHERE UserId = @M2) AS VARCHAR(2))
          + ' | open ' + CAST((SELECT COUNT(*) FROM User_Department WHERE UserId = @M2 AND EffectiveTo IS NULL) AS VARCHAR(12));
     UPDATE Department SET StatusId = 1 WHERE DepartmentId IN (@DA, @DB);
+    UPDATE Agenda SET AgendaStatusCode = 'AC' WHERE AgendaId = @Ag;   -- step 52: back at AC, as before the checks above
 
     ---------------------------------------------------------------------------
     -- Department delete

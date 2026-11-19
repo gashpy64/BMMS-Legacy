@@ -101,15 +101,65 @@ namespace BMMSBAL
                     // BMMS-Fix-UserHistory-Step39.sql (step UD1a)
                     return DepartmentsMessage(ReasonDetail);
                 case UserChangeReason.LastManager:
-                    // BMMS-Fix-UserHistory-Step39.sql (step UD1a, rule 12)
-                    return "Not saved: this Manager is still needed: " + System.Web.HttpUtility.HtmlEncode(ReasonDetail) + ". "
-                         + "Approve or reject those items first, or give the department another active Manager. Nothing was changed.";
+                    // BMMS-Fix-UserHistory-Step39.sql (step UD1a, rule 12); the parts since step MR1 (step 52)
+                    return LastManagerMessage(ReasonDetail);
                 case UserChangeReason.Other:
                     Utilities.WriteErrorLog(ClassName, "UserChange", "Refused by the database: " + ReasonDetail);
                     return "This user cannot be deleted because other data still refers to them. The details were written to the error log.";
                 default:
                     return Common.GetAppSetting("delete_reference");
             }
+        }
+
+        // Reason 24 (step MR1, BMMS-Fix-ManagerRelease-Step52.sql): ReasonDetail is 'open:<n>|past:<n>|<department part>',
+        // the department part as step 39 wrote it ('last active Manager of <names with counts>', or empty; its counts are
+        // said as the department's, DepartmentCounts). One line per
+        // part that applies, in screen terms; the items routed to the person never suggest another department Manager.
+        // A detail in the step 39 form (the database without step 52) gets the step 39 message.
+        private static string LastManagerMessage(string Detail)
+        {
+            string detail = Detail ?? string.Empty;
+            System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(detail, @"^open:(\d{1,9})\|past:(\d{1,9})\|(.*)$",
+                System.Text.RegularExpressions.RegexOptions.Singleline);
+            if (!m.Success)
+                return "Not saved: this Manager is still needed: " + System.Web.HttpUtility.HtmlEncode(detail) + ". "
+                     + "Approve or reject those items first, or give the department another active Manager. Nothing was changed.";
+
+            int open = int.Parse(m.Groups[1].Value);
+            int past = int.Parse(m.Groups[2].Value);
+            string departments = m.Groups[3].Value.Trim();
+
+            List<string> parts = new List<string>();
+            if (open > 0)
+                parts.Add(Items(open) + " routed to them " + (open == 1 ? "is" : "are")
+                          + " still open for approval: approve or reject " + (open == 1 ? "it" : "them") + " first.");
+            if (past > 0)
+                parts.Add(Items(past) + " routed to them " + (past == 1 ? "belongs" : "belong")
+                          + " to meetings whose date has passed and whose agenda was never finalized: the Controller should finalize "
+                          + "the agenda of those meetings first (finalizing rejects the items not yet approved).");
+            if (departments.Length > 0)
+                parts.Add(Capitalise(System.Web.HttpUtility.HtmlEncode(DepartmentCounts(departments))) + ": give the department another active Manager first.");
+
+            return "Not saved: this Manager is still needed.<br />" + string.Join("<br />", parts.ToArray())
+                 + (parts.Count > 0 ? "<br />" : string.Empty) + "Nothing was changed.";
+        }
+
+        // Step MR1 (owner 2026-11-19): in the department part the count is the department's, not the person's:
+        // "(2 items waiting)" as the database writes it becomes "(2 items of the department waiting)"
+        private static string DepartmentCounts(string departments)
+        {
+            return System.Text.RegularExpressions.Regex.Replace(departments, @"\((\d{1,9}) items? waiting\)",
+                m => "(" + Items(int.Parse(m.Groups[1].Value)) + " of the department waiting)");
+        }
+
+        private static string Items(int n)
+        {
+            return n.ToString() + (n == 1 ? " item" : " items");
+        }
+
+        private static string Capitalise(string text)
+        {
+            return text.Length == 0 ? text : char.ToUpperInvariant(text[0]) + text.Substring(1);
         }
 
         // Reason 23 (step UD1a): ReasonDetail is a code, for an inactive home department followed by its name

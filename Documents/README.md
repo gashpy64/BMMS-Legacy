@@ -3,10 +3,10 @@
 - Title: BMMS Documents - index, register and rules
 - Audience: Gashpy Software (owner, developers, doc-writer)
 - Shipped: No
-- Applies to: RA1d (header; the register entry of 00-Overall gets one To confirm point, no manual text changed); UN6e (no register entry changed: no user manual changed, nothing is visible); FU2b (register entries of 00-Overall and 03-Controller); FU2a (register entries of 00-Overall, 01-User, 02-Manager and 03-Controller); FU1 (register entries of 00-Overall, 03-Controller and Glossary); UN6d
-- Last updated by: RA1d, based on d642746 (header, and the To confirm of the 00-Overall entry; the other register entries are those of FU2b, FU2a and the steps before)
+- Applies to: MR1 (header; the To confirm of the 04-Admin entry; no user manual text changed); RA1d (header; the register entry of 00-Overall gets one To confirm point, no manual text changed); UN6e (no register entry changed: no user manual changed, nothing is visible); FU2b (register entries of 00-Overall and 03-Controller); FU2a (register entries of 00-Overall, 01-User, 02-Manager and 03-Controller); FU1 (register entries of 00-Overall, 03-Controller and Glossary); UN6d
+- Last updated by: MR1, based on e1b90dc (header, and the To confirm of the 04-Admin entry; the other register entries are those of RA1d, FU2b, FU2a and the steps before)
 - Status: Draft
-- Verified against: for RA1d: the step's diff and the user-manual search (the sign-in message "Your access has changed. Please sign in again." is in no manual; the sections "Signing in and your password" and "Common problems" of the role manuals are not written yet), BMMS/Default.aspx.cs (the message texts); for UN6e: the step's diff and the user-manual search (no manual describes ViewState, stylesheets, indexes or the tester); the register entries of the manuals and the Glossary: see there; CLAUDE.md, .claude/agents/doc-writer.md, Documents/_build/*.ps1, Tests/README.md
+- Verified against: for MR1: the step's diff and the user-manual search (the User Master message of a Manager still needed is in no manual: the Admin manual is not written yet for User Master; the Dashboard text of a passed meeting date is unchanged in the Manager and Controller manuals), BMMSBAL/UserMgr.cs and MeetingMgr.cs (the message texts); for RA1d: the step's diff and the user-manual search (the sign-in message "Your access has changed. Please sign in again." is in no manual; the sections "Signing in and your password" and "Common problems" of the role manuals are not written yet), BMMS/Default.aspx.cs (the message texts); for UN6e: the step's diff and the user-manual search (no manual describes ViewState, stylesheets, indexes or the tester); the register entries of the manuals and the Glossary: see there; CLAUDE.md, .claude/agents/doc-writer.md, Documents/_build/*.ps1, Tests/README.md
   (the update matrix lines for the tester)
 - To confirm:
 
@@ -240,7 +240,7 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
   (card titles and column headers), DashBoard.aspx.cs (diff), Database/BMMS-Fix-DashboardMeetings-Step42.sql (the
   Admin gets no counts), Database/README.md (section Step UN6b); for "What you can and cannot do": BMMS/XML/PageAccess.xml,
   BMMS/UserControl/MenuUserControl.ascx (Master, Admin and Reports menus by role), the owner's principle of 2026-11-10
-- To confirm: manual not written yet (WF2d3), except the first section in part and the Dashboard screen (written
+- To confirm: for the User Master screen (written in WF2d3): since step MR1 a role change away from Manager, a removed department and a Deactivate of an active Manager are refused while items routed to the Manager wait; the message box shows "Not saved: this Manager is still needed." and one line per part (items still open for approval; items of past meetings whose agenda was never finalized, which the Controller closes with Agenda Finalization; last active Manager of a department), then "Nothing was changed." The texts are in the CHANGELOG entry of MR1 and are for the owner to place in the Admin manual; one screenshot need (the message box with two and with three parts); manual not written yet (WF2d3), except the first section in part and the Dashboard screen (written
   from the code, not compared with a screenshot); the wording of the
   owner's principle as the owner wants it in a shipped manual; whether the Admin may also use the
   functional masters that PageAccess.xml opens to both Admin and Controller (Member, Committee,

@@ -65,6 +65,9 @@ DECLARE @E NVARCHAR(10) = N'';
 DECLARE @Now DATETIME = GETDATE();
 DECLARE @Old DATETIME = '20260101 08:00:00';
 DECLARE @Past DATETIME = DATEADD(DAY, -3, CAST(CAST(GETDATE() AS date) AS DATETIME));
+-- Step 52 (MR1): a Manager's approve or reject after the meeting date is refused (Reason 28), so the open meeting whose
+-- items are decided here is dated 10 days ahead; its agenda submission date stays in the past
+DECLARE @Future DATETIME = DATEADD(DAY, 10, CAST(CAST(GETDATE() AS date) AS DATETIME));
 DECLARE @Sys INT = (SELECT TOP 1 UserId FROM Users WHERE IsSystem = 1 ORDER BY UserId);
 DECLARE @CtrlRoleId INT = (SELECT TOP 1 RoleId FROM Roles WHERE RoleCode = 'controller');
 DECLARE @MgrRoleId INT = (SELECT TOP 1 RoleId FROM Roles WHERE RoleCode = 'manager');
@@ -137,7 +140,7 @@ BEGIN TRY
     SET @Usr = SCOPE_IDENTITY();
 
     INSERT INTO Meeting (MeetingNo, CommitteeId, Place, Venue, MeetingDate, MeetingTime, AgendaSubmissionDate, AgendaStatus, MinutesStatus)
-    VALUES ('99935', @C, 'ZZ35 test', 'ZZ', @Past, '10:00', @Past, 'Open', 'Open');
+    VALUES ('99935', @C, 'ZZ35 test', 'ZZ', @Future, '10:00', @Past, 'Open', 'Open');   -- step 52: the meeting date was @Past
     SET @Mt = SCOPE_IDENTITY();
 
     ---------------------------------------------------------------------------

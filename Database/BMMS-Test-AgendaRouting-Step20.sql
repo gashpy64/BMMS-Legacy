@@ -62,6 +62,9 @@ DECLARE @CtlOn TABLE (UserId INT);
 
 DECLARE @Now DATETIME = GETDATE();
 DECLARE @Past DATETIME = DATEADD(DAY, -7, CAST(CAST(GETDATE() AS date) AS DATETIME));
+-- Step 52 (MR1): a Manager's approve or reject after the meeting date is refused (Reason 28), so the two open meetings
+-- whose items are decided here are dated 10 days ahead; the finalised meeting 99921 keeps the past date
+DECLARE @Future DATETIME = DATEADD(DAY, 10, CAST(CAST(GETDATE() AS date) AS DATETIME));
 DECLARE @E VARCHAR(10) = '';
 DECLARE @Sys INT = (SELECT TOP 1 UserId FROM Users WHERE IsSystem = 1 ORDER BY UserId);
 DECLARE @AdminRoleId INT = (SELECT TOP 1 RoleId FROM Roles WHERE RoleCode = 'admin');
@@ -158,14 +161,14 @@ BEGIN TRY
     SET @UsrOff = SCOPE_IDENTITY();
 
     INSERT INTO Meeting (MeetingNo, CommitteeId, Place, Venue, MeetingDate, MeetingTime, AgendaStatus, MinutesStatus)
-    VALUES ('99920', @C, 'ZZ20 test', 'ZZ', @Past, '10:00', 'Open', 'Open');
+    VALUES ('99920', @C, 'ZZ20 test', 'ZZ', @Future, '10:00', 'Open', 'Open');   -- step 52: was @Past
     SET @Mt = SCOPE_IDENTITY();
     INSERT INTO Meeting (MeetingNo, CommitteeId, Place, Venue, MeetingDate, MeetingTime, AgendaStatus, MinutesStatus)
     VALUES ('99921', @C, 'ZZ20 test', 'ZZ', @Past, '10:00', 'Close', 'Open');
     SET @MtF = SCOPE_IDENTITY();
     -- Items inserted directly go to their own open meeting, so the numbering of the saved ones is not affected
     INSERT INTO Meeting (MeetingNo, CommitteeId, Place, Venue, MeetingDate, MeetingTime, AgendaStatus, MinutesStatus)
-    VALUES ('99922', @C, 'ZZ20 test', 'ZZ', @Past, '10:00', 'Open', 'Open');
+    VALUES ('99922', @C, 'ZZ20 test', 'ZZ', @Future, '10:00', 'Open', 'Open');   -- step 52: was @Past
     SET @Mt2 = SCOPE_IDENTITY();
 
     SET @ActiveAdmins = (SELECT COUNT(*) FROM Users WHERE RoleId = @AdminRoleId AND AccountStatus = 1 AND IsSystem = 0);

@@ -1250,16 +1250,29 @@ END');
     CLOSE CaseCursor;
     DEALLOCATE CaseCursor;
 
-    INSERT INTO @T SELECT 'Approval, earlier text beside the new one: cases run (13 actors x 13 items x 8 actions); cases whose Result, Reason, ReasonDetail or written rows differ', '1352 cases, 0 differ',
-           CAST((SELECT COUNT(*) FROM @Case) AS VARCHAR(12)) + ' cases, ' + CAST((SELECT COUNT(*) FROM @Case WHERE OldOut <> NewOut OR OldOut IS NULL OR NewOut IS NULL) AS VARCHAR(12)) + ' differ'
+    -- Step 52 (MR1): the earlier text does not look at the meeting date, step 52 refuses a Manager's decision after it
+    -- (Reason 28). Those differences are counted apart (the routed managers' approve and reject of the past item pAC, now
+    -- Reason 28: 6); any OTHER difference is still named. Expected value and the count changed.
+    INSERT INTO @T SELECT 'Approval, earlier text beside the new one: cases run (13 actors x 13 items x 8 actions); cases whose Result, Reason, ReasonDetail or written rows differ',
+           '1352 cases, 6 differ (6 of them a manager''s decision on pAC, now Reason 28), 0 other',
+           CAST((SELECT COUNT(*) FROM @Case) AS VARCHAR(12)) + ' cases, ' + CAST((SELECT COUNT(*) FROM @Case WHERE OldOut <> NewOut OR OldOut IS NULL OR NewOut IS NULL) AS VARCHAR(12)) + ' differ ('
+         + CAST((SELECT COUNT(*) FROM @Case WHERE (OldOut <> NewOut OR OldOut IS NULL OR NewOut IS NULL)
+                 AND Item = 'pAC' AND Act IN ('mgr approve', 'mgr reject') AND NewRR = 'Result 0, Reason 28') AS VARCHAR(12))
+         + ' of them a manager''s decision on pAC, now Reason 28), '
+         + CAST((SELECT COUNT(*) FROM @Case WHERE (OldOut <> NewOut OR OldOut IS NULL OR NewOut IS NULL)
+                 AND NOT (Item = 'pAC' AND Act IN ('mgr approve', 'mgr reject') AND ISNULL(NewRR, '') = 'Result 0, Reason 28')) AS VARCHAR(12)) + ' other'
          + ISNULL((SELECT TOP 1 ': ' + Actor + ' / ' + Item + ' / ' + Act + ': ' + LEFT(ISNULL(OldOut, 'null'), 200) + ' <> ' + LEFT(ISNULL(NewOut, 'null'), 200)
-                   FROM @Case WHERE OldOut <> NewOut OR OldOut IS NULL OR NewOut IS NULL ORDER BY Actor, Item, Act), '');
+                   FROM @Case WHERE (OldOut <> NewOut OR OldOut IS NULL OR NewOut IS NULL)
+                   AND NOT (Item = 'pAC' AND Act IN ('mgr approve', 'mgr reject') AND ISNULL(NewRR, '') = 'Result 0, Reason 28')
+                   ORDER BY Actor, Item, Act), '');
     -- 1352 cases = 13 x 13 x 8. The system account: 104 (Reason 12). The inactive, the unknown and the missing user:
     -- 312 (Reason 8). The other nine actors: the unknown item 72 (Reason 4); the two items of the finalised agenda 144
     -- (Reason 5); the ten other items 720, of which allowed: the creator's manager 3 items x 2 actions = 6, each of the
     -- two managers with an alert row 4 x 2 = 8, the Controller 2 items at AMA x 3 action rows + 4 items at AC x reject
     -- = 10; in all 32, and 688 refused with Reason 14.
-    INSERT INTO @T SELECT 'The comparison is not empty: cases that were allowed (Result 1), and each refusal that occurs', 'allowed 32; Reason 12: 104, Reason 14: 688, Reason 4: 72, Reason 5: 144, Reason 8: 312',
+    -- Step 52 (MR1): the 6 decisions of the routed managers on the past item pAC (3 managers x approve, reject) are
+    -- refused with Reason 28 (expected value changed: allowed 32 to 26, Reason 28: 6)
+    INSERT INTO @T SELECT 'The comparison is not empty: cases that were allowed (Result 1), and each refusal that occurs', 'allowed 26; Reason 12: 104, Reason 14: 688, Reason 28: 6, Reason 4: 72, Reason 5: 144, Reason 8: 312',
            'allowed ' + CAST((SELECT COUNT(*) FROM @Case WHERE NewRR = 'Result 1, Reason 0') AS VARCHAR(12)) + '; '
          + ISNULL(STUFF((SELECT ', ' + REPLACE(NewRR, 'Result 0, ', '') + ': ' + CAST(COUNT(*) AS VARCHAR(12)) FROM @Case WHERE NewRR LIKE 'Result 0,%' GROUP BY NewRR ORDER BY NewRR FOR XML PATH('')), 1, 2, ''), 'none');
 
@@ -1292,7 +1305,8 @@ END');
           UNION ALL SELECT 24, 'a finalised agenda refuses the routed manager', 'mg1', 'fAC', 'mgr approve', 'Result 0, Reason 5'
           UNION ALL SELECT 25, 'a finalised agenda refuses the Controller', 'ctl', 'fAMA', 'ctl approve', 'Result 0, Reason 5'
           UNION ALL SELECT 26, 'an unknown item is refused', 'mg1', 'unknown', 'mgr approve', 'Result 0, Reason 4'
-          UNION ALL SELECT 27, 'AS BEFORE, the procedure does not look at the meeting date: the routed manager approves an item of a meeting whose date has passed (the page refuses it, step M6a)', 'mg1', 'pAC', 'mgr approve', 'Result 1, Reason 0'
+          -- Step 52 (MR1): a Manager's decision after the meeting date is refused, Reason 28 (expected value and name changed)
+          UNION ALL SELECT 27, 'SINCE STEP 52, the routed manager''s approve of an item of a meeting whose date has passed is refused (Reason 28; the page refuses it first, step M6a)', 'mg1', 'pAC', 'mgr approve', 'Result 0, Reason 28'
           UNION ALL SELECT 28, 'AS BEFORE, the same for the Controller at AMA', 'ctl', 'pAMA', 'ctl approve', 'Result 1, Reason 0'
           UNION ALL SELECT 29, 'a meeting without a date: the routed manager approves', 'mg1', 'nAC', 'mgr approve', 'Result 1, Reason 0') x
     ORDER BY x.Seq;

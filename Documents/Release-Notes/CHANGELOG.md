@@ -3,10 +3,10 @@
 - Title: BMMS Change Log
 - Audience: Gashpy Software (internal)
 - Shipped: No
-- Applies to: RA1d; UN6e; FU2b; FU2a; FU1
-- Last updated by: RA1d, based on d642746
+- Applies to: MR1; RA1d; UN6e; FU2b; FU2a; FU1
+- Last updated by: MR1, based on e1b90dc
 - Status: Draft
-- Verified against: for RA1d: git diff d642746 (BMMS/PageAccessModule.cs, BMMS/Default.aspx.cs, BMMS/Global.asax.cs, BMMSBAL/UserMgr.cs, BMMSDAL/UserDB.cs, Database/BMMS-Check-InstalledSteps.sql, Database/BMMS-Test-SystemAccount-Stage3.sql, Tests/README.md, Database/README.md) and the new files (Database/BMMS-Fix-SessionCheck-Step51.sql read in full; the Rollback and Test scripts of step 51 not read line by line; Tests/packs/session-check/README.md), Database/README.md section Step RA1d and Known items, the Test results, the tester run 2026-11-19_104149 and the owner's tests as given; for UN6e: git diff dbc48ca (BMMS/DashBoard/DashBoard.aspx.cs, BMMS/MasterPage/Main.Master.cs and MainNoMenu.Master.cs, BMMS/Default.aspx.cs, BMMS/Master/Committee.aspx, BMMS.csproj, Database/BMMS-Check-InstalledSteps.sql, Tests/README.md, Tests/_runner/Run-Tests.ps1) and the new files (BMMS/AssetVersion.cs read in full; BMMS-Fix-Indexes-Step50.sql header; Tests/packs/page-assets/README.md), Database/README.md section Step UN6e and Known items, the owner's tests and the tester run 2026-11-18_123549 as given; for FU2b: git diff c4300b5 (BMMS/Report/Followup.aspx(.cs) and FollowupActionTaken.aspx(.cs), BMMS/Master/Followup.aspx(.cs), BMMS/FollowupStatusText.cs, BMMSBAL/ReportsMgr.cs and ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/BMMS-Check-InstalledSteps.sql, the Rollback and Test of step 47, Database/README.md section Step FU2b and Known items), Database/BMMS-Fix-FollowupReports-Step49.sql (read), the Test results, the tester runs 2026-11-17_133514 and 2026-11-17_135000 and the owner's tests as given;
+- Verified against: for MR1: git diff e1b90dc (BMMSBAL/UserMgr.cs and MeetingMgr.cs, Database/BMMS-Check-InstalledSteps.sql, the Fix scripts of steps 39 and 44, the Test scripts of steps 20, 35, 39 and 44, Tests/README.md, Tests/packs/session-check/*, Database/README.md section Step MR1 and Known items) and the new files (the Fix, Rollback and Test scripts of step 52, taken from Database/README.md, not read line by line), the Test results, the tester run 2026-11-19_145521 as given; the owner's tests of MR1 as given; for RA1d: git diff d642746 (BMMS/PageAccessModule.cs, BMMS/Default.aspx.cs, BMMS/Global.asax.cs, BMMSBAL/UserMgr.cs, BMMSDAL/UserDB.cs, Database/BMMS-Check-InstalledSteps.sql, Database/BMMS-Test-SystemAccount-Stage3.sql, Tests/README.md, Database/README.md) and the new files (Database/BMMS-Fix-SessionCheck-Step51.sql read in full; the Rollback and Test scripts of step 51 not read line by line; Tests/packs/session-check/README.md), Database/README.md section Step RA1d and Known items, the Test results, the tester run 2026-11-19_104149 and the owner's tests as given; for UN6e: git diff dbc48ca (BMMS/DashBoard/DashBoard.aspx.cs, BMMS/MasterPage/Main.Master.cs and MainNoMenu.Master.cs, BMMS/Default.aspx.cs, BMMS/Master/Committee.aspx, BMMS.csproj, Database/BMMS-Check-InstalledSteps.sql, Tests/README.md, Tests/_runner/Run-Tests.ps1) and the new files (BMMS/AssetVersion.cs read in full; BMMS-Fix-Indexes-Step50.sql header; Tests/packs/page-assets/README.md), Database/README.md section Step UN6e and Known items, the owner's tests and the tester run 2026-11-18_123549 as given; for FU2b: git diff c4300b5 (BMMS/Report/Followup.aspx(.cs) and FollowupActionTaken.aspx(.cs), BMMS/Master/Followup.aspx(.cs), BMMS/FollowupStatusText.cs, BMMSBAL/ReportsMgr.cs and ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/BMMS-Check-InstalledSteps.sql, the Rollback and Test of step 47, Database/README.md section Step FU2b and Known items), Database/BMMS-Fix-FollowupReports-Step49.sql (read), the Test results, the tester runs 2026-11-17_133514 and 2026-11-17_135000 and the owner's tests as given;
   for FU2a: git diff 9336d29 (BMMS/DashBoard/DashBoard.aspx(.cs, .designer.cs), BMMS/Master/Followup.aspx.cs, BMMS/CSS/bmms-workbench.css, BMMS/BMMS.csproj, Database/BMMS-Check-InstalledSteps.sql, the Rollbacks and Tests of steps 43 and 45, Tests/packs/dashboard/*) and the new files (BMMS/FollowupStatusText.cs read in full; the three step 48 scripts: the Reason lines of the Fix script only), Database/README.md section Step FU2a and Known items, the Test results, the tester run 2026-11-16_181041 and the owner's tests as given;
   for FU1: git diff 3d571c4 (BMMS/Master/Followup.aspx(.cs, .designer.cs), BMMS/CSS/bmms-workbench.css, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/BMMS-Check-InstalledSteps.sql, Tests/README.md, Tests/packs/followup/*), Database/README.md section Step FU1 and Known items; the three step 47 scripts were not read line by line (their content is taken from Database/README.md), the Test result (95 of 95), the tester run 2026-11-16_133023 and the owner's tests as given;
   for UN6d: git diff ce7358a 276e402 (BMMS/DashBoard/DashBoard.aspx(.cs), BMMS/Master/Followup.aspx(.cs), BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, BMMS/CSS/CommonHTML.css and bmms-workbench.css, Database/BMMS-Fix-FollowupSave-Step46.sql and BMMS-Rollback-FollowupSave-Step46.sql (read in full), BMMS-Check-InstalledSteps.sql, Database/README.md section Step UN6d and Known items, Tests/README.md, Tests/packs/followup/*, Tests/packs/dashboard/README.md and expected.json, Tests/packs/access-matrix/README.md), Claude outputs/un6d-requirements.md, the Test script and tester results and the owner's tests as given; for UN6c2b: git diff f3cbd7e~1 f3cbd7e (BMMS/DashBoard/DashBoard.aspx(.cs), BMMS/UserControl/MeetingSummary.ascx(.cs), BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs and ActionItemDB.cs, Database/BMMS-Fix-DashboardSummary-Step45.sql (read), BMMS-Rollback-AgendaWaitingFor-Step44.sql, BMMS-Check-InstalledSteps.sql, Database/README.md section Step UN6c2b and Known items, Tests/README.md, Tests/packs/dashboard/README.md), the tester run of 2026-11-15 and the owner's tests as given; for UN6c2a: git diff HEAD (493cb45) and the new files (BMMS/DashBoard/DashBoard.aspx(.cs, .designer.cs),
@@ -43,6 +43,51 @@
 One entry per step, newest first. Each entry names the step, its tag and what changed for users,
 for installers and in the database. Release entries (tags vX.Y.Z) collect the steps since the
 previous release.
+
+## MR1 - A Manager stays needed while items routed to him wait, also on Deactivate; the meeting-date rule in the database (tag not yet set, 2026-11-19; database step 52; code not yet committed, based on e1b90dc)
+
+- For users (Admin, User Master): a Manager is refused (nothing changed) when the Admin changes his role away from Manager, removes
+  one of his departments or, new, deactivates him, while items routed to him wait. The message box shows one line per part: the
+  header "Not saved: this Manager is still needed."; "[n] item(s) routed to them is/are still open for approval: approve or reject
+  it/them first."; "[n] item(s) routed to them belongs/belong to meetings whose date has passed and whose agenda was never
+  finalized: the Controller should finalize the agenda of those meetings first (finalizing rejects the items not yet approved).";
+  for the last active Manager of a department "Last active Manager of [department] ([n] item(s) of the department waiting): give
+  the department another active Manager first."; and "Nothing was changed." The lines about the Manager's own items never suggest
+  another Manager. Before, the personal count did not agree with the Dashboard (items of past meetings were counted but not shown
+  in My approvals).
+- For users (Manager, Controller): a Manager's approve or reject of an item after the meeting date is also refused by the
+  database, with the Dashboard's text "The meeting date has passed, so this item can no longer be approved or rejected. It will be
+  rejected when the agenda is finalized."; nothing is saved, no mail, no alert. The Dashboard's own check normally stops it first.
+  The Controller closes such items with Agenda Finalization, which rejects every item not yet approved. No page changed.
+- For installers: database step 52 (BMMS-Fix-ManagerRelease-Step52.sql; marker ManagerRelease-Step52), after step 51; needs steps 39,
+  44 and 51. Rollback: roll back the build first, then BMMS-Rollback-ManagerRelease-Step52.sql (the four texts back letter for
+  letter, SHA-1 compared). The Fix scripts of steps 39 and 44 now stop while step 52 is installed. A re-run of another step that
+  holds one of the four objects (2, 3, 6, 10, 13, 14, 16, 17, 18, 20, 21, 29, 30, 31, 35, 42) brings back an older text: run step
+  52 again. The date is the database server's date (UTC on Azure SQL Database: Known item).
+- In the database: fn_ManagerReleaseRefusal, spr_AddEditUser, spr_SetUserStatusByUserId (step 39) and spr_UpdateAgendaByAgendaId
+  (step 44) replaced. Rule 12's personal part reads fn_AgendaWaitingFor and counts open (Kind P) and past (Kind Q) items; Reason 24
+  ReasonDetail is `open:<n>|past:<n>|<department part>`; Deactivate of an active Manager runs rule 12; Reason 28 for a Manager's
+  decision after the meeting date. No table or data change; nothing granted.
+- For developers: BMMSBAL/UserMgr.cs builds the Reason 24 message from the parts (a ReasonDetail in the step 39 form gets the step
+  39 message); BMMSBAL/MeetingMgr.cs maps Reason 28 to the Dashboard's text.
+- For the tester: session-check pack, new check 4b: qa_admin's change of qa_manager to User is refused with the lines of 2 open and
+  1 past item; nothing changes. Baseline: Update-Baseline.ps1 with step 52.
+- Older tests (Test scripts only): Tests 20 and 35 have their open meetings dated ahead; Test 39 takes the Reason 24 detail of step
+  52 and has a new check (59 checks); Test 44 takes Reason 28 and counts the 6 intended differences of check 28 apart.
+- Repair during the build: a re-run of the step 44 Fix script on BMMS_Test (before its guard existed) put step 44 texts back; the Fix
+  scripts of steps 45, 48 and 52 were run again and 213 module texts were compared with BMMS_Quality (only the four of step 52
+  differ). Backlog: audit every Fix script's re-run guard before an install-all script (Database/README.md, Known items).
+- Results: BMMS_Test: Test 52 28 of 28; Step 20 56/56; Step 35 28/28; Step 39 59/59; Step 44 120/120; UserStatus-Stage2a 50/50;
+  Stage2b 63/63; SystemAccount-Stage3 51/51; UserProtection-Stage1 142/142; Step 23 53/53; Step 24 36/36; Step 51 18/18. Tester run
+  Tests\_results\2026-11-19_145521: PASSED, 894 checks, 894 passed, 0 failed (the self-test's 3 planted wrong expectations were
+  caught and are not counted): selftest 8, access-matrix 472, dashboard 397, session-check 20; error log 0 new lines.
+  The owner's tests passed on BMMS_Test on 2026-11-19: the Check script (step 52 Installed, 4 of 4), Test 52 28 of 28,
+  Step 39 59 of 59, Step 44 120 of 120; in the browser: mgruser's role change and Deactivate refused with (b) 8 items; with
+  meeting C06-00004 and an item of depuser added, two parts (1 open, 8 past); with itmgruser's HRD removed, three parts
+  for the role change and the Deactivate (HRD 9 items of the department), HRD then given back; the message boxes fine in
+  Chrome and Edge; mgruser's My approvals shows only C06-00004-001, an old item opened from Alerts shows the meeting-date
+  message with no Approve or Reject; mgruser approved C06-00004-001 (mail sent); the Controller finalized 00004 (its item
+  rejected, mail sent) and 00001 (2 items rejected, mails sent); the refusal then counted 6; the error log clean.
 
 ## RA1d - A signed-in user whose role, departments or status changed is signed out at the next click (tag not yet set, 2026-11-19; database step 51; code not yet committed, based on d642746)
 

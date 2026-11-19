@@ -112,6 +112,13 @@ BEGIN
     RAISERROR('Current database is "%s". Select the BMMS database (or its test copy) and run again. Nothing was changed.', 16, 1, @CurrentDatabase);
     SET NOEXEC ON;
 END
+-- Step 52 (step MR1) replaced spr_UpdateAgendaByAgendaId again and kept the marker of this step, so the text check
+-- below would let a re-run put the step 44 text back without a word (ManagerRelease-Step52)
+ELSE IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_UpdateAgendaByAgendaId')), '') LIKE '%ManagerRelease-Step52%')
+BEGIN
+    RAISERROR('Step 52 is installed in "%s": it replaced spr_UpdateAgendaByAgendaId of this step. Run BMMS-Rollback-ManagerRelease-Step52.sql first, then this script, then BMMS-Fix-ManagerRelease-Step52.sql again. Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
 ELSE IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.fn_DashboardActionItems')), '') NOT LIKE '%DashboardAlerts-Step43%'
          OR OBJECT_ID('dbo.fn_UserDepartmentScope', 'IF') IS NULL
          OR OBJECT_ID('dbo.spr_UpdateAgendaByAgendaId', 'P') IS NULL OR OBJECT_ID('dbo.spr_GetDashboardMeetings', 'P') IS NULL)
