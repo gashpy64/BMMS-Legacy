@@ -51,6 +51,21 @@
 9. Always left out of commits: BMMS/Files/AgendaText/, Database/BMMS-Check-SmallintParameters.sql,
    bin, obj.
 
+Agents: security-reviewer, ux-reviewer, ui-reviewer (step 3), tester (step 5), doc-writer (step 7),
+doc-auditor (below).
+
+Documentation audit (doc-auditor, step DA1)
+- Not part of the per-step gate. It runs at each release candidate and on the owner's request,
+  by Documents/Audit/README.md (catalog export with Documents/_build/Export-Catalog.ps1 into
+  %LOCALAPPDATA%\BMMS-Audit\, outside the repository; git status --short --ignored before and
+  after).
+- The doc-auditor writes only the four files of its run folder
+  Documents/Audit/DA-yyyymmdd-<short SHA of HEAD>/ (its guard .claude/hooks/doc-auditor-guard.ps1
+  blocks every other write, every edit, any Bash command but one read-only git command, and reads
+  of connectionStrings.config and of Log\ and App_Data\). Documents/Audit/README.md is written by
+  the main session; Documents/Standards/documents-spec.md changes only on the owner's word.
+- After a run, the doc-writer (not the auditor) makes the stubs the run lists.
+
 House rules (unchanged)
 - Test scripts run on BMMS_Test only.
 - Numbered database steps have Fix, Rollback and Test scripts, a marker in the procedure text and

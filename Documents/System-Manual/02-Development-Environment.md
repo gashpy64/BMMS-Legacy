@@ -3,10 +3,11 @@
 - Title: Development Environment
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6e (the SQL Server row and the App_Data row of "The tester: what the development machine needs"); UN6b (the memory reading in "The tester: what the development machine needs"); the rest WF3a2
-- Last updated by: UN6e, based on dbc48ca
+- Applies to: DA1 (the doc-auditor row of "The agents", the section "The doc-auditor and its guard", the section "The audit catalog"); UN6e (the SQL Server row and the App_Data row of "The tester: what the development machine needs"); UN6b (the memory reading in "The tester: what the development machine needs"); the rest WF3a2
+- Commit: 5f8c4fe
+- Last updated by: DA1, based on 5f8c4fe
 - Status: Draft
-- Verified against: for step UN6e: Tests/README.md (diff: the Server and Site lines), Database/README.md (section Step UN6e, Tester); for step UN6b: Tests/_runner/Tester.Common.ps1 (diff: Get-QaMemory, QaMemoryWarnMB),
+- Verified against: for step DA1: .claude/agents/doc-auditor.md, .claude/hooks/doc-auditor-guard.ps1 (header comment and the lines that name the write pattern and the Grep extension list; not read line by line), Documents/_build/Export-Catalog.ps1 (parameters, the output-folder rule, the fingerprint), Documents/Audit/README.md, CLAUDE.md (diff); for step UN6e: Tests/README.md (diff: the Server and Site lines), Database/README.md (section Step UN6e, Tester); for step UN6b: Tests/_runner/Tester.Common.ps1 (diff: Get-QaMemory, QaMemoryWarnMB),
   Run-Tests.ps1 (diff, preflight), Tests/README.md (diff, the memory warning row); for the development workflow (steps 1, 5, 6, 7 and 9) and the agents: CLAUDE.md (diff),
   .claude/agents/tester.md; for the section "The tester: what the development machine needs": Tests/package.json,
   Tests/README.md, Tests/_runner/Tester.Common.ps1 and Run-Tests.ps1 (tool lookup), Tests/lib/run.js,
@@ -307,6 +308,7 @@ The agents are Claude Code subagents defined in `.claude/agents/`:
 | ui-reviewer | Read-only visual review of one step: use of bmms-workbench.css and existing page patterns, clipping and overflow at laptop widths, column alignment, colour and contrast, icons with text or tooltip, Chrome and Edge at 100 percent. Never edits files |
 | tester | Runs the tester's packs (Tests/_runner/Run-Tests.ps1) and returns a fixed record; tools Read and Bash, confined by .claude/hooks/tester-guard.ps1; writes nothing and changes no test (10-Testing-and-Release) |
 | doc-writer | Writes and updates the documents in Documents/ for one step, after the owner's tests pass and before the commit, and returns a record of the documents changed, the statements it could not verify and a shot list. Writes only inside Documents/ |
+| doc-auditor | Audits the documents in Documents/ against the documents standard, the code, the Database scripts and a read-only catalog of BMMS_Test, and writes one run folder of four files under Documents/Audit/. Runs at each release candidate and on the owner's request; not part of the per-step gate. Model sonnet; tools Read, Grep, Glob, Write and Bash (Bash only for read-only git). Guard: .claude/hooks/doc-auditor-guard.ps1 ("The doc-auditor and its guard", below) |
 
 The doc-writer has a guard hook (`.claude/hooks/doc-writer-guard.ps1`, declared in the agent's
 frontmatter, so it runs only while doc-writer runs). It blocks:
@@ -322,6 +324,42 @@ frontmatter, so it runs only while doc-writer runs). It blocks:
 
 It is a second layer. The main session also compares `git status --short --ignored` before and
 after doc-writer runs; only files inside Documents/ may change.
+
+### The doc-auditor and its guard
+
+The doc-auditor (`.claude/agents/doc-auditor.md`, model sonnet, tools Read, Grep, Glob, Write and
+Bash) reads and never changes a document, the code or the database. Its method, the run folder and
+the table of runs are in Documents/Audit/README.md; when it runs is in 10-Testing-and-Release
+("Documentation audit (step DA1)"). Its guard hook (`.claude/hooks/doc-auditor-guard.ps1`, declared
+in the agent's frontmatter, so it runs only while doc-auditor runs; the hook command ends with
+`|| exit 2`) has these rules:
+
+- Write: only the four files Audit-Summary.md, Coverage-Matrix.md, Gap-Register.md and
+  Drift-Register.md of the folder `Documents/Audit/DA-<yyyymmdd>-<short SHA of HEAD>/`. Documents/Audit/README.md, an
+  earlier run folder, Documents/Standards/ and every other file are refused.
+- No Edit, MultiEdit or NotebookEdit: each file is written whole.
+- Bash: one read-only git command only (as for the doc-writer's guard).
+- Read: `connectionStrings.config` and any file under a `Log\` or `App_Data\` folder are refused.
+- Grep: the glob must be one pattern ending in an allowed file extension (.cs .aspx .ascx .master
+  .asax .sql .md .js .css .xml .xsl .ps1 .psm1 .json .csproj .sln .resx .html .htm) or one
+  trailing list of them.
+- Any other tool is blocked, and so is anything the hook cannot read or understand (it fails
+  closed).
+
+The guard does not compare the date in the run-folder name with today's date; the owner accepted
+that (CHANGELOG, DA1). The doc-writer's guard has no read rule. The main session also compares
+`git status --short --ignored` before and after a run.
+
+### The audit catalog
+
+`Documents/_build/Export-Catalog.ps1` writes the read-only catalog of a database that the
+doc-auditor reads. It runs only SELECT statements; `-Server` and `-Database` are mandatory (there
+is no default). It writes `%LOCALAPPDATA%\BMMS-Audit\catalog-<yyyymmdd>-<short SHA>\`, a folder
+outside the repository (the script refuses an output folder inside the working tree, so the
+catalog never shows in git status). A fingerprint of the database is taken before and after the
+export and the script fails if they differ (no schema change during the export). The catalog holds
+procedure texts as installed, so keep it on this machine. The command line is in
+Documents/Audit/README.md ("How to run an audit").
 
 ### Documentation checks
 

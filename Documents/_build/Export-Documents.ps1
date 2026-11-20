@@ -15,6 +15,9 @@
   an inline [[CONFIRM: ...]], a non-empty "To confirm" field (in its header block or, for a user
   manual, in its register entry), an image target other than images/<name>.<png|jpg|gif|svg>,
   any raw block (openxml, html, ...), or - for a user manual - any hit of Check-UserManuals.ps1.
+  Step DA1: any file under Documents/Audit/ (audit files are internal, never exported); and for a
+  release export (vX.Y.Z) a document whose "Commit" field (header block, or a manual's register
+  entry) is missing or empty. A draft export only warns about the Commit field.
   The PDF is saved without document properties; the .docx is saved without personal
   information (author, last modified by).
   Word updates only the table of contents (and the page numbers it lays out itself); no other
@@ -80,6 +83,13 @@ if ($lab.IsRelease) {
 
 # ---- pre-checks: all files must pass before anything is written ----
 $refusals = [System.Collections.Generic.List[string]]::new()
+$commitWarnings = [System.Collections.Generic.List[string]]::new()
+# Step DA1: the Commit field. A release export refuses a document without it; a draft warns.
+function Add-CommitCheck([string]$rel, [string]$state) {
+    if (-not $state) { return }
+    if ($lab.IsRelease) { $refusals.Add("${rel}: release export needs the 'Commit' field filled in ($state)") }
+    else { $commitWarnings.Add("${rel}: 'Commit' field is $state (a release export would refuse it)") }
+}
 $glossary = Join-Path $manualDir 'Glossary.md'
 $overall = Join-Path $manualDir '00-Overall.md'
 $checkList = [System.Collections.Generic.List[string]]::new()
@@ -95,6 +105,7 @@ $items = foreach ($f in $checkList) {
         $refusals.Add("${rel}: only Markdown files inside Documents/ (not Documents/Export/) can be exported"); continue
     }
     if ([IO.Path]::GetFileName($full) -notmatch '^[A-Za-z0-9._-]+\.md$') { $refusals.Add("${rel}: file name must use only letters, digits, dot, dash and underscore"); continue }
+    if (Test-DocUnder $full (Join-Path $docs 'Audit')) { $refusals.Add("${rel}: audit files are internal and are never exported"); continue }
     foreach ($pr in (Test-DocAst -PandocPath $pandocPath -File $full)) { $refusals.Add("${rel}: $pr") }
     $text = (Get-Content -Raw -LiteralPath $full).Replace("`r", '')
     $lines = $text.Split("`n")
@@ -105,12 +116,14 @@ $items = foreach ($f in $checkList) {
         if (-not $register.ContainsKey($key)) { $refusals.Add("${rel}: no register entry in Documents/README.md") }
         elseif (-not $register[$key].Contains('To confirm')) { $refusals.Add("${rel}: register entry has no 'To confirm' field") }
         elseif ($register[$key]['To confirm']) { $refusals.Add("${rel}: register 'To confirm' is not empty: $($register[$key]['To confirm'])") }
+        if ($register.ContainsKey($key)) { Add-CommitCheck $rel (Test-DocCommitField $register[$key]) }
         $chk = & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Check-UserManuals.ps1') -Files $rel -Pandoc $pandocPath 2>&1
         if ($LASTEXITCODE -ne 0) { $refusals.Add("${rel}: Check-UserManuals.ps1 found internal material:`n    " + (($chk | Out-String).Trim() -replace "`n", "`n    ")) }
     } else {
         $h = Get-DocHeader -Lines $lines
         if ($null -eq $h -or -not $h.Contains('To confirm')) { $refusals.Add("${rel}: header block or its 'To confirm' field missing") }
         elseif ($h['To confirm']) { $refusals.Add("${rel}: 'To confirm' is not empty: $($h['To confirm'])") }
+        Add-CommitCheck $rel (Test-DocCommitField $h)
     }
     if ($lines[0] -notmatch '^# (.+)$') { $refusals.Add("${rel}: line 1 is not '# <Title>'"); continue }
     $title = $Matches[1].Trim()
@@ -126,6 +139,7 @@ if ($hasMermaid) {
     if (-not $mmdcPath) { $refusals.Add('mermaid-cli not found; install it or pass -Mmdc <path to mmdc.cmd>') }
     $edgePath = Find-DocEdge -Hint $Edge
 }
+foreach ($w in $commitWarnings) { Write-Output "WARNING $w" }
 if ($refusals.Count -gt 0) {
     Write-Output 'Export refused, nothing written:'
     $refusals | ForEach-Object { Write-Output "- $_" }

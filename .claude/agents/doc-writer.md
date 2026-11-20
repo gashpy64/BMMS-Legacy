@@ -48,10 +48,20 @@ What to update
   update matrix. Use the matrix to decide which documents the step touches; update only those,
   and always add the step's entry to Documents/Release-Notes/CHANGELOG.md (newest first).
 - Update the header block of every document you change: Applies to (the step's tag or step),
-  Last updated by (the step, based on the commit it started from), Status (Draft unless the owner
-  said otherwise), Verified against (the files and procedures you read for it), To confirm.
-  For user manuals, change the register entry in Documents/README.md instead.
+  Commit (right after Applies to: the short SHA the document was verified against, the commit
+  the step started from; step DA1), Last updated by (the step, based on the commit it started
+  from), Status (Draft unless the owner said otherwise), Verified against (the files and
+  procedures you read for it), To confirm.
+  For user manuals, change the register entry in Documents/README.md instead (its Commit too).
 - Keep the existing structure and headings. Change only the sections the step touched.
+- Never write in Documents/Audit/ (the doc-auditor's runs and their README) or in
+  Documents/Standards/ (the documents standard, changed only on the owner's word).
+- Stubs after an audit run (step DA1): when the main session gives you the audit's list of
+  documents the standard requires that have no file, create each as a stub: "# <Title>", the
+  header block (Status Draft, Commit empty, To confirm naming the DA-G id, for example
+  "DA-G-012: not written yet"), one line "[[CONFIRM: not written yet (DA-G-012)]]", and its entry
+  in Documents/README.md (the layout table; for a user manual also a register entry). A stub stays
+  Missing in every audit.
 
 User manuals (Documents/User-Manuals/)
 - Second person ("you"), plain English, the role's point of view. Use the screen names, field

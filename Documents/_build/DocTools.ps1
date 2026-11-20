@@ -71,9 +71,32 @@ function Get-DocRegister([string]$ReadmePath) {
     $reg
 }
 
+# Step DA1: the optional "Commit" field (the SHA a document was last verified against). It comes
+# right after "Applies to" in a header block or a register entry. Returns "" when it is filled in,
+# "missing" or "empty" otherwise, and "misplaced" when it is not right after "Applies to".
+function Test-DocCommitField($Fields) {
+    if ($null -eq $Fields -or -not $Fields.Contains('Commit')) { return 'missing' }
+    $names = @($Fields.Keys)
+    $i = [array]::IndexOf($names, 'Commit')
+    if ($i -lt 1 -or $names[$i - 1] -ne 'Applies to') { return 'misplaced' }
+    if (-not $Fields['Commit']) { return 'empty' }
+    ''
+}
+
+# The header fields in order without the optional Commit field (for the order check).
+function Get-DocFieldNamesWithoutCommit($Fields) {
+    @(@($Fields.Keys) | Where-Object { $_ -ne 'Commit' })
+}
+
 # Returns the first secret-like match in a line, or $null.
 function Find-DocSecret([string]$Line) {
     $patterns = @(
+        # Step DA1: a password hash of Common.HashPassword ("<iterations>.<salt base64>.<hash base64>": 16-byte salt,
+        # 32-byte hash), a 16-byte salt or a 32-byte hash on its own (base64), and a DPAPI-protected setting value
+        '\b\d{3,7}\.[A-Za-z0-9+/]{20,}={0,2}\.[A-Za-z0-9+/]{20,}={0,2}',
+        '(?<![A-Za-z0-9+/])[A-Za-z0-9+/]{22}==(?![A-Za-z0-9+/=])',
+        '(?<![A-Za-z0-9+/])[A-Za-z0-9+/]{43}=(?![A-Za-z0-9+/=])',
+        '(?i)\bdpapi:[A-Za-z0-9+/]{16,}',
         '(?i)\b(password|pwd)\s*=\s*[^\s<;"]+',
         '(?i)\bData Source\s*=',
         '(?i)\bInitial Catalog\s*=',

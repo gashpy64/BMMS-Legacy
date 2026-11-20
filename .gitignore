@@ -46,6 +46,8 @@ BMMS/Files/PDF/
 
 /BMMS/ConnectionStrings.config
 **/App_Data/PageAccessLog.txt
+# Step DA1: the whole App_Data folder of the site (runtime files only, never committed)
+/BMMS/App_Data/
 **/Files/SqlBackup/*.bak
 /BMMS/Files/AgendaAttach/
 /BMMS/Files/MemberPhoto/

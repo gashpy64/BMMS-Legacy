@@ -16,7 +16,11 @@
     target must be images/<name>.<png|jpg|gif|svg> next to the document and no raw block
     (openxml, html, ...) is allowed;
   - no secret-like text (connection-string parts, password assignments, private IP addresses,
-    mail addresses other than the example domains);
+    mail addresses other than the example domains; since step DA1 also password hashes and salts
+    in the form of Common.HashPassword, and DPAPI-protected values);
+  - step DA1: the optional "Commit" field (the SHA the document was last verified against) right
+    after "Applies to", in a header block or a manual's register entry: a WARNING when it is
+    missing or empty (exit code unchanged), a failure when it is not right after "Applies to";
   - every Mermaid block parses, when mermaid-cli is found (-Mmdc, or the tools folder, or PATH);
     otherwise the Mermaid check is reported as skipped. The parse writes temporary files only
     under Documents/Export/_check/ and starts Edge with all network traffic blocked.
@@ -45,6 +49,11 @@ $docs = Join-Path $repo 'Documents'
 $exportDir = Join-Path $docs 'Export'
 $failures = [System.Collections.Generic.List[string]]::new()
 function Add-Fail([string]$msg) { $failures.Add($msg) }
+$warnings = [System.Collections.Generic.List[string]]::new()
+function Add-CommitNote([string]$where, [string]$state) {
+    if ($state -eq 'misplaced') { Add-Fail "${where}: field 'Commit' must come right after 'Applies to'" }
+    elseif ($state) { $warnings.Add("${where}: 'Commit' field is $state") }
+}
 
 $exportReadme = Join-Path $exportDir 'README.md'
 $files = Get-ChildItem -LiteralPath $docs -Recurse -File -Force -Filter '*.md' |
@@ -84,6 +93,7 @@ foreach ($f in $files) {
         } else {
             $entry = $register[$key]
             foreach ($h in $headerFields) { if (-not $entry.Contains($h)) { Add-Fail "Documents/README.md register ${key}: field '$h' missing" } }
+            Add-CommitNote "Documents/README.md register $key" (Test-DocCommitField $entry)
             if ($entry.Contains('Status') -and $statuses -notcontains $entry['Status']) { Add-Fail "Documents/README.md register ${key}: Status '$($entry['Status'])' not allowed" }
         }
     } else {
@@ -91,7 +101,8 @@ foreach ($f in $files) {
         if ($null -eq $fields) {
             Add-Fail "${rel}: header block missing (line 3 onwards must be the 8 fields)"
         } else {
-            $names = @($fields.Keys)
+            $names = Get-DocFieldNamesWithoutCommit $fields
+            Add-CommitNote $rel (Test-DocCommitField $fields)
             for ($k = 0; $k -lt $headerFields.Count; $k++) {
                 if ($names.Count -le $k -or $names[$k] -ne $headerFields[$k]) {
                     Add-Fail "${rel}: header field $($k + 1) must be '$($headerFields[$k])'"
@@ -176,6 +187,10 @@ if ($mermaidBlocks.Count -eq 0) {
 }
 
 Write-Output ("Checked {0} Markdown file(s) under Documents/; register entries: {1}; images and raw blocks: {2}; Mermaid: {3}." -f @($files).Count, $register.Count, $astNote, $mermaidNote)
+if ($warnings.Count -gt 0) {
+    $warnings | ForEach-Object { Write-Output "WARNING $_" }
+    Write-Output ("{0} warning(s) (the Commit field; a release export refuses a document without it)." -f $warnings.Count)
+}
 if ($failures.Count -gt 0) {
     $failures | ForEach-Object { Write-Output "FAIL $_" }
     Write-Output ("{0} failure(s)." -f $failures.Count)

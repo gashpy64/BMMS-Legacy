@@ -35,7 +35,9 @@ Everything else here is internal.
 | Data-Flow/04-Workflows/ | One file per workflow (swim lanes per role) | No |
 | Release-Notes/CHANGELOG.md | One entry per step and per release | No |
 | Export/ | Word and PDF exports, made per release; ignored by git except Export/README.md | No (the PDFs of the manuals are what ships) |
-| _build/ | Export and check scripts, the Gashpy Word template | No |
+| _build/ | Export and check scripts, the Gashpy Word template, the catalog export of BMMS_Test (Export-Catalog.ps1) | No |
+| Standards/documents-spec.md | The documents standard: the rules an audit checks the documents against (a copy of the owner's project document; changed only by the owner's word) | No |
+| Audit/ | Documentation audits by the doc-auditor agent: Audit/README.md and one folder per run, `DA-yyyymmdd-<short SHA>/` (Audit-Summary, Coverage-Matrix, Gap-Register, Drift-Register). Internal: never exported, never given to a client | No |
 
 The older folder `Documentation/` was merged into System-Manual and removed in step WF2b1 (see
 System-Manual/01, "Superseded documents"); only `Documentation/Pages.xlsx` remains, until the
@@ -68,16 +70,21 @@ Every document outside User-Manuals starts with its title and this block:
 - Audience: <who reads it>
 - Shipped: No
 - Applies to: <git tag or step>
+- Commit: <short SHA the document was last verified against>
 - Last updated by: <step>, based on <commit the step started from>
 - Status: Draft | Reviewed by owner | Current
 - Verified against: <files or procedures read>
 - To confirm: <open points; empty before an export>
 ```
 
+The `Commit` field (step DA1) is the commit the document was last verified against, right after
+`Applies to`. `Check-Documents.ps1` warns when it is missing or empty; a release export refuses a
+document without it (a draft export only warns).
+
 ### User manuals
 
 A user manual carries only its title and three lines; its full header block is in the register
-below.
+below, with the `Commit` field there.
 
 ```
 # <Title>
@@ -121,6 +128,7 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
 - Audience: Everyone who uses BMMS, and the people who decide on it
 - Shipped: Yes (PDF export)
 - Applies to: FU2b (section "MD Secretariat and Management": the Followup and Followup Summary items, the new paragraph on the Followup status column, the Confirmed Status choices and the refusal messages, three screenshot placeholders); FU2a (section "The Dashboard meeting list, by role": the Action Items card: the Reopened label, the status line under the action text, a confirmed item read-only, the message after Submit on a confirmed item; the Management row and paragraph; four screenshot placeholders); FU1 (section "MD Secretariat and Management": the paragraph on the Followup screen: the Status column as text, no Submit or Reopen, who confirmed and reopened, a confirmed followup is final; the first Followup screenshot placeholder reworded); UN6d (section "The Dashboard meeting list, by role": the Action Items table and the paragraph on Submit in the Action Item Details panel; the section "MD Secretariat and Management": the MD Secretariat reads Followup only, four screenshot placeholders); UN6c2b (section "The Dashboard meeting list, by role": the table of roles, "In progress" and "Waiting for me", the new subsection "The summary cards", "My approvals and Waiting for me": the heading with a dash, the hint of a refused choice, the Committee drop-down sentence, the layout paragraph; the Dashboard paragraph of "MD Secretariat and Management"); UN6c2a (section "The Dashboard meeting list, by role": the Waiting for me column, "In progress", "Pending" and "Waiting for me", the new subsection "My approvals and Waiting for me", the layout paragraph, the Committee drop-down sentence; the Dashboard paragraph of "MD Secretariat and Management"); UN6c1 (section "The Dashboard meeting list, by role": the Alerts card, the header count, the Action Items card; the Dashboard paragraph of "MD Secretariat and Management"); UN6b (sections "The Dashboard meeting list, by role", "Meeting status on the Dashboard" and the Dashboard paragraph of "MD Secretariat and Management"); the rest RA1b (step 41)
+- Commit:
 - Last updated by: FU2b, based on c4300b5
 - Status: Draft
 - Verified against: for FU2b: BMMS/Report/Followup.aspx and .aspx.cs (the Followup status column, the Pending choice, StatusCellHtml, StatusBlockHtml, the Summary column, the refusals), BMMS/FollowupStatusText.cs (Word, Line), BMMSBAL/ReportsMgr.cs (ReportRefusedMessage), Database/README.md (section Step FU2b) and the owner's tests as given;
@@ -157,6 +165,7 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
 - Audience: User role
 - Shipped: Yes (PDF export)
 - Applies to: FU2a (section "Screens", Dashboard: the paragraph on the Reopened label, the status line, a confirmed item read-only and the message after Submit); UN6d (section "Screens", Dashboard: the paragraph on changing the action text, Submit and Cancel, the saved message and the failure messages); UN6c2b (section "Screens", Dashboard: the summary cards, the Committee drop-down, the heading In progress and its meaning, the message for a choice that cannot be used); UN6c2a (section "Screens", Dashboard: the description of In progress, no My approvals or Waiting for me, the layout and the Committee drop-down sentences); UN6c1 (section "Screens", Dashboard: Alerts card and Action Items card); UN6b (section "Screens", Dashboard only); the rest user-ud1a
+- Commit:
 - Last updated by: FU2a, based on 9336d29
 - Status: Draft
 - Verified against: for FU2a: BMMS/DashBoard/DashBoard.aspx and .aspx.cs (diff: the Reopened chip, the status line, the read-only panel of a confirmed item, the message after Submit), BMMS/FollowupStatusText.cs, Database/README.md (section Step FU2a) and the owner's tests as given;
@@ -178,6 +187,7 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
 - Audience: Manager role
 - Shipped: Yes (PDF export)
 - Applies to: FU2a (section "Screens", Dashboard: the paragraph on the Reopened label, the status line, a confirmed item read-only and the message after Submit); UN6d (section "Screens", Dashboard: the paragraph on changing the action text, Submit and Cancel, the saved message and the failure messages); UN6c2b (section "Screens", Dashboard: the summary cards, the heading In progress and its meaning, the Committee and Department drop-downs on every card, My approvals heading with a dash, the messages for a choice that cannot be used, the layout sentence); UN6c2a (section "Screens", Dashboard: the My approvals card, the Waiting for me column, Pending and Waiting for me, deciding an item, the meeting-date and could-not-be-checked messages, the layout and the drop-down sentences); UN6c1 (section "Screens", Dashboard: Alerts card and Action Items card); UN6b (section "Screens", Dashboard only); the rest user-ud1a
+- Commit:
 - Last updated by: FU2a, based on 9336d29
 - Status: Draft
 - Verified against: for FU2a: BMMS/DashBoard/DashBoard.aspx and .aspx.cs (diff: the Reopened chip, the status line, the read-only panel of a confirmed item, the message after Submit), BMMS/FollowupStatusText.cs, Database/README.md (section Step FU2a) and the owner's tests as given;
@@ -201,6 +211,7 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
 - Audience: Controller role
 - Shipped: Yes (PDF export)
 - Applies to: FU2b (section "What you can and cannot do": the Followup and Followup Summary paragraph on the Followup status (the Pending choice, the column, the line, the FOLLOWUP STATUS block, the Summary word, the refusal messages), the Followup by Department paragraph (the Followup status column and the printed status, the refusal messages), five screenshot placeholders; section "Screens", Followup: the blank reason message and the single message of the reason check); FU2a (section "Screens", Dashboard: the paragraph on the Reopened label, the status line, a confirmed item read-only and the message after Submit); FU1 (section "Screens", Followup: the filter label Pending, the Status column and drop-down, Submit confirming only the changed rows and its messages, a confirmed followup final with "Confirmed by" and "Confirmed (before history)", View of a confirmed action text, Reopen with its panel, reason and messages, the "Reopened by" line, five screenshot placeholders); UN6d (section "Screens": the paragraph on changing the action text in the Dashboard, and the new screen "Followup" with its messages and two screenshot placeholders); UN6c2b (section "Screens", Dashboard: the summary cards, the heading In progress and its meaning, the Committee drop-down on every card, My approvals heading with a dash, the messages for a choice that cannot be used, the layout sentence); UN6c2a (section "Screens", Dashboard: the My approvals card, the Waiting for me column, Pending and Waiting for me, deciding an item, the meeting-date and could-not-be-checked messages, the layout and the Committee drop-down sentences); UN6c1 (section "Screens", Dashboard: Alerts card and Action Items card); UN6b (section "Screens", Dashboard); the rest RA1c2
+- Commit:
 - Last updated by: FU2b, based on c4300b5
 - Status: Draft
 - Verified against: for FU2b: BMMS/Report/Followup.aspx and .aspx.cs, BMMS/Report/FollowupActionTaken.aspx and .aspx.cs (the Followup status column, the Pending choice, the status block and column of the printed reports, the refusals), BMMS/FollowupStatusText.cs (Word, Line), BMMS/Master/Followup.aspx and .aspx.cs (diff: the reason check), BMMSBAL/ReportsMgr.cs (ReportRefusedMessage), Database/README.md (section Step FU2b) and the owner's tests as given;
@@ -232,6 +243,7 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
 - Audience: Admin role
 - Shipped: Yes (PDF export)
 - Applies to: UN6c2b (section "Screens", Dashboard: no summary cards, the In progress heading, the Alerts card note, the layout sentence); UN6c2a (section "Screens", Dashboard: no My approvals card, no Waiting for me column, the layout sentence); UN6c1 (section "Screens", Dashboard: no functional alerts, no Action Items card); UN6b (section "Screens", Dashboard); the rest RA1b (step 41)
+- Commit:
 - Last updated by: UN6c2b, based on 357cdd0
 - Status: Draft
 - Verified against: for UN6c2b: BMMS/UserControl/MeetingSummary.ascx.cs (the cards are hidden when the server refuses the role; the Admin gets no statistics), Database/BMMS-Fix-DashboardSummary-Step45.sql (Reason 4 for the Admin), BMMS/DashBoard/DashBoard.aspx (the Alerts note), BMMS/CSS/bmms-workbench.css, Database/README.md (section Step UN6c2b);
@@ -253,6 +265,7 @@ File names: lower case, `<manual>-<screen>-<state>.png`, inside User-Manuals/ima
 - Audience: Everyone who uses BMMS
 - Shipped: Yes (appended to the Overall manual's export)
 - Applies to: FU1 (entry "MD Secretariat"); UN6d (entry "MD Secretariat"); UN6c2b (entries "In progress" and "Summary cards", and "Waiting for me"); UN6c2a (entries "Meeting date passed", "My approvals" and "Waiting for me"); RA1b (step 41)
+- Commit:
 - Last updated by: FU1, based on 3d571c4
 - Status: Draft
 - Verified against: for FU1: BMMS/Master/Followup.aspx.cs (CanSave, the Status cell for a reader, "View"); for UN6d: BMMS/Master/Followup.aspx.cs (CanSave, the read-only line, "View", the disabled ticks), Database/README.md (section Step UN6d); for UN6c2b: BMMS/UserControl/MeetingSummary.ascx.cs (InProgressMeaning, the cards), Database/BMMS-Fix-DashboardSummary-Step45.sql; for UN6c2a: BMMS/DashBoard/DashBoard.aspx.cs (message texts, BindAgendaDetails), BMMS/UserControl/MeetingSummary.ascx.cs (the Waiting for me column), Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (who has the panel, what IsWaiting needs); for step RA1b (step 41): BMMS/XML/PageAccess.xml, BMMS/UserControl/MenuUserControl.ascx
@@ -293,6 +306,8 @@ Which change updates which document. The doc-writer uses it after every step.
 | Install, step order, a Fix, Rollback, Check or Test script | System-Manual/03-Deployment-and-Installation, System-Manual/10-Testing-and-Release, this README |
 | A new numbered database step | Also the tester's baseline: System-Manual/10-Testing-and-Release ("Upkeep after a new database step"; Update-Baseline.ps1) |
 | The tester (Tests/, .claude/agents/tester.md, .claude/hooks/tester-guard.ps1) | System-Manual/10-Testing-and-Release, System-Manual/02-Development-Environment ("The tester"); no user manual |
+| The doc-auditor, its guard, Export-Catalog.ps1 or the documents standard | System-Manual/02-Development-Environment (the agents table), System-Manual/10-Testing-and-Release (the audit at a release candidate), Audit/README.md, this README |
+| An audit run (doc-auditor) | Only its run folder `Documents/Audit/DA-yyyymmdd-<short SHA>/` and the run list in Audit/README.md; afterwards the doc-writer's stubs for the documents the standard requires that have no file (each a register or layout entry here) |
 | Every step | Release-Notes/CHANGELOG.md |
 
 A step with no document impact says "documents affected: none" in its plan, and only the
@@ -318,3 +333,11 @@ Run from the repository root in PowerShell 7:
   Documents/Export/.
 - `pwsh -File Documents/_build/New-ReferenceDocx.ps1` - rebuilds the Gashpy Word template
   (only when the template is to change).
+- `pwsh -NoProfile -File Documents/_build/Export-Catalog.ps1 -Server .\SQLEXPRESS -Database BMMS_Test -Replace` -
+  the read-only catalog of BMMS_Test (-Server and -Database are mandatory)
+  for an audit, into a folder outside the repository (see Audit/README.md).
+
+Since step DA1: `Check-Documents.ps1` also checks the files under Audit/ and Standards/ (they
+carry the header block), finds password hashes, salts and DPAPI-protected values as secret-like
+text, and warns about an empty or missing `Commit` field. `Export-Documents.ps1` refuses every file
+under Audit/, and for a release export any document whose `Commit` is empty or missing.
