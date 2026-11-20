@@ -20,7 +20,7 @@
             <asp:GridView ID="grvSqlBackup" runat="server" AutoGenerateColumns="false" CssClass="contentTable1"
                 AllowSorting="true" CellPadding="4" DataKeyNames="Audit_Trail_SqlBackup_Id" Font-Names="Verdana, Arial, Helvetica, sans-serif"
                 Font-Size="X-Small" ForeColor="#333333" GridLines="Horizontal" Height="32px"
-                Width="100%">
+                Width="100%" OnSorting="grvRecord_Sorting">
                 <HeaderStyle CssClass="contentTableHeader" HorizontalAlign="Center" Font-Bold="true" />
                 <Columns>
                     <asp:TemplateField HeaderText="S.No.">
@@ -36,23 +36,24 @@
                                 Style="color: White" CommandArgument="Backup_File_Name"></asp:LinkButton>
                         </HeaderTemplate>
                         <ItemTemplate>
-                            <asp:Label ID="lblBackup_File_Name" Text='<%#Eval("Backup_File_Name")%>' runat="server" />
+                            <asp:Label ID="lblBackup_File_Name" Text='<%# HttpUtility.HtmlEncode(Eval("Backup_File_Name")) %>' runat="server" />
                         </ItemTemplate>
                         <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
                     </asp:TemplateField>
-                    <asp:TemplateField SortExpression="UserName">
+                    <%-- "Name (login)" by User_Id, " (inactive)" added (step UN3) --%>
+                    <asp:TemplateField SortExpression="UserDisplayName">
                         <HeaderTemplate>
-                            <asp:LinkButton ID="lnk2" runat="server" Text="User Name" CommandName="Sort" Style="color: White"
-                                CommandArgument="UserName"></asp:LinkButton>
+                            <asp:LinkButton ID="lnk2" runat="server" Text="Backup By" CommandName="Sort" Style="color: White"
+                                CommandArgument="UserDisplayName"></asp:LinkButton>
                         </HeaderTemplate>
                         <ItemTemplate>
-                            <asp:Label ID="lblUserName" SkinID="lblSkinGen" Text='<%#Eval("UserName")%>' runat="server" />
+                            <asp:Label ID="lblUserName" SkinID="lblSkinGen" Text='<%# HttpUtility.HtmlEncode(Eval("UserDisplayName")) %>' runat="server" />
                         </ItemTemplate>
-                        <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
+                        <ItemStyle CssClass="contentTabletd wb-user-cell" VerticalAlign="Middle" HorizontalAlign="Center" />
                     </asp:TemplateField>
                     <asp:TemplateField SortExpression="Backup_Date_Time">
                         <HeaderTemplate>
-                            <asp:LinkButton ID="lnk2" runat="server" Text="Backup Date Time" CommandName="Sort"
+                            <asp:LinkButton ID="lnk3" runat="server" Text="Backup Date Time" CommandName="Sort"
                                 Style="color: White" CommandArgument="Backup_Date_Time"></asp:LinkButton>
                         </HeaderTemplate>
                         <ItemTemplate>
@@ -66,7 +67,7 @@
                                 Style="color: White" CommandArgument="User_IP_Address"></asp:LinkButton>
                         </HeaderTemplate>
                         <ItemTemplate>
-                            <asp:Label ID="lblUser_IP_Address" runat="server" SkinID="lblskingen" Text='<%#Eval("User_IP_Address")%>'></asp:Label>
+                            <asp:Label ID="lblUser_IP_Address" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("User_IP_Address")) %>'></asp:Label>
                         </ItemTemplate>
                         <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
                     </asp:TemplateField>

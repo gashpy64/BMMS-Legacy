@@ -18,6 +18,9 @@ namespace BMMS.Report
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            // Step RA1a: Admin only (role read from the database; ends the request otherwise)
+            BMMS.Security.PageAccessModule.RequireRole("admin");
+
             Common.InitSetup(className);
 
             if (!IsPostBack)
@@ -25,27 +28,24 @@ namespace BMMS.Report
                 txtFromDate.Text = System.DateTime.Now.ToString("dd-MMM-yyyy");
                 txtToDate.Text = System.DateTime.Now.ToString("dd-MMM-yyyy");
                 BindUsers();
-                BindGridView();
+                LoadAuditTrail();
             }
 
         }
         #region BindUsers
+        // Step UN3: every user (inactive ones and the system account included) as "Name (login)", " (inactive)"
+        // added, sorted by name, then login, after "- All -" (value 0). The value is UserId; the filter reads only
+        // that. The user table is no longer kept in ViewState: it was never read back, and View_Users carries the
+        // password hash (finding F-1).
         private void BindUsers()
         {
             try
             {
-                DataTable dtUsers = new DataTable();
-                dtUsers = UserMgr.GetUserList();
-                ViewState["dtUsers"] = dtUsers;
-
-                DataRow dr = dtUsers.NewRow();
-                dr["LoginName"] = "- All -";
-                dr["UserId"] = "0";    // 0 for All
-
-                dtUsers.Rows.InsertAt(dr, 0);
+                DataTable dtUsers = UserMgr.WithUserDisplayName(UserMgr.GetUserList());
 
                 ddlUsers.DataSource = dtUsers;
                 ddlUsers.DataBind();
+                ddlUsers.Items.Insert(0, new ListItem("- All -", "0"));    // 0 for All
             }
             catch (Exception ex)
             {
@@ -58,12 +58,15 @@ namespace BMMS.Report
         }
         #endregion
 
-        #region BindGridView
-        private void BindGridView()
+        #region LoadAuditTrail
+        // Reads the rows for the filter (UserId, dates), adds the "Update By" text by Update_By (step UN3:
+        // "Name (login)", " (inactive)" added, "(unknown user)" for a user that no longer exists), keeps them in
+        // ViewState for the header sort and shows them. Step UN3 (F-2): the query is here and no longer in
+        // BindGridView, so a header sort no longer reads the rows again and loses its order.
+        private void LoadAuditTrail()
         {
             try
             {
-
                 DateTime FromDate = Convert.ToDateTime(txtFromDate.Text);
                 DateTime ToDate = Convert.ToDateTime(txtToDate.Text);
                 int UserId = Convert.ToInt16(ddlUsers.SelectedValue.ToString());
@@ -72,20 +75,29 @@ namespace BMMS.Report
 
                 DataTable dtAuditTrail = new DataTable();
                 dtAuditTrail = AuditTrail_Mgr.GetAuditTrailMasterByUserId(UserId, From_Date, To_Date);
+                UserMgr.AddUserDisplayColumn(dtAuditTrail, "Update_By");
 
                 ViewState["dtAuditTrail"] = dtAuditTrail;
 
-                grvAuditTrail.DataSource = dtAuditTrail;
-                grvAuditTrail.DataBind();
+                BindGridView();
             }
             catch (Exception ex)
             {
-                Utilities.GoToErrPage(className, "BindGridView", ex);
+                Utilities.GoToErrPage(className, "LoadAuditTrail", ex);
             }
             finally
             {
 
             }
+        }
+        #endregion
+
+        #region BindGridView
+        // Shows the rows kept in ViewState (LoadAuditTrail), in the order of the last header sort
+        private void BindGridView()
+        {
+            grvAuditTrail.DataSource = (DataTable)ViewState["dtAuditTrail"];
+            grvAuditTrail.DataBind();
         }
         #endregion
 
@@ -109,7 +121,7 @@ namespace BMMS.Report
         protected void btnSubmit_Click(object sender, EventArgs e)
         {
             grvAuditTrail.Visible = true;
-            BindGridView();
+            LoadAuditTrail();
         }
         #endregion
     }

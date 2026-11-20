@@ -14,7 +14,7 @@ namespace BMMSBAL
         private string _Code;
         private int _MinutesId;
         private int _DecisionTypeId;
-        private DateTime _DueDate = System.DateTime.Now;
+        private DateTime? _DueDate;   // step UN6a: null = no due date (Followup only; BMMS-Fix-MinutesDueDate-Step38.sql)
         private string _Directions;
         private string _ActualResolution;
         private string _ShortText = string.Empty;
@@ -38,11 +38,13 @@ namespace BMMSBAL
             get { return _DecisionTypeId; }
             set { _DecisionTypeId = value; }
         }
-        public DateTime DueDate
+        public DateTime? DueDate
         {
             get { return _DueDate; }
             set { _DueDate = value; }
         }
+        // Step UN6a1: send @DueDate with the save (Save minutes, when MinutesMgr.HasDueDateParameter() is true)
+        public bool SendDueDate { get; set; }
         public string Directions
         {
             get { return _Directions; }
@@ -128,21 +130,29 @@ namespace BMMSBAL
         #endregion
 
         #region UpdateMinutes
-        public static int UpdateMinutes(MinutesBAL myMinutesBAL)
+        public static MeetingChangeResult UpdateMinutes(MinutesBAL myMinutesBAL)
         {
             MinutesDAL myMinutesDAL = new MinutesDAL();
 
             myMinutesDAL.Code = myMinutesBAL.Code;
             myMinutesDAL.MinutesId = myMinutesBAL.MinutesId;
             myMinutesDAL.DecisionTypeId = myMinutesBAL.DecisionTypeId;
-            //myMinutesDAL.DueDate = myMinutesBAL.DueDate;
-            myMinutesDAL.Directions = myMinutesBAL.Directions;
-            myMinutesDAL.ActualResolution = myMinutesBAL.ActualResolution;
+            myMinutesDAL.DueDate = myMinutesBAL.DueDate;   // step UN6a
+            myMinutesDAL.SendDueDate = myMinutesBAL.SendDueDate;   // step UN6a1
+            myMinutesDAL.Directions = HtmlCleaner.Clean(myMinutesBAL.Directions);   // step A1a
+            myMinutesDAL.ActualResolution = HtmlCleaner.Clean(myMinutesBAL.ActualResolution);   // step A1a
             myMinutesDAL.ShortText = myMinutesBAL.ShortText;
             myMinutesDAL.CreatedBy = myMinutesBAL.CreatedBy;
             myMinutesDAL.UpdatedBy = myMinutesBAL.UpdatedBy;
 
-            return MinutesDB.UpdateMinutes(myMinutesDAL);
+            return MeetingChangeResult.FromTable(MinutesDB.UpdateMinutes(myMinutesDAL));
+        }
+
+        // Step UN6a1: true when the database has step 38 (spr_UpdateMinutes takes @DueDate); the page then sends the
+        // due dates, otherwise it disables the due date boxes and saves the minutes without them
+        public static bool HasDueDateParameter()
+        {
+            return MinutesDB.HasDueDateParameter();
         }
         #endregion
 

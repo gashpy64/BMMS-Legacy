@@ -100,6 +100,14 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region GetDashboardDepartments
+        // Step UN6b: the departments of a Manager or a User for the Dashboard (spr_GetDashboardDepartments)
+        public static DataTable GetDashboardDepartments(int ActingUserId, out int Reason)
+        {
+            return DepartmentDB.GetDashboardDepartments(ActingUserId, out Reason);
+        }
+        #endregion
+
         #region GetNextDeptCode
         public static string GetNextDeptCode()
         {
@@ -147,6 +155,37 @@ namespace BMMSBAL
         public static int DeleteDepartmentByDeptId(int DeptId)
         {
             return DepartmentDB.DeleteDepartmentByDeptId(DeptId);
+        }
+        #endregion
+
+        #region DeleteDepartment
+        /// <summary>
+        /// Step UD1a: deletes the department and returns the message for the page (null when it was deleted).
+        /// Reason 25 (BMMS-Fix-UserHistory-Step39.sql): still mapped to users (ReasonDetail "Mapped:names") or used in
+        /// the department history ("History"); any other refusal keeps the general "in use" message. Without
+        /// step 39 the procedure returns Result only, as before.
+        /// </summary>
+        public static string DeleteDepartment(int DeptId)
+        {
+            DataTable dt = DepartmentDB.DeleteDepartment(DeptId);
+
+            if (dt.Rows.Count > 0 && Convert.ToInt32(dt.Rows[0]["Result"]) == 1)
+                return null;
+
+            if (dt.Rows.Count > 0 && dt.Columns.Contains("Reason") && Convert.ToInt32(dt.Rows[0]["Reason"]) == 25)
+            {
+                string detail = Convert.ToString(dt.Rows[0]["ReasonDetail"]);
+                const string mapped = "Mapped:";
+
+                if (detail.StartsWith(mapped, StringComparison.Ordinal))
+                    return "This department cannot be deleted: it is mapped to "
+                         + System.Web.HttpUtility.HtmlEncode(detail.Substring(mapped.Length))
+                         + ". Remove it from them in User Master first, or make it inactive.";
+
+                return "This department cannot be deleted: it is used in the department history of users. Make it inactive instead.";
+            }
+
+            return Common.GetAppSetting("delete_reference");
         }
         #endregion
         

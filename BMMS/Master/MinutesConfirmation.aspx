@@ -2,7 +2,6 @@
     Codebehind="MinutesConfirmation.aspx.cs" Inherits="BMMS.Master.MinutesConfirmation"
     Title="Minutes Confirmation" ValidateRequest="false" %>
 
-<%@ Register Assembly="FreeTextBox" Namespace="FreeTextBoxControls" TagPrefix="FTB" %>
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="cc1" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <div class="formContent">

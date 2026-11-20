@@ -122,7 +122,7 @@ namespace BMMSBAL
         #endregion
 
         #region AddEditMeetingMember
-        public int AddEditMeetingMember(MeetingMemberBAL MeetingMemberBAL)
+        public MeetingChangeResult AddEditMeetingMember(MeetingMemberBAL MeetingMemberBAL)
         {
             MeetingMemberDAL MeetingMemberDAL = new MeetingMemberDAL();
             MeetingMemberDAL.Code = MeetingMemberBAL.Code;
@@ -136,14 +136,14 @@ namespace BMMSBAL
             MeetingMemberDAL.UpdatedOn = MeetingMemberBAL.UpdatedOn;
             MeetingMemberDAL.UpdatedBy = MeetingMemberBAL.UpdatedBy;
 
-            return MeetingMemberDB.AddEditMeetingMember(MeetingMemberDAL);
+            return MeetingChangeResult.FromTable(MeetingMemberDB.AddEditMeetingMember(MeetingMemberDAL));
         }
         #endregion
 
         #region DeleteMeetingMemberByMeetingMemberId
-        public static int DeleteMeetingMemberByMeetingMemberId(int MeetingMemberId)
+        public static MeetingChangeResult DeleteMeetingMemberByMeetingMemberId(int MeetingMemberId)
         {
-            return MeetingMemberDB.DeleteMeetingMemberByMeetingMemberId(MeetingMemberId);
+            return MeetingChangeResult.FromTable(MeetingMemberDB.DeleteMeetingMemberByMeetingMemberId(MeetingMemberId));
         }
         #endregion
 

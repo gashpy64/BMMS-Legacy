@@ -24,18 +24,35 @@ namespace BMMS
         {
             InitSetup();
 
+            // Step UN6e: ?v=<stamp> on the stylesheet links of the header (AssetVersion.cs)
+            AssetVersion.Register(this);
+
             if (!Page.IsPostBack)
             {
                 InitCtrlAttributes();
                 ScriptManager.GetCurrent(this).SetFocus(txtLoginName.ClientID);
+
+                // Sent here by PageAccessModule: the account was deactivated while logged in, or (step RA1d) the role
+                // or the departments changed. The value is only compared with the two fixed codes and never shown.
+                string status = Request.QueryString["status"];
+                if (status == BMMS.Security.PageAccessModule.StatusInactive)
+                    MsgDisplay(InactiveMessage);
+                else if (status == BMMS.Security.PageAccessModule.StatusChanged)
+                    MsgDisplay(AccessChangedMessage);
             }
         }
         #endregion
 
+        private const string InactiveMessage = "Your account is inactive. Contact the administrator.";
+        // Step RA1d: the session was ended because the role or the departments changed
+        private const string AccessChangedMessage = "Your access has changed. Please sign in again.";
+
         #region InitSetup()
         private void InitSetup()
         {
-            Page.Title = Common.GetAppSetting("PageTitle") + "Login";
+            Page.Title = Common.GetAppSetting("PageTitle") + " - Login";
+            // the footer line of the other pages (step B3)
+            lblFooter.Text = Common.ProductFooter(typeof(_Default).Assembly);
             Session["PageURL"] = "~/Default.aspx";
             txtLoginName.Attributes.Add("MaxLength", Common.GetAppSetting("LoginIdMaxLength"));
             txtPassword.Attributes.Add("MaxLength", Common.GetAppSetting("PasswordMaxLength"));
@@ -59,13 +76,13 @@ namespace BMMS
             DataTable dtUser = new DataTable();
 
             string sLoginName = txtLoginName.Text.Trim();
-            string sPassword = Common.EncryptVal(txtPassword.Text.Trim());
+            string sPasswordInput = txtPassword.Text.Trim();
             string User_IP_Address = Utilities.GetLocalIPAddress();
             string Server_Url = Request.Url.AbsoluteUri.ToString();
 
             try
             {
-                dtUser = UserMgr.GetUserByLoginName(sLoginName, sPassword, User_IP_Address, Server_Url);
+                dtUser = UserMgr.GetUserByLoginName(sLoginName, string.Empty, User_IP_Address, Server_Url);
 
                 if (dtUser.Rows.Count <= 0)
                 {
@@ -76,12 +93,7 @@ namespace BMMS
                     ScriptManager.GetCurrent(this).SetFocus(txtLoginName.ClientID);
 
                 }
-                else if (dtUser.Rows[0]["AccountStatus"].ToString() == "0")
-                {
-                    errMsg = "Your account was locked by admin.";
-                    ScriptManager.GetCurrent(this).SetFocus(txtLoginName.ClientID);
-                }
-                else if (dtUser.Rows[0]["Password"].ToString() != sPassword)
+                else if (!Common.VerifyPassword(sPasswordInput, dtUser.Rows[0]["Password"].ToString()))
                 {
                     int UserId = int.Parse(dtUser.Rows[0]["UserId"].ToString());
 
@@ -99,16 +111,46 @@ namespace BMMS
                     //if (Session["LoginCount"].ToString() == "3")
                         //UserMgr.LockUserByUserId(UserId);
                 }
+                else if (dtUser.Rows[0]["AccountStatus"].ToString() != "1")
+                {
+                    // Checked after the password, so the message does not tell a stranger the login exists
+                    errMsg = InactiveMessage;
+                    ScriptManager.GetCurrent(this).SetFocus(txtLoginName.ClientID);
+                }
                 else
                 {
-                    Session["UserId"] = dtUser.Rows[0]["UserId"].ToString();
-                    Session["UserName"] = dtUser.Rows[0]["UserName"].ToString();
-                    Session["DesignName"] = dtUser.Rows[0]["DesignationName"].ToString();
-                    Session["RoleCode"] = dtUser.Rows[0]["RoleCode"].ToString();
-                    Session["RoleName"] = dtUser.Rows[0]["RoleName"].ToString();
-                    Session["NoRecord"] = Common.GetAppSetting("NoRecord");
+                    int loggedInUserId = int.Parse(dtUser.Rows[0]["UserId"].ToString());
 
-                    if (txtPassword.Text.Trim() == "lvb@123")
+                    // Step RA1d: what PageAccessModule compares on every request (spr_GetUserAccessState, step 51), read
+                    // before anything is recorded. A database error is "Database not connected" (the catch below).
+                    UserAccessState access = UserMgr.GetUserAccessState(loggedInUserId);
+                    if (access == null || !access.IsActive)
+                    {
+                        errMsg = InactiveMessage;
+                        ScriptManager.GetCurrent(this).SetFocus(txtLoginName.ClientID);
+                        MsgDisplay(errMsg);
+                        return;
+                    }
+
+                    UserMgr.RecordLogin(loggedInUserId, User_IP_Address, Server_Url);
+
+                    // Upgrade an old-format password to the new hash on first successful login
+                    if (Common.IsLegacyFormat(dtUser.Rows[0]["Password"].ToString()))
+                        UserMgr.ResetPasswordByUserId(loggedInUserId, Common.HashPassword(sPasswordInput), loggedInUserId);
+                    Session["UserId"] = dtUser.Rows[0]["UserId"].ToString();
+                    // UserName is the person's name (shown); LoginName is the login ID (header tooltip, logs; step UN2)
+                    Session["UserName"] = dtUser.Rows[0]["UserName"].ToString();
+                    Session["LoginName"] = dtUser.Rows[0]["LoginName"].ToString();
+                    Session["DesignName"] = dtUser.Rows[0]["DesignationName"].ToString();
+                    // Step RA1d: the role and the department set from the same read the module compares with
+                    Session["RoleCode"] = access.RoleCode;
+                    Session["RoleName"] = access.RoleName;
+                    Session[BMMS.Security.PageAccessModule.SessionDepartmentSetKey] = access.DepartmentSet;
+                    Session["NoRecord"] = Common.GetAppSetting("NoRecord");
+                    // The protected system account (BMMS-Fix-SystemAccount-Stage3.sql): "1" or "0"
+                    Session["IsSystem"] = dtUser.Columns.Contains("IsSystem") && Convert.ToBoolean(dtUser.Rows[0]["IsSystem"]) ? "1" : "0";
+
+                    if (sPasswordInput == Common.DefaultPassword)
                         Response.Redirect(@"~\ChangePasswordFirst.aspx", false);
                     else
                         Response.Redirect(@"~\DashBoard\Dashboard.aspx", false);
@@ -125,17 +167,27 @@ namespace BMMS
 
             }
 
-            MsgDisplay(errMsg);
+            MsgDisplay(errMsg, errMsg == "Database not connected" ? MessageKind.Error : MessageKind.Warning);
 
             //Response.Redirect(@"~\DashBoard\Dashboard.aspx", false);
         }
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
+        }
+        #endregion
+
+        #region ScriptManager1_AsyncPostBackError
+        // An unhandled error in an UpdatePanel postback: written to the error log, and the browser gets a fixed
+        // text instead of the exception (JScript/AsyncPostBackError.js shows the message bar; step E1)
+        protected void ScriptManager1_AsyncPostBackError(object sender, AsyncPostBackErrorEventArgs e)
+        {
+            ScriptManager1.AsyncPostBackErrorMessage = Utilities.AsyncPostBackErrorMessage;
+            Utilities.LogAsyncPostBackError(Page, e.Exception, ScriptManager1.AsyncPostBackSourceElementID);
         }
         #endregion
 

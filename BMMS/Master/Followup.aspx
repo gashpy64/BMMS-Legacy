@@ -1,8 +1,7 @@
 <%@ Page Language="C#" MasterPageFile="~/MasterPage/Main.Master" AutoEventWireup="true"
     Codebehind="Followup.aspx.cs" Inherits="BMMS.Master.Followup" Title="Followup"
-    ValidateRequest="false" MaintainScrollPositionOnPostback="true" %>
+    MaintainScrollPositionOnPostback="true" %>
 
-<%@ Register Assembly="FreeTextBox" Namespace="FreeTextBoxControls" TagPrefix="FTB" %>
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="cc1" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
@@ -112,7 +111,7 @@
                                         <asp:RadioButtonList ID="rdoConfirmStatus" runat="server" RepeatDirection="Horizontal">
                                             <asp:ListItem Text="Both" Value="-1" Selected="True"></asp:ListItem>
                                             <asp:ListItem Text="Confirmed" Value="1"></asp:ListItem>
-                                            <asp:ListItem Text="Not Confirmed" Value="0"></asp:ListItem>
+                                            <asp:ListItem Text="Pending" Value="0"></asp:ListItem>
                                         </asp:RadioButtonList>
                                     </td>
                                 </tr>
@@ -129,6 +128,12 @@
                         </div>
                     </asp:Panel>
                     <asp:Panel ID="pnlViewFollowup" runat="server">
+                        <%-- Step UN6d: a role that can only read the followups (MD Secretariat) is told so above the list.
+                             The wrapper is a floated row like the .divRow rows around it (wb-followup-row), so the line
+                             stays below the filter rows --%>
+                        <div class="wb-followup-row">
+                            <p id="pFollowupReadOnly" runat="server" class="wb-dash-message" visible="false"></p>
+                        </div>
                         <div class="divRow">
                             <asp:GridView ID="grvFollowup" runat="server" SkinID="grvSkinNoPaging" AutoGenerateColumns="false"
                                 CssClass="contentTable1" AllowSorting="true" CellPadding="4" DataKeyNames="MinutesId"
@@ -218,13 +223,23 @@
                                         <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center"
                                             Width="100px" />
                                     </asp:TemplateField>
-                                    <asp:TemplateField HeaderText="Is Confirmed">
+                                    <%-- Step FU1: Status replaces the Is Confirmed tick. A Pending row of the Controller has the
+                                         drop-down (Pending / Confirmed; Submit saves the rows changed to Confirmed); a Confirmed row
+                                         is final: who and when, and for the Controller the Reopen button. The text is built and
+                                         encoded in grvFollowup_RowDataBound --%>
+                                    <asp:TemplateField HeaderText="Status">
                                         <ItemTemplate>
                                             <asp:Label ID="lblIsConfirmed" runat="server" Text='<%#Eval("IsConfirmed") %>' Visible="false"></asp:Label>
-                                            <asp:CheckBox ID="chkIsConfirmed" runat="server" />
+                                            <asp:DropDownList ID="ddlStatus" runat="server" CssClass="wb-followup-status-ddl" ToolTip="Status of this followup">
+                                                <asp:ListItem Text="Pending" Value="0" Selected="True"></asp:ListItem>
+                                                <asp:ListItem Text="Confirmed" Value="1"></asp:ListItem>
+                                            </asp:DropDownList>
+                                            <asp:Literal ID="litStatus" runat="server" Mode="PassThrough"></asp:Literal>
+                                            <asp:Button ID="btnReopen" CssClass="button wb-followup-reopen-button" Text="Reopen" CommandArgument='<%#Eval("ActionItemId")%>'
+                                                runat="server" CommandName="Reopen" ToolTip="Reopen this followup (a reason is asked)" />
                                         </ItemTemplate>
-                                        <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center"
-                                            Width="100px" />
+                                        <ItemStyle CssClass="contentTabletd wb-followup-status-cell" VerticalAlign="Middle" HorizontalAlign="Left"
+                                            Width="220px" />
                                     </asp:TemplateField>
                                 </Columns>
                                 <EmptyDataTemplate>
@@ -243,16 +258,12 @@
             <asp:Panel ID="pnlActualResolution" runat="server">
                 <div class="MyPopupOuter">
                     <div class="MyPopupContent">
-                        <div class="MyPopupContentInner">
+                        <div class="MyPopupContentInner wb-followup-popup">
                             <div class="formPanel">
                                 <div class="divHeader">
-                                    :: Edit Minute Actual Resolution</div>
+                                    :: View Minute Actual Resolution</div>
                                 <div class="divRow" style="text-align: center;">
-                                    <FTB:FreeTextBox ID="ftxtActualResolution" runat="server" Width="600px" Height="200px"
-                                        AllowHtmlMode="false" ShowTagPath="false" AutoGenerateToolbarsFromString="True"
-                                        ButtonSet="Office2003" ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                        ToolbarStyleConfiguration="Office2003">
-                                    </FTB:FreeTextBox>
+                                    <bmms:RichTextEditor ID="ftxtActualResolution" runat="server" Width="600px" Height="200px" ReadOnly="true" Label="Actual Resolution" />
                                 </div>
                                 <div class="divRow" style="text-align: center;">
                                     <asp:Button ID="btnActualResolutionCancel" runat="server" CssClass="button" Text="Cancel"
@@ -266,16 +277,19 @@
             <asp:Panel ID="pnlActionText" runat="server">
                 <div class="MyPopupOuter">
                     <div class="MyPopupContent">
-                        <div class="MyPopupContentInner">
+                        <div class="MyPopupContentInner wb-followup-popup">
                             <div class="formPanel">
                                 <div class="divHeader">
-                                    :: Edit Action Text</div>
+                                    <asp:Literal ID="litActionTextTitle" runat="server" Text=":: Edit Action Text"></asp:Literal></div>
                                 <div class="divRow" style="text-align: center;">
-                                    <FTB:FreeTextBox ID="ftxtActionText" runat="server" Width="600px" Height="200px"
-                                        AllowHtmlMode="false" ShowTagPath="false" AutoGenerateToolbarsFromString="True"
-                                        ButtonSet="Office2003" ToolbarLayout="Bold,Italic,Underline|JustifyLeft,JustifyRight,JustifyCenter,JustifyFull;BulletedList,NumberedList,Indent,Outdent"
-                                        ToolbarStyleConfiguration="Office2003">
-                                    </FTB:FreeTextBox>
+                                    <%-- Width 600px: the same width is in ".wb-followup-popup .wb-dash-message" (CSS/bmms-workbench.css); change both together --%>
+                                    <bmms:RichTextEditor ID="ftxtActionText" runat="server" Width="600px" Height="200px" Label="Action Text" />
+                                </div>
+                                <%-- Step UN6d: the read-only line, or a save that failed, a busy server or a text that is too
+                                     long (the page's message box lies under this panel). A floated row (wb-followup-row),
+                                     so it sits under the editor's row, as wide as the editor --%>
+                                <div class="wb-followup-row" aria-live="polite">
+                                    <p id="pActionTextPanelMessage" runat="server" class="wb-dash-message" visible="false"></p>
                                 </div>
                                 <div class="divRow" style="text-align: center;">
                                     <asp:Button ID="btnActionTextSave" runat="server" CssClass="button" Text="Save" OnClick="btnActionTextSave_Click" />
@@ -287,8 +301,70 @@
                     </div>
                 </div>
             </asp:Panel>
+            <%-- Step FU1: the Reopen panel, Controller only, one confirmed followup at once (never part of Submit) --%>
+            <asp:Panel ID="pnlReopen" runat="server">
+                <div class="MyPopupOuter">
+                    <div class="MyPopupContent">
+                        <div class="MyPopupContentInner wb-followup-popup">
+                            <div class="formPanel">
+                                <div class="divHeader">
+                                    :: Reopen Followup</div>
+                                <div class="wb-followup-row">
+                                    <p id="pReopenItem" runat="server" class="wb-followup-reopen-item"></p>
+                                </div>
+                                <div class="wb-followup-row">
+                                    <div class="wb-followup-reopen">
+                                        <asp:Label ID="lblReopenReason" runat="server" AssociatedControlID="txtReopenReason" CssClass="Lable"
+                                            Text="Reason for reopening :"></asp:Label>
+                                        <span class="spanMandatory">*</span>
+                                        <%-- Width: .wb-followup-reopen is 600px, as the Action Text editor (CSS/bmms-workbench.css) --%>
+                                        <asp:TextBox ID="txtReopenReason" runat="server" TextMode="MultiLine" Rows="5" CssClass="wb-followup-reopen-text"></asp:TextBox>
+                                        <span class="wb-followup-reopen-hint">At most 500 characters.</span>
+                                    </div>
+                                </div>
+                                <%-- The check in the browser (a "<" that the server would refuse) and the server's messages:
+                                     blank, too long, refused, failed --%>
+                                <div class="wb-followup-row" aria-live="polite">
+                                    <p id="pReopenCheck" class="wb-dash-message" role="alert" hidden="hidden"></p>
+                                    <p id="pReopenPanelMessage" runat="server" class="wb-dash-message" visible="false"></p>
+                                </div>
+                                <div class="divRow" style="text-align: center;">
+                                    <asp:Button ID="btnReopenSave" runat="server" CssClass="button" Text="Save" OnClick="btnReopenSave_Click" />
+                                    <asp:Button ID="btnReopenCancel" runat="server" CssClass="button" Text="Cancel" OnClick="btnReopenCancel_Click" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </asp:Panel>
             <asp:HiddenField ID="hdnMinutesId" runat="server" />
             <asp:HiddenField ID="hdnAgendaId" runat="server" />
         </ContentTemplate>
     </asp:UpdatePanel>
+
+    <script type="text/javascript">
+        // Step FU1 (decision D5): the server refuses a post with "<" followed by a letter, "!", "/" or "?", or with "&#"
+        // (request validation), and the page would go to the error page. Checked here before the post; nothing is sent.
+        function FollowupReopenCheck() {
+            var box = document.getElementById("<%= txtReopenReason.ClientID %>");
+            var line = document.getElementById("pReopenCheck");
+            if (!box || !line) return true;
+            if (/<[a-zA-Z!\/?]/.test(box.value) || /&#/.test(box.value)) {
+                // Step FU2b (RA-2): one message only: the server's line of an earlier Save ("Enter the reason for
+                // reopening.") is cleared
+                var server = document.getElementById("<%= pReopenPanelMessage.ClientID %>");
+                if (server) {
+                    server.textContent = "";
+                    server.style.display = "none";
+                }
+                line.textContent = "Remove the \"<\" or \"&#\" from the reason, then save again.";
+                line.hidden = false;
+                box.focus();
+                return false;
+            }
+            line.textContent = "";
+            line.hidden = true;
+            return true;
+        }
+    </script>
 </asp:Content>

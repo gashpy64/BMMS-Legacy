@@ -41,7 +41,7 @@
                         <asp:GridView ID="grvCommittee" runat="server" SkinID="grvSkinNoPaging" AutoGenerateColumns="false"
                             CssClass="contentTable1" AllowSorting="true" CellPadding="4" DataKeyNames="CommitteeId"
                             Font-Names="Verdana, Arial, Helvetica, sans-serif" Font-Size="X-Small" ForeColor="#333333"
-                            GridLines="Horizontal" Height="32px" Width="100%">
+                            GridLines="Horizontal" Height="32px" Width="100%" OnSorting="grvRecord_Sorting">
                             <HeaderStyle CssClass="contentTableHeader" HorizontalAlign="Center" Font-Bold="true" />
                             <Columns>
                                 <asp:TemplateField HeaderText="S.No.">
@@ -57,7 +57,7 @@
                                             Style="color: White" CommandArgument="CommitteeCode"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblCommitteeCode" SkinID="lblSkinGen" Text='<%#Eval("CommitteeCode")%>'
+                                        <asp:Label ID="lblCommitteeCode" SkinID="lblSkinGen" Text='<%# HttpUtility.HtmlEncode(Eval("CommitteeCode")) %>'
                                             runat="server" />
                                         <asp:HiddenField ID="hdnCommitteeId" runat="server" Value='<%#Eval("CommitteeId")%>' />
                                     </ItemTemplate>
@@ -69,14 +69,14 @@
                                             Style="color: White" CommandArgument="CommitteeName"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblCommitteeName" SkinID="lblSkinGen" Text='<%#Eval("CommitteeName")%>'
+                                        <asp:Label ID="lblCommitteeName" SkinID="lblSkinGen" Text='<%# HttpUtility.HtmlEncode(Eval("CommitteeName")) %>'
                                             runat="server" />
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
                                 </asp:TemplateField>
                                 <asp:TemplateField SortExpression="IncorporationDate">
                                     <HeaderTemplate>
-                                        <asp:LinkButton ID="lnk2" runat="server" Text="Incorporation Date" CommandName="Sort"
+                                        <asp:LinkButton ID="lnk3" runat="server" Text="Incorporation Date" CommandName="Sort"
                                             Style="color: White" CommandArgument="IncorporationDate"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
@@ -100,7 +100,7 @@
                                             CommandArgument="StatusName"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblStatusName" runat="server" SkinID="lblskingen" Text='<%#Eval("StatusName") %>'></asp:Label>
+                                        <asp:Label ID="lblStatusName" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("StatusName")) %>'></asp:Label>
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
                                 </asp:TemplateField>

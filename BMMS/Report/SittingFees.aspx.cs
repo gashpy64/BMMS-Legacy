@@ -49,21 +49,33 @@ namespace BMMS.Report
         {
             try
             {
+                // Built in memory and opened by ViewReport.aspx?pdf=1; nothing is written to ~/Files/PDF (step 26).
+                // Two pop-ups of the same user at once: the last one built wins.
+                byte[] pdf = null;
+                string name = string.Empty;
+
                 switch (rdoReportType.SelectedValue)
                 {
                     case "Individual":
-                        GenerateIndividualReport();
-                        ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(825,500,'../Files/PDF/SFR_Individual.pdf','Report');", true);
+                        pdf = GenerateIndividualReport();
+                        name = "SittingFees_Individual";
                         break;
                     case "Designation":
-                        GenerateDesignationReport();
-                        ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(825,500,'../Files/PDF/SFR_Designation.pdf','Report');", true);
+                        pdf = GenerateDesignationReport();
+                        name = "SittingFees_Designation";
                         break;
                     case "Consolidated":
                         pnlConsolidated.Visible = true;
-                        GenerateConsolidatedReport();
-                        ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(825,500,'../Files/PDF/SFR_Consolidated.pdf','Report');", true);
+                        pdf = GenerateConsolidatedReport();
+                        name = "SittingFees_Consolidated";
                         break;
+                }
+
+                if (pdf != null)
+                {
+                    Session["ReportPdf"] = pdf;
+                    Session["ReportPdfName"] = name;
+                    ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:popup(825,500,'ViewReport.aspx?pdf=1','Report');", true);
                 }
             }
             catch (Exception ex)
@@ -73,8 +85,17 @@ namespace BMMS.Report
         }
         #endregion
 
+        #region ShowIndicTextMessage
+        // Sitting Fees has no Word export or Print view; the PDF is not made (step U1b)
+        private void ShowIndicTextMessage()
+        {
+            ScriptManager.RegisterStartupScript(this, this.GetType(), "r",
+                "javascript:alert('" + HttpUtility.JavaScriptStringEncode(PdfFonts.IndicTextMessageFor("Sitting Fees has no Word export, so this report cannot be made")) + "');", true);
+        }
+        #endregion
+
         #region GenerateIndividualReport
-        public void GenerateIndividualReport()
+        public byte[] GenerateIndividualReport()
         {
 
             int MemberId = int.Parse(ddlMember.SelectedValue.ToString());
@@ -88,12 +109,31 @@ namespace BMMS.Report
             else
                 dtMember = MemberMgr.GetMemberDTbyMemberId(MemberId);
 
-            PDF_Reports.GenerateSittingFeeIndividual(dtMember, FromDate, ToDate, txtAuthorizedPersionName.Text.Trim(), txtAuthorizedPersionDesign.Text.Trim());
+            // No member, or no sitting fee in the period: the same message as Designation and Consolidated (step 26)
+            byte[] pdf = null;
+
+            if (dtMember.Rows.Count > 0)
+            {
+                // Tamil or Hindi text: no PDF (step U1b)
+                if (PDF_Reports.SittingFeeIndividualHasIndicText(dtMember, FromDate, ToDate, txtAuthorizedPersionName.Text.Trim(), txtAuthorizedPersionDesign.Text.Trim()))
+                {
+                    ShowIndicTextMessage();
+                    return null;
+                }
+
+                pdf = PDF_Reports.GenerateSittingFeeIndividual(dtMember, FromDate, ToDate, txtAuthorizedPersionName.Text.Trim(), txtAuthorizedPersionDesign.Text.Trim());
+            }
+
+            if (pdf == null)
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:alert('No such record found');", true);
+
+            return pdf;
         }
         #endregion
 
         #region GenerateDesignationReport
-        public void GenerateDesignationReport()
+        // The PDF bytes; null when there is nothing to print (a message is shown instead)
+        public byte[] GenerateDesignationReport()
         {
 
             int DesignationId = int.Parse(ddlDesignation.SelectedValue.ToString());
@@ -108,16 +148,24 @@ namespace BMMS.Report
             {
                 dtDesignation = AttendanceMgr.GetAttendanceMembersByDesignId(DesignationId, FromDate, ToDate);
 
-                if (dtDesignation.Rows.Count > 0)
-                    PDF_Reports.GenerateSittingFeeDesignation(dtDesignation, FromDate, ToDate, txtAuthorizedPersionName.Text.Trim(), txtAuthorizedPersionDesign.Text.Trim());
+                // Tamil or Hindi text: no PDF (step U1b)
+                if (dtDesignation.Rows.Count > 0
+                    && (PdfFonts.HasIndicText(dtDesignation, "MemberName", "DesignationName")
+                        || PdfFonts.HasIndicText(txtAuthorizedPersionName.Text, txtAuthorizedPersionDesign.Text) || PdfFonts.OrganisationHasIndicText()))
+                    ShowIndicTextMessage();
+                else if (dtDesignation.Rows.Count > 0)
+                    return PDF_Reports.GenerateSittingFeeDesignation(dtDesignation, FromDate, ToDate, txtAuthorizedPersionName.Text.Trim(), txtAuthorizedPersionDesign.Text.Trim());
                 else
                     ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:alert('No such record found');", true);
             }
+
+            return null;
         }
         #endregion
 
         #region GenerateConsolidatedReport
-        public void GenerateConsolidatedReport()
+        // The PDF bytes; null when there is nothing to print (a message is shown instead)
+        public byte[] GenerateConsolidatedReport()
         {
 
             int CommitteeId = int.Parse(ddlCommittee.SelectedValue.ToString());
@@ -133,11 +181,17 @@ namespace BMMS.Report
 
             dtMember = dtTemp.DefaultView.ToTable(true, "MemberId", "MemberName");
 
-            if (dtMeeting.Rows.Count > 0)
-                PDF_Reports.GenerateSittingFeeConsolidated(dtMeeting, dtMember, FromDate, ToDate, txtAuthorizedPersionName.Text.Trim(), txtAuthorizedPersionDesign.Text.Trim());
+            // Tamil or Hindi text: no PDF (step U1b)
+            if (dtMeeting.Rows.Count > 0
+                && (PdfFonts.HasIndicText(dtMeeting, "CommitteeName", "Place") || PdfFonts.HasIndicText(dtMember, "MemberName")
+                    || PdfFonts.OrganisationHasIndicText()))
+                ShowIndicTextMessage();
+            else if (dtMeeting.Rows.Count > 0)
+                return PDF_Reports.GenerateSittingFeeConsolidated(dtMeeting, dtMember, FromDate, ToDate, txtAuthorizedPersionName.Text.Trim(), txtAuthorizedPersionDesign.Text.Trim());
             else
                 ScriptManager.RegisterStartupScript(this, this.GetType(), "r", "javascript:alert('No such record found');", true);
 
+            return null;
         }
         #endregion
 

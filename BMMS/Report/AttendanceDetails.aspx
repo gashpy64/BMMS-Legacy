@@ -2,7 +2,6 @@
     Codebehind="AttendanceDetails.aspx.cs" Inherits="BMMS.Report.AttendanceDetails"
     Title="Attendance Details" ValidateRequest="false" %>
 
-<%@ Register Assembly="FreeTextBox" Namespace="FreeTextBoxControls" TagPrefix="FTB" %>
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="cc1" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <div class="formContent">
@@ -62,23 +61,23 @@
                                             Style="color: White" CommandArgument="CommitteeName"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblCommitteeName" runat="server" SkinID="lblskingen" Text='<%#Eval("CommitteeName")%>'></asp:Label>
+                                        <asp:Label ID="lblCommitteeName" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("CommitteeName")) %>'></asp:Label>
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Left" />
                                 </asp:TemplateField>
                                 <asp:TemplateField SortExpression="MeetingNo">
                                     <HeaderTemplate>
-                                        <asp:LinkButton ID="LinkButton1" runat="server" Text="Meeting No" CommandName="Sort"
+                                        <asp:LinkButton ID="LinkButton2" runat="server" Text="Meeting No" CommandName="Sort"
                                             Style="color: White" CommandArgument="MeetingNo"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblMeetingNo" runat="server" SkinID="lblskingen" Text='<%#Eval("MeetingNo")%>'></asp:Label>
+                                        <asp:Label ID="lblMeetingNo" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("MeetingNo")) %>'></asp:Label>
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
                                 </asp:TemplateField>
                                 <asp:TemplateField SortExpression="MeetingDate">
                                     <HeaderTemplate>
-                                        <asp:LinkButton ID="LinkButton1" runat="server" Text="Meeting Date" CommandName="Sort"
+                                        <asp:LinkButton ID="LinkButton5" runat="server" Text="Meeting Date" CommandName="Sort"
                                             Style="color: White" CommandArgument="MeetingDate"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
@@ -92,7 +91,7 @@
                                             Style="color: White" CommandArgument="MemberName"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblMemberName" runat="server" SkinID="lblskingen" Text='<%#Eval("MemberName")%>'></asp:Label>
+                                        <asp:Label ID="lblMemberName" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("MemberName")) %>'></asp:Label>
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Left" />
                                 </asp:TemplateField>
@@ -102,17 +101,17 @@
                                             Style="color: White" CommandArgument="DesignationName"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblDesignationName" runat="server" SkinID="lblskingen" Text='<%#Eval("DesignationName")%>'></asp:Label>
+                                        <asp:Label ID="lblDesignationName" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("DesignationName")) %>'></asp:Label>
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Left" />
                                 </asp:TemplateField>
                                 <asp:TemplateField SortExpression="Attendance">
                                     <HeaderTemplate>
-                                        <asp:LinkButton ID="LinkButton4" runat="server" Text="Attendance" CommandName="Sort"
+                                        <asp:LinkButton ID="LinkButton6" runat="server" Text="Attendance" CommandName="Sort"
                                             Style="color: White" CommandArgument="Attendance"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblAttendance" runat="server" SkinID="lblskingen" Text='<%#Eval("Attendance")%>'></asp:Label>
+                                        <asp:Label ID="lblAttendance" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("Attendance")) %>'></asp:Label>
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
                                 </asp:TemplateField>

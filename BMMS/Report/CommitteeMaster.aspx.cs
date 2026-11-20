@@ -92,8 +92,9 @@ namespace BMMS.Report
 
                 dtCommittee = dv.ToTable("dtCommittee");
 
-                grvCommittee.DataSource = dtCommittee;
-                grvCommittee.DataBind();
+                // Kept for the header sort (step A1b-1)
+                ViewState["DataTable"] = dtCommittee;
+                BindGridView();
             }
             catch (Exception ex)
             {
@@ -102,6 +103,30 @@ namespace BMMS.Report
             finally
             {
 
+            }
+        }
+        #endregion
+
+        #region BindGridView
+        private void BindGridView()
+        {
+            grvCommittee.DataSource = (DataTable)ViewState["DataTable"];
+            grvCommittee.DataBind();
+        }
+        #endregion
+
+        #region grvRecord_Sorting
+        protected void grvRecord_Sorting(object sender, GridViewSortEventArgs e)
+        {
+            try
+            {
+                ViewState["DataTable"] = Utilities.GridViewDataTableSorting(sender, e, (DataTable)ViewState["DataTable"]);
+
+                BindGridView();
+            }
+            catch (Exception ex)
+            {
+                Utilities.GoToErrPage(className, "grvRecord_Sorting", ex);
             }
         }
         #endregion

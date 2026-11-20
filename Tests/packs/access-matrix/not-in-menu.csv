@@ -1,0 +1,8 @@
+role,address,reason
+*,Default.aspx,"The sign-in page itself; a signed-in user reaches it by signing out, not from the menu."
+*,Error/ErrorPage.aspx,"Shown by the application after an error on another page; not a menu task."
+*,ChangePasswordFirst.aspx,"Shown at the first sign-in after Reset Password (Default.aspx sends the user there); not a menu task."
+controller,Report/ViewReport.aspx,"The report window that Generate opens on the report pages (Minutes, Followup, Agenda Approval and others); not a menu item."
+manager,Report/ViewReport.aspx,"The report window that Generate opens on the Manager's report pages; not a menu item."
+controller,Report/ViewReport.aspx?pdf=1,"The PDF window that Generate opens for Agenda Summary, Agenda Details, Agenda Approval, Notice and Sitting Fees; not a menu item."
+manager,Report/ViewReport.aspx?pdf=1,"The PDF window that Generate opens for the Manager's Agenda Summary and Agenda Details; not a menu item."

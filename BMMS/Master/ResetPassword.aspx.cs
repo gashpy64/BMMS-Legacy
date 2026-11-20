@@ -19,6 +19,9 @@ namespace BMMS.Master
         #region Page_Load
         protected void Page_Load(object sender, EventArgs e)
         {
+            // Step RA1a: Admin only (role read from the database; ends the request otherwise)
+            BMMS.Security.PageAccessModule.RequireRole("admin");
+
             if (!IsPostBack)
             {
                 pnlResetPassword.Visible = false;
@@ -39,7 +42,13 @@ namespace BMMS.Master
                 DataTable dtUser = new DataTable();
                 dtUser = UserMgr.GetUserList();
 
-                Common.LoadDropdownlist(ddlLoginUser, dtUser, "LoginName", "UserId", true);
+                // The protected system account changes its own password only (BMMS-Fix-SystemAccount-Stage3.sql)
+                for (int i = dtUser.Rows.Count - 1; i >= 0; i--)
+                    if (Common.IsSystemAccountRow(dtUser.Rows[i]))
+                        dtUser.Rows.RemoveAt(i);
+
+                // Step UN3: "Name (login)" (" (inactive)" added), sorted by name, then login; the value stays UserId
+                Common.LoadDropdownlist(ddlLoginUser, UserMgr.WithUserDisplayName(dtUser), UserMgr.UserDisplayNameColumn, "UserId", true);
             }
             catch (Exception ex)
             {
@@ -81,8 +90,11 @@ namespace BMMS.Master
         #region btnResetPassword_Click
         protected void btnResetPassword_Click(object sender, EventArgs e)
         {
+            // Step RA1a: checked again before the action
+            BMMS.Security.PageAccessModule.RequireRole("admin");
+
             int PasswordLength = 8; // Convert.ToInt16(Common.GetAppSetting("PasswordMaxLength"));
-            string NewPassword = "lvb@123"; // Common.CreateRandomPassword(PasswordLength);
+            string NewPassword = Common.DefaultPassword; // Common.CreateRandomPassword(PasswordLength);
 
             string ToMailId = hdnEmailId.Value.ToString();
             string Subject = "Your password has been reset to default password";
@@ -90,37 +102,49 @@ namespace BMMS.Master
             BodyText += "Please change your password after login.";
 
             string result = string.Empty;
-            result = Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, null);
-            
-            
-
             string errMsg = string.Empty;
 
-            if (result == "Success")
+            int UserId = Convert.ToInt16(ddlLoginUser.SelectedValue);
+            // Acting user: the server-side session only
+            int UpdatedBy = Session["UserId"] == null ? 0 : Convert.ToInt16(Session["UserId"].ToString());
+
+            // Check the rule, reset, and only then send the mail
+            UserChangeResult check = UserMgr.CheckUserChange(UpdatedBy, UserId, "ResetPassword", 0);
+
+            if (check.Result != 1)
             {
-                int UserId = Convert.ToInt16(ddlLoginUser.SelectedValue);
-                int UpdatedBy = Convert.ToInt16(Session["UserId"].ToString());
-
-                string Password = Common.EncryptVal(NewPassword);
-
-                errMsg = "New passward was sent through mail.";
-
-                UserMgr.ResetPasswordByUserId(UserId, Password, UpdatedBy);
+                errMsg = check.RefusalMessage("reset this user's password", className);
+            }
+            else if (UserMgr.ResetPasswordByUserId(UserId, Common.HashPassword(NewPassword), UpdatedBy) != 1)
+            {
+                errMsg = "The password was not reset. Please try again.";
+            }
+            else if (UserMgr.GetUserStatusByUserId(UserId) != 1)
+            {
+                // An inactive user receives no mail (BMMS-Fix-UserStatus-Stage2b.sql)
+                errMsg = "Password reset; no mail sent because the account is inactive.";
             }
             else
             {
-                errMsg = "Error : " + result;
+                // Step ML2c: ToRequired: the mail is for this user; without a valid To address it fails (no Bcc-only mail)
+                result = Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, null, true);
+
+                if (result == "Success")
+                    errMsg = "New passward was sent through mail.";
+                else
+                    errMsg = "The password was reset to the default password, but the mail could not be sent. The error is in the error log.";   // step M1
             }
 
-            MsgDisplay(errMsg);
+            MsgDisplay(errMsg, (errMsg == "New passward was sent through mail." || errMsg == "Password reset; no mail sent because the account is inactive.") ? MessageKind.Success
+                    : errMsg == "The password was not reset. Please try again." ? MessageKind.Error : MessageKind.Warning);
             pnlResetPassword.Visible = false;
         }
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

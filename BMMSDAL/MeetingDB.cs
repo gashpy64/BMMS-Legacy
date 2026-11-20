@@ -136,6 +136,48 @@ namespace BMMSDAL
         }
         #endregion
 
+        #region GetDashboardMeetings
+        // Step UN6b (BMMS-Fix-DashboardMeetings-Step42.sql): the Dashboard's meeting list. The procedure reads the role
+        // and the departments of the acting user from the database and checks the two filters against them
+        // (CommitteeId 0 = all committees, DepartmentId 0 = all the user's departments). Reason 0 when allowed,
+        // otherwise 8 (user missing or inactive) or 4 (role or filter not allowed), and then no rows.
+        // StatisticsShown and ActingRoleCode come from the procedure, never from the session.
+        // Step UN6c2a (BMMS-Fix-AgendaWaitingFor-Step44.sql): WaitingShown and the column WaitingForMe: for a Controller
+        // and a Manager the items of a scheduled meeting that wait for this person's approval.
+        public static DataTable GetDashboardMeetings(int ActingUserId, int CommitteeId, int DepartmentId,
+            out int Reason, out bool StatisticsShown, out string ActingRoleCode, out bool WaitingShown)
+        {
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+            SqlParameter shown = new SqlParameter("@StatisticsShown", SqlDbType.Int);
+            shown.Direction = ParameterDirection.Output;
+            SqlParameter role = new SqlParameter("@ActingRoleCode", SqlDbType.VarChar, 50);
+            role.Direction = ParameterDirection.Output;
+
+            SqlParameter waiting = new SqlParameter("@WaitingShown", SqlDbType.Int);
+            waiting.Direction = ParameterDirection.Output;
+
+            SqlParameter[] parameter = new SqlParameter[8];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = new SqlParameter("@CommitteeId", CommitteeId);
+            parameter[2] = new SqlParameter("@DepartmentId", DepartmentId);
+            parameter[3] = result;
+            parameter[4] = reason;
+            parameter[5] = shown;
+            parameter[6] = role;
+            parameter[7] = waiting;
+
+            DataTable dt = CommonDB.GetDataTable("spr_GetDashboardMeetings", parameter);
+            Reason = MinutesDB.RefusalReason(result, reason);
+            StatisticsShown = Reason == 0 && shown.Value != null && shown.Value != DBNull.Value && Convert.ToInt32(shown.Value) == 1;
+            WaitingShown = Reason == 0 && waiting.Value != null && waiting.Value != DBNull.Value && Convert.ToInt32(waiting.Value) == 1;
+            ActingRoleCode = role.Value == null || role.Value == DBNull.Value ? string.Empty : role.Value.ToString();
+            return dt;
+        }
+        #endregion
+
         #region GetMeetingByCommitteeId
         public static DataTable GetMeetingByCommitteeId(int CommitteeId)
         {
@@ -248,7 +290,7 @@ namespace BMMSDAL
         #endregion
 
         #region AddEditMeeting
-        public static int AddEditMeeting(MeetingDAL MeetingDAL)
+        public static DataTable AddEditMeeting(MeetingDAL MeetingDAL)
         {
             SqlParameter[] parameter = new SqlParameter[14];
             parameter[0] = new SqlParameter("@Code", MeetingDAL.Code);
@@ -266,32 +308,66 @@ namespace BMMSDAL
             parameter[12] = new SqlParameter("@UpdatedOn", MeetingDAL.UpdatedOn);
             parameter[13] = new SqlParameter("@UpdatedBy", MeetingDAL.UpdatedBy);
 
-            return CommonDB.ExecuteProcedure("spr_AddEditMeeting", parameter);
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks-Step16.sql)
+            return CommonDB.GetDataTable("spr_AddEditMeeting", parameter);
         }
         #endregion
 
         #region UpdateMeetingChairman
-        public static int UpdateMeetingChairman(int MeetingId, int CommitteeId, int ChairmanNameId)
+        public static DataTable UpdateMeetingChairman(int MeetingId, int CommitteeId, int ChairmanNameId)
         {
             SqlParameter[] parameter = new SqlParameter[3];
             parameter[0] = new SqlParameter("@MeetingId", MeetingId);
             parameter[1] = new SqlParameter("@CommitteeId", CommitteeId);
             parameter[2] = new SqlParameter("@ChairmanNameId", ChairmanNameId);
 
-            return CommonDB.ExecuteProcedure("spr_UpdateMeetingChairman", parameter);
+            // One row: Result, Reason, ReasonDetail (BMMS-Fix-MeetingLocks.sql)
+            return CommonDB.GetDataTable("spr_UpdateMeetingChairman", parameter);
         }
         #endregion
 
-        #region DeleteMeetingByMeetingId
-        public static int DeleteMeetingByMeetingId(int MeetingId)
+        #region GetMeetingStatusByMeetingId
+        // AgendaStatus, MinutesStatus, IsHeld, IsMinutesFinalized; no row if the meeting does not exist
+        public static DataTable GetMeetingStatusByMeetingId(int MeetingId)
         {
             SqlParameter[] parameter = new SqlParameter[1];
             parameter[0] = new SqlParameter("@MeetingId", MeetingId);
 
-            DataTable dtResult = new DataTable();
-            dtResult = CommonDB.GetDataTable("spr_DeleteMeetingByMeetingId", parameter);
+            return CommonDB.GetDataTable("spr_GetMeetingStatusByMeetingId", parameter);
+        }
+        #endregion
 
-            return Convert.ToInt16(dtResult.Rows[0]["Result"].ToString());
+        #region GetMeetingWorkflowState
+        // IsNew, AgendaFinalized, AttendanceRecorded, MinutesTotal, MinutesUpdated; no row if the meeting
+        // does not exist (BMMS-Fix-WorkflowOrder-Step23.sql)
+        public static DataTable GetMeetingWorkflowState(int MeetingId)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@MeetingId", MeetingId);
+
+            return CommonDB.GetDataTable("spr_GetMeetingWorkflowState", parameter);
+        }
+        #endregion
+
+        #region GetMeetingEditLockByMeetingId
+        // HasAttendance, HasAgenda; no row if the meeting does not exist (BMMS-Fix-MeetingLocks-Step16.sql)
+        public static DataTable GetMeetingEditLockByMeetingId(int MeetingId)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@MeetingId", MeetingId);
+
+            return CommonDB.GetDataTable("spr_GetMeetingEditLockByMeetingId", parameter);
+        }
+        #endregion
+
+        #region DeleteMeetingByMeetingId
+        // Step D1: Result, Reason, ReasonDetail (BMMS-Fix-MeetingDelete-D1.sql)
+        public static DataTable DeleteMeetingByMeetingId(int MeetingId)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@MeetingId", MeetingId);
+
+            return CommonDB.GetDataTable("spr_DeleteMeetingByMeetingId", parameter);
         }
         #endregion
     }

@@ -220,7 +220,7 @@ namespace BMMS.Master
                     myCommittee = null;
                 }
 
-                MsgDisplay(sMsg);
+                MsgDisplay(sMsg, sMsg == "Successfully Saved" ? MessageKind.Success : MessageKind.Warning);
 
                 pnlViewCommittee.Visible = true;
                 pnlEditCommittee.Visible = false;
@@ -240,9 +240,9 @@ namespace BMMS.Master
             dtCommittee.CaseSensitive = false;
 
             if (btnSave.Text == "Save")
-                dv.RowFilter = " CommitteeName = '" + txtCommitteeName.Text.Trim().ToLower() + "'";
+                dv.RowFilter = " CommitteeName = '" + txtCommitteeName.Text.Trim().ToLower().Replace("'", "''") + "'";
             if (btnSave.Text == "Update")
-                dv.RowFilter = " CommitteeName = '" + txtCommitteeName.Text.Trim().ToLower() + "' and CommitteeId <> " + hdnCommitteeId.Value;
+                dv.RowFilter = " CommitteeName = '" + txtCommitteeName.Text.Trim().ToLower().Replace("'", "''") + "' and CommitteeId <> " + hdnCommitteeId.Value;
 
 
             DataTable dtFilter = dv.ToTable("dtCommittee");
@@ -251,6 +251,13 @@ namespace BMMS.Master
             {
                 MsgDisplay("Duplicate Committee Name not allowed");
                 ScriptManager.GetCurrent(this).SetFocus(txtCommitteeName.ClientID);
+                return false;
+            }
+
+            if (txtIncorporationDate.Text.Trim() == string.Empty)
+            {
+                MsgDisplay("Incorporation Date is required.");
+                ScriptManager.GetCurrent(this).SetFocus(txtIncorporationDate.ClientID);
                 return false;
             }
 
@@ -272,7 +279,7 @@ namespace BMMS.Master
             string ToMailId = string.Empty;
             string Bcc = string.Empty;
 
-            DataTable dtUser = UserMgr.GetUserList();
+            DataTable dtUser = UserMgr.GetActiveUserList();   // active users only (stage 2a)
             if (dtUser.Rows.Count > 0)
             {
                 for (int i = 0; i <= dtUser.Rows.Count - 1; i++)
@@ -305,13 +312,13 @@ namespace BMMS.Master
             BodyText += "</td>";
 
             BodyText += "<td style='text-align:left; font-weight:normal;'>";
-            BodyText += ": " + txtCommitteeCode.Text.Trim() + "<br /><br />";
-            BodyText += ": " + txtCommitteeName.Text.Trim() + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(txtCommitteeCode.Text.Trim()) + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(txtCommitteeName.Text.Trim()) + "<br /><br />";
             if (chkBoard.Checked)
                 BodyText += ": Yes<br /><br />";
             else
                 BodyText += ": No<br /><br />";
-            BodyText += ": " + txtIncorporationDate.Text.Trim() + "<br /><br />";
+            BodyText += ": " + HttpUtility.HtmlEncode(txtIncorporationDate.Text.Trim()) + "<br /><br />";
             BodyText += "</td>";
 
             BodyText += "</tr>";
@@ -358,7 +365,7 @@ namespace BMMS.Master
                         chkBoard.Checked = true;
                     else
                         chkBoard.Checked = false;
-                    txtIncorporationDate.Text = myCommittee.IncorporationDate.ToString("dd-MMM-yyyy");
+                    txtIncorporationDate.Text = myCommittee.IncorporationDate == DateTime.MinValue ? string.Empty : myCommittee.IncorporationDate.ToString("dd-MMM-yyyy");
                     txtMeetingStartNo.Text = myCommittee.MeetingStartNo.ToString();
 
                     DataTable dtMeeting = MeetingMgr.GetMeetingByCommitteeId(CommitteeId);
@@ -394,9 +401,12 @@ namespace BMMS.Master
                         }
                         else
                         {
-                            CommitteeMgr.DeleteCommitteeByCommitteeId(CommitteeId);
+                            int Result = CommitteeMgr.DeleteCommitteeByCommitteeId(CommitteeId);
 
-                            MsgDisplay(Common.GetAppSetting("delete_msg"));
+                            if (Result == 1)
+                                MsgDisplay(Common.GetAppSetting("delete_msg"), MessageKind.Success);
+                            else
+                                MsgDisplay(Common.GetAppSetting("delete_reference"));
                         }
                     }
                     catch (Exception ex)
@@ -430,9 +440,9 @@ namespace BMMS.Master
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

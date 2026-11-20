@@ -45,6 +45,25 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region GetDashboardAlerts / GetAlertCount / RemoveAlertForUser
+        // Step UN6c1 (step 43): see AlertDB
+        public static DataTable GetDashboardAlerts(int ActingUserId, string Mode, int PageNo,
+            out int Reason, out int TotalRows, out int UnreadCount, out int PageShown)
+        {
+            return AlertDB.GetDashboardAlerts(ActingUserId, Mode, PageNo, out Reason, out TotalRows, out UnreadCount, out PageShown);
+        }
+
+        public static int GetAlertCount(int ActingUserId, out int Reason)
+        {
+            return AlertDB.GetAlertCount(ActingUserId, out Reason);
+        }
+
+        public static int RemoveAlertForUser(int ActingUserId, int AlertUserId)
+        {
+            return AlertDB.RemoveAlertForUser(ActingUserId, AlertUserId);
+        }
+        #endregion
+
         #region UpdateAlertByUserId
         public static void UpdateAlertByUserId(int UserId, int AlertId)
         {
