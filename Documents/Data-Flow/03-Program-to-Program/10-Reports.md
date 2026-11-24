@@ -3,10 +3,11 @@
 - Title: Program to Program: Reports
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: FU2b (Followup and Followup Summary, Followup by Department: the procedures with the acting user and the Followup status; "Programs involved", the Management paragraph, "Followup by Department", "Refusal paths", "Where each rule lives", "Tables read and written"); UN6d (one pointer in "Scope" only); RA1c2
-- Last updated by: FU2b, based on c4300b5
+- Applies to: UD1c (step 54: Agenda Summary, Agenda Details, Minutes and Minutes Extract read procedures with the acting user; the new section "Agenda reports and Minutes by the acting user (step UD1c)", "Programs involved", "Refusal paths", "Where each rule lives", "Tables read and written"); FU2b (Followup and Followup Summary, Followup by Department: the procedures with the acting user and the Followup status; "Programs involved", the Management paragraph, "Followup by Department", "Refusal paths", "Where each rule lives", "Tables read and written"); UN6d (one pointer in "Scope" only); RA1c2
+- Commit: 42cb88c
+- Last updated by: UD1c, based on 42cb88c
 - Status: Draft
-- Verified against: for step FU2b: BMMS/Report/Followup.aspx(.cs) and FollowupActionTaken.aspx(.cs) (diff against c4300b5), BMMS/FollowupStatusText.cs (Word, Line), BMMSBAL/ReportsMgr.cs, ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs (diff), Database/BMMS-Fix-FollowupReports-Step49.sql (read in full for the three new objects and spr_ReopenFollowup), Database/README.md (section Step FU2b); for step UN6d: BMMS/Master/Followup.aspx.cs (it is the Master page, not Report/Followup.aspx), Database/README.md (section Step UN6d); for step RA1c2: BMMS/Report/FollowupActionTaken.aspx(.cs) (git diff against 1db6ac6),
+- Verified against: for step UD1c: BMMS/Report/Reports.aspx.cs (diff: LoadDepartment, the subject number lists, GetReportDetails, reportReason), BMMSBAL/ReportsMgr.cs (the wrappers and ReportRefusedMessage), BMMSBAL/DepartmentMgr.cs (diff), Database/BMMS-Fix-ManagerScope-Step54.sql (fn_ManagerDepartments, spr_GetManagerDepartments, spr_GetAgendaReport, spr_GetMinutesReportByUser, spr_GetReportSubjectNos read in full), Database/README.md (section Step UD1c); the old SQL text of ReportsMgr.cs was seen only in the diff stat (138 lines changed), not read; for step FU2b: BMMS/Report/Followup.aspx(.cs) and FollowupActionTaken.aspx(.cs) (diff against c4300b5), BMMS/FollowupStatusText.cs (Word, Line), BMMSBAL/ReportsMgr.cs, ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs (diff), Database/BMMS-Fix-FollowupReports-Step49.sql (read in full for the three new objects and spr_ReopenFollowup), Database/README.md (section Step FU2b); for step UN6d: BMMS/Master/Followup.aspx.cs (it is the Master page, not Report/Followup.aspx), Database/README.md (section Step UN6d); for step RA1c2: BMMS/Report/FollowupActionTaken.aspx(.cs) (git diff against 1db6ac6),
   BMMS/XML/PageAccess.xml, BMMS/UserControl/MenuUserControl.ascx, BMMSDAL/ActionItemDB.cs
   (GetActionItemByMeetingIdDeptId), Database/README.md (section Step RA1c2); for step RA1c1: BMMS/Report/ViewReport.aspx.cs (git diff against 4946500); and before:
   BMMS/Report/Reports.aspx.cs, Followup.aspx.cs, ViewReport.aspx.cs (diff of step RA1b),
@@ -46,11 +47,12 @@ Confirmed ticks and the MD Secretariat reads) is not a report. It is described i
 | MinutesDB, ActionItemDB (BMMSDAL) | The procedure calls with the OUTPUT parameters |
 | spr_GetMinutesReportMeetingsAllStatus, spr_GetMinutesReportAllStatus | Step 41, read only, check the acting user |
 | spr_GetFollowupReport, spr_GetFollowupByDepartmentReport, fn_FollowupStatusLatest | Step 49 (FU2b), read only, check the acting user; the function gives the latest status history row of an item |
+| spr_GetAgendaReport, spr_GetMinutesReportByUser, spr_GetReportSubjectNos, spr_GetManagerDepartments, fn_ManagerDepartments | Step 54 (UD1c), read only, check the acting user; see "Agenda reports and Minutes by the acting user (step UD1c)" |
 
 ## Main flow
 
 The Minutes report in every status (Controller and Management). A Manager or any other allowed role takes
-the older path (spr_GetMinutesReportMeetings and spr_GetMinutesReport, finalised and confirmed only).
+the older path (spr_GetMinutesReportMeetings; since step 54 spr_GetMinutesReportByUser for the rows instead of spr_GetMinutesReport; finalised and confirmed only).
 
 ```mermaid
 sequenceDiagram
@@ -203,6 +205,52 @@ Drawn from: BMMS/Report/FollowupActionTaken.aspx.cs (Page_Load, btnCreatePDF_Cli
 GetFollowup, StatusCellHtml, CreateReportHTML), BMMS/UserControl/MenuUserControl.ascx, BMMS/XML/PageAccess.xml,
 BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/BMMS-Fix-FollowupReports-Step49.sql.
 
+## Agenda reports and Minutes by the acting user (step UD1c)
+
+Since step 54 (UD1c, owner-approved 2026-11-24) Agenda Summary, Agenda Details, Minutes (Manager) and Minutes Extract read
+a procedure with the acting user (the session's UserId); ReportsMgr builds no SQL text any more. A Manager's departments
+are those of fn_ManagerDepartments (every department of which he is an active Manager, by fn_DepartmentManagers of step
+53). The Controller's and Management's reports give the same rows as before (proved by the step 54 Test script, part 1b,
+over every committee, department and meeting of BMMS_Test).
+
+```mermaid
+sequenceDiagram
+    participant M as Manager
+    participant Pg as Reports.aspx.cs
+    participant BL as ReportsMgr, DepartmentMgr
+    participant SD as spr_GetManagerDepartments
+    participant SR as spr_GetAgendaReport or spr_GetMinutesReportByUser
+    participant V as ViewReport.aspx
+
+    M->>Pg: open Agenda Summary, Agenda Details, Minutes or Minutes Extract
+    Pg->>BL: GetManagerDepartments(user id)
+    BL->>SD: ActingUserId
+    SD-->>Pg: his departments (home first, IsHome, IsActive) or Reason 8 / 4
+    Pg-->>M: Department drop-down: All my departments, then his departments
+    M->>Pg: View or Generate (department, meeting, subject numbers)
+    Pg->>BL: report call with the acting user id
+    BL->>SR: acting user, committee, department, meeting and subject filters
+    alt acting user missing or inactive (Reason 8), another role or a department that is not his (Reason 4)
+        SR-->>Pg: no rows, Reason
+        Pg-->>M: "Your session is no longer valid. Please log in again." or "You are not allowed to see this report."
+    else allowed
+        SR-->>Pg: rows of his departments (the Controller: every department)
+        Pg->>V: report HTML or PDF built from these rows (Print, PDF, Word follow them)
+    end
+```
+
+| From | To | Data | Notes |
+|---|---|---|---|
+| Reports.aspx.cs (LoadDepartment) | DepartmentMgr.GetManagerDepartments, spr_GetManagerDepartments | ActingUserId | Manager only; the other roles keep the department list of step 41. Reason 8 or 4 disables View and Generate and shows the message |
+| spr_GetManagerDepartments | Reports.aspx.cs | DepartmentId, DepartmentName, IsHome, IsActive | Home department first, then by name; the page marks " (home)" and " (inactive)" |
+| Reports.aspx.cs (GetReportDetails) | ReportsMgr | The acting user id and the nine filters | One call per report code; reportReason keeps the Reason |
+| ReportsMgr | spr_GetAgendaReport | @ActingUserId, filters, @OrderBy (1: committee, meeting, subject number; 2: department, meeting, subject number) | Agenda Summary and Agenda Details; the approved items (AgendaStatusCode ACA) of View_Agenda |
+| ReportsMgr | spr_GetMinutesReportByUser | @ActingUserId, filters | Minutes for the Manager, and Minutes Extract; the minutes of meetings finalized or confirmed (View_Minute) |
+| Reports.aspx.cs (subject number lists) | ReportsMgr.GetReportSubjectNos, spr_GetReportSubjectNos | ActingUserId, MeetingId, DepartmentId (-1 = all) | The From / To lists; a refusal disables the two lists and shows the message |
+
+The department drop-down of a Manager is never trusted: the procedure reads fn_ManagerDepartments again and refuses (Reason 4) a
+department that is not his; a value for "All my departments" (0 or less) means every department of his scope.
+
 ## Refusal paths
 
 | Where | When | What happens |
@@ -219,6 +267,8 @@ BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/BMMS-Fix-FollowupRep
 | The same procedures | Reason 4: role not controller or mgmt | No rows; "You are not allowed to see this report." |
 | spr_GetFollowupReport (Followup.aspx: View, Generate, Export) | Reason 8: acting user missing, 0, inactive or the system account; Reason 4: role not controller or mgmt | No rows, no grid; the same two messages (FU2b; before, only Management's path had them) |
 | spr_GetFollowupByDepartmentReport (FollowupActionTaken.aspx: the grid, the subject lists, Generate Report, the check of Submit) | Reason 8 as above; Reason 4: every role but the Controller, Management included | No rows, no grid, the subject lists disabled; the same two messages (FU2b) |
+| spr_GetAgendaReport, spr_GetMinutesReportByUser, spr_GetReportSubjectNos (UD1c) | Reason 8: acting user missing, inactive or the system account; Reason 4: another role (spr_GetReportSubjectNos allows controller, mgmt and manager; the other two controller and manager), or a Manager's department that is not one of fn_ManagerDepartments | No rows; "Your session is no longer valid. Please log in again." or "You are not allowed to see this report."; for the subject number lists the two lists are disabled |
+| spr_GetManagerDepartments (UD1c) | Reason 8 as above; Reason 4: not a Manager | No rows; the Department drop-down holds "All my departments" only, disabled, View and Generate disabled, the same two messages |
 
 Empty meeting list on the every-status path: "No meetings with minutes for this committee."
 
@@ -239,7 +289,9 @@ Empty meeting list on the every-status path: "No meetings with minutes for this 
 | Followup by Department: Controller only | PageAccess.xml; RequireRole in FollowupActionTaken.aspx.cs (Page_Load, Generate Report) | none |
 | Followup by Department: Controller only, in the database too | as above | spr_GetFollowupByDepartmentReport (Reason 4 for every other role) |
 | Followup by Department: the chosen committee's rows and the subject range | FollowupActionTaken.aspx.cs (GetFollowup parses the two numbers) | spr_GetFollowupByDepartmentReport (@CommitteeId, @SubjectNoFrom, @SubjectNoTo); the two row filters of the page are gone |
-| Manager and other roles: finalised and confirmed only | Reports.aspx.cs (older path) | spr_GetMinutesReport, spr_GetMinutesReportMeetings (step 22, unchanged) |
+| Manager and other roles: finalised and confirmed only | Reports.aspx.cs (older path) | spr_GetMinutesReportByUser (step 54; the rows), spr_GetMinutesReportMeetings (step 22, unchanged); spr_GetMinutesReport is kept but no longer called |
+| A Manager's departments for the reports | Reports.aspx.cs (LoadDepartment), DepartmentMgr (GetManagerDepartments, ManagerDepartmentText, AllMyDepartmentsText) | fn_ManagerDepartments, spr_GetManagerDepartments (step 54) |
+| The scope and the department check of Agenda Summary, Agenda Details, Minutes (Manager) and Minutes Extract; the subject number lists | ReportsMgr (calls only; no SQL text); Reports.aspx.cs (reportReason) | spr_GetAgendaReport, spr_GetMinutesReportByUser, spr_GetReportSubjectNos (step 54) |
 
 ## Tables read and written
 
@@ -247,7 +299,10 @@ None written. Since step 49, Followup, Followup Summary and Followup by Departme
 (Followup, for the minutes status), Action_Item_Status_History and Users (the user who acted) through
 fn_FollowupStatusLatest, and Users and Roles for the acting user's role; they write nothing. The three step 41
 procedures read the views View_Minute (minutes rows), View_Meeting (meetings) and
-View_Action_Item (follow-up rows), and Users and Roles for the acting user's role. PageAccessModule reads
+View_Action_Item (follow-up rows), and Users and Roles for the acting user's role. Since step 54 the agenda and minutes
+report procedures read View_Agenda (spr_GetAgendaReport), View_Minute and Meeting (spr_GetMinutesReportByUser,
+spr_GetReportSubjectNos), Users and Roles for the acting user, and fn_ManagerDepartments (Users, Department, User_Department
+by fn_DepartmentManagers); spr_GetManagerDepartments reads Users, Roles and Department; none writes. PageAccessModule reads
 the user through UserMgr.GetUserDataTableByUserId (View_Users).
 
 ## Drawn from
@@ -255,4 +310,5 @@ the user through UserMgr.GetUserDataTableByUserId (View_Users).
 BMMS/Report/Reports.aspx.cs, Followup.aspx.cs, ViewReport.aspx.cs, BMMS/PageAccessModule.cs,
 BMMS/XML/PageAccess.xml, BMMSBAL/ReportsMgr.cs, BMMSBAL/HTML_Report.cs, BMMSDAL/MinutesDB.cs,
 BMMSDAL/ActionItemDB.cs, Database/BMMS-Fix-ReportAccess-Step41.sql (header and first procedure),
-Database/BMMS-Test-ReportAccess-Step41.sql (header), Database/README.md (section RA1b).
+Database/BMMS-Test-ReportAccess-Step41.sql (header), Database/README.md (section RA1b); for step 54: Database/BMMS-Fix-ManagerScope-Step54.sql,
+BMMS/Report/Reports.aspx.cs (diff), BMMSBAL/ReportsMgr.cs and DepartmentMgr.cs, BMMSDAL/MinutesDB.cs, Database/README.md (section Step UD1c).

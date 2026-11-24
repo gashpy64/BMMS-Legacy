@@ -38,7 +38,8 @@ namespace BMMS.Master
         // Step C2: Edit and Update by the rule of the list (BMMS-Fix-ManagerDepartment-Step33.sql); Delete for the
         // Controller only. Nothing is opened, saved or deleted on a refusal.
         private const string ItemNotOwnMessage = "You can open only the agenda items you entered.";
-        private const string ItemNotInDepartmentMessage = "You can open only the agenda items of your department and the items you entered.";
+        // Step UD1c (owner answer 4): "departments", a Manager may have several
+        private const string ItemNotInDepartmentMessage = "You can open only the agenda items of your departments and the items you entered.";
         private const string DeleteControllerOnlyMessage = "Only the Controller can delete agenda items. Nothing was deleted.";
 
         // Step C2: a new item of a User or Manager takes the department from the user master, read at Save
@@ -54,8 +55,95 @@ namespace BMMS.Master
                 MsgHide();
                 InitCtrlAttributes();
                 LoadDDLlist();
+                LoadListDepartments();
                 LoadSubjectType();
                 LoadCommittee();
+            }
+        }
+        #endregion
+
+        #region Manager's departments (step UD1c)
+        // Step UD1c (BMMS-Fix-ManagerScope-Step54.sql): a Manager's departments, read from the database on every call
+        // (spr_GetManagerDepartments: fn_ManagerDepartments, home first; IsHome, IsActive); empty for another role.
+        private DataTable ManagerDepartments()
+        {
+            int reason;
+            return ManagerDepartments(out reason);
+        }
+
+        // Reason 0 when read; 8 (session no longer valid) or 4 (no longer a Manager), then an empty table
+        private DataTable ManagerDepartments(out int Reason)
+        {
+            DataTable dt = DepartmentMgr.GetManagerDepartments(int.Parse(Session["UserId"].ToString()), out Reason);
+            return Reason == 0 && dt != null ? dt : new DataTable();
+        }
+
+        // Step UD1c review: the departments could not be read; the page says so instead of an empty choice
+        private static string DepartmentsRefusedMessage(int Reason)
+        {
+            return Reason == 8 ? "Your session is no longer valid. Please log in again."
+                               : "Your departments could not be read: you may no longer be a Manager. Reload the page.";
+        }
+
+        private static bool ListsDepartment(DataTable Departments, int DepartmentId, bool ActiveOnly)
+        {
+            foreach (DataRow row in Departments.Rows)
+                if (Convert.ToInt32(row["DepartmentId"]) == DepartmentId && (!ActiveOnly || Convert.ToBoolean(row["IsActive"])))
+                    return true;
+            return false;
+        }
+
+        private static string DepartmentNameOf(DataTable Departments, int DepartmentId)
+        {
+            foreach (DataRow row in Departments.Rows)
+                if (Convert.ToInt32(row["DepartmentId"]) == DepartmentId)
+                    return Convert.ToString(row["DepartmentName"]);
+            return string.Empty;
+        }
+
+        // The list filter of a Manager: "All my departments" (0), then his departments (home marked, an inactive one marked)
+        private void LoadListDepartments()
+        {
+            pnlListDepartment.Visible = Session["RoleCode"].ToString() == "manager";
+            if (!pnlListDepartment.Visible)
+                return;
+
+            int reason;
+            DataTable dtMine = ManagerDepartments(out reason);
+            if (reason != 0)
+            {
+                MsgDisplay(DepartmentsRefusedMessage(reason));
+                btnAdd.Enabled = false;
+            }
+
+            ddlListDepartment.Items.Clear();
+            ddlListDepartment.Items.Add(new ListItem(DepartmentMgr.AllMyDepartmentsText, "0"));
+            foreach (DataRow row in dtMine.Rows)
+                ddlListDepartment.Items.Add(new ListItem(DepartmentMgr.ManagerDepartmentText(row), Convert.ToString(row["DepartmentId"])));
+            ddlListDepartment.SelectedIndex = 0;
+        }
+
+        // The department chosen in the list filter; 0 = all (also for every other role)
+        private int ListDepartmentId()
+        {
+            int departmentId;
+            if (!pnlListDepartment.Visible || ddlListDepartment.SelectedItem == null
+                || !int.TryParse(ddlListDepartment.SelectedValue, out departmentId) || departmentId < 0)
+                return 0;
+            return departmentId;
+        }
+
+        protected void ddlListDepartment_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                MsgHide();
+                LoadAgenda();
+                BindGridView();
+            }
+            catch (Exception ex)
+            {
+                Utilities.GoToErrPage(className, "ddlListDepartment_SelectedIndexChanged", ex);
             }
         }
         #endregion
@@ -217,7 +305,8 @@ namespace BMMS.Master
                     dtAgenda = AgendaMgr.GetAgendaByMeetingId(MeetingId);
                     break;
                 default:
-                    dtAgenda = AgendaMgr.GetAgendaByMeetingIdDeptId(MeetingId, UserId);
+                    // Step UD1c: a Manager's list filter; the procedure reads his departments itself
+                    dtAgenda = AgendaMgr.GetAgendaByMeetingIdDeptId(MeetingId, UserId, ListDepartmentId());
                     break;
             }
 
@@ -578,10 +667,41 @@ namespace BMMS.Master
                     }
                     if (Session["RoleCode"].ToString() == "manager")
                     {
-                        pnlDepartment.Visible = false;
-                        txtDepartment.Visible = true;
-                        txtDepartment.Text = userBal.DepartmentName.ToString();
-                        hdnDepartmentId.Value = userBal.DepartmentId.ToString();
+                        // Step UD1c: a Manager with several active departments chooses one (his home department first and
+                        // chosen); with one it is fixed. Save checks the department again (and spr_AddEditAgendaByManager:
+                        // Reason 30). A Manager without an active department keeps the home department, which Save refuses.
+                        int departmentReason;
+                        DataTable dtMine = ManagerDepartments(out departmentReason);
+                        if (departmentReason != 0)
+                        {
+                            // Step UD1c review: nothing to offer; the form is not opened
+                            MsgDisplay(DepartmentsRefusedMessage(departmentReason));
+                            pnlViewAgenda.Visible = true;
+                            pnlEditAgenda.Visible = false;
+                            return;
+                        }
+                        DataTable dtActive = dtMine.Clone();
+                        foreach (DataRow row in dtMine.Rows)
+                            if (Convert.ToBoolean(row["IsActive"]))
+                                dtActive.ImportRow(row);
+
+                        if (dtActive.Rows.Count > 1)
+                        {
+                            pnlDepartment.Visible = true;
+                            txtDepartment.Visible = false;
+                            ddlDepartment.Items.Clear();
+                            foreach (DataRow row in dtActive.Rows)
+                                ddlDepartment.Items.Add(new ListItem(DepartmentMgr.ManagerDepartmentText(row), Convert.ToString(row["DepartmentId"])));
+                            ddlDepartment.SelectedIndex = 0;
+                            hdnDepartmentId.Value = ddlDepartment.SelectedValue;
+                        }
+                        else
+                        {
+                            pnlDepartment.Visible = false;
+                            txtDepartment.Visible = true;
+                            txtDepartment.Text = dtActive.Rows.Count == 1 ? Convert.ToString(dtActive.Rows[0]["DepartmentName"]) : userBal.DepartmentName.ToString();
+                            hdnDepartmentId.Value = dtActive.Rows.Count == 1 ? Convert.ToString(dtActive.Rows[0]["DepartmentId"]) : userBal.DepartmentId.ToString();
+                        }
                         txtSubjectNo.ReadOnly = true;
                         pnlControllerComments.Visible = false;
                         pnlManagerComments.Visible = true;
@@ -700,7 +820,25 @@ namespace BMMS.Master
                         int postedDepartmentId;
                         bool postedDepartmentValid = int.TryParse(hdnDepartmentId.Value, out postedDepartmentId);
 
-                        if (btnSave.Text == "Save")
+                        if (btnSave.Text == "Save" && Session["RoleCode"].ToString() == "manager")
+                        {
+                            // Step UD1c: a Manager's new item takes the department chosen (several departments) or the fixed
+                            // one, which must be one of his active departments, read now from the database; otherwise
+                            // nothing is saved (spr_AddEditAgendaByManager checks again: Reason 30)
+                            int chosenDepartmentId = 0;
+                            if (pnlDepartment.Visible)
+                            {
+                                if (!int.TryParse(ddlDepartment.SelectedValue, out chosenDepartmentId))
+                                    chosenDepartmentId = 0;
+                            }
+                            else if (postedDepartmentValid)
+                                chosenDepartmentId = postedDepartmentId;
+
+                            myAgenda.DepartmentId = chosenDepartmentId;
+                            if (!ListsDepartment(ManagerDepartments(), chosenDepartmentId, true))
+                                departmentRefusal = MeetingChangeReason.NotManagerOfDepartmentMessage;
+                        }
+                        else if (btnSave.Text == "Save")
                         {
                             UserBAL actingUserForDepartment = UserMgr.GetUserByUserId(int.Parse(Session["UserId"].ToString()));
                             myAgenda.DepartmentId = actingUserForDepartment.DepartmentId;
@@ -910,11 +1048,11 @@ namespace BMMS.Master
 
             if (roleCode == "manager")
             {
+                // Step UD1c: any of his departments (fn_ManagerDepartments, read now), an inactive one too, as the list
+                // shows them; spr_AddEditAgendaByManager checks an Update again (Reason 30)
                 int itemDepartmentId;
-                UserBAL actingUser = UserMgr.GetUserByUserId(userId);
-
                 if (int.TryParse(item["DepartmentId"].ToString(), out itemDepartmentId)
-                    && actingUser != null && itemDepartmentId == actingUser.DepartmentId)
+                    && ListsDepartment(ManagerDepartments(), itemDepartmentId, false))
                     return "Success";
 
                 return ItemNotInDepartmentMessage;
@@ -1099,9 +1237,12 @@ namespace BMMS.Master
                 // Step ML2b: the detail rows shared by every agenda mail (Subject No only when it has a value)
                 string BodyText = string.Empty;
                 BodyText += "<table>";
+                // Step UD1c: a Manager's chosen department by its name (the drop-down text marks the home department)
+                string departmentText = roleCode == "controller" ? ddlDepartment.SelectedItem.Text.ToString()
+                    : roleCode == "manager" && pnlDepartment.Visible ? DepartmentNameOf(ManagerDepartments(), DepartmentId)
+                    : txtDepartment.Text;
                 BodyText += AgendaMail.DetailRows(txtAgendaNo.Text, txtSubjectNo.Text, txtCommittee.Text, txtMeetingNo.Text,
-                    txtDateOfMeeting.Text, Session["RoleCode"].ToString() == "controller" ? ddlDepartment.SelectedItem.Text.ToString() : txtDepartment.Text,
-                    ddlSubjectType.SelectedItem.Text, txtShortText.Text);
+                    txtDateOfMeeting.Text, departmentText, ddlSubjectType.SelectedItem.Text, txtShortText.Text);
                 BodyText += "</table>";
                 if (SentToControllerNote)
                     BodyText += "<p>" + HttpUtility.HtmlEncode(MeetingChangeReason.SentToControllerNoManagerNote) + "</p>";   // step UD1b

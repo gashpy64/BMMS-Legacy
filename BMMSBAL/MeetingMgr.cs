@@ -97,6 +97,8 @@ namespace BMMSBAL
                     return MeetingChangeReason.DecisionAfterMeetingDateMessage;
                 case MeetingChangeReason.DepartmentHasNoManager:
                     return MeetingChangeReason.DepartmentHasNoManagerMessage(ReasonDetail);
+                case MeetingChangeReason.NotManagerOfDepartment:
+                    return MeetingChangeReason.NotManagerOfDepartmentMessage;   // step UD1c
                 default:
                     return "Record Not Saved";
             }
@@ -130,6 +132,12 @@ namespace BMMSBAL
         public const int DueDateBeforeMeetingDate = 22; // step 38 (UN6a): a Followup due date before the meeting date; ReasonDetail the meeting date
         public const int DecisionAfterMeetingDate = 28; // step 52 (MR1): a Manager's approve or reject after the meeting date (database server date)
         public const int DepartmentHasNoManager = 29;   // step 53 (UD1b): a new item's department has no active Manager and the setting says refuse; ReasonDetail the department
+        public const int NotManagerOfDepartment = 30;   // step 54 (UD1c): a Manager's new item or Update outside his departments (fn_ManagerDepartments)
+
+        /// <summary>Step UD1c (BMMS-Fix-ManagerScope-Step54.sql): a Manager's new item in a department of which he is not an
+        /// active Manager (or that is inactive), or an Update of an item of such a department that he did not enter.
+        /// Nothing was saved.</summary>
+        public const string NotManagerOfDepartmentMessage = "Not saved: you are not a Manager of that department.";
 
         /// <summary>Step UD1b (BMMS-Fix-DepartmentApprovers-Step53.sql): a new agenda item of a department without an
         /// active Manager, while the System Settings say such items are refused. Nothing was saved.</summary>

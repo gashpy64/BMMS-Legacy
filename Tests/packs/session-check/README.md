@@ -41,12 +41,14 @@ through User Master, the Admin's own page, so they go through the same procedure
    Dashboard; qa_user2, who cannot sign in, is checked on the sign-in page.
 4b. Step MR1 (database step 52), rewritten in step UD1b (database step 53): since step 53 every active Manager of a
    department decides its items, and Credit has other active Managers (qa_manager3, credmanager), so a change of qa_manager to User is
-   allowed. The refusal is shown on qa_manager2 instead, the only Manager of HRD and of Secretarial (step 3 gave him
-   Credit too). The Admin tries to make qa_manager2 a User. Rule 12 refuses it: the message box reads, line by line,
-   "Not saved: this Manager is still needed.", "2 items routed to them are still open for approval: approve or reject
-   them first." (QA1-00001-006 of HRD and QA2-00001-2 of Secretarial, meetings to come), "Last active Manager of HRD
-   (1 item of the department waiting), Secretarial (1 item of the department waiting): give the department another
-   active Manager first." and "Nothing was changed."; no past-meeting line. qa_manager2 stays a Manager.
+   allowed. The refusal is shown on qa_manager2 instead, the only Manager of Secretarial (step 3 gave him Credit too).
+   Step UD1c (database step 54, owner 2026-11-24): the fixture's qa_manager4 is a second active Manager of HRD, so the
+   HRD item QA1-00001-006 no longer needs qa_manager2 (qa_manager4 can decide it) and HRD drops out of the message.
+   The Admin tries to make qa_manager2 a User. Rule 12 refuses it: the message box reads, line by line,
+   "Not saved: this Manager is still needed.", "1 item routed to them is still open for approval: approve or reject
+   it first." (QA2-00001-2 of Secretarial, a meeting to come), "Last active Manager of Secretarial (1 item of the
+   department waiting): give the department another active Manager first." and "Nothing was changed."; no
+   past-meeting line. qa_manager2 stays a Manager. (Before step UD1c: 2 items, QA1-00001-006 too, and the HRD line.)
 5. qa_ctrl, unchanged, opens Meeting, Reports (Minutes) and the Dashboard between the changes: each opens.
 6. App_Data\PageAccessLog.txt (the site copy's): exactly one SESSION-ENDED line for each of the three, with
    "UserId [n]; " and the reason (`role md_sect to mgmt`, `departments changed`, `inactive`); none for qa_ctrl

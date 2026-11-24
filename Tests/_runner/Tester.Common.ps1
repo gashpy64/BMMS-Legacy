@@ -49,6 +49,7 @@ $QaAccounts = [ordered]@{
     manager    = 'qa_manager'
     manager2   = 'qa_manager2'
     manager3   = 'qa_manager3'   # step UD1b (database step 53): a second Manager of Credit, for the two-approvers pack
+    manager4   = 'qa_manager4'   # step UD1c (database step 54): a Manager of Credit (home) and HRD, for the manager-scope pack
     user       = 'qa_user'
     user2      = 'qa_user2'
     mgmt       = 'qa_mgmt'

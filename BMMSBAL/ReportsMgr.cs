@@ -62,126 +62,56 @@ namespace BMMSBAL
         #endregion
 
 
-        #region GetAgendaSummaryReport
-        public static DataTable GetAgendaSummaryReport(int CommitteeId, int DepartmentId, int MeetingNoSearch, int MeetingId, int FromMeetingId, int ToMeetingId,
-            int SubjectNoSearch, int FromSubjectNo, int ToSubjectNo)
+        #region Agenda and minutes reports by the acting user (step UD1c, BMMS-Fix-ManagerScope-Step54.sql)
+        // Agenda Summary, Agenda Details, Minutes and Minutes Extract read procedures with the acting user; no SQL text is
+        // built here any more. The procedure reads the role and, for a Manager, his departments (fn_ManagerDepartments) in
+        // the database: the Controller every department, a Manager his departments only (DepartmentId 0 or less = all of
+        // them; another department is refused). Reason 0 when allowed; 8 (acting user missing or inactive) or 4 (another
+        // role, or a department that is not his), then no rows: ReportRefusedMessage gives the page's text.
+        // Agenda Summary of one meeting and Agenda Details: committee, meeting, subject number (OrderBy 1).
+        public static DataTable GetAgendaSummaryReport(int ActingUserId, int CommitteeId, int DepartmentId, int MeetingNoSearch, int MeetingId,
+            int FromMeetingId, int ToMeetingId, int SubjectNoSearch, int FromSubjectNo, int ToSubjectNo, out int Reason)
         {
-            string SQL_Query_Text = string.Empty;
+            return AgendaDB.GetAgendaReport(ActingUserId, CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
+                SubjectNoSearch, FromSubjectNo, ToSubjectNo, 1, out Reason);
+        }
 
-            if (CommitteeId > 0)
-            {
-                SQL_Query_Text += "SELECT * FROM View_Agenda WHERE AgendaStatusCode = 'ACA'";
+        // Agenda Summary of every meeting or of a range: department, meeting, subject number (OrderBy 2)
+        public static DataTable GetAgendaSummaryFullReport(int ActingUserId, int CommitteeId, int DepartmentId, int MeetingNoSearch, int MeetingId,
+            int FromMeetingId, int ToMeetingId, int SubjectNoSearch, int FromSubjectNo, int ToSubjectNo, out int Reason)
+        {
+            return AgendaDB.GetAgendaReport(ActingUserId, CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
+                SubjectNoSearch, FromSubjectNo, ToSubjectNo, 2, out Reason);
+        }
 
-                SQL_Query_Text += " AND CommitteeId = " + CommitteeId;
+        public static DataTable GetAgendaDetailsReport(int ActingUserId, int CommitteeId, int DepartmentId, int MeetingNoSearch, int MeetingId,
+            int FromMeetingId, int ToMeetingId, int SubjectNoSearch, int FromSubjectNo, int ToSubjectNo, out int Reason)
+        {
+            return AgendaDB.GetAgendaReport(ActingUserId, CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
+                SubjectNoSearch, FromSubjectNo, ToSubjectNo, 1, out Reason);
+        }
 
-                if (DepartmentId > 0)
-                    SQL_Query_Text += " AND DepartmentId = " + DepartmentId;
+        // Minutes and Minutes Extract: only meetings with finalized or confirmed minutes (step 22); the extract reads the same rows
+        public static DataTable GetMinutesReport(int ActingUserId, int CommitteeId, int DepartmentId, int MeetingNoSearch, int MeetingId,
+            int FromMeetingId, int ToMeetingId, int SubjectNoSearch, int FromSubjectNo, int ToSubjectNo, out int Reason)
+        {
+            return MinutesDB.GetMinutesReportByUser(ActingUserId, CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
+                SubjectNoSearch, FromSubjectNo, ToSubjectNo, out Reason);
+        }
 
-                if (MeetingNoSearch == 0)
-                    if (MeetingId > 0)
-                        SQL_Query_Text += " AND MeetingId = " + MeetingId;
+        public static DataTable GetMinutesExtractReport(int ActingUserId, int CommitteeId, int DepartmentId, int MeetingNoSearch, int MeetingId,
+            int FromMeetingId, int ToMeetingId, int SubjectNoSearch, int FromSubjectNo, int ToSubjectNo, out int Reason)
+        {
+            return MinutesDB.GetMinutesReportByUser(ActingUserId, CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
+                SubjectNoSearch, FromSubjectNo, ToSubjectNo, out Reason);
+        }
 
-                if (MeetingNoSearch == 1)
-                    SQL_Query_Text += " AND (MeetingId BETWEEN " + FromMeetingId + " AND " + ToMeetingId + ")";
-
-                if (SubjectNoSearch == 1)
-                    SQL_Query_Text += " AND (SubjectNo BETWEEN " + FromSubjectNo + " AND " + ToSubjectNo + ")";
-            }
-
-
-            SQL_Query_Text += " ORDER BY CommitteeId, MeetingId, SubjectNo;";
-
-            return CommonDB.GetDataTableFromQuery(SQL_Query_Text);
+        // The From / To subject number lists of a meeting (DepartmentId -1 = every department of the acting user's scope)
+        public static DataTable GetReportSubjectNos(int ActingUserId, int MeetingId, int DepartmentId, out int Reason)
+        {
+            return MinutesDB.GetReportSubjectNos(ActingUserId, MeetingId, DepartmentId, out Reason);
         }
         #endregion
-
-        #region GetAgendaSummaryFullReport
-        public static DataTable GetAgendaSummaryFullReport(int CommitteeId, int DepartmentId, int MeetingNoSearch, int MeetingId, int FromMeetingId, int ToMeetingId,
-            int SubjectNoSearch, int FromSubjectNo, int ToSubjectNo)
-        {
-            string SQL_Query_Text = string.Empty;
-
-            if (CommitteeId > 0)
-            {
-                SQL_Query_Text += "SELECT * FROM View_Agenda WHERE AgendaStatusCode = 'ACA'";
-
-                SQL_Query_Text += " AND CommitteeId = " + CommitteeId;
-
-                if (DepartmentId > 0)
-                    SQL_Query_Text += " AND DepartmentId = " + DepartmentId;
-
-                if (MeetingNoSearch == 0)
-                    if (MeetingId > 0)
-                        SQL_Query_Text += " AND MeetingId = " + MeetingId;
-
-                if (MeetingNoSearch == 1)
-                    SQL_Query_Text += " AND (MeetingId BETWEEN " + FromMeetingId + " AND " + ToMeetingId + ")";
-
-                if (SubjectNoSearch == 1)
-                    SQL_Query_Text += " AND (SubjectNo BETWEEN " + FromSubjectNo + " AND " + ToSubjectNo + ")";
-            }
-
-
-            SQL_Query_Text += " ORDER BY DepartmentId, MeetingId, SubjectNo;";
-
-            return CommonDB.GetDataTableFromQuery(SQL_Query_Text);
-        }
-        #endregion
-
-        #region GetAgendaDetailsReport
-        public static DataTable GetAgendaDetailsReport(int CommitteeId, int DepartmentId, int MeetingNoSearch, int MeetingId, int FromMeetingId, int ToMeetingId,
-            int SubjectNoSearch, int FromSubjectNo, int ToSubjectNo)
-        {
-            string SQL_Query_Text = string.Empty;
-
-            if (CommitteeId > 0)
-            {
-                SQL_Query_Text += "SELECT * FROM View_Agenda WHERE AgendaStatusCode = 'ACA'";
-
-                SQL_Query_Text += " AND CommitteeId = " + CommitteeId;
-
-                if (DepartmentId > 0)
-                    SQL_Query_Text += " AND DepartmentId = " + DepartmentId;
-
-                if (MeetingNoSearch == 0)
-                    if (MeetingId > 0)
-                        SQL_Query_Text += " AND MeetingId = " + MeetingId;
-
-                if (MeetingNoSearch == 1)
-                    SQL_Query_Text += " AND (MeetingId BETWEEN " + FromMeetingId + " AND " + ToMeetingId + ")";
-
-                if (SubjectNoSearch == 1)
-                    SQL_Query_Text += " AND (SubjectNo BETWEEN " + FromSubjectNo + " AND " + ToSubjectNo + ")";
-            }
-
-
-            SQL_Query_Text += " ORDER BY CommitteeId, MeetingId, SubjectNo;";
-
-            return CommonDB.GetDataTableFromQuery(SQL_Query_Text);
-        }
-        #endregion
-
-        #region GetMinutesReport
-        // Only meetings with finalized or confirmed minutes; same filters and order as the
-        // query built here before (BMMS-Fix-MinutesGating-Step22.sql)
-        public static DataTable GetMinutesReport(int CommitteeId, int DepartmentId, int MeetingNoSearch, int MeetingId, int FromMeetingId, int ToMeetingId,
-            int SubjectNoSearch, int FromSubjectNo, int ToSubjectNo)
-        {
-            return MinutesDB.GetMinutesReport(CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
-                SubjectNoSearch, FromSubjectNo, ToSubjectNo);
-        }
-        #endregion
-
-        #region GetMinutesExtractReport
-        // The extract used the same query as the minutes report, so it reads the same procedure
-        public static DataTable GetMinutesExtractReport(int CommitteeId, int DepartmentId, int MeetingNoSearch, int MeetingId, int FromMeetingId, int ToMeetingId,
-            int SubjectNoSearch, int FromSubjectNo, int ToSubjectNo)
-        {
-            return MinutesDB.GetMinutesReport(CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
-                SubjectNoSearch, FromSubjectNo, ToSubjectNo);
-        }
-        #endregion
-
     }
     #endregion
 

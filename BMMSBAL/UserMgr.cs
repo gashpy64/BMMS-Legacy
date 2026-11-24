@@ -103,6 +103,9 @@ namespace BMMSBAL
                 case UserChangeReason.LastManager:
                     // BMMS-Fix-UserHistory-Step39.sql (step UD1a, rule 12); the parts since step MR1 (step 52)
                     return LastManagerMessage(ReasonDetail);
+                case UserChangeReason.ReportingPersonNotAllowed:
+                    // BMMS-Fix-ManagerScope-Step54.sql (step UD1c)
+                    return UserChangeReason.ReportingPersonNotAllowedMessage;
                 case UserChangeReason.Other:
                     Utilities.WriteErrorLog(ClassName, "UserChange", "Refused by the database: " + ReasonDetail);
                     return "This user cannot be deleted because other data still refers to them. The details were written to the error log.";
@@ -251,6 +254,11 @@ namespace BMMSBAL
         public const int Other = 9;
         public const int DepartmentsNotValid = 23; // the departments, or an inactive home department on Activate (step 39)
         public const int LastManager = 24;         // last active Manager / items routed to him (step 39, rule 12)
+        public const int ReportingPersonNotAllowed = 31; // the Reporting Person is not a Manager of the department or a Controller (step 54)
+
+        // Step UD1c: Reason 31, and the page's own check while a Reporting Person "(not allowed now)" is chosen
+        public const string ReportingPersonNotAllowedMessage =
+            "Not saved: the Reporting Person must be a Manager of the user's department or a Controller. Choose another, or - Select -.";
 
         public const string MappingsClosedPrefix = "MappingsClosed:";
         public const string NotRestoredPrefix = "NotRestored:";
@@ -421,7 +429,7 @@ namespace BMMSBAL
 
         /// <summary>
         /// Step UN3: a pick list of users (rows with UserName, LoginName and AccountStatus, as spr_GetUser and
-        /// spr_GetMgrControllerByDeptId return them). Returns a copy with the columns UserDisplayName and
+        /// spr_GetReportingPersonList return them). Returns a copy with the columns UserDisplayName and
         /// UserSortName, sorted by name, then login (case ignored). The value of the list stays UserId.
         /// </summary>
         public static DataTable WithUserDisplayName(DataTable Users)
@@ -494,16 +502,16 @@ namespace BMMSBAL
         }
         #endregion
 
-        #region GetMgrController
-        public static DataTable GetMgrControllerByDeptId(int DepartmentId)
+        #region GetReportingPersonList
+        /// <summary>Step UD1c (BMMS-Fix-ManagerScope-Step54.sql): who may be the Reporting Person of a user of the
+        /// department (Allowed 1), and the current one with Allowed 0 when it is not allowed now. Reason 0 when allowed.</summary>
+        public static DataTable GetReportingPersonList(int ActingUserId, int DepartmentId, int UserId, int CurrentManagerId, out int Reason)
         {
-            return UserDB.GetMgrControllerByDeptId(DepartmentId);
+            return UserDB.GetReportingPersonList(ActingUserId, DepartmentId, UserId, CurrentManagerId, out Reason);
         }
 
-        public static DataTable GetMgrControllerByDeptId(int DepartmentId, int IncludeUserId)
-        {
-            return UserDB.GetMgrControllerByDeptId(DepartmentId, IncludeUserId);
-        }
+        /// <summary>Step UD1c: the text after a Reporting Person who is no longer allowed.</summary>
+        public const string NotAllowedNowText = " (not allowed now)";
         #endregion
 
         #region GetUserStatusByUserId

@@ -3,11 +3,11 @@
 - Title: Workflow: Agenda Life Cycle
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UD1b (step 53: the route of a new item and the Manager's approval); user-ud1a
-- Commit: db1d641
-- Last updated by: UD1b, based on db1d641
+- Applies to: UD1c (step 54: one decision-points row, the department of a Manager's new item and his Update); UD1b (step 53: the route of a new item and the Manager's approval); user-ud1a
+- Commit: 42cb88c
+- Last updated by: UD1c, based on 42cb88c
 - Status: Draft
-- Verified against: for UD1b: Database/BMMS-Fix-DepartmentApprovers-Step53.sql (fn_AgendaRoute, fn_AgendaWaitingFor, the comment blocks of spr_AddEditAgenda and spr_UpdateAgendaByAgendaId), Database/README.md (section Step UD1b), System-Manual/04-Database (the routing and approval tables)
+- Verified against: for UD1c: Database/BMMS-Fix-ManagerScope-Step54.sql (the comment block and the Reason 30 checks of spr_AddEditAgendaByManager), Database/README.md (section Step UD1c); for UD1b: Database/BMMS-Fix-DepartmentApprovers-Step53.sql (fn_AgendaRoute, fn_AgendaWaitingFor, the comment blocks of spr_AddEditAgenda and spr_UpdateAgendaByAgendaId), Database/README.md (section Step UD1b), System-Manual/04-Database (the routing and approval tables)
 - To confirm: workflow written only as far as the route of a new item and the Manager's approval at AC (step UD1b); the edit, the delete, the Controller's approval at AMA and the finalisation are not drawn here yet (WF2c4)
 
 ## Lanes
@@ -78,6 +78,7 @@ flowchart LR
 |---|---|---|---|
 | Where a new item of a User starts | Database | In order: Reporting Person inactive: refused; Reporting Person an active Controller: AMA; department has an active Manager other than the creator: AC; otherwise the setting: refuse or AMA with RouteNote 'N' | fn_AgendaRoute, spr_AddEditAgenda |
 | Where an item entered by a Manager or the Controller starts | Database | Manager: AMA; Controller: ACA; no route check | spr_AddEditAgendaByManager, spr_AddEditAgendaByController |
+| In which department a Manager may enter a new item, and which items he may update (step 54) | Database | A new item only in an active department of which he is an active Manager, otherwise Reason 30, nothing saved; an Update only of an item he entered or of one of his departments (fn_ManagerDepartments); the item's alert also goes to the other active Managers of its department | fn_ManagerDepartments, spr_AddEditAgendaByManager |
 | Who may approve or reject at AC | Database | Every active Manager of the item's department (role Manager, active, not the system account, an open department mapping), never the creator; the Reporting Person and the alert rows do not decide | fn_AgendaWaitingFor, fn_DepartmentManagers |
 | Which decision stands | Database | The first; the item is locked, a second Manager gets Reason 14 | spr_UpdateAgendaByAgendaId |
 | Whether a Manager may decide after the meeting date | Database | No (Reason 28, step 52); the Controller's reject stays possible | spr_UpdateAgendaByAgendaId |

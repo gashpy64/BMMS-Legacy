@@ -54,6 +54,16 @@ BEGIN
     RAISERROR('Current database is "%s". Select the BMMS database (or its test copy) and run again. Nothing was changed.', 16, 1, @CurrentDatabase);
     SET NOEXEC ON;
 END
+-- Step 54 (step UD1c) replaced spr_AddEditAgendaByManager and spr_AddEditUser of step 53 again and needs step 53, keeping its markers, so a run now
+-- would put an older text back without a word (ManagerScope-Step54)
+ELSE IF (OBJECT_ID('dbo.fn_ManagerDepartments', 'IF') IS NOT NULL
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetAgendaByMeetingIdDeptId')), '') LIKE '%ManagerScope-Step54%'
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_AddEditAgendaByManager')), '') LIKE '%ManagerScope-Step54%'
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_AddEditUser')), '') LIKE '%ManagerScope-Step54%')
+BEGIN
+    RAISERROR('Step 54 is installed in "%s": it replaced spr_AddEditAgendaByManager and spr_AddEditUser of step 53 again and needs step 53. Run BMMS-Rollback-ManagerScope-Step54.sql first, then this script. Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
 ELSE IF (NOT EXISTS (SELECT 1 FROM (VALUES ('fn_AgendaRoute'), ('fn_AgendaWaitingFor'), ('fn_ManagerReleaseRefusal'), ('fn_DashboardAlerts'), ('spr_GetDashboardAlerts'), ('spr_GetAlertCount'),
                                            ('spr_GetAlertMailId'), ('spr_GetAgendaUpdateMailId'), ('spr_GetAgendaCreationMailId'), ('spr_RerouteWaitingAgendas'), ('spr_AddEditCommittee'), ('spr_AddEditMeeting'),
                                            ('spr_AddEditAgenda'), ('spr_AddEditAgendaByManager'), ('spr_AddEditAgendaByController'), ('spr_UpdateAgendaByAgendaId'), ('spr_AddEditUser'), ('spr_SetUserStatusByUserId')) o(Name)

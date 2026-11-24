@@ -51,6 +51,15 @@
                         OnSelectedIndexChanged="ddlMeeting_SelectedIndexChanged" Enabled="true">
                     </asp:DropDownList>
                 </div>
+                <%-- Step UD1c: a Manager's departments (fn_ManagerDepartments), "All my departments" first; the list
+                     procedure checks the department again with the acting user --%>
+                <asp:Panel ID="pnlListDepartment" runat="server" CssClass="bmms-strip-item" Visible="false">
+                    <label for="ctl00_ContentPlaceHolder1_ddlListDepartment">
+                        Department</label>
+                    <asp:DropDownList ID="ddlListDepartment" runat="server" AutoPostBack="true"
+                        OnSelectedIndexChanged="ddlListDepartment_SelectedIndexChanged">
+                    </asp:DropDownList>
+                </asp:Panel>
                 <div class="bmms-strip-action">
                     <asp:Button ID="btnAdd" runat="server" CssClass="wb-btn" Text="Add" OnClick="btnAdd_Click" />
                 </div>
@@ -60,7 +69,8 @@
                     Agenda items in this meeting</div>
                 <%-- Step C2: the list of a User holds the items they entered; the list of a Manager the items of the
                      Manager's department and the items the Manager entered (spr_GetAgendaByMeetingIdDeptId,
-                     BMMS-Fix-ManagerDepartment-Step33.sql). The Controller sees every item and no line. --%>
+                     BMMS-Fix-ManagerDepartment-Step33.sql). The Controller sees every item and no line.
+                     Step UD1c: a Manager's departments (BMMS-Fix-ManagerScope-Step54.sql). --%>
                 <%if (Session["RoleCode"].ToString() == "user")
                   { %>
                 <p class="bmms-card-note">
@@ -69,7 +79,7 @@
                   else if (Session["RoleCode"].ToString() == "manager")
                   { %>
                 <p class="bmms-card-note">
-                    Items of your department.</p>
+                    Items of your departments and the items you entered.</p>
                 <%} %>
                 <div class="wb-table-scroll">
                     <asp:GridView ID="grvAgenda" runat="server" SkinID="grvSkinNoPaging" AutoGenerateColumns="false"

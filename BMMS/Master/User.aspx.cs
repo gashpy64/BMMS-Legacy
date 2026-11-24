@@ -431,6 +431,7 @@ namespace BMMS.Master
             ddlRole.Enabled = true;
             hdnUserId.Value = "0";
             ViewState["CurrentManagerId"] = 0;
+            ViewState["NotAllowedManagerIds"] = null;   // step UD1c
             ViewState["EditedUserInactive"] = false;
             pnlViewUser.Visible = false;
             pnlEditUser.Visible = true;
@@ -551,6 +552,15 @@ namespace BMMS.Master
                 return false;
             }
 
+            // Step UD1c: not saved while a Reporting Person "(not allowed now)" is chosen; the form stays open
+            // (spr_AddEditUser refuses it too, Reason 31)
+            if (NotAllowedManagerChosen())
+            {
+                MsgDisplay(HttpUtility.HtmlEncode(UserChangeReason.ReportingPersonNotAllowedMessage));
+                ddlManager.Enabled = true;
+                ScriptManager.GetCurrent(this).SetFocus(ddlManager.ClientID);
+                return false;
+            }
 
 
             return true;
@@ -603,7 +613,8 @@ namespace BMMS.Master
                     ddlManager.Text = myUser.ManagerId.ToString();
                     
                     ddlRole.Text = myUser.RoleId.ToString();
-                    if (ddlRole.SelectedItem.Text.ToLower() == "user")
+                    // Step UD1c: a Reporting Person "(not allowed now)" can be changed whatever the role (Save is refused while it is chosen)
+                    if (ddlRole.SelectedItem.Text.ToLower() == "user" || NotAllowedManagerChosen())
                         ddlManager.Enabled = true;
                     else
                         ddlManager.Enabled = false;
@@ -705,7 +716,8 @@ namespace BMMS.Master
             }
             else
             {
-                ddlManager.Enabled = false;
+                // Step UD1c: a Reporting Person "(not allowed now)" stays changeable for every role
+                ddlManager.Enabled = NotAllowedManagerChosen();
             }
         }
         #endregion
@@ -716,6 +728,8 @@ namespace BMMS.Master
             int DepartmentId = int.Parse(ddlDepartment.SelectedValue.ToString());
 
             LoadMgrController(DepartmentId);
+            // Step UD1c: a new department clears the Reporting Person; one of the new department's list is chosen again
+            ddlManager.SelectedIndex = 0;
 
             // Step UD1a: the previous home department stays ticked (it is still managed until it is unticked)
             string previousHome = ViewState["HomeDepartment"] as string;
@@ -729,13 +743,40 @@ namespace BMMS.Master
         #region LoadMgrController
         private void LoadMgrController(int DepartmentId)
         {
-            // Active Managers / Controllers, plus the edited user's current manager even if inactive.
-            // Step UN3: the text is "Name (login)" (" (inactive)" added), sorted by name, then login; the value
-            // stays UserId. The procedure's own ManagerText column (login only) is no longer shown.
+            // Step UD1c (BMMS-Fix-ManagerScope-Step54.sql): the active Controllers and the active Managers of the chosen
+            // department (spr_GetReportingPersonList), never the user himself, plus the user's current Reporting Person
+            // when he is none of them, shown "(not allowed now)"; Save is refused while that one is chosen (PageValidation,
+            // and spr_AddEditUser with Reason 31). Before, the Managers and Controllers of the department.
+            // Step UN3: the text is "Name (login)", sorted by name, then login; the value stays UserId.
             int currentManagerId = ViewState["CurrentManagerId"] == null ? 0 : (int)ViewState["CurrentManagerId"];
-            DataTable dtMgrController = UserMgr.WithUserDisplayName(UserMgr.GetMgrControllerByDeptId(DepartmentId, currentManagerId));
+            int editedUserId;
+            if (!int.TryParse(hdnUserId.Value, out editedUserId) || editedUserId < 0)
+                editedUserId = 0;
+
+            int reason;
+            DataTable dtMgrController = UserMgr.WithUserDisplayName(
+                UserMgr.GetReportingPersonList(ActingUserId(), DepartmentId, editedUserId, currentManagerId, out reason));
+
+            string notAllowed = string.Empty;
+            foreach (DataRow row in dtMgrController.Rows)
+            {
+                if (Convert.ToBoolean(row["Allowed"]))
+                    continue;
+                row[UserMgr.UserDisplayNameColumn] = Common.UserDisplayName(Convert.ToString(row["UserName"]).Trim(),
+                    Convert.ToString(row["LoginName"]).Trim(), true) + UserMgr.NotAllowedNowText;
+                notAllowed += "," + Convert.ToString(row["UserId"]);
+            }
+            ViewState["NotAllowedManagerIds"] = notAllowed + ",";
 
             Common.LoadDropdownlist(ddlManager, dtMgrController, UserMgr.UserDisplayNameColumn, "UserId", true);
+        }
+
+        // Step UD1c: the chosen Reporting Person is listed "(not allowed now)"
+        private bool NotAllowedManagerChosen()
+        {
+            string ids = ViewState["NotAllowedManagerIds"] as string;
+            return ids != null && ddlManager.SelectedItem != null && ddlManager.SelectedValue != "0"
+                && ids.Contains("," + ddlManager.SelectedValue + ",");
         }
         #endregion
         

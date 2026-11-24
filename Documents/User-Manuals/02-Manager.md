@@ -206,6 +206,73 @@ labels sit above the fields. On a window 1240 pixels wide or narrower the cards 
 [Screenshot: Dashboard as a Manager, Alerts card under All with greyed handled alerts and their lines - supplied by Gashpy Software]
 [Screenshot: Agenda Alert panel as a Manager, opened from a handled alert, the line "Handled by" and no Approve or Reject - supplied by Gashpy Software]
 
+### Agenda Entry (your departments)
+
+Only what depends on your departments is written here. The rest of Agenda Entry is not described yet.
+
+Your departments are the departments of which you are an active Manager. If you are a Manager of one department only,
+that department is yours; if you are a Manager of several, they all are. BMMS reads them every time you open or save
+something, so a change made by the Admin applies at once.
+
+Purpose: you enter agenda items for your departments and change the items of your departments.
+
+Fields and buttons in the strip above the list:
+
+- Committee and Meeting: as before.
+- Department: "All my departments" (chosen when the page opens), then each of your departments. Your home department is
+  marked "(home)" and a department that is no longer active is marked "(inactive)".
+- Add: starts a new item.
+
+The card above the list says "Items of your departments and the items you entered." The list shows the items of the
+department you chose (with "All my departments", the items of all your departments) and the items you entered
+yourself, with the columns Entered by and Department. When you choose one department, the list shows the items of that
+department only; items you entered in your other departments are not listed until you choose "All my departments".
+
+Steps:
+
+1. To see one department, choose it in Department. The list is read again.
+2. To change an item of a colleague, click Edit in its row and then Update. This works for an item of any of your
+   departments, also an inactive one, and for the items you entered. Update never changes the item's department, its
+   status or who entered it.
+3. To enter a new item, choose the Committee and the Meeting and click Add. If you are an active Manager of several
+   departments, the form has a Department drop-down with your active departments, your home department chosen first. If
+   you are an active Manager of one department, the department is shown and cannot be changed.
+
+Messages and what to do:
+
+- "You can open only the agenda items of your departments and the items you entered.": you clicked Edit on an item of a
+  department you are not a Manager of, and that you did not enter. Nothing was opened.
+- "Not saved: you are not a Manager of that department.": the department of the new item (or of the item you update) is
+  not one of your active departments. Nothing was saved. Choose another department, or ask the Admin.
+- "Your departments could not be read: you may no longer be a Manager. Reload the page.": your departments cannot be
+  read, so Add is disabled. Reload the page; if it stays, ask the Admin.
+- "Your session is no longer valid. Please log in again.": sign in again.
+
+[Screenshot: Agenda Entry as a Manager of two departments, the Department drop-down open - supplied by Gashpy Software]
+[Screenshot: Agenda Entry as a Manager, the Add form with the Department drop-down - supplied by Gashpy Software]
+
+### Reports (Agenda Summary, Agenda Details, Minutes, Minutes Extract)
+
+Only what depends on your departments is written here.
+
+On each of these four reports the Department drop-down offers "All my departments" first (chosen when the page opens), then
+each of your departments, with "(home)" and "(inactive)" as in Agenda Entry. With "All my departments" the report holds the
+items of all your departments; with one department, that department only. The Controller's and Management's reports are
+not changed. The Print, PDF and Word versions hold the same rows as the report you generated.
+
+Agenda Summary and Agenda Details open as a PDF; print them from the PDF viewer. Minutes and Minutes Extract open in the
+report view with Print, Export to Word and Export to Pdf.
+
+Messages and what to do:
+
+- "You are not allowed to see this report.": the department you asked for is not one of your departments (for example the
+  page was open while the Admin changed your departments). Reload the page and choose again.
+- "Your session is no longer valid. Please log in again.": sign in again.
+- When your departments cannot be read when the page opens, the page shows one of the two messages above and View and
+  Generate are disabled. Reload the page; if it stays, ask the Admin.
+
+[Screenshot: Reports, Agenda Summary as a Manager of two departments, the Department drop-down - supplied by Gashpy Software]
+
 [[CONFIRM: the other screens are not written yet]]
 
 ## Tasks by goal
@@ -226,6 +293,8 @@ Alerts:
   open and whose date is today or later).
 - When one Manager decides an item, the alerts of the other Managers of the department are handled (see "Handled
   alerts" above): they stay in the All list, in grey, with "Handled by [Name (login)] on [dd-MMM-yyyy]".
+- When you enter a new item as a Manager, the other active Managers of the item's department get an alert for it, also
+  those whose home department is another one.
 - When you stop being a Manager of a department (the Admin changes your role, takes the department away or deactivates
   you), your waiting alerts of that department show "No longer Manager of the department ([dd-MMM-yyyy])". The Admin is
   told how many were closed and that the other Managers of the department still have them.

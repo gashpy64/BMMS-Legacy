@@ -106,6 +106,14 @@ an item that would go to the Controllers is refused. Items entered by a Manager 
 The Controller's own rules for approving are unchanged, and a Manager's decision after the meeting date is still
 refused.
 
+A Manager's departments are the departments of which he is an active Manager. The same departments apply on every screen
+where a Manager chooses a department: Agenda Entry (the Department drop-down of the list and of a new item, and Edit of
+a colleague's item), the Dashboard, and the reports Agenda Summary, Agenda Details, Minutes and Minutes Extract (the
+Department drop-down "All my departments", then his departments). A Manager is refused an item or a report of a
+department that is not his. A User has his own department only; the Controller has every department. When the Admin
+chooses the Reporting Person of a person in User Master, the list holds the active Controllers and the active Managers
+of the person's department, never the person himself.
+
 The panel follows the Committee drop-down, and the Manager's Department drop-down. It lists only items of a meeting
 whose agenda is open and whose date has not passed. When nothing waits for you it says "Nothing is waiting for
 your approval." The User, Management, MD Secretariat and the Admin have no panel.

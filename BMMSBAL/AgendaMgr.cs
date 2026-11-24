@@ -201,9 +201,12 @@ namespace BMMSBAL
         #endregion
 
         #region GetAgendaByMeetingIdDeptId
-        public static DataTable GetAgendaByMeetingIdDeptId(int MeetingId, int UserId)
+        // Step UD1c (BMMS-Fix-ManagerScope-Step54.sql): DepartmentId 0 = every item the user may see (a Manager's
+        // "All my departments"); otherwise only that department's items. The Manager's departments are read in the
+        // database (fn_ManagerDepartments), never from the page.
+        public static DataTable GetAgendaByMeetingIdDeptId(int MeetingId, int UserId, int DepartmentId)
         {
-            return AgendaDB.GetAgendaByMeetingIdDeptId(MeetingId, UserId);
+            return AgendaDB.GetAgendaByMeetingIdDeptId(MeetingId, UserId, DepartmentId);
         }
         #endregion
 

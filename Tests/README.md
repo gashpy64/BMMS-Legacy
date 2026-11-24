@@ -58,6 +58,12 @@ pwsh -NoProfile -File Tests/_runner/Run-Tests.ps1 -Pack access-matrix
   "Handled by QA Manager (qa_manager) on ..." and "No longer Manager of the department (...)", not counted in the
   header; opening that row shows the same line, and Remove from my list takes it off. Approve and Reject are not
   driven (they send mail). About a minute. Its rules, files and checks: `Tests\packs\two-approvers\README.md`.
+- `-Pack manager-scope` (step UD1c, database step 54): qa_manager4, a Manager of Credit (home) and HRD: the Department filter of
+  Agenda Entry and its lists (All, HRD, Credit), Edit of a colleague's HRD item, the Department choice of a new item, the
+  Department drop-down of the four Manager reports with Agenda Summary and Minutes viewed for All and for HRD, and as
+  qa_admin the Reporting Person list of User Master for HRD and for Credit. It saves nothing and posts no department that
+  is not offered (the database's refusals are in the step 54 Test script). About a minute. Its rules, files and checks:
+  `Tests\packs\manager-scope\README.md`.
 - `-Pack session-check` (step RA1d): while qa_mdsec, qa_manager2 and qa_user2 are signed in, qa_admin changes a
   role, adds a department and deactivates a user in User Master; each one's next click (for qa_manager2 a
   Dashboard filter, an UpdatePanel postback) lands on the sign-in page with its fixed message and a new
@@ -185,6 +191,7 @@ BMMS_Quality holds only the seed rows of Reset Database and the fixture
 | qa_manager | Manager | Credit |
 | qa_manager2 | Manager | HRD (home) and Secretarial |
 | qa_manager3 | Manager | Credit (step UD1b; HRD until the HRD item was saved) |
+| qa_manager4 | Manager | Credit (home) and HRD (step UD1c; saved after every item) |
 | qa_user | User | Credit, manager qa_manager |
 | qa_user2 | User | HRD, manager qa_manager2 |
 | qa_mgmt | Management | Secretarial |
@@ -268,7 +275,7 @@ the installed Chrome is used.
 
 ## Credentials
 
-`Tests\local\credentials.json` holds the generated passwords of the ten test accounts and of
+`Tests\local\credentials.json` holds the generated passwords of the eleven test accounts and of
 the two SQL logins `bmms_tester` and `bmms_site`. They are valid for BMMS_Quality only. Nothing in it is committed:
 `Tests/local/` is in `.gitignore`. `Tests\credentials.json.example` shows the form only.
 

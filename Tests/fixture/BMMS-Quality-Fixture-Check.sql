@@ -41,6 +41,7 @@ INSERT INTO @A VALUES ('qa_ctrl', 'controller', 1, 1);
 INSERT INTO @A VALUES ('qa_manager', 'manager', 1, 1);
 INSERT INTO @A VALUES ('qa_manager2', 'manager', 1, 2);
 INSERT INTO @A VALUES ('qa_manager3', 'manager', 1, 1);   -- step UD1b
+INSERT INTO @A VALUES ('qa_manager4', 'manager', 1, 2);   -- step UD1c
 INSERT INTO @A VALUES ('qa_user', 'user', 1, 1);
 INSERT INTO @A VALUES ('qa_user2', 'user', 1, 1);
 INSERT INTO @A VALUES ('qa_mgmt', 'mgmt', 1, 1);
@@ -57,12 +58,12 @@ SELECT 'Account ' + a.LoginName + ': role, active, open role rows, open departme
 FROM @A a;
 
 INSERT INTO @T (Name, Expected, Actual)
-SELECT 'Accounts with a password hash of the application (100000.salt.hash)', '10',
+SELECT 'Accounts with a password hash of the application (100000.salt.hash)', '11',
        CAST((SELECT COUNT(*) FROM Users WHERE LoginName LIKE 'qa[_]%' AND Password LIKE '100000._%._%' AND LEN(Password) > 60) AS VARCHAR(12));
 INSERT INTO @T (Name, Expected, Actual)
-SELECT 'qa_ accounts in all', '10', CAST((SELECT COUNT(*) FROM Users WHERE LoginName LIKE 'qa[_]%') AS VARCHAR(12));
+SELECT 'qa_ accounts in all', '11', CAST((SELECT COUNT(*) FROM Users WHERE LoginName LIKE 'qa[_]%') AS VARCHAR(12));
 INSERT INTO @T (Name, Expected, Actual)
-SELECT 'Users in all (four seeded and ten qa_)', '14', CAST((SELECT COUNT(*) FROM Users) AS VARCHAR(12));
+SELECT 'Users in all (four seeded and eleven qa_)', '15', CAST((SELECT COUNT(*) FROM Users) AS VARCHAR(12));
 INSERT INTO @T (Name, Expected, Actual)
 SELECT 'qa_user reports to qa_manager; qa_user2 to qa_manager2', 'yes',
        CASE WHEN EXISTS (SELECT 1 FROM Users u JOIN Users m ON m.UserId = u.ManagerId WHERE u.LoginName = 'qa_user' AND m.LoginName = 'qa_manager')
@@ -73,6 +74,13 @@ SELECT 'qa_manager2 departments (home first)', 'D003*, D002',
        ISNULL(STUFF((SELECT ', ' + d.DepartmentCode + CASE WHEN ud.IsHome = 1 THEN '*' ELSE '' END
                      FROM User_Department ud JOIN Department d ON d.DepartmentId = ud.DepartmentId JOIN Users u ON u.UserId = ud.UserId
                      WHERE u.LoginName = 'qa_manager2' AND ud.EffectiveTo IS NULL
+                     ORDER BY ud.IsHome DESC, d.DepartmentCode FOR XML PATH('')), 1, 2, ''), 'none');
+-- Step UD1c: qa_manager4, Credit (home) and HRD
+INSERT INTO @T (Name, Expected, Actual)
+SELECT 'qa_manager4 departments (home first)', 'D004*, D003',
+       ISNULL(STUFF((SELECT ', ' + d.DepartmentCode + CASE WHEN ud.IsHome = 1 THEN '*' ELSE '' END
+                     FROM User_Department ud JOIN Department d ON d.DepartmentId = ud.DepartmentId JOIN Users u ON u.UserId = ud.UserId
+                     WHERE u.LoginName = 'qa_manager4' AND ud.EffectiveTo IS NULL
                      ORDER BY ud.IsHome DESC, d.DepartmentCode FOR XML PATH('')), 1, 2, ''), 'none');
 
 -- Committee and members

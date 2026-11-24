@@ -205,13 +205,50 @@ namespace BMMSDAL
         #endregion
 
         #region GetAgendaByMeetingIdDeptId
-        public static DataTable GetAgendaByMeetingIdDeptId(int MeetingId, int UserId)
+        // Step UD1c (BMMS-Fix-ManagerScope-Step54.sql): @DepartmentId 0 = every item the user may see
+        public static DataTable GetAgendaByMeetingIdDeptId(int MeetingId, int UserId, int DepartmentId)
         {
-            SqlParameter[] parameter = new SqlParameter[2];
+            SqlParameter[] parameter = new SqlParameter[3];
             parameter[0] = new SqlParameter("@MeetingId", MeetingId);
             parameter[1] = new SqlParameter("@UserId", UserId);
+            parameter[2] = new SqlParameter("@DepartmentId", DepartmentId);
 
             return CommonDB.GetDataTable("spr_GetAgendaByMeetingIdDeptId", parameter); ;
+        }
+        #endregion
+
+        #region GetAgendaReport
+        // Step UD1c (BMMS-Fix-ManagerScope-Step54.sql): Agenda Summary and Agenda Details read spr_GetAgendaReport with the
+        // acting user (before, the page built the query as SQL text). OrderBy 1: committee, meeting, subject number;
+        // 2: department, meeting, subject number. The procedure reads the role and the Manager's departments in the
+        // database: Reason 8 (acting user missing or inactive) or 4 (another role, or a department that is not his),
+        // then no rows; 0 when allowed.
+        public static DataTable GetAgendaReport(int ActingUserId, int CommitteeId, int DepartmentId, int MeetingNoSearch, int MeetingId,
+            int FromMeetingId, int ToMeetingId, int SubjectNoSearch, int FromSubjectNo, int ToSubjectNo, int OrderBy, out int Reason)
+        {
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+
+            SqlParameter[] parameter = new SqlParameter[13];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = new SqlParameter("@CommitteeId", CommitteeId);
+            parameter[2] = new SqlParameter("@DepartmentId", DepartmentId);
+            parameter[3] = new SqlParameter("@MeetingNoSearch", MeetingNoSearch);
+            parameter[4] = new SqlParameter("@MeetingId", MeetingId);
+            parameter[5] = new SqlParameter("@FromMeetingId", FromMeetingId);
+            parameter[6] = new SqlParameter("@ToMeetingId", ToMeetingId);
+            parameter[7] = new SqlParameter("@SubjectNoSearch", SubjectNoSearch);
+            parameter[8] = new SqlParameter("@FromSubjectNo", FromSubjectNo);
+            parameter[9] = new SqlParameter("@ToSubjectNo", ToSubjectNo);
+            parameter[10] = new SqlParameter("@OrderBy", OrderBy);
+            parameter[11] = result;
+            parameter[12] = reason;
+
+            DataTable dt = CommonDB.GetDataTable("spr_GetAgendaReport", parameter);
+            Reason = MinutesDB.RefusalReason(result, reason);
+            return dt;
         }
         #endregion
 

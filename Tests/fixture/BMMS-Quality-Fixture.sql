@@ -25,6 +25,8 @@
        qa_manager3    Manager          Credit (step UD1b, database step 53: a second Manager of Credit; also of
                                        HRD until the HRD item is saved, then HRD is removed, so his row of that
                                        item is marked 'N'; qa_manager's decisions mark his Credit rows 'H')
+       qa_manager4    Manager          Credit (home) and HRD (step UD1c, database step 54: a Manager of two
+                                       departments for the manager-scope pack; added last, after every item)
        qa_user        User             Credit, manager qa_manager
        qa_user2       User             HRD, manager qa_manager2
        qa_mgmt        Management       Secretarial
@@ -137,6 +139,7 @@ DECLARE @RoleAdmin INT, @RoleController INT, @RoleManager INT, @RoleUser INT, @R
 DECLARE @DeptAdmin INT, @DeptSec INT, @DeptHrd INT, @DeptCredit INT;
 DECLARE @Design INT;
 DECLARE @QaManager3 INT;   -- step UD1b
+DECLARE @QaManager4 INT;   -- step UD1c
 DECLARE @QaAdmin INT, @QaController INT, @QaManager INT, @QaManager2 INT, @QaUser INT, @QaUser2 INT, @QaMgmt INT, @QaMdSec INT, @QaInactive INT;
 DECLARE @DeptList VARCHAR(50);
 DECLARE @C INT;
@@ -613,6 +616,20 @@ BEGIN TRY
     FROM Action_Item ai JOIN Minutes mi ON mi.MinutesId = ai.MinutesId JOIN Agenda a ON a.AgendaId = mi.AgendaId
     WHERE a.CommitteeId = @C2 AND a.AgendaNo IN ('QA2-00003-1', 'QA2-00002-1');
     IF (@@ROWCOUNT <> 2) RAISERROR('the two QA2 action items were not mapped', 16, 1);
+
+    ---------------------------------------------------------------------------
+    -- Step UD1c (database step 54): qa_manager4, a Manager of Credit (home) and HRD for the manager-scope pack.
+    -- Saved last, after every item, through spr_AddEditUser as the seeded Admin: as a new Manager he gets his
+    -- unread rows of the items waiting at AC in Credit and HRD (spr_SetManagerAlertRows, step 53); nothing of the
+    -- other accounts changes.
+    ---------------------------------------------------------------------------
+    SET @Step = 'account qa_manager4 (Credit and HRD; step UD1c)';
+    SET @DeptList = CAST(@DeptCredit AS VARCHAR(12)) + ',' + CAST(@DeptHrd AS VARCHAR(12));
+    DELETE FROM @R; INSERT INTO @R EXEC spr_AddEditUser @Code = 'Save', @UserId = 0, @UserName = 'QA Manager Four', @DepartmentId = @DeptCredit,
+        @DesignationId = @Design, @ManagerId = NULL, @RoleId = @RoleManager, @EmailId = 'qa_manager4@example.invalid', @LoginName = 'qa_manager4',
+        @Password = '$(H_manager4)', @CreatedOn = @Now, @CreatedBy = @Sys, @UpdatedOn = @Now, @UpdatedBy = @Sys, @DepartmentIds = @DeptList;
+    IF NOT EXISTS (SELECT 1 FROM @R WHERE Result = 1) RAISERROR('refused', 16, 1);
+    SET @QaManager4 = (SELECT UserId FROM Users WHERE LoginName = 'qa_manager4');
 
     COMMIT TRANSACTION;
     PRINT 'FIXTURE: DONE';

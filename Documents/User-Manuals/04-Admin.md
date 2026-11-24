@@ -86,8 +86,20 @@ Steps:
 2. To change a Manager's role, to remove a department from a Manager, or to deactivate a Manager, use the same screen.
    BMMS stops you only when no other Manager of the department could decide an item that is waiting for him.
 
+3. To choose the Reporting Person of a person, set the Department first. The Reporting Person list then holds the active
+   Controllers and the active Managers of that department, never the person himself; "- Select -" is always allowed. When
+   you change the Department, the Reporting Person is set to "- Select -" and you choose again. A Reporting Person who is
+   saved already but is no longer one of the list (for example a Manager who left the department) is shown with
+   " (not allowed now)" after the name; the Reporting Person drop-down can be changed for every role then. You cannot save
+   while that person is chosen. This is checked when you create a person and on every save, also when you did not change
+   the Reporting Person.
+
 Messages and what to do:
 
+- "Not saved: the Reporting Person must be a Manager of the user's department or a Controller. Choose another, or - Select -.":
+  the chosen Reporting Person is not allowed (a person shown "(not allowed now)", or one who stopped being allowed since the
+  page was opened). Nothing was saved and the form stays open. Choose another Reporting Person, or "- Select -", and save
+  again.
 - "Not saved: this Manager is still needed.": the change was refused and nothing was changed. One line says why: items
   still open for approval ("[n] item(s) routed to them is/are still open for approval: approve or reject it/them first."),
   items of meetings whose date has passed and whose agenda was never finalized ("the Controller should finalize the
@@ -103,6 +115,7 @@ Messages and what to do:
   [departments]." and then the same sentence.
 
 [Screenshot: User Master, the message after a Manager's department was removed, alerts closed - supplied by Gashpy Software]
+[Screenshot: User Master, the Reporting Person list with an entry marked (not allowed now) and the refusal message - supplied by Gashpy Software]
 
 ### System Settings (Department without an active Manager)
 

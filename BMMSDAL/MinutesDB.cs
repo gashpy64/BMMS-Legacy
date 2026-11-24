@@ -128,23 +128,60 @@ namespace BMMSDAL
         }
         #endregion
 
-        #region GetMinutesReport
-        // Minutes and Minutes Extract reports: only meetings with finalized or confirmed minutes (BMMS-Fix-MinutesGating-Step22.sql)
-        public static DataTable GetMinutesReport(int CommitteeId, int DepartmentId, int MeetingNoSearch, int MeetingId, int FromMeetingId, int ToMeetingId,
-            int SubjectNoSearch, int FromSubjectNo, int ToSubjectNo)
+        #region GetMinutesReportByUser
+        // Minutes and Minutes Extract reports: only meetings with finalized or confirmed minutes (BMMS-Fix-MinutesGating-Step22.sql).
+        // Step UD1c (BMMS-Fix-ManagerScope-Step54.sql): read with the acting user; the procedure limits the rows by the role and,
+        // for a Manager, by his departments (fn_ManagerDepartments). Reason 8 (acting user missing or inactive) or 4 (another
+        // role, or a department that is not his), then no rows; 0 when allowed. spr_GetMinutesReport is no longer called.
+        public static DataTable GetMinutesReportByUser(int ActingUserId, int CommitteeId, int DepartmentId, int MeetingNoSearch, int MeetingId,
+            int FromMeetingId, int ToMeetingId, int SubjectNoSearch, int FromSubjectNo, int ToSubjectNo, out int Reason)
         {
-            SqlParameter[] parameter = new SqlParameter[9];
-            parameter[0] = new SqlParameter("@CommitteeId", CommitteeId);
-            parameter[1] = new SqlParameter("@DepartmentId", DepartmentId);
-            parameter[2] = new SqlParameter("@MeetingNoSearch", MeetingNoSearch);
-            parameter[3] = new SqlParameter("@MeetingId", MeetingId);
-            parameter[4] = new SqlParameter("@FromMeetingId", FromMeetingId);
-            parameter[5] = new SqlParameter("@ToMeetingId", ToMeetingId);
-            parameter[6] = new SqlParameter("@SubjectNoSearch", SubjectNoSearch);
-            parameter[7] = new SqlParameter("@FromSubjectNo", FromSubjectNo);
-            parameter[8] = new SqlParameter("@ToSubjectNo", ToSubjectNo);
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
 
-            return CommonDB.GetDataTable("spr_GetMinutesReport", parameter);
+            SqlParameter[] parameter = new SqlParameter[12];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = new SqlParameter("@CommitteeId", CommitteeId);
+            parameter[2] = new SqlParameter("@DepartmentId", DepartmentId);
+            parameter[3] = new SqlParameter("@MeetingNoSearch", MeetingNoSearch);
+            parameter[4] = new SqlParameter("@MeetingId", MeetingId);
+            parameter[5] = new SqlParameter("@FromMeetingId", FromMeetingId);
+            parameter[6] = new SqlParameter("@ToMeetingId", ToMeetingId);
+            parameter[7] = new SqlParameter("@SubjectNoSearch", SubjectNoSearch);
+            parameter[8] = new SqlParameter("@FromSubjectNo", FromSubjectNo);
+            parameter[9] = new SqlParameter("@ToSubjectNo", ToSubjectNo);
+            parameter[10] = result;
+            parameter[11] = reason;
+
+            DataTable dt = CommonDB.GetDataTable("spr_GetMinutesReportByUser", parameter);
+            Reason = RefusalReason(result, reason);
+            return dt;
+        }
+        #endregion
+
+        #region GetReportSubjectNos
+        // Step UD1c (BMMS-Fix-ManagerScope-Step54.sql): the subject numbers of a meeting for the report pages' From / To lists
+        // (the rows spr_GetMinutesByMeetingId gave with status 1), read with the acting user: a Manager only his departments'
+        // (DepartmentId -1 = all of them). Reason 8 or 4 as above, then no rows; 0 when allowed.
+        public static DataTable GetReportSubjectNos(int ActingUserId, int MeetingId, int DepartmentId, out int Reason)
+        {
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+
+            SqlParameter[] parameter = new SqlParameter[5];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = new SqlParameter("@MeetingId", MeetingId);
+            parameter[2] = new SqlParameter("@DepartmentId", DepartmentId);
+            parameter[3] = result;
+            parameter[4] = reason;
+
+            DataTable dt = CommonDB.GetDataTable("spr_GetReportSubjectNos", parameter);
+            Reason = RefusalReason(result, reason);
+            return dt;
         }
         #endregion
 

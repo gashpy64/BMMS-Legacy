@@ -256,6 +256,7 @@ DECLARE @DA INT, @DB INT, @Com INT, @MOpen INT, @MPast INT, @MFin INT, @MNull IN
 DECLARE @Ctl INT, @Mg1 INT, @Mg2 INT, @Mg3 INT, @Mg4 INT, @Usr INT, @Gmt INT, @Mds INT, @Adm INT, @Off INT;
 DECLARE @Res INT, @Rsn INT, @Total INT, @Page INT, @Shown INT, @Wait INT, @CanA INT, @CanR INT, @AgOpen INT, @DtOpen INT;
 DECLARE @Role VARCHAR(50), @Txt VARCHAR(1000), @Id INT, @N INT, @Refused INT;
+DECLARE @RowsNotByRule INT, @RuleNoRow INT;   -- step UD1c: check 15 against the rule written out
 DECLARE @cActor VARCHAR(20), @cUser INT, @cItem VARCHAR(20), @cAgenda INT, @cAct VARCHAR(30), @cM VARCHAR(50), @cC VARCHAR(50);
 DECLARE @OldRR VARCHAR(60), @NewRR VARCHAR(60), @OldOut NVARCHAR(MAX), @NewOut NVARCHAR(MAX);
 DECLARE @AgendaBefore VARCHAR(60), @AgendaAfter VARCHAR(60), @MapBefore VARCHAR(60), @MapAfter VARCHAR(60), @AuditBefore VARCHAR(60), @AuditAfter VARCHAR(60);
@@ -1081,6 +1082,29 @@ END');
         INSERT INTO @T VALUES ('Login itmgruser (an active Manager): the items at AC of his departments that are not routed to him are refused with Reason 14', 'PASS', 'SKIPPED');
     ELSE
     BEGIN
+        -- Step UD1c: his function rows against the rule written out as in row 13 (the step 20 rule, or the step 53 rule),
+        -- counted before the calls below change any item, so the check no longer depends on how many items exist
+        -- (before, the expected count of function rows was the number of items not routed to him)
+        DECLARE @RuleItems TABLE (AgendaId INT PRIMARY KEY);
+        INSERT INTO @RuleItems (AgendaId)
+        SELECT a.AgendaId
+        FROM Agenda a
+        INNER JOIN Users u ON u.UserId = @Id
+        LEFT JOIN Users c ON c.UserId = a.CreatedBy
+        WHERE ISNULL(a.AgendaStatusCode, '') = 'AC'
+        AND ((@S53 = 0
+              AND (u.UserId = ISNULL(c.ManagerId, 0)
+                   OR EXISTS (SELECT 1 FROM Alert_User_Map m JOIN Alert_Master am ON am.AlertId = m.AlertId
+                              WHERE am.SourceType = 'Agenda' AND am.SourceTypeId = a.AgendaId AND m.UserId = u.UserId)))
+          OR (@S53 = 1
+              AND u.UserId <> ISNULL(a.CreatedBy, 0)
+              AND (EXISTS (SELECT 1 FROM User_Department ud WHERE ud.UserId = u.UserId AND ud.DepartmentId = a.DepartmentId AND ud.EffectiveTo IS NULL)
+                   OR (u.DepartmentId = a.DepartmentId AND NOT EXISTS (SELECT 1 FROM User_Department ux WHERE ux.UserId = u.UserId)))));
+        SET @RowsNotByRule = (SELECT COUNT(*) FROM dbo.fn_AgendaWaitingFor(@Id, @Today) w
+                              WHERE NOT EXISTS (SELECT 1 FROM @RuleItems ri WHERE ri.AgendaId = w.AgendaId));
+        SET @RuleNoRow = (SELECT COUNT(*) FROM @RuleItems ri
+                          WHERE NOT EXISTS (SELECT 1 FROM dbo.fn_AgendaWaitingFor(@Id, @Today) w WHERE w.AgendaId = ri.AgendaId));
+
         SET @N = 0; SET @Refused = 0;
         DECLARE ItCursor CURSOR LOCAL FAST_FORWARD FOR
             SELECT a.AgendaId FROM Agenda a
@@ -1105,12 +1129,13 @@ END');
         END
         CLOSE ItCursor;
         DEALLOCATE ItCursor;
-        INSERT INTO @T SELECT 'Login itmgruser: the ' + CAST(@N AS VARCHAR(12)) + ' items at AC (open agenda) of his departments that are not routed to him: each refused with Reason 14 and still at AC; none of them in his function rows'
-               + CASE WHEN @S53 = 1 THEN ' [step 53: he is a Manager of their department: in his function rows, none refused with Reason 14]' ELSE '' END,
-               CASE WHEN @S53 = 1 THEN '0 of ' + CAST(@N AS VARCHAR(12)) + ' refused, ' + CAST(@N AS VARCHAR(12)) + ' function rows'
-                    ELSE CAST(@N AS VARCHAR(12)) + ' of ' + CAST(@N AS VARCHAR(12)) + ' refused, 0 function rows' END,
-               CAST(@Refused AS VARCHAR(12)) + ' of ' + CAST(@N AS VARCHAR(12)) + ' refused, '
-             + CAST((SELECT COUNT(*) FROM dbo.fn_AgendaWaitingFor(@Id, @Today)) AS VARCHAR(12)) + ' function rows';
+        INSERT INTO @T SELECT 'Login itmgruser: the ' + CAST(@N AS VARCHAR(12)) + ' items at AC (open agenda) of his departments not routed to him: refused with Reason 14, still at AC'
+               + CASE WHEN @S53 = 1 THEN ' [step 53: none refused]' ELSE '' END
+               + '; his function rows against the rule of row 13: rows not by the rule / rule items without a row',
+               CASE WHEN @S53 = 1 THEN '0 of ' + CAST(@N AS VARCHAR(12)) + ' refused; 0 / 0'
+                    ELSE CAST(@N AS VARCHAR(12)) + ' of ' + CAST(@N AS VARCHAR(12)) + ' refused; 0 / 0' END,
+               CAST(@Refused AS VARCHAR(12)) + ' of ' + CAST(@N AS VARCHAR(12)) + ' refused; '
+             + CAST(@RowsNotByRule AS VARCHAR(12)) + ' / ' + CAST(@RuleNoRow AS VARCHAR(12));
     END
 
     ---------------------------------------------------------------------------

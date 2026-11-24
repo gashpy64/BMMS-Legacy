@@ -22,7 +22,9 @@
      3  spr_GetAgendaByMeetingIdDeptId, every user and every meeting: the
         items the user entered and, for a Manager, every item whose
         Agenda.DepartmentId is the Manager's department; each once, nothing
-        else
+        else. Since step 54 (UD1c) the Manager's departments are those of
+        fn_ManagerDepartments (every department of which he is an active
+        Manager); without step 54 Users.DepartmentId of a Manager, as before
      4  EnteredByName in every row of both lists: the creator's User Name,
         " (inactive)" added for an inactive account, "(unknown user)" when
         the user row is missing
@@ -60,6 +62,8 @@ DECLARE @T TABLE (No INT, CheckName NVARCHAR(200), Result VARCHAR(10), Detail NV
 DECLARE @Bad TABLE (CheckNo INT, MeetingId INT, UserId INT, AgendaId INT, Problem VARCHAR(60));
 DECLARE @Mtg TABLE (MeetingId INT PRIMARY KEY);
 DECLARE @UserList TABLE (UserId INT PRIMARY KEY, IsManager INT, DepartmentId INT, LoginName VARCHAR(50));
+-- Step 54 (ManagerScope-Step54): the departments whose items a user's list holds besides his own items
+DECLARE @Scope TABLE (UserId INT, DepartmentId INT, PRIMARY KEY (UserId, DepartmentId));
 
 DECLARE @Marker INT = 0;
 DECLARE @m INT;
@@ -95,6 +99,14 @@ BEGIN
     SELECT us.UserId, CASE WHEN r.RoleCode = 'manager' THEN 1 ELSE 0 END, us.DepartmentId, us.LoginName
     FROM Users us
     LEFT JOIN Roles r ON r.RoleId = us.RoleId;
+
+    -- Step 54: fn_ManagerDepartments when it is installed, otherwise the step 33 rule (a Manager's Users.DepartmentId)
+    IF (OBJECT_ID('dbo.fn_ManagerDepartments', 'IF') IS NOT NULL)
+        INSERT INTO @Scope (UserId, DepartmentId)
+        EXEC sp_executesql N'SELECT u.UserId, md.DepartmentId FROM dbo.Users u CROSS APPLY dbo.fn_ManagerDepartments(u.UserId) md';
+    ELSE
+        INSERT INTO @Scope (UserId, DepartmentId)
+        SELECT UserId, DepartmentId FROM @UserList WHERE IsManager = 1 AND DepartmentId IS NOT NULL;
 
     SET @Meetings = (SELECT COUNT(*) FROM @Mtg);
     SET @Items = (SELECT COUNT(*) FROM View_Agenda WHERE MeetingId IS NOT NULL);
@@ -156,14 +168,14 @@ BEGIN
             SELECT 3, @m, @u, va.AgendaId, 'missing from the list'
             FROM View_Agenda va
             WHERE va.MeetingId = @m
-            AND (va.CreatedBy = @u OR (@IsManager = 1 AND va.DepartmentId = @Dept))
+            AND (va.CreatedBy = @u OR va.DepartmentId IN (SELECT s.DepartmentId FROM @Scope s WHERE s.UserId = @u))
             AND NOT EXISTS (SELECT 1 FROM #C2Rows r WHERE r.AgendaId = va.AgendaId);
 
             INSERT INTO @Bad (CheckNo, MeetingId, UserId, AgendaId, Problem)
             SELECT 3, @m, @u, r.AgendaId, 'listed but not allowed, or listed twice'
             FROM #C2Rows r
             WHERE r.MeetingId <> @m OR r.MeetingId IS NULL
-            OR NOT (ISNULL(r.CreatedBy, -1) = @u OR (@IsManager = 1 AND ISNULL(r.DepartmentId, -1) = ISNULL(@Dept, -2)))
+            OR NOT (ISNULL(r.CreatedBy, -1) = @u OR ISNULL(r.DepartmentId, -1) IN (SELECT s.DepartmentId FROM @Scope s WHERE s.UserId = @u))
             OR (SELECT COUNT(*) FROM #C2Rows r2 WHERE r2.AgendaId = r.AgendaId) > 1;
 
             INSERT INTO @Bad (CheckNo, MeetingId, UserId, AgendaId, Problem)
@@ -216,7 +228,7 @@ BEGIN
     SET @n = (SELECT COUNT(*) FROM @Bad WHERE CheckNo = 3);
     SET @Detail = CAST(@Users AS VARCHAR(12)) + N' users x ' + CAST(@Meetings AS VARCHAR(12)) + N' meetings; '
                 + CAST(@n AS VARCHAR(12)) + N' rows differ';
-    INSERT INTO @T VALUES (3, N'Manager / User list: own items, and for a Manager the department''s items', CASE WHEN @Meetings = 0 THEN 'SKIPPED' WHEN @n = 0 THEN 'PASS' ELSE 'FAIL' END,
+    INSERT INTO @T VALUES (3, N'Manager / User list: own items, and for a Manager the items of his departments [step 54: fn_ManagerDepartments]', CASE WHEN @Meetings = 0 THEN 'SKIPPED' WHEN @n = 0 THEN 'PASS' ELSE 'FAIL' END,
                            CASE WHEN @Meetings = 0 THEN N'no agenda items in BMMS_Test' ELSE @Detail END);
 
     SET @n = (SELECT COUNT(*) FROM @Bad WHERE CheckNo = 4);

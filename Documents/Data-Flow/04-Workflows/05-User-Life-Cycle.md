@@ -3,11 +3,11 @@
 - Title: Workflow: User Life Cycle
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UD1b (step 53: a Manager leaving or joining a department); user-ud1a
-- Commit: db1d641
-- Last updated by: UD1b, based on db1d641
+- Applies to: UD1c (step 54: one decision-points row, the Reporting Person); UD1b (step 53: a Manager leaving or joining a department); user-ud1a
+- Commit: 42cb88c
+- Last updated by: UD1c, based on 42cb88c
 - Status: Draft
-- Verified against: for UD1b: BMMS/Master/User.aspx.cs and BMMSBAL/UserMgr.cs (diff), Database/BMMS-Fix-DepartmentApprovers-Step53.sql (fn_ManagerReleaseRefusal, spr_SetManagerAlertRows, the comment blocks of spr_AddEditUser and spr_SetUserStatusByUserId), Database/README.md (section Step UD1b)
+- Verified against: for UD1c: Database/BMMS-Fix-ManagerScope-Step54.sql (fn_ReportingPersonAllowed, the two Reason 31 checks of spr_AddEditUser), BMMS/Master/User.aspx.cs (diff), Database/README.md (section Step UD1c); for UD1b: BMMS/Master/User.aspx.cs and BMMSBAL/UserMgr.cs (diff), Database/BMMS-Fix-DepartmentApprovers-Step53.sql (fn_ManagerReleaseRefusal, spr_SetManagerAlertRows, the comment blocks of spr_AddEditUser and spr_SetUserStatusByUserId), Database/README.md (section Step UD1b)
 - To confirm: workflow written only for a Manager's role, departments and status since step UD1b (WF2c4); the creation of a user, the password steps, the delete and the other roles are not drawn here yet
 
 ## Lanes
@@ -68,6 +68,7 @@ flowchart LR
 | What happens to his waiting alerts when he may leave | Database | Marked 'N' with HandledBy the acting user; the other Managers keep theirs | spr_SetManagerAlertRows (@Release 1) |
 | What a new, re-activated or newly mapped Manager receives | Database | An unread row on the alert of each waiting item of his departments (the creator's own items excepted) | spr_SetManagerAlertRows (@Release 0) |
 | Who may make these changes | Page access, database | The Admin role (User Master is admin only); the protected system account may act as the acting user | PageAccess.xml; spr_SetManagerAlertRows |
+| Who may be a user's Reporting Person (step 54) | Admin (the choice), database (the check) | An active Controller or an active Manager of the user's department, never the user himself; "- Select -" is always allowed; refused with Reason 31 on Create and on every Update, also when the Reporting Person is unchanged; a Department change clears the choice | fn_ReportingPersonAllowed, spr_GetReportingPersonList, spr_AddEditUser; User.aspx.cs |
 
 ## Drawn from
 

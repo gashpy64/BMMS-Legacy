@@ -72,7 +72,25 @@ namespace BMMS.Master {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.DropDownList ddlMeeting;
-        
+
+        /// <summary>
+        /// pnlListDepartment control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel pnlListDepartment;
+
+        /// <summary>
+        /// ddlListDepartment control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.DropDownList ddlListDepartment;
+
         /// <summary>
         /// btnAdd control.
         /// </summary>

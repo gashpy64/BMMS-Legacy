@@ -3,11 +3,11 @@
 - Title: Program to Program: User Master and History Tables
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UD1b (step 53: a Manager's role change, removed department or Deactivate, and the closed alerts); user-ud1a
-- Commit: db1d641
-- Last updated by: UD1b, based on db1d641
+- Applies to: UD1c (step 54: the new section "The Reporting Person (step UD1c)"); UD1b (step 53: a Manager's role change, removed department or Deactivate, and the closed alerts); user-ud1a
+- Commit: 42cb88c
+- Last updated by: UD1c, based on 42cb88c
 - Status: Draft
-- Verified against: for UD1b: BMMS/Master/User.aspx.cs (diff: the save and the status messages), BMMSBAL/UserMgr.cs (diff: ReleasedMessage, SuccessDetail), BMMSDAL/UserDB.cs (the two procedure calls), Database/BMMS-Fix-DepartmentApprovers-Step53.sql (fn_ManagerReleaseRefusal, spr_SetManagerAlertRows and the comment blocks of spr_AddEditUser and spr_SetUserStatusByUserId read; the long procedure texts not read line by line), Database/README.md (section Step UD1b)
+- Verified against: for UD1c: BMMS/Master/User.aspx.cs (diff: LoadMgrController, NotAllowedManagerChosen, PageValidation, the Department change), BMMSBAL/UserMgr.cs (diff), Database/BMMS-Fix-ManagerScope-Step54.sql (fn_ReportingPersonAllowed and spr_GetReportingPersonList read in full; spr_AddEditUser read at its comment block and the two Reason 31 checks), Database/README.md (section Step UD1c); for UD1b: BMMS/Master/User.aspx.cs (diff: the save and the status messages), BMMSBAL/UserMgr.cs (diff: ReleasedMessage, SuccessDetail), BMMSDAL/UserDB.cs (the two procedure calls), Database/BMMS-Fix-DepartmentApprovers-Step53.sql (fn_ManagerReleaseRefusal, spr_SetManagerAlertRows and the comment blocks of spr_AddEditUser and spr_SetUserStatusByUserId read; the long procedure texts not read line by line), Database/README.md (section Step UD1b)
 - To confirm: feature area written only for the release of a Manager since step UD1b (WF2c2); the rest of User Master (save, role history, department history, delete, reset password) is not written yet
 
 ## Scope
@@ -103,6 +103,58 @@ Saved", "User deactivated").
 | spr_AddEditUser | Users, Roles, Department, User_Role, User_Department, Agenda, Meeting, Alert_Master, Alert_User_Map | Users, User_Role, User_Department, Alert_User_Map |
 | spr_SetUserStatusByUserId | the same | Users (AccountStatus); User_Role and User_Department (since step 39: Deactivate closes the open role and department rows with CloseReason 'D'; Activate opens a new row for the current role and the home department and, for a Manager, for the other departments closed at that deactivation); Alert_User_Map |
 | spr_SetManagerAlertRows | Users, Roles, User_Department, Agenda, Meeting, Alert_Master, Alert_User_Map | Alert_User_Map |
+
+## The Reporting Person (step UD1c)
+
+Since step 54 the Reporting Person ("manager" of a user) must be an active Controller or an active Manager of the user's
+department, never the user himself; "- Select -" (none) is always allowed.
+
+```mermaid
+sequenceDiagram
+    participant A as Admin
+    participant P as User.aspx.cs
+    participant B as UserMgr
+    participant SL as spr_GetReportingPersonList
+    participant S as spr_AddEditUser
+    participant F as fn_ReportingPersonAllowed
+
+    A->>P: choose or change the Department
+    P->>B: GetReportingPersonList(acting user, department, edited user, current Reporting Person)
+    B->>SL: parameters
+    SL->>F: department, edited user
+    F-->>SL: active Controllers and the active Managers of the department, not the user
+    SL-->>P: rows with Allowed 1, and the current one with Allowed 0 when outside the list
+    P-->>A: the list, with - Select - chosen after a Department change and "not allowed now" marked on a current one outside the list
+    A->>P: Save
+    alt the chosen Reporting Person is one shown "(not allowed now)"
+        P-->>A: "Not saved: the Reporting Person must be a Manager of the user's department or a Controller. Choose another, or - Select -."
+    else
+        P->>S: Create or Update
+        S->>F: department, user
+        alt Reporting Person not in the list (Reason 31)
+            S-->>P: Reason 31, nothing saved
+            P-->>A: the same message
+        else allowed
+            S-->>P: Result 1
+        end
+    end
+```
+
+| From | To | Data | Notes |
+|---|---|---|---|
+| User.aspx.cs (LoadMgrController) | UserMgr.GetReportingPersonList, spr_GetReportingPersonList | Acting user, department, edited user (0 for a new user), current Reporting Person | Admin only: Reason 8 (acting user missing or inactive), Reason 4 (another role), then no rows. Replaces spr_GetMgrControllerByDeptId, which stays in the database and is no longer called |
+| spr_GetReportingPersonList | User.aspx.cs | UserId, UserName, LoginName, AccountStatus, RoleCode, Allowed | The page marks Allowed 0 rows " (not allowed now)" and enables the drop-down for every role while one is chosen |
+| User.aspx.cs (ddlDepartment change) | the drop-down | "- Select -" | The list is read again for the new department |
+| User.aspx.cs (PageValidation) | the Admin | The refusal message | The form stays open, Save does nothing |
+| spr_AddEditUser | fn_ReportingPersonAllowed | The department, the user | Create: the user is not known yet; every Update, also when the Reporting Person is unchanged (strict); Reason 31 |
+
+| Reason | Raised by | Meaning | Message the page shows |
+|---|---|---|---|
+| 31 | spr_AddEditUser | The Reporting Person is not an active Controller or an active Manager of the user's department, or is the user himself | "Not saved: the Reporting Person must be a Manager of the user's department or a Controller. Choose another, or - Select -." |
+
+fn_ReportingPersonAllowed: the active Controllers other than the protected system account, and the rows of
+fn_DepartmentManagers(department), each without the user himself. Tables read: Users, Roles, and those of
+fn_DepartmentManagers (Users, Roles, User_Department). Nothing is written by the list or the function.
 
 ## Drawn from
 

@@ -176,21 +176,30 @@ namespace BMMSDAL
         }
         #endregion
 
-        #region GetMgrControllerByDeptId
-        public static DataTable GetMgrControllerByDeptId(int DepartmentId)
+        #region GetReportingPersonList
+        // Step UD1c (BMMS-Fix-ManagerScope-Step54.sql): the Reporting Person list of User Master (it replaces the call of
+        // spr_GetMgrControllerByDeptId, which stays in the database unused): the active Controllers and the active Managers
+        // of the department (Allowed 1), never the user himself (UserId, 0 for a new user), and the current Reporting
+        // Person with Allowed 0 when it is none of them. Columns UserId, UserName, LoginName, AccountStatus, RoleCode,
+        // Allowed. Reason 0 when allowed, otherwise 8 (acting user missing or inactive) or 4 (not an Admin), then no rows.
+        public static DataTable GetReportingPersonList(int ActingUserId, int DepartmentId, int UserId, int CurrentManagerId, out int Reason)
         {
-            return GetMgrControllerByDeptId(DepartmentId, 0);
-        }
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
 
-        // Active Managers / Controllers of the department, plus IncludeUserId (the edited
-        // user's current manager) even if inactive. Column ManagerText marks it "(inactive)".
-        public static DataTable GetMgrControllerByDeptId(int DepartmentId, int IncludeUserId)
-        {
-            SqlParameter[] parameter = new SqlParameter[2];
-            parameter[0] = new SqlParameter("@DepartmentId", DepartmentId);
-            parameter[1] = new SqlParameter("@IncludeUserId", IncludeUserId <= 0 ? (object)DBNull.Value : IncludeUserId);
+            SqlParameter[] parameter = new SqlParameter[6];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = new SqlParameter("@DepartmentId", DepartmentId);
+            parameter[2] = new SqlParameter("@UserId", UserId);
+            parameter[3] = new SqlParameter("@CurrentManagerId", CurrentManagerId <= 0 ? (object)DBNull.Value : CurrentManagerId);
+            parameter[4] = result;
+            parameter[5] = reason;
 
-            return CommonDB.GetDataTable("spr_GetMgrControllerByDeptId", parameter);
+            DataTable dt = CommonDB.GetDataTable("spr_GetReportingPersonList", parameter);
+            Reason = MinutesDB.RefusalReason(result, reason);
+            return dt;
         }
         #endregion
 

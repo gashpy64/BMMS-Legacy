@@ -41,11 +41,13 @@ const USERS = 'Master/User.aspx';
 const DASH = 'DashBoard/DashBoard.aspx';
 const CHANGED_TEXT = 'Your access has changed. Please sign in again.';
 const SESSION_COOKIE = 'ASP.NET_SessionId';
-// Step MR1: the Reason 24 message, one line per part (BMMSBAL/UserMgr.cs, LastManagerMessage); step UD1b: for qa_manager2
+// Step MR1: the Reason 24 message, one line per part (BMMSBAL/UserMgr.cs, LastManagerMessage); step UD1b: for qa_manager2.
+// Step UD1c (owner 2026-11-24): qa_manager4 (fixture) is a second active Manager of HRD, so the HRD item QA1-00001-006
+// no longer needs qa_manager2: one open item (QA2-00001-2 of Secretarial) and the Secretarial line only.
 const MANAGER_NEEDED_LINES = [
   'Not saved: this Manager is still needed.',
-  '2 items routed to them are still open for approval: approve or reject them first.',
-  'Last active Manager of HRD (1 item of the department waiting), Secretarial (1 item of the department waiting): '
+  '1 item routed to them is still open for approval: approve or reject it first.',
+  'Last active Manager of Secretarial (1 item of the department waiting): '
     + 'give the department another active Manager first.',
   'Nothing was changed.',
 ];
@@ -277,7 +279,7 @@ module.exports = {
       const shot = await t.shot(admin, 'manager-still-needed');
       await openUsers(t, admin);
       const managerNow = (await readUsers(admin))[L.manager2];
-      rec('admin', 'The Admin makes qa_manager2 a User: refused, the message with the open items (2) and the department line (HRD, Secretarial), no past line; qa_manager2 still a Manager',
+      rec('admin', 'The Admin makes qa_manager2 a User: refused, the message with the open item (1, Secretarial) and the department line (Secretarial; HRD has qa_manager4 too), no past line; qa_manager2 still a Manager',
         { lines: MANAGER_NEEDED_LINES, role: 'Manager' }, { lines: refusal, role: managerNow ? managerNow.role : '' }, { screenshot: shot });
 
       // The page access log: one SESSION-ENDED line per ended session, with its reason; none for the others

@@ -108,6 +108,27 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region GetManagerDepartments
+        // Step UD1c (BMMS-Fix-ManagerScope-Step54.sql): the acting Manager's departments (spr_GetManagerDepartments: home
+        // first; IsHome, IsActive) for Agenda Entry and the reports. Reason 0 when allowed, otherwise 8 or 4, then no rows.
+        public static DataTable GetManagerDepartments(int ActingUserId, out int Reason)
+        {
+            return DepartmentDB.GetManagerDepartments(ActingUserId, out Reason);
+        }
+
+        /// <summary>Step UD1c: the text of a Manager's department in a drop-down: the name, " (home)" for the home
+        /// department, " (inactive)" for an inactive one. Plain text (a ListItem encodes it).</summary>
+        public static string ManagerDepartmentText(DataRow Row)
+        {
+            return Convert.ToString(Row["DepartmentName"])
+                 + (Convert.ToBoolean(Row["IsHome"]) ? " (home)" : string.Empty)
+                 + (Convert.ToBoolean(Row["IsActive"]) ? string.Empty : " (inactive)");
+        }
+
+        /// <summary>Step UD1c: the first item of a Manager's department filter (value 0 or -1 as the page needs it).</summary>
+        public const string AllMyDepartmentsText = "All my departments";
+        #endregion
+
         #region GetNextDeptCode
         public static string GetNextDeptCode()
         {

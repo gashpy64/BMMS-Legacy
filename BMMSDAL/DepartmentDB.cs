@@ -128,6 +128,28 @@ namespace BMMSDAL
         }
         #endregion
 
+        #region GetManagerDepartments
+        // Step UD1c (BMMS-Fix-ManagerScope-Step54.sql): the departments of the acting Manager (fn_ManagerDepartments), home
+        // first (DepartmentId, DepartmentName, IsHome, IsActive), read by the procedure from the acting user id. Reason 0
+        // when allowed, otherwise 8 (user missing, inactive or the system account) or 4 (not a Manager), and then no rows.
+        public static DataTable GetManagerDepartments(int ActingUserId, out int Reason)
+        {
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+
+            SqlParameter[] parameter = new SqlParameter[3];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = result;
+            parameter[2] = reason;
+
+            DataTable dt = CommonDB.GetDataTable("spr_GetManagerDepartments", parameter);
+            Reason = MinutesDB.RefusalReason(result, reason);
+            return dt;
+        }
+        #endregion
+
         #region GetNextDeptCode
         public static string GetNextDeptCode()
         {

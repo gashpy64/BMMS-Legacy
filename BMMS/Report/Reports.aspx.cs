@@ -24,6 +24,10 @@ namespace BMMS.Report
         private bool allStatus = false;
         private int allStatusReason = 0;
 
+        // Step UD1c (BMMS-Fix-ManagerScope-Step54.sql): the Reason of the report procedure GetReportDetails called (every
+        // report reads one with the acting user now); 0 when allowed, 8 or 4 when refused (then no rows)
+        private int reportReason = 0;
+
         #region Page_Load
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -85,21 +89,39 @@ namespace BMMS.Report
         #region LoadDepartment
         public void LoadDepartment()
         {
-            DataTable dtDepartment = new DataTable();
-            dtDepartment = DepartmentMgr.GetDepartmentList(1);
-
-            Common.LoadDDLwithAllNew(ddlDepartment, dtDepartment, "DepartmentName", "DepartmentId", true);
-
-            UserBAL userBal = new UserBAL();
-            userBal = UserMgr.GetUserByUserId(int.Parse(Session["UserId"].ToString()));
-
+            // Step UD1c (BMMS-Fix-ManagerScope-Step54.sql): a Manager chooses among his departments (fn_ManagerDepartments,
+            // read in the database), "All my departments" first; the home department marked, an inactive one too. The
+            // report procedures check the chosen department again with the acting user, so a posted value is never
+            // trusted. Before, the drop-down was fixed to Users.DepartmentId. The other roles are unchanged.
             if (Session["RoleCode"].ToString() == "manager")
             {
-                ddlDepartment.Text = userBal.DepartmentId.ToString();
-                ddlDepartment.Enabled = false;
+                int departmentReason;
+                DataTable dtMine = DepartmentMgr.GetManagerDepartments(int.Parse(Session["UserId"].ToString()), out departmentReason);
+
+                ddlDepartment.Items.Clear();
+                ddlDepartment.Items.Add(new System.Web.UI.WebControls.ListItem(DepartmentMgr.AllMyDepartmentsText, "-1"));
+                if (departmentReason == 0)
+                    foreach (DataRow row in dtMine.Rows)
+                        ddlDepartment.Items.Add(new System.Web.UI.WebControls.ListItem(DepartmentMgr.ManagerDepartmentText(row), Convert.ToString(row["DepartmentId"])));
+                ddlDepartment.SelectedIndex = 0;
+                ddlDepartment.Enabled = departmentReason == 0;
+
+                // Step UD1c review: the departments could not be read (session no longer valid, or no longer a Manager):
+                // the page says so and offers no report
+                if (departmentReason != 0)
+                {
+                    MsgDisplay(ReportsMgr.ReportRefusedMessage(departmentReason));
+                    btnView.Enabled = false;
+                    btnGenerateReport.Enabled = false;
+                }
             }
             else
             {
+                DataTable dtDepartment = new DataTable();
+                dtDepartment = DepartmentMgr.GetDepartmentList(1);
+
+                Common.LoadDDLwithAllNew(ddlDepartment, dtDepartment, "DepartmentName", "DepartmentId", true);
+
                 ddlDepartment.Text = "All";
                 ddlDepartment.Enabled = true;
             }
@@ -259,7 +281,16 @@ namespace BMMS.Report
 
                     int MeetingId = int.Parse(ddlMeetingNo.SelectedValue.ToString());
 
-                    DataTable dtSubjectNo = MinutesMgr.GetMinutesByMeetingId(MeetingId, 1, DepartmentId);
+                    // Step UD1c: read with the acting user (a Manager: only his departments' subject numbers)
+                    int subjectReason;
+                    DataTable dtSubjectNo = ReportsMgr.GetReportSubjectNos(int.Parse(Session["UserId"].ToString()), MeetingId, DepartmentId, out subjectReason);
+                    if (subjectReason != 0)
+                    {
+                        // Step UD1c review: no subject numbers to choose from; the From / To lists stay off
+                        MsgDisplay(ReportsMgr.ReportRefusedMessage(subjectReason));
+                        ddlSubjectNoFrom.Enabled = false;
+                        ddlSubjectNoTo.Enabled = false;
+                    }
 
                     Common.LoadDDLwithAll(ddlSubjectNoFrom, dtSubjectNo, "SubjectNo", "SubjectNo", false);
                     Common.LoadDDLwithAll(ddlSubjectNoTo, dtSubjectNo, "SubjectNo", "SubjectNo", false);
@@ -352,11 +383,12 @@ namespace BMMS.Report
 
                 DataTable dtReportDetails = GetReportDetails();
 
-                // Step RA1b: a refusal of the every-status procedure (Reason 8 or 4) shows its message, no grid
-                if (allStatus && allStatusReason != 0)
+                // Step RA1b: a refusal of the every-status procedure (Reason 8 or 4) shows its message, no grid.
+                // Step UD1c: the same for every report procedure (a Manager's department that is not his: Reason 4).
+                if (reportReason != 0)
                 {
                     pnlViewReport.Visible = false;
-                    MsgDisplay(ReportsMgr.ReportRefusedMessage(allStatusReason));
+                    MsgDisplay(ReportsMgr.ReportRefusedMessage(reportReason));
                     return;
                 }
 
@@ -426,10 +458,10 @@ namespace BMMS.Report
                     DataTable dtReportsDetails = new DataTable();
                     dtReportsDetails = GetReportDetails();
 
-                    if (allStatus && allStatusReason != 0)
+                    if (reportReason != 0)
                     {
-                        // Step RA1b: the every-status procedure refused (Reason 8 or 4)
-                        MsgDisplay(ReportsMgr.ReportRefusedMessage(allStatusReason));
+                        // Step RA1b: the every-status procedure refused (Reason 8 or 4); step UD1c: any report procedure
+                        MsgDisplay(ReportsMgr.ReportRefusedMessage(reportReason));
                     }
                     else if (dtReportsDetails.Rows.Count <= 0)
                     {
@@ -490,33 +522,41 @@ namespace BMMS.Report
 
             reportCode = ViewState["reportCode"].ToString();
 
+            // Step UD1c (BMMS-Fix-ManagerScope-Step54.sql): every report reads a procedure with the acting user; the
+            // procedure limits the rows by the role and a Manager's departments. Print, PDF and Word are built from these rows.
+            int actingUserId = int.Parse(Session["UserId"].ToString());
+            reportReason = 0;
+
             switch (reportCode)
             {
                 case "minutes":
                     // Step RA1b: every minutes status for the Controller and Management (BMMS-Fix-ReportAccess-Step41.sql)
                     if (allStatus)
+                    {
                         dtReportsDetails = ReportsMgr.GetMinutesReportAllStatus(CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
-                            SubjectNoSearch, FromSubjectNo, ToSubjectNo, int.Parse(Session["UserId"].ToString()), out allStatusReason);
+                            SubjectNoSearch, FromSubjectNo, ToSubjectNo, actingUserId, out allStatusReason);
+                        reportReason = allStatusReason;
+                    }
                     else
-                        dtReportsDetails = ReportsMgr.GetMinutesReport(CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
-                            SubjectNoSearch, FromSubjectNo, ToSubjectNo);
+                        dtReportsDetails = ReportsMgr.GetMinutesReport(actingUserId, CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
+                            SubjectNoSearch, FromSubjectNo, ToSubjectNo, out reportReason);
                     break;
                 case "minutes_extract":
-                    dtReportsDetails = ReportsMgr.GetMinutesExtractReport(CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
-                        SubjectNoSearch, FromSubjectNo, ToSubjectNo);
+                    dtReportsDetails = ReportsMgr.GetMinutesExtractReport(actingUserId, CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
+                        SubjectNoSearch, FromSubjectNo, ToSubjectNo, out reportReason);
                     break;
                 case "agenda_summary":
 
                     if (MeetingNoSearch == 1 || (MeetingNoSearch == 0 && MeetingId <= 0))
-                        dtReportsDetails = ReportsMgr.GetAgendaSummaryFullReport(CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
-                            SubjectNoSearch, FromSubjectNo, ToSubjectNo);
+                        dtReportsDetails = ReportsMgr.GetAgendaSummaryFullReport(actingUserId, CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
+                            SubjectNoSearch, FromSubjectNo, ToSubjectNo, out reportReason);
                     else
-                        dtReportsDetails = ReportsMgr.GetAgendaSummaryReport(CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
-                            SubjectNoSearch, FromSubjectNo, ToSubjectNo);
+                        dtReportsDetails = ReportsMgr.GetAgendaSummaryReport(actingUserId, CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
+                            SubjectNoSearch, FromSubjectNo, ToSubjectNo, out reportReason);
                     break;
                 case "agenda_details":
-                    dtReportsDetails = ReportsMgr.GetAgendaDetailsReport(CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
-                        SubjectNoSearch, FromSubjectNo, ToSubjectNo);
+                    dtReportsDetails = ReportsMgr.GetAgendaDetailsReport(actingUserId, CommitteeId, DepartmentId, MeetingNoSearch, MeetingId, FromMeetingId, ToMeetingId,
+                        SubjectNoSearch, FromSubjectNo, ToSubjectNo, out reportReason);
                     break;
             }
 
