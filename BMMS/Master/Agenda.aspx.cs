@@ -646,6 +646,7 @@ namespace BMMS.Master
                 bool saved = false;
                 bool mailFailed = false;
                 string submissionNotice = string.Empty;
+                bool sentToControllerNote = false;   // step UD1b: the user's new item went to the Controller (no active Manager)
 
                 try
                 {
@@ -765,7 +766,7 @@ namespace BMMS.Master
                         strResult = CheckNewItemMeetingDate(myAgenda.MeetingId, out submissionNotice);
 
                         if (strResult == "Success")
-                            strResult = CheckNewItemRoute();
+                            strResult = CheckNewItemRoute(myAgenda.DepartmentId);
                     }
                     else if (updateAccess != "Success")
                     {
@@ -803,15 +804,18 @@ namespace BMMS.Master
                         }
 
                         saved = result.Result == 1;
+                        // Step UD1b: the save itself says the item went to the Controller (the department had no active Manager)
+                        sentToControllerNote = saved && btnSave.Text == "Save" && result.ReasonDetail == "SentToController";
 
                         // Save first; the "Agenda Created" mail goes out only when the database accepted the new
                         // item, and the item stays saved when the mail fails (step M2)
                         if (!saved)
                             sMsg = result.RefusalMessage();
-                        else if (btnSave.Text == "Save" && GenerateMail() != "Success")
+                        else if (btnSave.Text == "Save" && GenerateMail(myAgenda.DepartmentId, sentToControllerNote) != "Success")
                         {
                             mailFailed = true;
-                            sMsg = MailNotSentMessage + submissionNotice;
+                            sMsg = MailNotSentMessage + submissionNotice
+                                 + (sentToControllerNote ? " " + MeetingChangeReason.SentToControllerNoManagerNote : "");   // step UD1b
                         }
                         else if (btnSave.Text == "Update" && GenerateUpdateMail(myAgenda.AgendaId, ActingUserId, result.ChangedFields) != "Success")
                         {
@@ -820,7 +824,9 @@ namespace BMMS.Master
                             sMsg = UpdateMailNotSentMessage;
                         }
                         else
-                            sMsg = submissionNotice == string.Empty ? "Successfully Saved" : "Successfully Saved." + submissionNotice;
+                            // Step UD1b: "Successfully Saved" alone keeps its old form; followed by a sentence it ends with a full stop
+                            sMsg = (submissionNotice == string.Empty && !sentToControllerNote ? "Successfully Saved" : "Successfully Saved." + submissionNotice)
+                                 + (sentToControllerNote ? " " + MeetingChangeReason.SentToControllerNoManagerNote : "");   // step UD1b
                     }
                     else
                     {
@@ -1006,13 +1012,15 @@ namespace BMMS.Master
         // A user's new item, before it is saved: refused while the manager is inactive (BMMS-Fix-UserStatus-Stage2b.sql)
         // or when it would go to the Controllers and none is active (BMMS-Fix-AgendaRouting-Step20.sql). Returns
         // "Success" or the refusal; nothing is saved and no mail goes out on a refusal. The procedure checks again.
-        private string CheckNewItemRoute()
+        // Step UD1b: the route is read for the item's department (BMMS-Fix-DepartmentApprovers-Step53.sql); route R
+        // (no active Manager in the department, setting "refuse") is refused with Reason 29's message.
+        private string CheckNewItemRoute(int DepartmentId)
         {
             string roleCode = Session["RoleCode"].ToString();
             if (roleCode == "controller" || roleCode == "manager")
                 return "Success";
 
-            DataTable dtRoute = AgendaMgr.GetAgendaCreationMailId(int.Parse(Session["UserId"].ToString()));
+            DataTable dtRoute = AgendaMgr.GetAgendaCreationMailId(int.Parse(Session["UserId"].ToString()), DepartmentId);
             string route = dtRoute.Rows[0]["Route"].ToString();
 
             if (route == "I")
@@ -1021,12 +1029,18 @@ namespace BMMS.Master
             if (route == "C" && Convert.ToInt32(dtRoute.Rows[0]["ActiveControllers"]) == 0)
                 return MeetingChangeReason.NoActiveControllerMessage;
 
+            if (route == "R")
+                return MeetingChangeReason.DepartmentHasNoManagerMessage(dtRoute.Rows[0]["DepartmentName"].ToString());
+
             return "Success";
         }
         #endregion
 
         #region GenerateMail
-        private string GenerateMail()
+        // Step UD1b: DepartmentId is the new item's department (the route and the Bcc of BMMS-Fix-DepartmentApprovers-Step53.sql);
+        // SentToControllerNote is true when the save said the user's item went to the Controller because the department had no
+        // active Manager (BMMS-Fix-DepartmentApprovers-Step53.sql, ReasonDetail "SentToController"); the mail body says so too.
+        private string GenerateMail(int DepartmentId, bool SentToControllerNote)
         {
             try
             {
@@ -1054,7 +1068,9 @@ namespace BMMS.Master
                 {
                     for (int i = 0; i <= dtUser.Rows.Count - 1; i++)
                     {
-                        if (dtUser.Rows[i]["UserId"].ToString() == mgrUserId.ToString())
+                        // Step UD1b: a Reporting Person of the Admin role gets no functional mail
+                        if (dtUser.Rows[i]["UserId"].ToString() == mgrUserId.ToString()
+                            && dtUser.Rows[i]["RoleCode"].ToString() != "admin")
                         {
                             Bcc += dtUser.Rows[i]["EmailId"].ToString();
                             break;
@@ -1068,7 +1084,7 @@ namespace BMMS.Master
                 string roleCode = Session["RoleCode"].ToString();
                 if (roleCode != "controller" && roleCode != "manager")
                 {
-                    DataTable dtRoute = AgendaMgr.GetAgendaCreationMailId(int.Parse(Session["UserId"].ToString()));
+                    DataTable dtRoute = AgendaMgr.GetAgendaCreationMailId(int.Parse(Session["UserId"].ToString()), DepartmentId);
 
                     Bcc = string.Empty;
                     for (int i = 0; i <= dtRoute.Rows.Count - 1; i++)
@@ -1087,6 +1103,8 @@ namespace BMMS.Master
                     txtDateOfMeeting.Text, Session["RoleCode"].ToString() == "controller" ? ddlDepartment.SelectedItem.Text.ToString() : txtDepartment.Text,
                     ddlSubjectType.SelectedItem.Text, txtShortText.Text);
                 BodyText += "</table>";
+                if (SentToControllerNote)
+                    BodyText += "<p>" + HttpUtility.HtmlEncode(MeetingChangeReason.SentToControllerNoManagerNote) + "</p>";   // step UD1b
 
                 string result = Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, Bcc);
 

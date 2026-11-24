@@ -42,6 +42,13 @@ BEGIN
     RAISERROR('Current database is "%s". Select the BMMS database (or its test copy) and run again. Nothing was changed.', 16, 1, @CurrentDatabase);
     SET NOEXEC ON;
 END
+-- Step 53 (step UD1b) replaced fn_AgendaWaitingFor and spr_UpdateAgendaByAgendaId again: roll it back first (DepartmentApprovers-Step53)
+ELSE IF (OBJECT_ID('dbo.fn_DepartmentManagers', 'IF') IS NOT NULL
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.fn_AgendaWaitingFor')), '') LIKE '%DepartmentApprovers-Step53%')
+BEGIN
+    RAISERROR('Step 53 is installed in "%s": it replaced fn_AgendaWaitingFor and spr_UpdateAgendaByAgendaId again; rolling this step back now would undo step 53 in part. Run BMMS-Rollback-DepartmentApprovers-Step53.sql first, then this script. Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
 -- Step 45 (step UN6c2b) replaced spr_GetDashboardMeetings and spr_GetDashboardApprovals again (their step 45 texts
 -- read fn_DashboardCommitteeFilter): its Rollback comes first, or this script would put back the step 42 meeting list
 -- under step 45 and drop the approvals procedure step 45 replaced

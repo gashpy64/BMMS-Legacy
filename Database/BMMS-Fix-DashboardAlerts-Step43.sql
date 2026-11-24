@@ -157,6 +157,14 @@ BEGIN
     RAISERROR('Current database is "%s". Select the BMMS database (or its test copy) and run again. Nothing was changed.', 16, 1, @CurrentDatabase);
     SET NOEXEC ON;
 END
+-- Step 53 (step UD1b) replaced fn_DashboardAlerts, spr_GetDashboardAlerts, spr_GetAlertCount, spr_GetAlertMailId and spr_GetAgendaUpdateMailId again and kept the markers of this step, so a re-run
+-- would put an older text back without a word (DepartmentApprovers-Step53)
+ELSE IF (OBJECT_ID('dbo.fn_DepartmentManagers', 'IF') IS NOT NULL
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.fn_AgendaWaitingFor')), '') LIKE '%DepartmentApprovers-Step53%')
+BEGIN
+    RAISERROR('Step 53 is installed in "%s": it replaced fn_DashboardAlerts, spr_GetDashboardAlerts, spr_GetAlertCount, spr_GetAlertMailId and spr_GetAgendaUpdateMailId of this step again. A re-run of this script would put an older text back. Run BMMS-Rollback-DepartmentApprovers-Step53.sql first, then this script, then BMMS-Fix-DepartmentApprovers-Step53.sql again. Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
 ELSE IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetDashboardMeetings')), '') NOT LIKE '%DashboardMeetings-Step42%'
          OR OBJECT_ID('dbo.spr_GetAlertMailId', 'P') IS NULL OR OBJECT_ID('dbo.spr_GetAgendaUpdateMailId', 'P') IS NULL
          OR COL_LENGTH('dbo.Agenda', 'MgrApprovedBy') IS NULL OR COL_LENGTH('dbo.Minutes', 'DueDate') IS NULL)

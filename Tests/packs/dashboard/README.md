@@ -90,7 +90,8 @@ the run):
 9. My approvals (step UN6c2a; `approvals`, `approvalFilters`, `approvalOpen`): the panel per account and its rows,
    newest meeting first; no panel for qa_user, qa_user2, qa_mgmt, qa_mdsec and qa_admin. With committee QA Dashboard
    Committee chosen qa_ctrl sees QA2-00001-1 only; qa_manager2 with HRD chosen sees his item, with Secretarial
-   chosen "Nothing is waiting for your approval." (QA2-00001-2 is Secretarial and at AC, but not routed to him).
+   chosen QA2-00001-2 (step UD1b, database step 53: it is Secretarial and at AC, and every Manager of the department
+   decides it; before step 53 it was routed to nobody and the panel read "Nothing is waiting for your approval.").
    qa_ctrl opens QA1-00001-002 from the panel: the Agenda Alert panel with Approve and Reject, his alert of that
    item read (header from 1 to 0) without a page reload, the row still in the panel. qa_user opens his alert of
    QA1-00001-003: no Approve, no Reject. In check 1 the cases of qa_ctrl, qa_manager and qa_manager2 also check
@@ -170,13 +171,13 @@ the tables, not by the step 45 objects): scheduled meetings QA1 00001 to 00003 a
 | qa_mdsec, qa_admin | no cards | no cards |
 
 My approvals per account, by the rule "Controller: items approved by the Manager; Manager: items waiting for the
-Manager that are routed to him; meetings with an open agenda whose date has not passed":
+Manager that are routed to him (since step UD1b: of his departments); meetings with an open agenda whose date has not passed":
 
 | Account | Panel |
 |---|---|
 | qa_ctrl | QA1-00001-002 (meeting QA1 00001), QA2-00001-1 (QA2 00001, dated today) |
 | qa_manager | QA1-00001-001 (QA1 00001), QA1-00002-001 (QA1 00002): both saved by qa_user, whose manager he is |
-| qa_manager2 | QA1-00001-006 (the HRD item saved by qa_user2, whose manager he is) |
+| qa_manager2 | QA1-00001-006 (the HRD item saved by qa_user2), QA2-00001-2 (the Secretarial item saved by qa_ctrl; step UD1b) |
 | qa_user, qa_user2, qa_mgmt, qa_mdsec, qa_admin | no panel |
 
 The Action Items card per account (check 2), by the rule "Controller and Management: every item that is not

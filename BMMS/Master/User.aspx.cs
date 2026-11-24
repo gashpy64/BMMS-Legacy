@@ -482,9 +482,13 @@ namespace BMMS.Master
                     UserChangeResult result = myUserMgr.AddEditUser(myUser);
 
                     string closed = result.SuccessDetail(UserChangeReason.MappingsClosedPrefix);
+                    string released = result.ReleasedMessage();   // step UD1b, already encoded
 
                     if (result.Result == 1 && closed.Length > 0)
-                        sMsg = "Saved. Their department mappings were closed today: " + HttpUtility.HtmlEncode(closed) + ".";
+                        sMsg = "Saved. Their department mappings were closed today: " + HttpUtility.HtmlEncode(closed) + "."
+                             + (released.Length > 0 ? " " + released : "");
+                    else if (result.Result == 1 && released.Length > 0)
+                        sMsg = "Saved. " + released;
                     else if (result.Result == 1)
                         sMsg = "Successfully Saved";
                     else if (result.Reason != UserChangeReason.None)
@@ -645,6 +649,8 @@ namespace BMMS.Master
                     if (result.Result == 1 && activate && notRestored.Length > 0)
                         // Activated, but not completely: a warning, so the department left out is noticed
                         MsgDisplay("Activated. Not restored (department inactive): " + HttpUtility.HtmlEncode(notRestored), MessageKind.Warning);
+                    else if (result.Result == 1 && !activate && result.ReleasedMessage().Length > 0)
+                        MsgDisplay("User deactivated. " + result.ReleasedMessage(), MessageKind.Success);   // step UD1b
                     else if (result.Result == 1)
                         MsgDisplay(activate ? "User activated" : "User deactivated", MessageKind.Success);
                     else

@@ -131,11 +131,26 @@ The Meetings card takes three parts of four of the width of the page, with the A
 
 ## Alerts and mails you receive
 
-[[CONFIRM: not written yet]]
+Where your new agenda item goes depends on its department, not only on the person you report to:
+
+- If the person you report to is an active Controller, the item goes straight to the Controllers.
+- Otherwise, if the department of the item has an active Manager, the item waits for the Managers of that department.
+  Every one of them gets an alert and the "has been Created" mail, and any one of them may approve or reject it.
+- Otherwise the Admin's System Settings decide ("Department without an active Manager"): either your item is not saved
+  (see "Common problems"), or it is saved and sent to the Controller. In that case BMMS says "Successfully Saved. Sent to
+  the Controller: the department had no active Manager." The "has been Created" mail adds the same line.
+
+You receive the "has been Created" mail for your own item as before.
+
+[[CONFIRM: the rest of this section (the other alerts and mails a User receives) is not written yet]]
 
 ## Common problems
 
-[[CONFIRM: not written yet]]
+- "Not saved: the department [department name] has no active Manager. Ask the Admin to nominate a Manager for the
+  department.": your item was not saved, because its department has no active Manager and BMMS is set to refuse such
+  items. Nothing was sent. Ask the Admin to nominate a Manager for the department, then enter the item again.
+
+[[CONFIRM: the other common problems are not written yet]]
 
 ## Quick reference
 

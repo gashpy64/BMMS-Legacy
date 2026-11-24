@@ -33,6 +33,13 @@ BEGIN
     RAISERROR('Current database is "%s". Select the BMMS database (or its test copy) and run again. Nothing was changed.', 16, 1, @CurrentDatabase);
     SET NOEXEC ON;
 END
+-- Step 53 (step UD1b) replaced the three Agenda Entry procedures again: roll it back first (DepartmentApprovers-Step53)
+ELSE IF (OBJECT_ID('dbo.fn_DepartmentManagers', 'IF') IS NOT NULL
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.fn_AgendaWaitingFor')), '') LIKE '%DepartmentApprovers-Step53%')
+BEGIN
+    RAISERROR('Step 53 is installed in "%s": it replaced the three Agenda Entry procedures again; rolling this step back now would undo step 53 in part. Run BMMS-Rollback-DepartmentApprovers-Step53.sql first, then this script. Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
 ELSE IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_AddEditAgendaByManager')), '') NOT LIKE '%CommentAuthor-Step35%'
          OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_AddEditAgendaByController')), '') NOT LIKE '%CommentAuthor-Step35%'
          OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_AddEditAgenda')), '') NOT LIKE '%UnicodeText-Step31%'

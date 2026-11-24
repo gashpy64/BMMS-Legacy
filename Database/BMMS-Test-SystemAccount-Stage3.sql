@@ -51,6 +51,8 @@ END
 GO
 
 DECLARE @T TABLE (TestNo INT IDENTITY(1,1), Test VARCHAR(160), Expected VARCHAR(120), Actual VARCHAR(400));
+-- Step 53 (step UD1b): no new alert row for the Admin role; the values that differ read [step 53: ...]
+DECLARE @S53 INT = CASE WHEN OBJECT_ID('dbo.fn_DepartmentManagers', 'IF') IS NOT NULL THEN 1 ELSE 0 END;
 DECLARE @R TABLE (Result INT, Reason INT, ReasonDetail NVARCHAR(2000),
                   Txt AS ('Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(3))
                           + CASE WHEN ReasonDetail <> '' THEN ', ' + CAST(ReasonDetail AS VARCHAR(200)) ELSE '' END));
@@ -288,7 +290,7 @@ BEGIN TRY
          @StatusId = 1, @CreatedOn = @Now, @CreatedBy = @CtlA, @UpdatedOn = @Now, @UpdatedBy = @CtlA;
     SET @C = (SELECT CommitteeId FROM Committee WHERE CommitteeCode = 'Z8A');
     SET @A = (SELECT TOP 1 AlertId FROM Alert_Master WHERE SourceType = 'Committee' AND SourceTypeId = @C ORDER BY AlertId DESC);
-    INSERT INTO @T SELECT 'Committee alert: system account / ordinary Admin mapped', '0 1',
+    INSERT INTO @T SELECT 'Committee alert: system account / ordinary Admin mapped [step 53: no Admin row]', CASE WHEN @S53 = 1 THEN '0 0' ELSE '0 1' END,
            CAST((SELECT COUNT(*) FROM Alert_User_Map WHERE AlertId = @A AND UserId = @Sys) AS VARCHAR(12)) + ' '
          + CAST((SELECT COUNT(*) FROM Alert_User_Map WHERE AlertId = @A AND UserId = @AdmA) AS VARCHAR(12));
 
@@ -298,7 +300,7 @@ BEGIN TRY
          @CreatedOn = @Now, @CreatedBy = @CtlA, @UpdatedOn = @Now, @UpdatedBy = @CtlA;
     SET @Mt = (SELECT MeetingId FROM Meeting WHERE CommitteeId = @C AND MeetingNo = '99981');
     SET @A = (SELECT TOP 1 AlertId FROM Alert_Master WHERE SourceType = 'Meeting' AND SourceTypeId = @Mt ORDER BY AlertId DESC);
-    INSERT INTO @T SELECT 'Meeting alert: system account / ordinary Admin mapped', '0 1',
+    INSERT INTO @T SELECT 'Meeting alert: system account / ordinary Admin mapped [step 53: no Admin row]', CASE WHEN @S53 = 1 THEN '0 0' ELSE '0 1' END,
            CAST((SELECT COUNT(*) FROM Alert_User_Map WHERE AlertId = @A AND UserId = @Sys) AS VARCHAR(12)) + ' '
          + CAST((SELECT COUNT(*) FROM Alert_User_Map WHERE AlertId = @A AND UserId = @AdmA) AS VARCHAR(12));
 
@@ -308,7 +310,7 @@ BEGIN TRY
          @CreatedOn = @Now, @CreatedBy = @UsrA, @UpdatedOn = @Now, @UpdatedBy = @UsrA, @SubjectNo = NULL, @ActingUserId = @UsrA;
     SET @AgA = (SELECT TOP 1 AgendaId FROM Agenda WHERE MeetingId = @Mt AND CreatedBy = @UsrA ORDER BY AgendaId DESC);
     SET @A = (SELECT TOP 1 AlertId FROM Alert_Master WHERE SourceType = 'Agenda' AND SourceTypeId = @AgA ORDER BY AlertId DESC);
-    INSERT INTO @T SELECT 'Agenda by a User (AC): ordinary Admin / system account / manager mapped', 'Result 1, Reason 0; 1 0 1',
+    INSERT INTO @T SELECT 'Agenda by a User (AC): ordinary Admin / system account / manager mapped [step 53: no Admin row]', CASE WHEN @S53 = 1 THEN 'Result 1, Reason 0; 0 0 1' ELSE 'Result 1, Reason 0; 1 0 1' END,
            (SELECT Txt FROM @R) + '; '
          + CAST((SELECT COUNT(*) FROM Alert_User_Map WHERE AlertId = @A AND UserId = @AdmA) AS VARCHAR(12)) + ' '
          + CAST((SELECT COUNT(*) FROM Alert_User_Map WHERE AlertId = @A AND UserId = @Sys) AS VARCHAR(12)) + ' '
@@ -320,7 +322,7 @@ BEGIN TRY
          @CreatedOn = @Now, @CreatedBy = @MgrA, @UpdatedOn = @Now, @UpdatedBy = @MgrA, @SubjectNo = NULL, @ActingUserId = @MgrA;
     SET @AgM = (SELECT TOP 1 AgendaId FROM Agenda WHERE MeetingId = @Mt AND CreatedBy = @MgrA ORDER BY AgendaId DESC);
     SET @A = (SELECT TOP 1 AlertId FROM Alert_Master WHERE SourceType = 'Agenda' AND SourceTypeId = @AgM ORDER BY AlertId DESC);
-    INSERT INTO @T SELECT 'Agenda by a Manager (AMA): ordinary Admin / system account mapped', '1 0',
+    INSERT INTO @T SELECT 'Agenda by a Manager (AMA): ordinary Admin / system account mapped [step 53: no Admin row]', CASE WHEN @S53 = 1 THEN '0 0' ELSE '1 0' END,
            CAST((SELECT COUNT(*) FROM Alert_User_Map WHERE AlertId = @A AND UserId = @AdmA) AS VARCHAR(12)) + ' '
          + CAST((SELECT COUNT(*) FROM Alert_User_Map WHERE AlertId = @A AND UserId = @Sys) AS VARCHAR(12));
 
@@ -330,7 +332,7 @@ BEGIN TRY
          @CreatedOn = @Now, @CreatedBy = @CtlA, @UpdatedOn = @Now, @UpdatedBy = @CtlA, @SubjectNo = NULL, @ActingUserId = @CtlA;
     SET @AgK = (SELECT TOP 1 AgendaId FROM Agenda WHERE MeetingId = @Mt AND CreatedBy = @CtlA ORDER BY AgendaId DESC);
     SET @A = (SELECT TOP 1 AlertId FROM Alert_Master WHERE SourceType = 'Agenda' AND SourceTypeId = @AgK ORDER BY AlertId DESC);
-    INSERT INTO @T SELECT 'Agenda by the Controller (ACA): ordinary Admin / system account mapped', '1 0',
+    INSERT INTO @T SELECT 'Agenda by the Controller (ACA): ordinary Admin / system account mapped [step 53: no Admin row]', CASE WHEN @S53 = 1 THEN '0 0' ELSE '1 0' END,
            CAST((SELECT COUNT(*) FROM Alert_User_Map WHERE AlertId = @A AND UserId = @AdmA) AS VARCHAR(12)) + ' '
          + CAST((SELECT COUNT(*) FROM Alert_User_Map WHERE AlertId = @A AND UserId = @Sys) AS VARCHAR(12));
 

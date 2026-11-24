@@ -488,12 +488,18 @@ namespace BMMSBAL
         #region GetAgendaCreationMailId
         // Route M (the manager step), C (straight to the Controllers) or I (manager inactive: refused),
         // with the Bcc addresses of the "agenda created" mail (BMMS-Fix-AgendaRouting-Step20.sql)
-        public static DataTable GetAgendaCreationMailId(int UserId)
+        // Step UD1b: for a new item of DepartmentId; route M Bcc every active Manager of the department, R refused
+        // (no active Manager, setting "refuse"); RouteNote "N" on route C when the department had no active Manager
+        // (BMMS-Fix-DepartmentApprovers-Step53.sql)
+        public static DataTable GetAgendaCreationMailId(int UserId, int DepartmentId)
         {
-            DataTable dt = AgendaDB.GetAgendaCreationMailId(UserId);
+            DataTable dt = AgendaDB.GetAgendaCreationMailId(UserId, DepartmentId);
 
             if (dt == null || dt.Rows.Count == 0 || !dt.Columns.Contains("Route"))
                 throw new InvalidOperationException("spr_GetAgendaCreationMailId returned no row. Run Database/BMMS-Fix-AgendaRouting-Step20.sql.");
+
+            if (!dt.Columns.Contains("RouteNote"))
+                throw new InvalidOperationException("spr_GetAgendaCreationMailId has no RouteNote column. Run Database/BMMS-Fix-DepartmentApprovers-Step53.sql.");
 
             return dt;
         }

@@ -53,7 +53,7 @@
                     </div>
                 </div>
                 <p class="wb-help">
-                    Stored now, used from a later step: today agenda items are routed as before. A change is
+                    Used when a new agenda item's department has no active Manager. A change is
                     written to the audit trail.
                     <asp:Literal ID="litDeptRuleLastChanged" runat="server"></asp:Literal></p>
                 <div class="wb-actions">

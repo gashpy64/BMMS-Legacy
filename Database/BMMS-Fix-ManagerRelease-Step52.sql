@@ -105,6 +105,14 @@ BEGIN
     RAISERROR('Current database is "%s". Select the BMMS database (or its test copy) and run again. Nothing was changed.', 16, 1, @CurrentDatabase);
     SET NOEXEC ON;
 END
+-- Step 53 (step UD1b) replaced the four objects of this step again and kept the markers of this step, so a re-run
+-- would put an older text back without a word (DepartmentApprovers-Step53)
+ELSE IF (OBJECT_ID('dbo.fn_DepartmentManagers', 'IF') IS NOT NULL
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.fn_AgendaWaitingFor')), '') LIKE '%DepartmentApprovers-Step53%')
+BEGIN
+    RAISERROR('Step 53 is installed in "%s": it replaced the four objects of this step again. A re-run of this script would put an older text back. Run BMMS-Rollback-DepartmentApprovers-Step53.sql first, then this script, then BMMS-Fix-DepartmentApprovers-Step53.sql again. Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
 ELSE IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.fn_ManagerReleaseRefusal')), '') NOT LIKE '%UserHistory-Step39%'
          OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_AddEditUser')), '') NOT LIKE '%UserHistory-Step39%'
          OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_SetUserStatusByUserId')), '') NOT LIKE '%UserHistory-Step39%')

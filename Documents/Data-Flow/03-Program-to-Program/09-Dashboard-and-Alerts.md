@@ -3,10 +3,11 @@
 - Title: Program to Program: Dashboard and Alerts
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: MR1 (step 52): Reason 28 in the refusal paths and the rule row for the meeting date in the database; UN6e (step 50): two rows of the Action Items tables (the list is no longer kept in ViewState); FU2a (step 48): the new section "The Action Items card and panel: a confirmed followup is final, the status line, Reopened"; FU1 (step 47): the Followup page (list, Submit, Reopen, status history) in the new section after the UN6d section; UN6d (step 46): the Action Item Details panel Submit and the Followup page saves; UN6c2b (step 45): the summary cards, the Committee filter on every card, the Action Items filters; UN6c2a (step 44): the My approvals panel, the Waiting for me column and the Approve and Reject buttons; UN6c1 (step 43): the Alerts card, the header count and the Action Items card; UN6b (step 42): the Meetings card; the rest not written yet
-- Last updated by: MR1, based on e1b90dc
+- Applies to: UD1b (step 53): the new section "Handled alert rows: one Manager decides, the others' alerts are closed" and two rows of the UN6c1 and UN6c2a rule tables; MR1 (step 52): Reason 28 in the refusal paths and the rule row for the meeting date in the database; UN6e (step 50): two rows of the Action Items tables (the list is no longer kept in ViewState); FU2a (step 48): the new section "The Action Items card and panel: a confirmed followup is final, the status line, Reopened"; FU1 (step 47): the Followup page (list, Submit, Reopen, status history) in the new section after the UN6d section; UN6d (step 46): the Action Item Details panel Submit and the Followup page saves; UN6c2b (step 45): the summary cards, the Committee filter on every card, the Action Items filters; UN6c2a (step 44): the My approvals panel, the Waiting for me column and the Approve and Reject buttons; UN6c1 (step 43): the Alerts card, the header count and the Action Items card; UN6b (step 42): the Meetings card; the rest not written yet
+- Commit: db1d641
+- Last updated by: UD1b, based on db1d641
 - Status: Draft
-- Verified against: for step MR1: BMMSBAL/MeetingMgr.cs (diff: Reason 28 text), Database/README.md (section Step MR1: spr_UpdateAgendaByAgendaId); the Fix script itself was not read line by line; for step UN6e: BMMS/DashBoard/DashBoard.aspx.cs (diff: LoadActionItemGRV, OnPagingAction), Database/README.md (section Step UN6e); for the step FU2a section: BMMS/DashBoard/DashBoard.aspx and .aspx.cs (diff), BMMS/FollowupStatusText.cs, BMMS/Master/Followup.aspx.cs (diff), BMMS/CSS/bmms-workbench.css (diff), Database/BMMS-Fix-DashboardFollowupFinal-Step48.sql (the Reason lines of the three procedures), Database/README.md (section Step FU2a and its Known items), the Test result of step 48 (43 of 43) and the tester run 2026-11-16_181041 as given;
+- Verified against: for step UD1b: BMMS/DashBoard/DashBoard.aspx and .aspx.cs and BMMS/CSS/bmms-workbench.css (diff), Database/BMMS-Fix-DepartmentApprovers-Step53.sql (fn_DashboardAlerts, spr_SetManagerAlertRows, spr_GetDashboardAlerts, spr_GetAlertCount read), Database/README.md (section Step UD1b), Tests/packs/two-approvers/README.md; for step MR1: BMMSBAL/MeetingMgr.cs (diff: Reason 28 text), Database/README.md (section Step MR1: spr_UpdateAgendaByAgendaId); the Fix script itself was not read line by line; for step UN6e: BMMS/DashBoard/DashBoard.aspx.cs (diff: LoadActionItemGRV, OnPagingAction), Database/README.md (section Step UN6e); for the step FU2a section: BMMS/DashBoard/DashBoard.aspx and .aspx.cs (diff), BMMS/FollowupStatusText.cs, BMMS/Master/Followup.aspx.cs (diff), BMMS/CSS/bmms-workbench.css (diff), Database/BMMS-Fix-DashboardFollowupFinal-Step48.sql (the Reason lines of the three procedures), Database/README.md (section Step FU2a and its Known items), the Test result of step 48 (43 of 43) and the tester run 2026-11-16_181041 as given;
   for the step FU1 section: BMMS/Master/Followup.aspx and .aspx.cs (read in full), BMMSBAL/ActionItemMgr.cs and BMMSDAL/ActionItemDB.cs (diff), Database/README.md (section Step FU1 and its Known items), the Test result of step 47 (95 of 95) and the tester run of 2026-11-16 as given;
   for the step UN6d section: git diff ce7358a 276e402 of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/Master/Followup.aspx and .aspx.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/BMMS-Fix-FollowupSave-Step46.sql (read in full), Database/README.md (section Step UN6d and its Known items), the Test script result of step 46 (56 of 56) and the tester runs of 2026-11-15 as given;
   for the step UN6c2b section: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs,
@@ -263,7 +264,7 @@ sequenceDiagram
 
 | Rule | C# | Procedure or function |
 |---|---|---|
-| Who sees which alert: the Admin role none of the eleven functional types; a Controller not ACA and ACR; a Manager not AMA and AMR; removed rows (StatusId 0) never | DashBoard.aspx.cs only displays | fn_DashboardAlerts |
+| Who sees which alert: the Admin role none of the eleven functional types; a Controller not ACA and ACR; a Manager not AMA and AMR; removed rows (StatusId 0) never; since step 53 a row marked as handled is listed whatever its type, under All only (see "Handled alert rows" below) | DashBoard.aspx.cs only displays | fn_DashboardAlerts |
 | Recent: every unread alert and the read ones whose event date is today or in the seven days before (database server date); Unread; All | AlertMode in ViewState (R by default), `AlertMode_Click` | spr_GetDashboardAlerts (@Mode, @From) |
 | Event date and person of an alert (entry, decision, edit more than one minute after a decision, or no recorded approver: a dash) | `ActorName` shows a dash when empty | fn_DashboardAlerts (EventOn, ActorUserId) |
 | A page of 10, the page after the last gives the last | `AllowCustomPaging`, `VirtualItemCount` | spr_GetDashboardAlerts (ROW_NUMBER, @PageShown) |
@@ -412,7 +413,7 @@ A refused call returns the same columns with no rows and changes nothing.
 
 | Rule | C# | Procedure or function |
 |---|---|---|
-| Who may decide an item: a Manager an item at AC routed to him (creator's manager or an alert row of the item, also one he removed from his list); a Controller approves at AMA and rejects at AC or AMA; no one else; not the system account or an inactive user | none | fn_AgendaWaitingFor (CanApprove, CanReject) |
+| Who may decide an item: a Manager an item at AC of whose department he is an active Manager, not the creator (since step 53, UD1b; before: routed to him by the creator's manager or an alert row of the item, also one he removed from his list); a Controller approves at AMA and rejects at AC or AMA; no one else; not the system account or an inactive user | none | fn_AgendaWaitingFor (CanApprove, CanReject) |
 | What waits for a person: CanApprove, agenda Open, meeting date today or later (or no date) | none | fn_AgendaWaitingFor (IsWaiting, AgendaOpen, DateOpen) |
 | The date is the database server's | none | `CAST(GETDATE() AS DATE)` in spr_GetDashboardApprovals, spr_GetAgendaApprovalState and spr_GetDashboardMeetings, passed to the function |
 | The My approvals rows: IsWaiting, committee, department, newest meeting first, 10 to a page | `LoadApprovals`, `OnPagingApprovals` | spr_GetDashboardApprovals |
@@ -887,6 +888,93 @@ Drawn from (FU2a): BMMS/DashBoard/DashBoard.aspx and .aspx.cs (diff), BMMS/Follo
 BMMS/Master/Followup.aspx.cs (diff), BMMS/CSS/bmms-workbench.css (diff), Database/BMMS-Fix-DashboardFollowupFinal-Step48.sql
 (Reason lines of the three procedures), Database/README.md (section Step FU2a), the Test script result of step 48 (43 of
 43 PASS on BMMS_Test), the tester run 2026-11-16_181041 and the owner's tests as given.
+
+## Handled alert rows: one Manager decides, the others' alerts are closed (step UD1b)
+
+Added in step UD1b (database step 53). Every active Manager of an item's department may approve or reject it at AC; the
+first decision wins. The other Managers' rows on the item's alert are then marked handled, and the Dashboard lists a marked
+row under All only, greyed, with a line that says why. A marked row is never counted as unread and never becomes unread again.
+Other causes mark a row too: a Manager who leaves a department, and a Controller who moves the item to another department.
+
+### Programs involved
+
+| Program | Kind | Part in the flow |
+|---|---|---|
+| DashBoard/DashBoard.aspx(.cs) | Page | `HandledCaption` builds the line; `lblHandled` shows it; the row gets the class `bmms-row-handled`; `lnkSource_Click` repeats the line in the Agenda Alert panel; Approve and Reject (`btnApprove_Click`, `btnReject_Click`) as before |
+| AgendaMgr.UpdateAgendaByAgendaId, AlertMgr.GetDashboardAlerts, AlertMgr.GetAlertCount | BAL | Unchanged calls |
+| spr_UpdateAgendaByAgendaId | Procedure | A Manager's decision: marks the other Managers' unmarked rows 'H' (HandledBy the deciding Manager, HandledOn now, read) in the same transaction |
+| spr_SetManagerAlertRows | Internal procedure | Marks 'N' (a Manager leaves a department), opens 'N' and 'M' rows again, gives a Manager his rows; called by other procedures only |
+| spr_AddEditAgendaByController | Procedure | A Controller's move of an item at AC to another department marks the other Managers' rows 'M'; a move back opens them |
+| spr_AddEditUser, spr_SetUserStatusByUserId | Procedures | Mark 'N' when rule 12 allows a Manager to leave a department; give a new, re-activated or newly mapped Manager his rows |
+| fn_DashboardAlerts, spr_GetDashboardAlerts, spr_GetAlertCount | Function, procedures | List a marked row (under All only), return HandledReason, HandledOn, HandledByName, HandledByLogin; count only unmarked unread rows |
+
+### Main flow
+
+```mermaid
+sequenceDiagram
+    participant M1 as Manager 1
+    participant M2 as Manager 2 (same department)
+    participant P as DashBoard.aspx.cs
+    participant S as spr_UpdateAgendaByAgendaId
+    participant T as Alert_User_Map
+    participant L as spr_GetDashboardAlerts
+
+    M1->>P: Approve or Reject in the Agenda Alert panel
+    P->>S: item, decision, acting user (M1)
+    S->>S: lock the item, check the rule (Reasons 12, 8, 4, 5, 14, 28)
+    S->>T: M2's unmarked rows on the item's alert: HandledReason H, HandledBy M1, HandledOn now, read
+    S-->>P: Result 1
+    M2->>P: opens the Dashboard
+    P->>L: acting user (M2), mode R, U or A
+    L-->>P: the marked row under All only, never in the unread count
+    P-->>M2: grey row, line "Handled by [Name (login)] on [dd-MMM-yyyy]"
+    alt Reason 14 - M2 decides second
+        M2->>P: Approve or Reject
+        P->>S: item, decision, acting user (M2)
+        S-->>P: Reason 14, nothing saved
+        P-->>M2: "You cannot approve or reject this agenda item at its current stage ([status name]). Reload the Dashboard to see its current state."
+    end
+```
+
+| From | To | Data | Notes |
+|---|---|---|---|
+| Manager 1 | DashBoard.aspx | Approve or Reject | Shown only when fn_AgendaWaitingFor says he may decide; the meeting-date rules of steps M6a and 52 apply as before |
+| DashBoard.aspx | spr_UpdateAgendaByAgendaId | Item, decision, acting user | Through AgendaMgr and AgendaDB, as before |
+| spr_UpdateAgendaByAgendaId | Alert_User_Map | HandledReason 'H', HandledBy, HandledOn, ReadStatus 1 on the other Managers' rows | Same transaction as the decision; a row already marked ('H', 'N' or 'M') is left as it is |
+| spr_GetDashboardAlerts | DashBoard.aspx | Rows with HandledReason, HandledOn, HandledByName, HandledByLogin | A marked row is in mode A only; @UnreadCount leaves it out |
+| DashBoard.aspx | Manager 2 | The grey row and its line | "Handled by [Name (login)] on [dd-MMM-yyyy]" (a missing name reads "another Manager"); "No longer Manager of the department ([dd-MMM-yyyy])"; "Item moved to another department ([dd-MMM-yyyy])" |
+| Manager 2 | DashBoard.aspx | Opens the marked row | The Agenda Alert panel is read-only for him when he may not decide, and shows the same line (joined by a space to any other panel line); "Remove from my list" works on it |
+
+### Refusal paths
+
+| Reason | Raised by | Meaning | Message the page shows |
+|---|---|---|---|
+| 14 | spr_UpdateAgendaByAgendaId | The second Manager decides after the first: the item is no longer at AC | The existing "current stage" text above |
+| 28 | spr_UpdateAgendaByAgendaId | A Manager decides after the meeting date (step 52) | Unchanged |
+
+### Where each rule lives
+
+| Rule | C# | Procedure or function |
+|---|---|---|
+| Who may decide: every active Manager of the item's department, not the creator | none (the page asks the server) | fn_AgendaWaitingFor, fn_DepartmentManagers |
+| The other Managers' rows become handled when one decides | none | spr_UpdateAgendaByAgendaId |
+| A Manager who leaves a department: his waiting rows of it become 'N' | `UserMgr` (message), User.aspx.cs | spr_SetManagerAlertRows (@Release 1), called from spr_AddEditUser and spr_SetUserStatusByUserId |
+| A Controller's move to another department: the other Managers' rows become 'M'; a move back opens them | none | spr_AddEditAgendaByController, spr_SetManagerAlertRows |
+| A marked row is listed under All only and is never unread | `HandledCaption`, `bmms-row-handled` (display only) | fn_DashboardAlerts, spr_GetDashboardAlerts, spr_GetAlertCount |
+| The words of the line | DashBoard.aspx.cs `HandledCaption` | none |
+
+### Tables read and written
+
+| Object | Reads | Writes |
+|---|---|---|
+| spr_UpdateAgendaByAgendaId | Users, Roles, Agenda, Meeting, Alert_Master, Alert_User_Map, and fn_AgendaWaitingFor | Agenda, Alert_Master (type), Alert_User_Map (marked, unread, the creator added), Audit_Trail_Master |
+| spr_SetManagerAlertRows | Users, Roles, User_Department, Agenda, Meeting, Alert_Master, Alert_User_Map | Alert_User_Map (new rows; marked or opened rows) |
+| fn_DashboardAlerts | Alert_User_Map (including the three handled columns), Alert_Master, Users (also the handling person), Roles, Alert_Type, Committee, Department, Agenda | none |
+
+Drawn from (UD1b): BMMS/DashBoard/DashBoard.aspx and .aspx.cs (diff: `HandledCaption`, `lblHandled`, the row class, `lnkSource_Click`),
+BMMS/CSS/bmms-workbench.css (diff), Database/BMMS-Fix-DepartmentApprovers-Step53.sql (fn_DashboardAlerts, spr_SetManagerAlertRows,
+spr_GetDashboardAlerts, spr_GetAlertCount read; the comment of spr_UpdateAgendaByAgendaId and the move of spr_AddEditAgendaByController
+read), Database/README.md (section Step UD1b), Tests/packs/two-approvers/README.md, the Test and tester results as given.
 
 ## Drawn from
 

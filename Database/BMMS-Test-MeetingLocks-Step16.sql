@@ -59,6 +59,9 @@ DECLARE @Now DATETIME = GETDATE();
 DECLARE @Today DATETIME = CAST(CAST(GETDATE() AS date) AS DATETIME);
 DECLARE @MDate DATETIME = DATEADD(DAY, -10, CAST(CAST(GETDATE() AS date) AS DATETIME));
 DECLARE @MDate15 DATETIME = DATEADD(HOUR, 15, @MDate);
+-- Step 52 (MR1) refuses a Manager's approve or reject after the meeting date (Reason 28), so meeting 99904, whose item
+-- the Manager approves, is dated 10 days ahead (step UD1b); its agenda submission date stays @MDate
+DECLARE @Future DATETIME = DATEADD(DAY, 10, CAST(CAST(GETDATE() AS date) AS DATETIME));
 DECLARE @Later DATETIME = DATEADD(MINUTE, 5, GETDATE());
 
 DECLARE @Admin INT = (SELECT TOP 1 u.UserId FROM Users u JOIN Roles r ON r.RoleId = u.RoleId WHERE r.RoleCode = 'admin' AND u.AccountStatus = 1 ORDER BY u.UserId);
@@ -70,6 +73,10 @@ DECLARE @Usr INT = (SELECT TOP 1 u.UserId FROM Users u JOIN Roles r ON r.RoleId 
 DECLARE @CtrlRoleId INT = (SELECT TOP 1 RoleId FROM Roles WHERE RoleCode = 'controller');
 DECLARE @AdminRoleId INT = (SELECT TOP 1 RoleId FROM Roles WHERE RoleCode = 'admin');
 DECLARE @DepartmentId INT = (SELECT TOP 1 DepartmentId FROM Department ORDER BY DepartmentId);
+-- Step 53 (step UD1b): a new item waits for the Managers of its department, and only they may decide it, so with step 53
+-- installed the items are of the home department of @Mgr (a department with an active Manager); the checks are unchanged
+IF (OBJECT_ID('dbo.fn_DepartmentManagers', 'IF') IS NOT NULL)
+    SET @DepartmentId = ISNULL((SELECT DepartmentId FROM Users WHERE UserId = @Mgr), @DepartmentId);
 DECLARE @DesignationId INT = (SELECT TOP 1 DesignationId FROM Designation ORDER BY DesignationId);
 DECLARE @MemberTypeId INT = (SELECT TOP 1 MemberTypeId FROM Member_Type ORDER BY MemberTypeId);
 DECLARE @SubjectTypeId INT = (SELECT TOP 1 SubjectTypeId FROM Subject_Type ORDER BY SubjectTypeId);
@@ -152,7 +159,7 @@ BEGIN TRY
     VALUES ('99903', @C16, 'ZZ place', 'ZZ venue', @MDate, '10:00', @MDate, 'Open', 'Open');
     SET @MAg = SCOPE_IDENTITY();
     INSERT INTO Meeting (MeetingNo, CommitteeId, Place, Venue, MeetingDate, MeetingTime, AgendaSubmissionDate, AgendaStatus, MinutesStatus)
-    VALUES ('99904', @C16, 'ZZ place', 'ZZ venue', @MDate, '10:00', @MDate, 'Open', 'Open');
+    VALUES ('99904', @C16, 'ZZ place', 'ZZ venue', @Future, '10:00', @MDate, 'Open', 'Open');   -- step UD1b: the meeting date was @MDate
     SET @MOpen = SCOPE_IDENTITY();
     INSERT INTO Meeting (MeetingNo, CommitteeId, Place, Venue, MeetingDate, MeetingTime, AgendaSubmissionDate, AgendaStatus, MinutesStatus)
     VALUES ('99905', @C16, 'ZZ place', 'ZZ venue', @MDate, '10:00', @MDate, 'Close', 'Open');

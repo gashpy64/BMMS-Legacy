@@ -203,6 +203,16 @@
    the four (2, 3, 6, 10, 13, 14, 16, 17, 18, 20, 21, 29, 30, 31, 35, 42)
    brings back an older text: step 52 reads Partly; run step 52 again.
    After BMMS-Rollback-ManagerRelease-Step52.sql it reads Missing.
+   Step 53 (step UD1b) adds fn_DepartmentManagers and spr_SetManagerAlertRows,
+   replaces 18 objects of steps 18, 20, 24, 37, 43, 44 and 52 (they keep the
+   markers of their earlier steps, so those steps still read Installed) and
+   adds the handled columns: 21 markers (20 objects and one for the columns
+   HandledReason and RouteNote). The Fix scripts of steps 20, 24, 36, 37, 43
+   and 52 stop while step 53 is installed; a re-run of another step that
+   holds one of the 18 (13, 16, 17, 18, 31, 35) brings back an older text:
+   step 53 reads Partly; run step 53 again. After
+   BMMS-Rollback-DepartmentApprovers-Step53.sql it reads 1 of 21 (the columns
+   stay).
    Step 32 is reserved and not built; it has no row.
    Step D1 (shown as step 100) replaces spr_DeleteMeetingByMeetingId, which
    no numbered script contains: it reads Missing only on a database restored
@@ -575,6 +585,18 @@ INSERT INTO @M
 SELECT 52, o.Name + ' (ManagerRelease-Step52)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%ManagerRelease-Step52%' THEN 1 ELSE 0 END
 FROM (VALUES ('fn_ManagerReleaseRefusal'), ('spr_UpdateAgendaByAgendaId'), ('spr_AddEditUser'), ('spr_SetUserStatusByUserId')) o(Name);
 
+-- 53. BMMS-Fix-DepartmentApprovers-Step53.sql, installed after step 52 (two new objects, 18 replaced, the handled columns)
+INSERT INTO @M
+SELECT 53, o.Name + ' (DepartmentApprovers-Step53)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%DepartmentApprovers-Step53%' THEN 1 ELSE 0 END
+FROM (VALUES ('fn_DepartmentManagers'), ('spr_SetManagerAlertRows'), ('fn_AgendaRoute'), ('fn_AgendaWaitingFor'),
+             ('fn_ManagerReleaseRefusal'), ('fn_DashboardAlerts'), ('spr_GetDashboardAlerts'), ('spr_GetAlertCount'),
+             ('spr_GetAlertMailId'), ('spr_GetAgendaUpdateMailId'), ('spr_GetAgendaCreationMailId'), ('spr_RerouteWaitingAgendas'),
+             ('spr_AddEditCommittee'), ('spr_AddEditMeeting'), ('spr_AddEditAgenda'), ('spr_AddEditAgendaByManager'),
+             ('spr_AddEditAgendaByController'), ('spr_UpdateAgendaByAgendaId'), ('spr_AddEditUser'), ('spr_SetUserStatusByUserId')) o(Name);
+INSERT INTO @M VALUES
+(53, 'Alert_User_Map.HandledReason and Agenda.RouteNote (DepartmentApprovers-Step53)',
+ CASE WHEN COL_LENGTH('dbo.Alert_User_Map', 'HandledReason') IS NOT NULL AND COL_LENGTH('dbo.Agenda', 'RouteNote') IS NOT NULL THEN 1 ELSE 0 END);
+
 -- D1 (shown as step 100). BMMS-Fix-MeetingDelete-D1.sql; no numbered script contains spr_DeleteMeetingByMeetingId
 INSERT INTO @M VALUES
 (100, 'spr_DeleteMeetingByMeetingId (MeetingDelete-D1)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_DeleteMeetingByMeetingId')), '') LIKE '%MeetingDelete-D1%' THEN 1 ELSE 0 END);
@@ -628,6 +650,7 @@ INSERT INTO @Steps VALUES
 (50, 'BMMS-Fix-Indexes-Step50.sql', 'an index is missing or was changed by hand: run step 50 again (it stops and names an index of the same name with another definition)'),
 (51, 'BMMS-Fix-SessionCheck-Step51.sql', 'the procedure is missing: run step 51 again (after step 50), BEFORE the build of step RA1d'),
 (52, 'BMMS-Fix-ManagerRelease-Step52.sql', 'an earlier step that holds one of its four objects was re-run (1 to 3 of 4): run step 52 again (after step 51)'),
+(53, 'BMMS-Fix-DepartmentApprovers-Step53.sql', 'an earlier step that holds one of its 18 objects was re-run, or step 53 was rolled back (1 of 21: the columns stay): run step 53 again (after step 52)'),
 (100, 'BMMS-Fix-MeetingDelete-D1.sql (step D1)', '');
 
 SELECT s.Step, s.Script,

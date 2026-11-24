@@ -57,6 +57,7 @@ DECLARE @AgendaId INT;
 DECLARE @MinutesId INT;
 DECLARE @AlertId INT;
 DECLARE @OtherUsers INT;
+DECLARE @AdminsLeftOut INT = 0;   -- step 53 (UD1b): the active Admin-role users other than the system account get no alert row
 
 BEGIN TRANSACTION;
 
@@ -95,6 +96,10 @@ BEGIN TRY
     END
     ELSE
         SET @OtherUsers = (SELECT COUNT(*) FROM Users) - 1;
+    -- Step 53 (step UD1b): the committee and meeting alerts leave out the Admin role
+    IF (OBJECT_ID('dbo.fn_DepartmentManagers', 'IF') IS NOT NULL)
+        SET @AdminsLeftOut = (SELECT COUNT(*) FROM Users u JOIN Roles r ON r.RoleId = u.RoleId
+                              WHERE r.RoleCode = 'admin' AND u.AccountStatus = 1 AND u.IsSystem = 0);
 
     ---------------------------------------------------------------------------
     -- Committee created (alert sent to every other user)
@@ -116,7 +121,7 @@ BEGIN TRY
     FROM Alert_Master WHERE AlertId = @AlertId;
 
     INSERT INTO @T
-    SELECT 'Committee alert: sent to every other user', CAST(@OtherUsers AS VARCHAR(12)), CAST(COUNT(*) AS VARCHAR(12))
+    SELECT 'Committee alert: sent to every other user [step 53: not Admins]', CAST(@OtherUsers - @AdminsLeftOut AS VARCHAR(12)), CAST(COUNT(*) AS VARCHAR(12))
     FROM Alert_User_Map WHERE AlertId = @AlertId;
 
     ---------------------------------------------------------------------------
@@ -134,7 +139,7 @@ BEGIN TRY
     FROM Meeting WHERE MeetingId = @MeetingId;
 
     INSERT INTO @T
-    SELECT 'Meeting alert: sent to every other user', CAST(@OtherUsers AS VARCHAR(12)), CAST(COUNT(*) AS VARCHAR(12))
+    SELECT 'Meeting alert: sent to every other user [step 53: not Admins]', CAST(@OtherUsers - @AdminsLeftOut AS VARCHAR(12)), CAST(COUNT(*) AS VARCHAR(12))
     FROM Alert_User_Map WHERE AlertId = (SELECT TOP 1 AlertId FROM Alert_Master WHERE SourceType = 'Meeting' AND SourceTypeId = @MeetingId ORDER BY AlertId DESC);
 
     ---------------------------------------------------------------------------

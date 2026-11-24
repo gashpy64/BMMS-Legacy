@@ -3,11 +3,11 @@
 - Title: Development Environment
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: DA1 (the doc-auditor row of "The agents", the section "The doc-auditor and its guard", the section "The audit catalog"); UN6e (the SQL Server row and the App_Data row of "The tester: what the development machine needs"); UN6b (the memory reading in "The tester: what the development machine needs"); the rest WF3a2
-- Commit: 5f8c4fe
-- Last updated by: DA1, based on 5f8c4fe
+- Applies to: UD1b (the Database BMMS_Quality row of "The tester: what the development machine needs": the account qa_manager3 and the pack two-approvers); DA1 (the doc-auditor row of "The agents", the section "The doc-auditor and its guard", the section "The audit catalog"); UN6e (the SQL Server row and the App_Data row of "The tester: what the development machine needs"); UN6b (the memory reading in "The tester: what the development machine needs"); the rest WF3a2
+- Commit: db1d641
+- Last updated by: UD1b, based on db1d641
 - Status: Draft
-- Verified against: for step DA1: .claude/agents/doc-auditor.md, .claude/hooks/doc-auditor-guard.ps1 (header comment and the lines that name the write pattern and the Grep extension list; not read line by line), Documents/_build/Export-Catalog.ps1 (parameters, the output-folder rule, the fingerprint), Documents/Audit/README.md, CLAUDE.md (diff); for step UN6e: Tests/README.md (diff: the Server and Site lines), Database/README.md (section Step UN6e, Tester); for step UN6b: Tests/_runner/Tester.Common.ps1 (diff: Get-QaMemory, QaMemoryWarnMB),
+- Verified against: for step UD1b: Tests/README.md, Tests/_runner/Tester.Common.ps1 and Setup-Quality.ps1, Tests/credentials.json.example (diff), Tests/packs/two-approvers/README.md; for step DA1: .claude/agents/doc-auditor.md, .claude/hooks/doc-auditor-guard.ps1 (header comment and the lines that name the write pattern and the Grep extension list; not read line by line), Documents/_build/Export-Catalog.ps1 (parameters, the output-folder rule, the fingerprint), Documents/Audit/README.md, CLAUDE.md (diff); for step UN6e: Tests/README.md (diff: the Server and Site lines), Database/README.md (section Step UN6e, Tester); for step UN6b: Tests/_runner/Tester.Common.ps1 (diff: Get-QaMemory, QaMemoryWarnMB),
   Run-Tests.ps1 (diff, preflight), Tests/README.md (diff, the memory warning row); for the development workflow (steps 1, 5, 6, 7 and 9) and the agents: CLAUDE.md (diff),
   .claude/agents/tester.md; for the section "The tester: what the development machine needs": Tests/package.json,
   Tests/README.md, Tests/_runner/Tester.Common.ps1 and Run-Tests.ps1 (tool lookup), Tests/lib/run.js,
@@ -69,6 +69,20 @@ The check scripts (`Check-Documents.ps1`, `Check-UserManuals.ps1`) need pandoc a
 check, mermaid-cli; they skip a check they cannot run and say so. The export script needs all four
 tools and makes no network calls. [[CONFIRM: how the documentation tools are installed on the owner's machine; the scripts only say where they look]]
 
+Note (UD1b, November 2026): since Microsoft Edge 158 the Mermaid check fails on the development laptop. Edge starts, exits at
+once with code 0 and keeps running in the background, so mermaid-cli reports "Failed to launch the browser process" for the
+first block and "The browser is already running" for every later one, and the script then cannot delete its work folder
+Documents/Export/_check. Until Edge works again, point -Edge at the Chrome for Testing that puppeteer keeps in its cache
+(installed with mermaid-cli; not the Chrome the owner browses with):
+
+```powershell
+pwsh -File Documents/_build/Check-Documents.ps1 -Mmdc "$env:APPDATA\npm\node_modules\@mermaid-js\mermaid-cli" -Edge "C:\Users\HP\.cache\puppeteer\chrome\win64-157.0.8103.50\chrome-win64\chrome.exe"
+```
+
+The folder name holds the Chrome for Testing version; a later mermaid-cli update may install another one beside it. If the
+check stops with the work folder locked, stop the leftover msedge.exe processes whose command line names
+`Documents\Export\_check\edge-profile`, then run it again. Database/README.md, "Known items for later steps", has the item.
+
 ### The tester: what the development machine needs
 
 The tester (step WF3a1; what it is and how it runs are in 10-Testing-and-Release) needs this on the
@@ -84,7 +98,7 @@ development machine:
 | IIS Express | `C:\Program Files (x86)\IIS Express\iisexpress.exe`, run on port 18573 with the .NET 4 runtime |
 | SQL Server | The local default instance (the tester's server name is fixed as `.`), with sysadmin rights for the owner's Windows login for the one-time setup. Since step UN6e (Tests/README.md) the two instances are named: the owner's BMMS, BMMS_Test and BMMS_New stay on `.\SQLEXPRESS`, which the tester never connects to; BMMS_Quality on `.` is made from a COPY_ONLY backup of BMMS_Test taken on `.\SQLEXPRESS` and passed through a folder both instances' service accounts can use (neither can read the other's backup folder); on `.` bmms_app is a login of its own, linked to its user in BMMS_Quality, with a password nobody keeps |
 | Folder `BMMS\App_Data` | Must exist in the working tree (empty is enough). A fresh clone lacks it, because git keeps no empty folder, and the site sync then refuses the run; create it once with `mkdir BMMS\App_Data` |
-| Database BMMS_Quality | A restore of BMMS_Test with every database step installed, then cleared, given its fixture and baselined by Tests/_runner/Setup-Quality.ps1. It is separate from BMMS and BMMS_Test, which the tester never uses |
+| Database BMMS_Quality | A restore of BMMS_Test with every database step installed, then cleared, given its fixture and baselined by Tests/_runner/Setup-Quality.ps1. It is separate from BMMS and BMMS_Test, which the tester never uses. Since step UD1b (database step 53) the fixture has ten qa_ accounts: qa_manager3 (Manager, Credit) is new, the second Manager of Credit; Tests/credentials.json.example and Tester.Common.ps1 name it `manager3`. The pack two-approvers (10-Testing-and-Release) reads it; after a new setup the credentials file is generated with the new account |
 | Two SQL logins | bmms_tester (owner of BMMS_Quality) and bmms_site (the site copy's login), made by the setup; neither has a server role or access to another database. bmms_app must already be linked in BMMS_Quality with db_backupoperator, db_datareader and db_datawriter |
 | Port 18573 | Must be free when a run starts (the runner refuses otherwise). Port 49673 was tried first and lies in the Windows range for outgoing connections |
 | sqlcmd | Used by the runner and the setup scripts |

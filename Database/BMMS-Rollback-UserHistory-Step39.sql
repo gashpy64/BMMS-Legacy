@@ -49,6 +49,13 @@ BEGIN
     RAISERROR('Current database is "%s". Select the BMMS database (or its test copy) and run again. Nothing was changed.', 16, 1, @CurrentDatabase);
     SET NOEXEC ON;
 END
+-- Step 53 (step UD1b) replaced objects of this step again: roll it back first (DepartmentApprovers-Step53)
+ELSE IF (OBJECT_ID('dbo.fn_DepartmentManagers', 'IF') IS NOT NULL
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.fn_AgendaWaitingFor')), '') LIKE '%DepartmentApprovers-Step53%')
+BEGIN
+    RAISERROR('Step 53 is installed in "%s": it replaced objects of this step again; rolling this step back now would undo step 53 in part. Run BMMS-Rollback-DepartmentApprovers-Step53.sql first, then this script. Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
 ELSE IF (OBJECT_ID('dbo.spr_sys_SetSmtpDefault', 'P') IS NULL OR COL_LENGTH('dbo.Users', 'IsSystem') IS NULL)
 BEGIN
     RAISERROR('Steps 18 and 30 are not installed in "%s"; this is not a database that step 39 was installed on. Nothing was changed.', 16, 1, @CurrentDatabase);

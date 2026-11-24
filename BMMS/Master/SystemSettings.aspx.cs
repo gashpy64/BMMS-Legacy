@@ -90,8 +90,8 @@ namespace BMMS.Master
 
                 if (result.Result == 1)
                     MsgDisplay(value == "controller"
-                        ? "Saved: when a department has no active Manager, a new agenda item will be sent to the Controller. This is stored now and used from a later step."
-                        : "Saved: when a department has no active Manager, a new agenda item will be refused. This is stored now and used from a later step.",
+                        ? "Saved: when a department has no active Manager, a new agenda item will be sent to the Controller. The setting is now in use."
+                        : "Saved: when a department has no active Manager, a new agenda item will be refused. The setting is now in use.",
                         MessageKind.Success);
                 else if (result.Reason == MeetingChangeReason.ActingUserInvalid)
                     MsgDisplay(result.RefusalMessage());

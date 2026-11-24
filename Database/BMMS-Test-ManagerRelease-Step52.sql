@@ -196,6 +196,9 @@ DECLARE @R TABLE (Result INT, Reason INT, ReasonDetail NVARCHAR(2000),
                   Txt AS ('Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(3))
                           + CASE WHEN ReasonDetail <> '' THEN ', ' + CAST(ReasonDetail AS VARCHAR(300)) ELSE '' END));
 DECLARE @T TABLE (TestNo INT IDENTITY(1,1), Test VARCHAR(200), Expected VARCHAR(400), Actual VARCHAR(400));
+-- Step 53 (step UD1b): every Manager of the item's department may decide it. Values that differ read [step 53: ...]; the
+-- changes step 53 now allows (rows of M1, M4) are undone at once (savepoints), so the later checks keep their meaning
+DECLARE @S53 INT = CASE WHEN OBJECT_ID('dbo.fn_DepartmentManagers', 'IF') IS NOT NULL THEN 1 ELSE 0 END;
 
 DECLARE @Now DATETIME = GETDATE();
 DECLARE @Day DATETIME = CAST(CAST(GETDATE() AS DATE) AS DATETIME);
@@ -318,14 +321,15 @@ BEGIN TRY
     -- Rule 12, the parts
     ---------------------------------------------------------------------------
     EXEC #ZZ52_Kinds @M1, NULL, 1, @S OUTPUT;
-    INSERT INTO @T SELECT 'M1, personal part: to come and without a date open (P 2: fut, none); past with the agenda open (Q 3: past1, past2, ctlAC); finalised and AMA not counted; no D (M2, M4, M5 also of A)',
-                          'P=2 Q=3', @S;
+    INSERT INTO @T SELECT 'M1, personal part: to come and without a date open (P 2: fut, none); past with the agenda open (Q 3: past1, past2, ctlAC); finalised and AMA not counted; no D [step 53: none]',
+                          CASE WHEN @S53 = 1 THEN '-' ELSE 'P=2 Q=3' END, @S;
 
     EXEC #ZZ52_Kinds @M3, NULL, 1, @S OUTPUT;
-    INSERT INTO @T SELECT 'M3, the only Manager of B with an item waiting: the department part D only (nothing routed to M3)', 'D:ZZ step 52 department B=1', @S;
+    INSERT INTO @T SELECT 'M3, the only Manager of B with an item waiting: the department part D only (nothing routed to M3) [step 53: and P=1]',
+                          CASE WHEN @S53 = 1 THEN 'D:ZZ step 52 department B=1 P=1' ELSE 'D:ZZ step 52 department B=1' END, @S;
 
     EXEC #ZZ52_Kinds @M4, NULL, 1, @S OUTPUT;
-    INSERT INTO @T SELECT 'M4 (as mgruser): past items only (Q 2), no D (A has other Managers)', 'Q=2', @S;
+    INSERT INTO @T SELECT 'M4 (as mgruser): past items only (Q 2), no D (A has other Managers) [step 53: none]', CASE WHEN @S53 = 1 THEN '-' ELSE 'Q=2' END, @S;
 
     EXEC #ZZ52_Kinds @M1, @DA, 0, @S OUTPUT;
     INSERT INTO @T SELECT 'M1, department part only (@Personal 0) for A: nothing (other Managers of A)', '-', @S;
@@ -334,34 +338,40 @@ BEGIN TRY
     -- Reason 24: role change, department removal, Deactivate
     ---------------------------------------------------------------------------
     SET @L = CAST(@DA AS VARCHAR(12));
+    SAVE TRANSACTION ZZ52Row9;
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC #ZZ52_Edit @M1, @rUser, @DA, @L, @Adm;
-    INSERT INTO @T SELECT 'M1 made a User: refused, the personal part only (open 2, past 3), no department part; still a Manager',
-                          'Result 0, Reason 24, open:2|past:3| | manager',
+    INSERT INTO @T SELECT 'M1 made a User: refused, the personal part only (open 2, past 3), no department part; still a Manager [step 53: allowed, undone]',
+                          CASE WHEN @S53 = 1 THEN 'Result 1, Reason 0 | user' ELSE 'Result 0, Reason 24, open:2|past:3| | manager' END,
                           ISNULL((SELECT Txt FROM @R), '-') + ' | ' + (SELECT r.RoleCode FROM Users u JOIN Roles r ON r.RoleId = u.RoleId WHERE u.UserId = @M1);
+    ROLLBACK TRANSACTION ZZ52Row9;
 
+    SAVE TRANSACTION ZZ52Row10;
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC #ZZ52_Edit @M4, @rUser, @DA, @L, @Adm;
-    INSERT INTO @T SELECT 'M4 (as mgruser) made a User: refused with the past items only',
-                          'Result 0, Reason 24, open:0|past:2|', ISNULL((SELECT Txt FROM @R), '-');
+    INSERT INTO @T SELECT 'M4 (as mgruser) made a User: refused with the past items only [step 53: allowed, undone]',
+                          CASE WHEN @S53 = 1 THEN 'Result 1, Reason 0' ELSE 'Result 0, Reason 24, open:0|past:2|' END, ISNULL((SELECT Txt FROM @R), '-');
+    ROLLBACK TRANSACTION ZZ52Row10;
 
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC #ZZ52_Edit @M3, @rUser, @DA, @L, @Adm;
-    INSERT INTO @T SELECT 'M3 made a User: refused with the department part only, its text as before step 52',
-                          'Result 0, Reason 24, open:0|past:0|last active Manager of ZZ step 52 department B (1 item waiting)', ISNULL((SELECT Txt FROM @R), '-');
+    INSERT INTO @T SELECT 'M3 made a User: refused with the department part only, its text as before step 52 [step 53: open:1]',
+                          'Result 0, Reason 24, open:' + CASE WHEN @S53 = 1 THEN '1' ELSE '0' END + '|past:0|last active Manager of ZZ step 52 department B (1 item waiting)', ISNULL((SELECT Txt FROM @R), '-');
 
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC #ZZ52_Edit @M3, @rMgr, @DA, @L, @Adm;
-    INSERT INTO @T SELECT 'M3 edited to remove B (still a Manager): the department part only',
-                          'Result 0, Reason 24, open:0|past:0|last active Manager of ZZ step 52 department B (1 item waiting) | 2',
+    INSERT INTO @T SELECT 'M3 edited to remove B (still a Manager): the department part only [step 53: open:1]',
+                          'Result 0, Reason 24, open:' + CASE WHEN @S53 = 1 THEN '1' ELSE '0' END + '|past:0|last active Manager of ZZ step 52 department B (1 item waiting) | 2',
                           ISNULL((SELECT Txt FROM @R), '-') + ' | ' + CAST((SELECT COUNT(*) FROM User_Department WHERE UserId = @M3 AND EffectiveTo IS NULL) AS VARCHAR(4));
 
+    SAVE TRANSACTION ZZ52Row13;
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_SetUserStatusByUserId @UserId = @M4, @AccountStatus = 0, @ActingUserId = @Adm;
-    INSERT INTO @T SELECT 'Deactivate M4 (past items routed to him): refused, Reason 24 as for a role change; still active, his rows open',
-                          'Result 0, Reason 24, open:0|past:2| | 1 1/1',
+    INSERT INTO @T SELECT 'Deactivate M4 (past items routed to him): refused, Reason 24 as for a role change; still active, his rows open [step 53: allowed, undone]',
+                          CASE WHEN @S53 = 1 THEN 'Result 1, Reason 0 | 0 0/0' ELSE 'Result 0, Reason 24, open:0|past:2| | 1 1/1' END,
                           ISNULL((SELECT Txt FROM @R), '-') + ' | ' + CAST((SELECT AccountStatus FROM Users WHERE UserId = @M4) AS VARCHAR(4)) + ' '
                         + CAST((SELECT COUNT(*) FROM User_Role WHERE UserId = @M4 AND EffectiveTo IS NULL) AS VARCHAR(4)) + '/'
                         + CAST((SELECT COUNT(*) FROM User_Department WHERE UserId = @M4 AND EffectiveTo IS NULL) AS VARCHAR(4));
+    ROLLBACK TRANSACTION ZZ52Row13;
 
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_SetUserStatusByUserId @UserId = @M3, @AccountStatus = 0, @ActingUserId = @Adm;
-    INSERT INTO @T SELECT 'Deactivate M3 (the only Manager of B with an item waiting): refused with the department part',
-                          'Result 0, Reason 24, open:0|past:0|last active Manager of ZZ step 52 department B (1 item waiting)', ISNULL((SELECT Txt FROM @R), '-');
+    INSERT INTO @T SELECT 'Deactivate M3 (the only Manager of B with an item waiting): refused with the department part [step 53: open:1]',
+                          'Result 0, Reason 24, open:' + CASE WHEN @S53 = 1 THEN '1' ELSE '0' END + '|past:0|last active Manager of ZZ step 52 department B (1 item waiting)', ISNULL((SELECT Txt FROM @R), '-');
 
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_SetUserStatusByUserId @UserId = @U1, @AccountStatus = 0, @ActingUserId = @Adm;
     INSERT INTO @T SELECT 'Deactivate a User (not a Manager): rule 12 does not apply, done', 'Result 1, Reason 0 | 0', ISNULL((SELECT Txt FROM @R), '-') + ' | ' + CAST((SELECT AccountStatus FROM Users WHERE UserId = @U1) AS VARCHAR(4));
@@ -386,8 +396,8 @@ BEGIN TRY
 
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_UpdateAgendaByAgendaId @AgendaId = @iPast1, @ShortText = 'ZZ52 past1', @ProposedResolution = '',
          @MgrComments = 'ok', @ControllerComments = '', @ControllerApprovedStatus = '', @MgrApprovedStatus = 'Approved', @UpdatedBy = @M2;
-    INSERT INTO @T SELECT 'M2 (not routed) approves the same past item: Reason 14 first (routing), not 28',
-                          'Result 0, Reason 14, Agenda Creation', ISNULL((SELECT Txt FROM @R), '-');
+    INSERT INTO @T SELECT 'M2 (not routed) approves the same past item: Reason 14 first (routing), not 28 [step 53: M2 is a Manager of A, so 28]',
+                          CASE WHEN @S53 = 1 THEN 'Result 0, Reason 28' ELSE 'Result 0, Reason 14, Agenda Creation' END, ISNULL((SELECT Txt FROM @R), '-');
 
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_UpdateAgendaByAgendaId @AgendaId = @iFut, @ShortText = 'ZZ52 fut', @ProposedResolution = '',
          @MgrComments = 'ok', @ControllerComments = '', @ControllerApprovedStatus = '', @MgrApprovedStatus = 'Approved', @UpdatedBy = @M1;
@@ -414,7 +424,7 @@ BEGIN TRY
 
     -- After these decisions: M1 has no open item; past1 and past2 are still past
     EXEC #ZZ52_Kinds @M1, NULL, 1, @S OUTPUT;
-    INSERT INTO @T SELECT 'M1 after the decisions: no open item; the two past items still counted (the Controller''s reject removed ctlAC)', 'Q=2', @S;
+    INSERT INTO @T SELECT 'M1 after the decisions: no open item; the two past items still counted (the Controller''s reject removed ctlAC) [step 53: none]', CASE WHEN @S53 = 1 THEN '-' ELSE 'Q=2' END, @S;
 
     -- Deactivate of a Manager with nothing routed, A keeps other Managers
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_SetUserStatusByUserId @UserId = @M5, @AccountStatus = 0, @ActingUserId = @Adm;

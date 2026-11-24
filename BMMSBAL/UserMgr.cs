@@ -192,10 +192,48 @@ namespace BMMSBAL
         /// </summary>
         public string SuccessDetail(string Prefix)
         {
-            if (Result == 1 && ReasonDetail != null && ReasonDetail.StartsWith(Prefix, StringComparison.Ordinal))
-                return ReasonDetail.Substring(Prefix.Length);
+            string detail = SuccessDetailWithoutReleased();
+            if (Result == 1 && detail.StartsWith(Prefix, StringComparison.Ordinal))
+                return detail.Substring(Prefix.Length);
 
             return string.Empty;
+        }
+
+        // Step UD1b (BMMS-Fix-DepartmentApprovers-Step53.sql): a successful detail may end with
+        // '|Released:<n>:<department names>'; the part before it is the detail of step UD1a
+        private string SuccessDetailWithoutReleased()
+        {
+            string detail = ReasonDetail ?? string.Empty;
+            int at = detail.LastIndexOf(UserChangeReason.ReleasedMarker, StringComparison.Ordinal);
+            return at >= 0 ? detail.Substring(0, at) : detail;
+        }
+
+        /// <summary>
+        /// Step UD1b: after a successful save or deactivation of a Manager, the sentence about his waiting approval alerts
+        /// that were closed for him ("" when none were). The other Managers of the department still have them.
+        /// Encoded for the page.
+        /// </summary>
+        public string ReleasedMessage()
+        {
+            if (Result != 1 || ReasonDetail == null)
+                return string.Empty;
+
+            int at = ReasonDetail.LastIndexOf(UserChangeReason.ReleasedMarker, StringComparison.Ordinal);
+            if (at < 0)
+                return string.Empty;
+
+            System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(
+                ReasonDetail.Substring(at + UserChangeReason.ReleasedMarker.Length), @"^(\d{1,9}):(.*)$",
+                System.Text.RegularExpressions.RegexOptions.Singleline);
+            if (!m.Success)
+                return string.Empty;
+
+            int n = int.Parse(m.Groups[1].Value);
+            string departments = m.Groups[2].Value.Trim();
+            return n.ToString() + " waiting approval alert" + (n == 1 ? "" : "s")
+                 + (departments.Length > 0 ? " of " + System.Web.HttpUtility.HtmlEncode(departments) : "")
+                 + (n == 1 ? " was" : " were") + " closed; the other Managers of the department still have "
+                 + (n == 1 ? "it" : "them") + ".";
         }
     }
 
@@ -216,6 +254,7 @@ namespace BMMSBAL
 
         public const string MappingsClosedPrefix = "MappingsClosed:";
         public const string NotRestoredPrefix = "NotRestored:";
+        public const string ReleasedMarker = "|Released:";   // step UD1b: at the end of a successful detail
 
         public const string SystemAccountMessage =
             "This is the protected system account. It cannot be edited, deactivated, deleted, or have its role or Login ID changed, "

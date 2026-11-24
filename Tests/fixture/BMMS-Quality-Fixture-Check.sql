@@ -40,6 +40,7 @@ INSERT INTO @A VALUES ('qa_admin', 'admin', 1, 1);
 INSERT INTO @A VALUES ('qa_ctrl', 'controller', 1, 1);
 INSERT INTO @A VALUES ('qa_manager', 'manager', 1, 1);
 INSERT INTO @A VALUES ('qa_manager2', 'manager', 1, 2);
+INSERT INTO @A VALUES ('qa_manager3', 'manager', 1, 1);   -- step UD1b
 INSERT INTO @A VALUES ('qa_user', 'user', 1, 1);
 INSERT INTO @A VALUES ('qa_user2', 'user', 1, 1);
 INSERT INTO @A VALUES ('qa_mgmt', 'mgmt', 1, 1);
@@ -56,12 +57,12 @@ SELECT 'Account ' + a.LoginName + ': role, active, open role rows, open departme
 FROM @A a;
 
 INSERT INTO @T (Name, Expected, Actual)
-SELECT 'Accounts with a password hash of the application (100000.salt.hash)', '9',
+SELECT 'Accounts with a password hash of the application (100000.salt.hash)', '10',
        CAST((SELECT COUNT(*) FROM Users WHERE LoginName LIKE 'qa[_]%' AND Password LIKE '100000._%._%' AND LEN(Password) > 60) AS VARCHAR(12));
 INSERT INTO @T (Name, Expected, Actual)
-SELECT 'qa_ accounts in all', '9', CAST((SELECT COUNT(*) FROM Users WHERE LoginName LIKE 'qa[_]%') AS VARCHAR(12));
+SELECT 'qa_ accounts in all', '10', CAST((SELECT COUNT(*) FROM Users WHERE LoginName LIKE 'qa[_]%') AS VARCHAR(12));
 INSERT INTO @T (Name, Expected, Actual)
-SELECT 'Users in all (four seeded and nine qa_)', '13', CAST((SELECT COUNT(*) FROM Users) AS VARCHAR(12));
+SELECT 'Users in all (four seeded and ten qa_)', '14', CAST((SELECT COUNT(*) FROM Users) AS VARCHAR(12));
 INSERT INTO @T (Name, Expected, Actual)
 SELECT 'qa_user reports to qa_manager; qa_user2 to qa_manager2', 'yes',
        CASE WHEN EXISTS (SELECT 1 FROM Users u JOIN Users m ON m.UserId = u.ManagerId WHERE u.LoginName = 'qa_user' AND m.LoginName = 'qa_manager')
@@ -148,8 +149,25 @@ SELECT 'QA2 00001 items: Credit AMA by qa_user, Secretarial AC by qa_ctrl; alert
                      FROM Agenda a JOIN Department d ON d.DepartmentId = a.DepartmentId JOIN Users u ON u.UserId = a.CreatedBy
                      WHERE a.AgendaNo LIKE 'QA2-00001-%' ORDER BY a.AgendaNo FOR XML PATH('')), 1, 2, ''), 'none') + '; '
      + CAST((SELECT COUNT(*) FROM Alert_Master am JOIN Agenda a ON a.AgendaId = am.SourceTypeId WHERE am.SourceType = 'Agenda' AND a.AgendaNo LIKE 'QA2-00001-%') AS VARCHAR(12));
+-- Step UD1b: qa_manager3's rows: unread on the two Credit items waiting at AC, 'H' (by qa_manager) on the Credit items
+-- qa_manager decided, 'N' (by qa_admin) on the HRD item at AC
 INSERT INTO @T (Name, Expected, Actual)
-SELECT 'Items that wait: qa_ctrl (AMA); qa_manager (routed AC); qa_manager2 (routed AC)', 'QA1-00001-002,QA2-00001-1; QA1-00001-001,QA1-00002-001; QA1-00001-006',
+SELECT 'qa_manager3 rows: unread at AC; H by qa_manager; N by qa_admin (QA1-00001-006)', '2; yes; QA1-00001-006',
+       CAST((SELECT COUNT(*) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId JOIN Alert_Master am ON am.AlertId = m.AlertId
+             JOIN Agenda a ON a.AgendaId = am.SourceTypeId AND am.SourceType = 'Agenda'
+             WHERE u.LoginName = 'qa_manager3' AND m.HandledReason IS NULL AND m.ReadStatus = 0 AND a.AgendaStatusCode = 'AC') AS VARCHAR(12)) + '; '
+     + CASE WHEN EXISTS (SELECT 1 FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId JOIN Users h ON h.UserId = m.HandledBy
+                         WHERE u.LoginName = 'qa_manager3' AND m.HandledReason = 'H' AND h.LoginName = 'qa_manager') THEN 'yes' ELSE 'no' END + '; '
+     + ISNULL(STUFF((SELECT ',' + a.AgendaNo FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId JOIN Users h ON h.UserId = m.HandledBy
+                     JOIN Alert_Master am ON am.AlertId = m.AlertId JOIN Agenda a ON a.AgendaId = am.SourceTypeId AND am.SourceType = 'Agenda'
+                     WHERE u.LoginName = 'qa_manager3' AND m.HandledReason = 'N' AND h.LoginName = 'qa_admin'
+                     ORDER BY a.AgendaNo FOR XML PATH('')), 1, 1, ''), 'none');
+
+INSERT INTO @T (Name, Expected, Actual)
+-- Step 53 (step UD1b): every Manager of the item's department decides it, so QA2-00001-2 (Secretarial) waits for qa_manager2
+SELECT 'Items that wait: qa_ctrl (AMA); qa_manager (routed AC); qa_manager2 (routed AC) [step 53: +QA2-00001-2]',
+       'QA1-00001-002,QA2-00001-1; QA1-00001-001,QA1-00002-001; QA1-00001-006'
+       + CASE WHEN OBJECT_ID('dbo.fn_DepartmentManagers', 'IF') IS NOT NULL THEN ',QA2-00001-2' ELSE '' END,
        ISNULL(STUFF((SELECT ',' + a.AgendaNo FROM Users u CROSS APPLY dbo.fn_AgendaWaitingFor(u.UserId, CAST(GETDATE() AS DATE)) w JOIN Agenda a ON a.AgendaId = w.AgendaId
                      WHERE u.LoginName = 'qa_ctrl' AND w.IsWaiting = 1 ORDER BY a.AgendaNo FOR XML PATH('')), 1, 1, ''), 'none') + '; '
      + ISNULL(STUFF((SELECT ',' + a.AgendaNo FROM Users u CROSS APPLY dbo.fn_AgendaWaitingFor(u.UserId, CAST(GETDATE() AS DATE)) w JOIN Agenda a ON a.AgendaId = w.AgendaId
@@ -189,7 +207,9 @@ SELECT 'qa_user: alerts in all, read (QA1-00004-001, QA1-00004-002, Committee (Q
              WHERE u.LoginName = 'qa_user' AND m.StatusId = 1 AND m.ReadStatus = 1
              AND am.DisplayText IN ('Agenda (QA1-00004-001)', 'Agenda (QA1-00004-002)', 'Committee (QA2)')) AS VARCHAR(12));
 INSERT INTO @T (Name, Expected, Actual)
-SELECT 'Item QA1-00005-001 has no recorded approver; qa_admin has alert rows (the listing rule hides them)', 'none, yes',
+-- Step 53 (step UD1b): no procedure writes alert rows for the Admin role any more, so qa_admin has none
+SELECT 'Item QA1-00005-001 has no recorded approver; qa_admin has alert rows (hidden) [step 53: none]',
+       CASE WHEN OBJECT_ID('dbo.fn_DepartmentManagers', 'IF') IS NOT NULL THEN 'none, no' ELSE 'none, yes' END,
        ISNULL((SELECT CASE WHEN a.ControllerApprovedBy IS NULL AND a.ControllerApprovedDate IS NULL THEN 'none' ELSE 'recorded' END
                FROM Agenda a WHERE a.CommitteeId = @C AND a.AgendaNo = 'QA1-00005-001'), 'item missing') + ', '
      + CASE WHEN EXISTS (SELECT 1 FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId WHERE u.LoginName = 'qa_admin' AND m.StatusId = 1) THEN 'yes' ELSE 'no' END;

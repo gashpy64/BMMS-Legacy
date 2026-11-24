@@ -120,7 +120,7 @@
       "account": "manager2",
       "committee": "", "department": "",
       "committeeFilter": true, "departmentOptions": ["All my departments", "HRD", "Secretarial"],
-      "subtitle": "Departments: HRD, Secretarial", "title": "Meetings, items of my departments", "lastHeader": "In progress", "statistics": true, "waiting": {"QA Test Committee | No 00001": "1"},
+      "subtitle": "Departments: HRD, Secretarial", "title": "Meetings, items of my departments", "lastHeader": "In progress", "statistics": true, "waiting": {"QA Dashboard Committee | No 00001": "1", "QA Test Committee | No 00001": "1"},
       "scheduled": [
         "QA Dashboard Committee | No 00001 | blue | Open for submission | 1 0 0 1",
         "QA Test Committee | No 00003 | green | Agenda finalised | 0 0 0 0",
@@ -150,7 +150,7 @@
       "account": "manager2",
       "committee": "", "department": "Secretarial",
       "committeeFilter": true, "departmentOptions": ["All my departments", "HRD", "Secretarial"],
-      "subtitle": "Departments: HRD, Secretarial", "title": "Meetings, Secretarial items", "lastHeader": "In progress", "statistics": true, "waiting": {},
+      "subtitle": "Departments: HRD, Secretarial", "title": "Meetings, Secretarial items", "lastHeader": "In progress", "statistics": true, "waiting": {"QA Dashboard Committee | No 00001": "1"},
       "scheduled": [
         "QA Dashboard Committee | No 00001 | blue | Open for submission | 1 0 0 1",
         "QA Test Committee | No 00003 | green | Agenda finalised | 0 0 0 0",
@@ -220,8 +220,8 @@
     {"account": "controller", "committee": "QA Test Committee", "department": "", "cards": ["4", "Items in progress", "Scheduled meetings, QA Test Committee", "2", "Items rejected", "Scheduled meetings, QA Test Committee"], "approvals": "My approvals (1)", "actionItems": ["QA1-00005-001", "QA1-00005-002", "QA1-00006-001"]},
     {"account": "mgmt", "committee": "QA Dashboard Committee", "department": "", "cards": ["2", "Items in progress", "Scheduled meetings, QA Dashboard Committee", "0", "Items rejected", "Scheduled meetings, QA Dashboard Committee"], "approvals": "no panel", "actionItems": ["QA2-00002-1", "QA2-00003-1"]},
     {"account": "manager2", "committee": "", "department": "HRD", "cards": ["1", "HRD items in progress", "Scheduled meetings, all committees", "0", "HRD items rejected", "Scheduled meetings, all committees"], "approvals": "My approvals (1)", "actionItems": []},
-    {"account": "manager2", "committee": "", "department": "Secretarial", "cards": ["1", "Secretarial items in progress", "Scheduled meetings, all committees", "0", "Secretarial items rejected", "Scheduled meetings, all committees"], "approvals": "My approvals (0)", "actionItems": ["QA2-00003-1"]},
-    {"account": "manager2", "committee": "QA Dashboard Committee", "department": "", "cards": ["1", "Items of my departments in progress", "Scheduled meetings, QA Dashboard Committee", "0", "Items of my departments rejected", "Scheduled meetings, QA Dashboard Committee"], "approvals": "My approvals (0)", "actionItems": ["QA2-00003-1"]},
+    {"account": "manager2", "committee": "", "department": "Secretarial", "cards": ["1", "Secretarial items in progress", "Scheduled meetings, all committees", "0", "Secretarial items rejected", "Scheduled meetings, all committees"], "approvals": "My approvals (1)", "actionItems": ["QA2-00003-1"]},
+    {"account": "manager2", "committee": "QA Dashboard Committee", "department": "", "cards": ["1", "Items of my departments in progress", "Scheduled meetings, QA Dashboard Committee", "0", "Items of my departments rejected", "Scheduled meetings, QA Dashboard Committee"], "approvals": "My approvals (1)", "actionItems": ["QA2-00003-1"]},
     {"account": "user", "committee": "QA Test Committee", "department": "", "cards": ["3", "Credit items in progress", "Scheduled meetings, QA Test Committee", "2", "Credit items rejected", "Scheduled meetings, QA Test Committee"], "approvals": "no panel", "actionItems": ["QA1-00005-001", "QA1-00005-002", "QA1-00006-001"]}
   ],
   "alertsNote": "Your own alerts, for every committee. The filters at the top do not apply.",
@@ -284,7 +284,7 @@
     "admin": "no panel",
     "controller": { "title": "My approvals (2)", "rows": ["QA1-00001-002 | QA Test Committee | No 00001 | Credit", "QA2-00001-1 | QA Dashboard Committee | No 00001 | Credit"] },
     "manager": { "title": "My approvals (2)", "rows": ["QA1-00001-001 | QA Test Committee | No 00001 | Credit", "QA1-00002-001 | QA Test Committee | No 00002 | Credit"] },
-    "manager2": { "title": "My approvals (1)", "rows": ["QA1-00001-006 | QA Test Committee | No 00001 | HRD"] },
+    "manager2": { "title": "My approvals (2)", "rows": ["QA1-00001-006 | QA Test Committee | No 00001 | HRD", "QA2-00001-2 | QA Dashboard Committee | No 00001 | Secretarial"] },
     "user": "no panel",
     "user2": "no panel",
     "mgmt": "no panel",
@@ -293,7 +293,7 @@
   "approvalFilters": [
     { "account": "controller", "committee": "QA Dashboard Committee", "department": "", "title": "My approvals (1)", "rows": ["QA2-00001-1 | QA Dashboard Committee | No 00001 | Credit"] },
     { "account": "manager2", "committee": "", "department": "HRD", "title": "My approvals (1)", "rows": ["QA1-00001-006 | QA Test Committee | No 00001 | HRD"] },
-    { "account": "manager2", "committee": "", "department": "Secretarial", "title": "My approvals (0)", "rows": [] }
+    { "account": "manager2", "committee": "", "department": "Secretarial", "title": "My approvals (1)", "rows": ["QA2-00001-2 | QA Dashboard Committee | No 00001 | Secretarial"] }
   ],
   "approvalsHeadingKept": { "accounts": ["controller", "manager", "manager2"] },
   "approvalOpen": {

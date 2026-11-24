@@ -24,6 +24,14 @@
      * the one-time re-route and its re-run
      * the signer order and the invitee list order
    No mail is sent: only database procedures run.
+   Step 53 (step UD1b), when installed: the setting DeptNoManagerAction is
+   'controller' inside the transaction and the items of the user without a
+   manager (N) and of the user whose manager is mgmt (X) are saved in a
+   made-up department without a Manager, so they still go straight to the
+   Controllers (and with no active Controller: Reason 15). The other Manager
+   who is refused at AC is a Manager of another department. Values that
+   differ with step 53 read "[step 53: ...]". fn_AgendaRoute and
+   spr_GetAgendaCreationMailId are called for the version installed.
 
    Everything runs inside one transaction that is ROLLED BACK. The only
    lasting effect is that identity values skip a few numbers.
@@ -51,11 +59,33 @@ BEGIN
 END
 GO
 
+-- Step 53 (step UD1b): fn_AgendaRoute has the department as second parameter; called for the version installed
+IF OBJECT_ID('tempdb..#ZZ20_Route') IS NOT NULL DROP PROCEDURE #ZZ20_Route;
+GO
+CREATE PROCEDURE #ZZ20_Route
+    @UserId INT, @DepartmentId INT, @Route CHAR(1) OUTPUT, @ActiveControllers INT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    IF (OBJECT_ID('dbo.fn_DepartmentManagers', 'IF') IS NOT NULL)
+        EXEC sp_executesql N'SELECT @r = Route, @c = ActiveControllers FROM dbo.fn_AgendaRoute(@u, @d)',
+             N'@u INT, @d INT, @r CHAR(1) OUTPUT, @c INT OUTPUT', @u = @UserId, @d = @DepartmentId, @r = @Route OUTPUT, @c = @ActiveControllers OUTPUT;
+    ELSE
+        EXEC sp_executesql N'SELECT @r = Route, @c = ActiveControllers FROM dbo.fn_AgendaRoute(@u)',
+             N'@u INT, @r CHAR(1) OUTPUT, @c INT OUTPUT', @u = @UserId, @r = @Route OUTPUT, @c = @ActiveControllers OUTPUT;
+END
+GO
+
 DECLARE @T TABLE (TestNo INT IDENTITY(1,1), Test VARCHAR(160), Expected VARCHAR(400), Actual VARCHAR(400));
 DECLARE @R TABLE (Result INT, Reason INT, ReasonDetail NVARCHAR(2000),
                   Txt AS ('Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(3))
                           + CASE WHEN ReasonDetail <> '' THEN ', ' + CAST(ReasonDetail AS VARCHAR(200)) ELSE '' END));
 DECLARE @ML TABLE (Route CHAR(1), ManagerName NVARCHAR(200), ActiveControllers INT, EmailId VARCHAR(200));
+DECLARE @ML7 TABLE (Route CHAR(1), ManagerName NVARCHAR(200), ActiveControllers INT, EmailId VARCHAR(200),
+                    DepartmentManagers INT, RouteNote CHAR(1), DepartmentName NVARCHAR(200));   -- step 53
+-- Step 53 (step UD1b): installed or not; the department of the items of users N and X; the Manager of another department
+DECLARE @S53 INT = CASE WHEN OBJECT_ID('dbo.fn_DepartmentManagers', 'IF') IS NOT NULL THEN 1 ELSE 0 END;
+DECLARE @DeptN INT, @DeptB INT, @DeptUN INT, @MgrB INT, @Rt CHAR(1), @RtCtl INT, @RouteText VARCHAR(40);
 DECLARE @RR TABLE (Rerouted INT);
 DECLARE @CS TABLE (Seq INT IDENTITY(1,1), CompanySecretary VARCHAR(200), DesignationName VARCHAR(200), MeetingMemberId INT);
 DECLARE @CtlOn TABLE (UserId INT);
@@ -109,6 +139,14 @@ BEGIN TRY
 
     INSERT INTO Department (DepartmentCode, DepartmentName, OrderNo, StatusId, CreatedOn, CreatedBy) VALUES ('ZZ20', 'ZZ step 20 department', 999, 1, @Now, @Sys);
     SET @Dept = SCOPE_IDENTITY();
+    -- Step 53: a department without a Manager (items of users N and X) and another department (its Manager MgrB)
+    INSERT INTO Department (DepartmentCode, DepartmentName, OrderNo, StatusId, CreatedOn, CreatedBy) VALUES ('ZZ20N', 'ZZ step 20 department without a Manager', 999, 1, @Now, @Sys);
+    SET @DeptN = SCOPE_IDENTITY();
+    INSERT INTO Department (DepartmentCode, DepartmentName, OrderNo, StatusId, CreatedOn, CreatedBy) VALUES ('ZZ20B', 'ZZ step 20 other department', 999, 1, @Now, @Sys);
+    SET @DeptB = SCOPE_IDENTITY();
+    SET @DeptUN = CASE WHEN @S53 = 1 THEN @DeptN ELSE @Dept END;
+    IF (@S53 = 1)
+        UPDATE App_Setting SET SettingValue = 'controller' WHERE SettingCode = 'DeptNoManagerAction';
 
     INSERT INTO Users (UserName, DepartmentId, DesignationId, ManagerId, RoleId, EmailId, LoginName, [Password], AccountStatus, CreatedOn, CreatedBy, UpdatedOn, UpdatedBy)
     VALUES ('ZZ20 admin', @Dept, @DesignationId, NULL, @AdminRoleId, 'zz20adm@example.invalid', 'zz20adm', 'not-a-login', 1, @Now, @Sys, @Now, @Sys);
@@ -131,6 +169,9 @@ BEGIN TRY
     INSERT INTO Users (UserName, DepartmentId, DesignationId, ManagerId, RoleId, EmailId, LoginName, [Password], AccountStatus, CreatedOn, CreatedBy, UpdatedOn, UpdatedBy)
     VALUES ('ZZ20 inactive manager', @Dept, @DesignationId, NULL, @MgrRoleId, 'zz20mgroff@example.invalid', 'zz20mgroff', 'not-a-login', 0, @Now, @Sys, @Now, @Sys);
     SET @MgrOff = SCOPE_IDENTITY();
+    INSERT INTO Users (UserName, DepartmentId, DesignationId, ManagerId, RoleId, EmailId, LoginName, [Password], AccountStatus, CreatedOn, CreatedBy, UpdatedOn, UpdatedBy)
+    VALUES ('ZZ20 manager of another department', @DeptB, @DesignationId, NULL, @MgrRoleId, 'zz20mgrb@example.invalid', 'zz20mgrb', 'not-a-login', 1, @Now, @Sys, @Now, @Sys);
+    SET @MgrB = SCOPE_IDENTITY();
     INSERT INTO Users (UserName, DepartmentId, DesignationId, ManagerId, RoleId, EmailId, LoginName, [Password], AccountStatus, CreatedOn, CreatedBy, UpdatedOn, UpdatedBy)
     VALUES ('ZZ20 mgmt', @Dept, @DesignationId, NULL, @MgmtRoleId, 'zz20mgmt@example.invalid', 'zz20mgmt', 'not-a-login', 1, @Now, @Sys, @Now, @Sys);
     SET @Mgmt = SCOPE_IDENTITY();
@@ -195,12 +236,17 @@ BEGIN TRY
     ---------------------------------------------------------------------------
     -- 2. Routes
     ---------------------------------------------------------------------------
-    INSERT INTO @T SELECT 'Route: manager / none / Controller / mgmt / inactive manager / inactive Controller', 'M C C C I I',
-           (SELECT Route FROM dbo.fn_AgendaRoute(@UsrM)) + ' ' + (SELECT Route FROM dbo.fn_AgendaRoute(@UsrN)) + ' '
-         + (SELECT Route FROM dbo.fn_AgendaRoute(@UsrC)) + ' ' + (SELECT Route FROM dbo.fn_AgendaRoute(@UsrX)) + ' '
-         + (SELECT Route FROM dbo.fn_AgendaRoute(@UsrI)) + ' ' + (SELECT Route FROM dbo.fn_AgendaRoute(@UsrCI));
+    SET @RouteText = '';
+    EXEC #ZZ20_Route @UsrM, @Dept, @Rt OUTPUT, @RtCtl OUTPUT;   SET @RouteText = @RouteText + ISNULL(@Rt, '-');
+    EXEC #ZZ20_Route @UsrN, @DeptUN, @Rt OUTPUT, @RtCtl OUTPUT; SET @RouteText = @RouteText + ' ' + ISNULL(@Rt, '-');
+    EXEC #ZZ20_Route @UsrC, @Dept, @Rt OUTPUT, @RtCtl OUTPUT;   SET @RouteText = @RouteText + ' ' + ISNULL(@Rt, '-');
+    EXEC #ZZ20_Route @UsrX, @DeptUN, @Rt OUTPUT, @RtCtl OUTPUT; SET @RouteText = @RouteText + ' ' + ISNULL(@Rt, '-');
+    EXEC #ZZ20_Route @UsrI, @Dept, @Rt OUTPUT, @RtCtl OUTPUT;   SET @RouteText = @RouteText + ' ' + ISNULL(@Rt, '-');
+    EXEC #ZZ20_Route @UsrCI, @Dept, @Rt OUTPUT, @RtCtl OUTPUT;  SET @RouteText = @RouteText + ' ' + ISNULL(@Rt, '-');
+    INSERT INTO @T SELECT 'Route: manager / none / Controller / mgmt / inactive manager / inactive Controller', 'M C C C I I', @RouteText;
+    EXEC #ZZ20_Route @UsrN, @DeptUN, @Rt OUTPUT, @RtCtl OUTPUT;
     INSERT INTO @T SELECT 'Route: active Controllers counted (system account and inactive left out)', CAST(@ActiveCtrls AS VARCHAR(12)),
-           CAST((SELECT ActiveControllers FROM dbo.fn_AgendaRoute(@UsrN)) AS VARCHAR(12));
+           CAST(@RtCtl AS VARCHAR(12));
 
     ---------------------------------------------------------------------------
     -- 3. Saving (spr_AddEditAgenda)
@@ -213,24 +259,25 @@ BEGIN TRY
     SET @A = (SELECT MAX(AlertId) FROM Alert_Master WHERE SourceType = 'Agenda' AND SourceTypeId = @AgM);
     INSERT INTO @T SELECT 'Save, active Manager: waits for the manager', 'Result 1, Reason 0; AC',
            (SELECT Txt FROM @R) + '; ' + ISNULL((SELECT AgendaStatusCode FROM Agenda WHERE AgendaId = @AgM), 'none');
-    INSERT INTO @T SELECT 'Save, active Manager: alert to the Admins and the manager, no Controller (unchanged)',
-           'AC; admins ' + CAST(@ActiveAdmins AS VARCHAR(12)) + ', manager 1, controllers 0',
+    INSERT INTO @T SELECT 'Save, active Manager: alert to the Admins and the manager, no Controller (unchanged) [step 53: no Admin]',
+           'AC; admins ' + CAST(CASE WHEN @S53 = 1 THEN 0 ELSE @ActiveAdmins END AS VARCHAR(12)) + ', manager 1, controllers 0',
            ISNULL((SELECT AlertTypeCode FROM Alert_Master WHERE AlertId = @A), 'none') + '; admins '
          + CAST((SELECT COUNT(*) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId WHERE m.AlertId = @A AND u.RoleId = @AdminRoleId) AS VARCHAR(12))
          + ', manager ' + CAST((SELECT COUNT(*) FROM Alert_User_Map WHERE AlertId = @A AND UserId = @Mgr) AS VARCHAR(12))
          + ', controllers ' + CAST((SELECT COUNT(*) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId WHERE m.AlertId = @A AND u.RoleId = @CtrlRoleId) AS VARCHAR(12));
 
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_AddEditAgenda @Code = 'Save', @AgendaId = 0, @AgendaNo = '', @CommitteeId = @C, @MeetingId = @Mt,
-         @DepartmentId = @Dept, @SubjectTypeId = @SubjectTypeId, @ShortText = 'ZZ20 N', @AgendaType = 'Entry', @AgendaText = 'ZZ', @AgendaTextPath = @E,
+         @DepartmentId = @DeptUN, @SubjectTypeId = @SubjectTypeId, @ShortText = 'ZZ20 N', @AgendaType = 'Entry', @AgendaText = 'ZZ', @AgendaTextPath = @E,
          @ProposedResolution = 'ZZ', @FilePath = @E, @MgrComments = @E, @ControllerComments = @E, @CurrentStatus = 'New',
          @CreatedOn = @Now, @CreatedBy = @UsrN, @UpdatedOn = @Now, @UpdatedBy = @UsrN, @SubjectNo = NULL, @ActingUserId = @UsrN;
     SET @AgN = (SELECT MAX(AgendaId) FROM Agenda WHERE CreatedBy = @UsrN);
     SET @A = (SELECT MAX(AlertId) FROM Alert_Master WHERE SourceType = 'Agenda' AND SourceTypeId = @AgN);
-    INSERT INTO @T SELECT 'Save, no manager: straight to the Controllers, manager fields empty', 'Result 1, Reason 0; AMA; empty',
+    INSERT INTO @T SELECT 'Save, no manager: straight to the Controllers, manager fields empty [step 53: the save says SentToController]',
+           CASE WHEN @S53 = 1 THEN 'Result 1, Reason 0, SentToController; AMA; empty' ELSE 'Result 1, Reason 0; AMA; empty' END,
            (SELECT Txt FROM @R) + '; ' + ISNULL((SELECT AgendaStatusCode + '; ' + CASE WHEN ISNULL(MgrApprovedStatus, '') = '' AND ISNULL(CAST(MgrComments AS VARCHAR(10)), '') = ''
                                                   AND MgrApprovedBy IS NULL THEN 'empty' ELSE 'set' END FROM Agenda WHERE AgendaId = @AgN), 'none');
-    INSERT INTO @T SELECT 'Save, no manager: alert AMA to the active Admins and Controllers only',
-           'AMA; admins ' + CAST(@ActiveAdmins AS VARCHAR(12)) + ', controllers ' + CAST(@ActiveCtrls AS VARCHAR(12)) + ', others 0',
+    INSERT INTO @T SELECT 'Save, no manager: alert AMA to the active Admins and Controllers only [step 53: no Admin]',
+           'AMA; admins ' + CAST(CASE WHEN @S53 = 1 THEN 0 ELSE @ActiveAdmins END AS VARCHAR(12)) + ', controllers ' + CAST(@ActiveCtrls AS VARCHAR(12)) + ', others 0',
            ISNULL((SELECT AlertTypeCode FROM Alert_Master WHERE AlertId = @A), 'none') + '; admins '
          + CAST((SELECT COUNT(*) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId WHERE m.AlertId = @A AND u.RoleId = @AdminRoleId AND u.AccountStatus = 1) AS VARCHAR(12))
          + ', controllers ' + CAST((SELECT COUNT(*) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId WHERE m.AlertId = @A AND u.RoleId = @CtrlRoleId AND u.AccountStatus = 1) AS VARCHAR(12))
@@ -250,12 +297,13 @@ BEGIN TRY
          + CAST((SELECT COUNT(*) FROM Alert_User_Map WHERE AlertId = @A AND UserId = @CtlOff) AS VARCHAR(12));
 
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_AddEditAgenda @Code = 'Save', @AgendaId = 0, @AgendaNo = '', @CommitteeId = @C, @MeetingId = @Mt,
-         @DepartmentId = @Dept, @SubjectTypeId = @SubjectTypeId, @ShortText = 'ZZ20 X', @AgendaType = 'Entry', @AgendaText = 'ZZ', @AgendaTextPath = @E,
+         @DepartmentId = @DeptUN, @SubjectTypeId = @SubjectTypeId, @ShortText = 'ZZ20 X', @AgendaType = 'Entry', @AgendaText = 'ZZ', @AgendaTextPath = @E,
          @ProposedResolution = 'ZZ', @FilePath = @E, @MgrComments = @E, @ControllerComments = @E, @CurrentStatus = 'New',
          @CreatedOn = @Now, @CreatedBy = @UsrX, @UpdatedOn = @Now, @UpdatedBy = @UsrX, @SubjectNo = NULL, @ActingUserId = @UsrX;
     SET @AgX = (SELECT MAX(AgendaId) FROM Agenda WHERE CreatedBy = @UsrX);
     SET @A = (SELECT MAX(AlertId) FROM Alert_Master WHERE SourceType = 'Agenda' AND SourceTypeId = @AgX);
-    INSERT INTO @T SELECT 'Save, manager has another role (mgmt): AMA, that manager not alerted', 'Result 1, Reason 0; AMA; 0',
+    INSERT INTO @T SELECT 'Save, manager has another role (mgmt): AMA, that manager not alerted [step 53: SentToController]',
+           CASE WHEN @S53 = 1 THEN 'Result 1, Reason 0, SentToController; AMA; 0' ELSE 'Result 1, Reason 0; AMA; 0' END,
            (SELECT Txt FROM @R) + '; ' + ISNULL((SELECT AgendaStatusCode FROM Agenda WHERE AgendaId = @AgX), 'none') + '; '
          + CAST((SELECT COUNT(*) FROM Alert_User_Map WHERE AlertId = @A AND UserId = @Mgmt) AS VARCHAR(12));
 
@@ -284,7 +332,7 @@ BEGIN TRY
     UPDATE Users SET AccountStatus = 0 WHERE UserId IN (SELECT UserId FROM @CtlOn);
 
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_AddEditAgenda @Code = 'Save', @AgendaId = 0, @AgendaNo = '', @CommitteeId = @C, @MeetingId = @Mt,
-         @DepartmentId = @Dept, @SubjectTypeId = @SubjectTypeId, @ShortText = 'ZZ20 N none', @AgendaType = 'Entry', @AgendaText = 'ZZ', @AgendaTextPath = @E,
+         @DepartmentId = @DeptUN, @SubjectTypeId = @SubjectTypeId, @ShortText = 'ZZ20 N none', @AgendaType = 'Entry', @AgendaText = 'ZZ', @AgendaTextPath = @E,
          @ProposedResolution = 'ZZ', @FilePath = @E, @MgrComments = @E, @ControllerComments = @E, @CurrentStatus = 'New',
          @CreatedOn = @Now, @CreatedBy = @UsrN, @UpdatedOn = @Now, @UpdatedBy = @UsrN, @SubjectNo = NULL, @ActingUserId = @UsrN;
     INSERT INTO @T SELECT 'Save, no manager and no active Controller: refused, no item', 'Result 0, Reason 15; 0',
@@ -301,7 +349,7 @@ BEGIN TRY
 
     -- Edits keep the status and the approval fields exactly as they are
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_AddEditAgenda @Code = 'Update', @AgendaId = @AgN, @AgendaNo = 'ZZ', @CommitteeId = @C, @MeetingId = @Mt,
-         @DepartmentId = @Dept, @SubjectTypeId = @SubjectTypeId, @ShortText = 'ZZ20 N edited', @AgendaType = 'Entry', @AgendaText = 'ZZ', @AgendaTextPath = @E,
+         @DepartmentId = @DeptUN, @SubjectTypeId = @SubjectTypeId, @ShortText = 'ZZ20 N edited', @AgendaType = 'Entry', @AgendaText = 'ZZ', @AgendaTextPath = @E,
          @ProposedResolution = 'ZZ', @FilePath = @E, @MgrComments = @E, @ControllerComments = @E, @CurrentStatus = 'New',
          @CreatedOn = @Now, @CreatedBy = @UsrN, @UpdatedOn = @Now, @UpdatedBy = @UsrN, @SubjectNo = NULL, @ActingUserId = @UsrN;
     INSERT INTO @T SELECT 'Edit by the user before the Controller decides (AMA): saved, still AMA', 'Result 1, Reason 0; AMA',
@@ -335,10 +383,27 @@ BEGIN TRY
     ---------------------------------------------------------------------------
     -- 4. "Agenda created" mail list (spr_GetAgendaCreationMailId)
     ---------------------------------------------------------------------------
-    DELETE FROM @ML; INSERT INTO @ML EXEC spr_GetAgendaCreationMailId @UserId = @UsrM;
-    INSERT INTO @T SELECT 'Mail list, manager route: the manager only', 'M 1 zz20mgr@example.invalid',
+    IF (@S53 = 1)
+    BEGIN
+        DELETE FROM @ML7; INSERT INTO @ML7 EXEC spr_GetAgendaCreationMailId @UserId = @UsrM, @DepartmentId = @Dept;
+        DELETE FROM @ML; INSERT INTO @ML SELECT Route, ManagerName, ActiveControllers, EmailId FROM @ML7;
+    END
+    ELSE
+    BEGIN
+        DELETE FROM @ML; INSERT INTO @ML EXEC spr_GetAgendaCreationMailId @UserId = @UsrM;
+    END
+    INSERT INTO @T SELECT 'Mail list, manager route: the manager only [step 53: both Managers of the department]',
+           CASE WHEN @S53 = 1 THEN 'M 2 zz20mgr2@example.invalid' ELSE 'M 1 zz20mgr@example.invalid' END,
            ISNULL(MAX(Route), '-') + ' ' + CAST(COUNT(*) AS VARCHAR(12)) + ' ' + ISNULL(MAX(EmailId), 'none') FROM @ML;
-    DELETE FROM @ML; INSERT INTO @ML EXEC spr_GetAgendaCreationMailId @UserId = @UsrN;
+    IF (@S53 = 1)
+    BEGIN
+        DELETE FROM @ML7; INSERT INTO @ML7 EXEC spr_GetAgendaCreationMailId @UserId = @UsrN, @DepartmentId = @DeptUN;
+        DELETE FROM @ML; INSERT INTO @ML SELECT Route, ManagerName, ActiveControllers, EmailId FROM @ML7;
+    END
+    ELSE
+    BEGIN
+        DELETE FROM @ML; INSERT INTO @ML EXEC spr_GetAgendaCreationMailId @UserId = @UsrN;
+    END
     INSERT INTO @T SELECT 'Mail list, Controller route: active Controllers, not the inactive one, the Admin or the creator', 'C 1 1 0 0 0',
            ISNULL(MAX(Route), '-') + ' '
          + CAST(SUM(CASE WHEN EmailId = 'zz20ctl1@example.invalid' THEN 1 ELSE 0 END) AS VARCHAR(12)) + ' '
@@ -346,7 +411,15 @@ BEGIN TRY
          + CAST(SUM(CASE WHEN EmailId = 'zz20ctloff@example.invalid' THEN 1 ELSE 0 END) AS VARCHAR(12)) + ' '
          + CAST(SUM(CASE WHEN EmailId = 'zz20adm@example.invalid' THEN 1 ELSE 0 END) AS VARCHAR(12)) + ' '
          + CAST(SUM(CASE WHEN EmailId = 'zz20usrn@example.invalid' THEN 1 ELSE 0 END) AS VARCHAR(12)) FROM @ML;
-    DELETE FROM @ML; INSERT INTO @ML EXEC spr_GetAgendaCreationMailId @UserId = @UsrI;
+    IF (@S53 = 1)
+    BEGIN
+        DELETE FROM @ML7; INSERT INTO @ML7 EXEC spr_GetAgendaCreationMailId @UserId = @UsrI, @DepartmentId = @Dept;
+        DELETE FROM @ML; INSERT INTO @ML SELECT Route, ManagerName, ActiveControllers, EmailId FROM @ML7;
+    END
+    ELSE
+    BEGIN
+        DELETE FROM @ML; INSERT INTO @ML EXEC spr_GetAgendaCreationMailId @UserId = @UsrI;
+    END
     INSERT INTO @T SELECT 'Mail list, inactive manager: route I with the name, no address', 'I ZZ20 inactive manager 1 0',
            ISNULL(MAX(Route), '-') + ' ' + ISNULL(MAX(CAST(ManagerName AS VARCHAR(200))), '') + ' ' + CAST(COUNT(*) AS VARCHAR(12)) + ' '
          + CAST(COUNT(EmailId) AS VARCHAR(12)) FROM @ML;
@@ -355,8 +428,8 @@ BEGIN TRY
     -- 5. Approve / reject (spr_UpdateAgendaByAgendaId): refusals first, nothing changes
     ---------------------------------------------------------------------------
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_UpdateAgendaByAgendaId @AgendaId = @AgM, @ShortText = 'ZZ20 M', @ProposedResolution = 'ZZ',
-         @MgrComments = 'ok', @ControllerComments = @E, @ControllerApprovedStatus = @E, @MgrApprovedStatus = 'Approved', @UpdatedBy = @Mgr2;
-    INSERT INTO @T SELECT 'Another Manager (not routed, not the creator''s) approves at AC: refused', 'Result 0, Reason 14, Agenda Creation; AC',
+         @MgrComments = 'ok', @ControllerComments = @E, @ControllerApprovedStatus = @E, @MgrApprovedStatus = 'Approved', @UpdatedBy = @MgrB;
+    INSERT INTO @T SELECT 'Another Manager (not routed, not the creator''s; step 53: of another department) approves at AC: refused', 'Result 0, Reason 14, Agenda Creation; AC',
            (SELECT Txt FROM @R) + '; ' + (SELECT AgendaStatusCode FROM Agenda WHERE AgendaId = @AgM);
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_UpdateAgendaByAgendaId @AgendaId = @AgM, @ShortText = 'ZZ20 M', @ProposedResolution = 'ZZ',
          @MgrComments = @E, @ControllerComments = 'ok', @ControllerApprovedStatus = 'Approved', @MgrApprovedStatus = @E, @UpdatedBy = @Ctl1;
@@ -391,7 +464,7 @@ BEGIN TRY
     INSERT INTO @T SELECT 'Unknown agenda item: refused (Reason 4)', 'Result 0, Reason 4', Txt FROM @R;
     INSERT INTO @T SELECT 'After the refusals: items unchanged, no audit row by the refused users', 'AC AMA 0',
            (SELECT AgendaStatusCode FROM Agenda WHERE AgendaId = @AgM) + ' ' + (SELECT AgendaStatusCode FROM Agenda WHERE AgendaId = @AgN) + ' '
-         + CAST((SELECT COUNT(*) FROM Audit_Trail_Master WHERE Update_By IN (@Mgr2, @Adm, @Mgmt, @MdSect, @CtlOff, @Ctl1) AND Update_On >= @Now) AS VARCHAR(12));
+         + CAST((SELECT COUNT(*) FROM Audit_Trail_Master WHERE Update_By IN (@Mgr2, @MgrB, @Adm, @Mgmt, @MdSect, @CtlOff, @Ctl1) AND Update_On >= @Now) AS VARCHAR(12));
 
     ---------------------------------------------------------------------------
     -- 6. Approve / reject: what is allowed
@@ -483,7 +556,7 @@ BEGIN TRY
     -- 7. One-time re-route (spr_RerouteWaitingAgendas)
     ---------------------------------------------------------------------------
     INSERT INTO Agenda (AgendaNo, CommitteeId, MeetingId, DepartmentId, SubjectTypeId, ShortText, AgendaType, AgendaText, ProposedResolution, AgendaStatusCode, CreatedOn, CreatedBy)
-    VALUES ('Z20-99922-093', @C, @Mt2, @Dept, @SubjectTypeId, 'ZZ20 stuck', 'Entry', 'ZZ', 'ZZ', 'AC', @Now, @UsrN);
+    VALUES ('Z20-99922-093', @C, @Mt2, @DeptUN, @SubjectTypeId, 'ZZ20 stuck', 'Entry', 'ZZ', 'ZZ', 'AC', @Now, @UsrN);
     SET @RA = SCOPE_IDENTITY();
     INSERT INTO Agenda (AgendaNo, CommitteeId, MeetingId, DepartmentId, SubjectTypeId, ShortText, AgendaType, AgendaText, ProposedResolution, AgendaStatusCode, CreatedOn, CreatedBy)
     VALUES ('Z20-99921-002', @C, @MtF, @Dept, @SubjectTypeId, 'ZZ20 stuck finalized', 'Entry', 'ZZ', 'ZZ', 'AC', @Now, @UsrN);
@@ -495,13 +568,19 @@ BEGIN TRY
     VALUES ('Z20-99922-095', @C, @Mt2, @Dept, @SubjectTypeId, 'ZZ20 waits inactive', 'Entry', 'ZZ', 'ZZ', 'AC', @Now, @UsrI);
     SET @RD = SCOPE_IDENTITY();
     INSERT INTO Alert_Master (SourceType, DepartmentId, SourceTypeId, DisplayText, AlertTypeCode, AlertSendOption, CommitteeId, CreatedOn, CreatedBy)
-    VALUES ('Agenda', @Dept, @RA, 'Agenda (Z20-99922-093)', 'AC', 3, @C, @Now, @UsrN);
+    VALUES ('Agenda', @DeptUN, @RA, 'Agenda (Z20-99922-093)', 'AC', 3, @C, @Now, @UsrN);
     SET @A = SCOPE_IDENTITY();
     INSERT INTO Alert_User_Map (AlertId, UserId, ReadStatus, StatusId) VALUES (@A, @Adm, 1, 1);
 
     -- Every item the procedure should move: those above and any waiting in the copy's own data
-    SET @Count = (SELECT COUNT(*) FROM Agenda a JOIN Meeting mt ON mt.MeetingId = a.MeetingId CROSS APPLY dbo.fn_AgendaRoute(a.CreatedBy) r
-                  WHERE a.AgendaStatusCode = 'AC' AND ISNULL(mt.AgendaStatus, 'Open') = 'Open' AND r.Route = 'C' AND r.ActiveControllers > 0);
+    IF (@S53 = 1)
+        EXEC sp_executesql N'SELECT @n = COUNT(*) FROM Agenda a JOIN Meeting mt ON mt.MeetingId = a.MeetingId CROSS APPLY dbo.fn_AgendaRoute(a.CreatedBy, a.DepartmentId) r
+                  WHERE a.AgendaStatusCode = ''AC'' AND ISNULL(mt.AgendaStatus, ''Open'') = ''Open'' AND r.Route = ''C'' AND r.ActiveControllers > 0',
+             N'@n INT OUTPUT', @n = @Count OUTPUT;
+    ELSE
+        EXEC sp_executesql N'SELECT @n = COUNT(*) FROM Agenda a JOIN Meeting mt ON mt.MeetingId = a.MeetingId CROSS APPLY dbo.fn_AgendaRoute(a.CreatedBy) r
+                  WHERE a.AgendaStatusCode = ''AC'' AND ISNULL(mt.AgendaStatus, ''Open'') = ''Open'' AND r.Route = ''C'' AND r.ActiveControllers > 0',
+             N'@n INT OUTPUT', @n = @Count OUTPUT;
 
     DELETE FROM @RR; INSERT INTO @RR EXEC spr_RerouteWaitingAgendas;
     INSERT INTO @T SELECT 'Re-route: moves every waiting item of a creator without a manager step', CAST(@Count AS VARCHAR(12)),
@@ -591,8 +670,11 @@ FROM @T;
 -- Confirm nothing was kept: should be 0, 0, 0 and 0
 SELECT (SELECT COUNT(*) FROM Users WHERE LoginName LIKE 'zz20%') AS TestUsersLeft,
        (SELECT COUNT(*) FROM Meeting WHERE MeetingNo IN ('99920', '99921', '99922') AND Place = 'ZZ20 test') AS TestMeetingsLeft,
-       (SELECT COUNT(*) FROM Department WHERE DepartmentCode = 'ZZ20') AS TestDepartmentsLeft,
+       (SELECT COUNT(*) FROM Department WHERE DepartmentCode IN ('ZZ20', 'ZZ20N', 'ZZ20B')) AS TestDepartmentsLeft,
        (SELECT COUNT(*) FROM Committee WHERE CommitteeCode = 'Z20' AND CommitteeName = 'ZZ step 20 committee') AS TestCommitteesLeft;
+GO
+
+IF OBJECT_ID('tempdb..#ZZ20_Route') IS NOT NULL DROP PROCEDURE #ZZ20_Route;
 GO
 
 SET NOEXEC OFF;

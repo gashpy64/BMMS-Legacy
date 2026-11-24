@@ -72,6 +72,9 @@ DECLARE @M TABLE (EmailId VARCHAR(250));
 DECLARE @E NVARCHAR(10) = N'';
 DECLARE @Now DATETIME = GETDATE();
 DECLARE @Past DATETIME = DATEADD(DAY, -3, CAST(CAST(GETDATE() AS date) AS DATETIME));
+-- Step 52 (MR1) refuses a Manager's approve or reject after the meeting date (Reason 28), so the open meeting whose
+-- items are decided here is dated 10 days ahead (step UD1b); its agenda submission date stays in the past
+DECLARE @Future DATETIME = DATEADD(DAY, 10, CAST(CAST(GETDATE() AS date) AS DATETIME));
 DECLARE @Sys INT = (SELECT TOP 1 UserId FROM Users WHERE IsSystem = 1 ORDER BY UserId);
 DECLARE @CtrlRoleId INT = (SELECT TOP 1 RoleId FROM Roles WHERE RoleCode = 'controller');
 DECLARE @MgrRoleId INT = (SELECT TOP 1 RoleId FROM Roles WHERE RoleCode = 'manager');
@@ -167,13 +170,16 @@ BEGIN TRY
     INSERT INTO Users (UserName, DepartmentId, DesignationId, ManagerId, RoleId, EmailId, LoginName, [Password], AccountStatus, CreatedOn, CreatedBy, UpdatedOn, UpdatedBy)
     VALUES ('ZZ37 user', @Dept, @DesignationId, @Mgr, @UserRoleId, 'zz37usr@example.invalid', 'zz37usr', 'not-a-login', 1, @Now, @Sys, @Now, @Sys);
     SET @Usr = SCOPE_IDENTITY();
+    -- Step UD1b (step 53): item B's user has a Controller as Reporting Person, so the item goes straight to the
+    -- Controllers (route C) before and after step 53; with no Reporting Person, step 53 sends it to the department's
+    -- Manager instead. The checks of item B are unchanged.
     INSERT INTO Users (UserName, DepartmentId, DesignationId, ManagerId, RoleId, EmailId, LoginName, [Password], AccountStatus, CreatedOn, CreatedBy, UpdatedOn, UpdatedBy)
-    VALUES ('ZZ37 user without manager', @Dept, @DesignationId, NULL, @UserRoleId, 'zz37usr2@example.invalid', 'zz37usr2', 'not-a-login', 1, @Now, @Sys, @Now, @Sys);
+    VALUES ('ZZ37 user without manager', @Dept, @DesignationId, @Ctl, @UserRoleId, 'zz37usr2@example.invalid', 'zz37usr2', 'not-a-login', 1, @Now, @Sys, @Now, @Sys);
     SET @Usr2 = SCOPE_IDENTITY();
     INSERT INTO @Who (UserId, Tag) VALUES (@Ctl, 'ctl'), (@Ctl2, 'ctl2'), (@Mgr, 'mgr'), (@Usr, 'usr'), (@Usr2, 'usr2');
 
     INSERT INTO Meeting (MeetingNo, CommitteeId, Place, Venue, MeetingDate, MeetingTime, AgendaSubmissionDate, AgendaStatus, MinutesStatus)
-    VALUES ('99937', @C, 'ZZ37 test', 'ZZ', @Past, '10:00', @Past, 'Open', 'Open');
+    VALUES ('99937', @C, 'ZZ37 test', 'ZZ', @Future, '10:00', @Past, 'Open', 'Open');   -- step UD1b: the meeting date was @Past
     SET @Mt = SCOPE_IDENTITY();
 
     ---------------------------------------------------------------------------

@@ -88,9 +88,23 @@ is the number of items that wait for your approval. (If the panel cannot be load
 the heading shows "My approvals (-)" with a dash instead of the number; a screen reader reads "count not
 available".) The heading keeps its number when you open or close an alert or an action item. It lists those items, the newest meeting first, 10 to a page,
 with the columns Item (the agenda number as a link, and the short text under it), Committee, Meeting (the meeting
-number and its date) and Department. The Controller sees the items that the Manager has approved. The Manager sees
-the items sent to him for approval: the items entered by the people who report to him, and the items about which
-BMMS sent him an alert (also when he removed the alert from his list). A Manager sees only the items he may approve.
+number and its date) and Department. The Controller sees the items that wait for the Controller: the items that a
+Manager has approved, and the items that went straight to the Controllers. The Manager sees the items of his
+departments that wait for a Manager, except the items he entered himself. A Manager sees only the items he may approve.
+
+Who approves an item at the Manager step: every active Manager of the item's department, and never the person who
+entered it. Where a new item of a User goes is decided in this order. If the person the User reports to (the Reporting
+Person) is not active, the item is not saved. If the Reporting Person is an active Controller, the item goes straight
+to the Controllers. Otherwise, if the department has an active Manager other than the User, the item waits for all the
+Managers of the department, and any one of them may approve or reject it; whoever decides first decides, and another
+Manager who then tries gets "You cannot approve or reject this agenda item at its current stage ([status name]).
+Reload the Dashboard to see its current state." Otherwise the Admin's System Settings ("Department without an active
+Manager") decide: the item is refused with "Not saved: the department [department name] has no active Manager. Ask the
+Admin to nominate a Manager for the department.", or it is saved and sent to the Controller, and the message and the
+"has been Created" mail add "Sent to the Controller: the department had no active Manager." If no Controller is active,
+an item that would go to the Controllers is refused. Items entered by a Manager or by the Controller keep their route.
+The Controller's own rules for approving are unchanged, and a Manager's decision after the meeting date is still
+refused.
 
 The panel follows the Committee drop-down, and the Manager's Department drop-down. It lists only items of a meeting
 whose agenda is open and whose date has not passed. When nothing waits for you it says "Nothing is waiting for
@@ -152,6 +166,17 @@ When you open an alert, its panel has the button "Remove from my list". It remov
 only; other people keep theirs. If the item is edited later, the alert comes back, unread. If the page
 cannot find the alert in your list it says "This alert is not in your list."
 
+Handled alerts (Managers): when one Manager of a department approves or rejects an item, the alerts of the other
+Managers of the department about that item are handled. A handled alert is listed under All only, in grey, with a line
+under the alert type: "Handled by [Name (login)] on [dd-MMM-yyyy]". Two other lines mark an alert that is closed for a
+Manager: "No longer Manager of the department ([dd-MMM-yyyy])", when he stopped being a Manager of the department (his
+role, department or status was changed) while the item was waiting, and "Item moved to another department
+([dd-MMM-yyyy])", when the Controller moved the item to another department. A handled alert is never counted as unread,
+in the header or in the Unread alerts card, and never becomes unread again; if the Controller moves the item back, the
+alerts of the first department's Managers become live again. "Remove from my list" works on a handled alert, and the
+Agenda Alert panel opened from it shows the same line. A new Manager, a Manager who is activated again, or a Manager
+who is given another department gets the alerts of the items of his departments that are waiting for a Manager.
+
 The header shows "Alerts (n)", the number of alerts you have not read. The number changes by itself after
 you press Approve, Reject or "Remove from my list", after you open an alert and when you click Recent, Unread
 or All. If BMMS cannot read the number, the header shows "Alerts" without a number.
@@ -161,7 +186,8 @@ or, when the server is busy, "The server is busy and the alerts could not be loa
 reload the page." If your account is not active it says "The alerts are not available: your account is not
 active. Sign in again."
 
-The Admin has no functional alerts: the card says "No alerts." and the header reads "Alerts (0)". The
+The Admin has no functional alerts: the card says "No alerts." and the header reads "Alerts (0)". BMMS no longer
+writes alerts about agenda items, approvals, meetings or committees for the Admin role. The
 Admin also receives no mail about agenda items, meetings or committees. The Controller does not see the
 alerts of the Controller's own decisions (approved or rejected), and the Manager does not see the alerts of
 the Manager's own decisions.

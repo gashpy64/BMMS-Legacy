@@ -232,7 +232,13 @@ DECLARE @R TABLE (Result INT, Reason INT, ReasonDetail NVARCHAR(2000));
 DECLARE @Actors TABLE (Label VARCHAR(20) PRIMARY KEY, UserId INT NULL);
 DECLARE @Items TABLE (Label VARCHAR(20) PRIMARY KEY, AgendaId INT);
 DECLARE @Actions TABLE (Label VARCHAR(30) PRIMARY KEY, M VARCHAR(50) NULL, C VARCHAR(50) NULL);
-DECLARE @Case TABLE (Actor VARCHAR(20), Item VARCHAR(20), Act VARCHAR(30), OldRR VARCHAR(60), NewRR VARCHAR(60), OldOut NVARCHAR(MAX), NewOut NVARCHAR(MAX));
+DECLARE @Case TABLE (Actor VARCHAR(20), Item VARCHAR(20), Act VARCHAR(30), OldRR VARCHAR(60), NewRR VARCHAR(60), OldOut NVARCHAR(MAX), NewOut NVARCHAR(MAX),
+                     NewH INT NULL);   -- step 53: rows of the item's alert marked 'H' by the new text's call
+-- Step 53 (step UD1b): every Manager of the item's department decides it, not the creator's manager or an alert row.
+-- Values that differ with step 53 installed read [step 53: ...]; the step 53 rule is the yardstick of row 13.
+DECLARE @S53 INT = CASE WHEN OBJECT_ID('dbo.fn_DepartmentManagers', 'IF') IS NOT NULL THEN 1 ELSE 0 END;
+DECLARE @NewH INT;
+DECLARE @ByDesign TABLE (Actor VARCHAR(20), Item VARCHAR(20), Act VARCHAR(30), NewRR VARCHAR(60), StatusAfter VARCHAR(10), Marked INT, PacReason28 INT);
 
 DECLARE @Now DATETIME = GETDATE();
 DECLARE @Day DATETIME = DATEADD(DAY, DATEDIFF(DAY, 0, GETDATE()), 0);
@@ -1005,7 +1011,7 @@ END
 -- Real data, read only: the function against the rule of step 20, written out here as it stood in the procedure
 ---------------------------------------------------------------------------
 INSERT INTO @T
-SELECT 'Data of this database: for every active user that is not the system account and every agenda item, fn_AgendaWaitingFor gives the answer of the step 20 rule (pairs that differ; '
+SELECT 'Data of this database: for every active user that is not the system account and every agenda item, fn_AgendaWaitingFor gives the answer of the step 20 rule [step 53: of the step 53 rule] (pairs that differ; '
        + CAST((SELECT COUNT(*) FROM Users WHERE AccountStatus = 1 AND IsSystem = 0) AS VARCHAR(12)) + ' users, ' + CAST((SELECT COUNT(*) FROM Agenda) AS VARCHAR(12)) + ' items)', '0',
        CAST((SELECT COUNT(*)
              FROM Users u
@@ -1014,15 +1020,25 @@ SELECT 'Data of this database: for every active user that is not the system acco
              LEFT JOIN Users c ON c.UserId = a.CreatedBy
              OUTER APPLY (SELECT w.CanApprove, w.CanReject FROM dbo.fn_AgendaWaitingFor(u.UserId, @Today) w WHERE w.AgendaId = a.AgendaId) f
              CROSS APPLY (SELECT
-                 CASE WHEN r.RoleCode = 'manager' AND ISNULL(a.AgendaStatusCode, '') = 'AC'
+                 CASE WHEN r.RoleCode = 'manager' AND ISNULL(a.AgendaStatusCode, '') = 'AC' AND @S53 = 0
                            AND (u.UserId = ISNULL(c.ManagerId, 0)
                                 OR EXISTS (SELECT 1 FROM Alert_User_Map m JOIN Alert_Master am ON am.AlertId = m.AlertId
                                            WHERE am.SourceType = 'Agenda' AND am.SourceTypeId = a.AgendaId AND m.UserId = u.UserId)) THEN 1
+                      -- step 53: an active Manager with an open department row (or, without any row, Users.DepartmentId), not the creator
+                      WHEN r.RoleCode = 'manager' AND ISNULL(a.AgendaStatusCode, '') = 'AC' AND @S53 = 1
+                           AND u.UserId <> ISNULL(a.CreatedBy, 0)
+                           AND (EXISTS (SELECT 1 FROM User_Department ud WHERE ud.UserId = u.UserId AND ud.DepartmentId = a.DepartmentId AND ud.EffectiveTo IS NULL)
+                                OR (u.DepartmentId = a.DepartmentId AND NOT EXISTS (SELECT 1 FROM User_Department ux WHERE ux.UserId = u.UserId))) THEN 1
                       WHEN r.RoleCode = 'controller' AND ISNULL(a.AgendaStatusCode, '') = 'AMA' THEN 1 ELSE 0 END AS OldApprove,
-                 CASE WHEN r.RoleCode = 'manager' AND ISNULL(a.AgendaStatusCode, '') = 'AC'
+                 CASE WHEN r.RoleCode = 'manager' AND ISNULL(a.AgendaStatusCode, '') = 'AC' AND @S53 = 0
                            AND (u.UserId = ISNULL(c.ManagerId, 0)
                                 OR EXISTS (SELECT 1 FROM Alert_User_Map m JOIN Alert_Master am ON am.AlertId = m.AlertId
                                            WHERE am.SourceType = 'Agenda' AND am.SourceTypeId = a.AgendaId AND m.UserId = u.UserId)) THEN 1
+                      -- step 53: an active Manager with an open department row (or, without any row, Users.DepartmentId), not the creator
+                      WHEN r.RoleCode = 'manager' AND ISNULL(a.AgendaStatusCode, '') = 'AC' AND @S53 = 1
+                           AND u.UserId <> ISNULL(a.CreatedBy, 0)
+                           AND (EXISTS (SELECT 1 FROM User_Department ud WHERE ud.UserId = u.UserId AND ud.DepartmentId = a.DepartmentId AND ud.EffectiveTo IS NULL)
+                                OR (u.DepartmentId = a.DepartmentId AND NOT EXISTS (SELECT 1 FROM User_Department ux WHERE ux.UserId = u.UserId))) THEN 1
                       WHEN r.RoleCode = 'controller' AND ISNULL(a.AgendaStatusCode, '') IN ('AC', 'AMA') THEN 1 ELSE 0 END AS OldReject) o
              WHERE u.AccountStatus = 1 AND u.IsSystem = 0
              AND (ISNULL(f.CanApprove, 0) <> o.OldApprove OR ISNULL(f.CanReject, 0) <> o.OldReject)) AS VARCHAR(12));
@@ -1089,8 +1105,10 @@ END');
         END
         CLOSE ItCursor;
         DEALLOCATE ItCursor;
-        INSERT INTO @T SELECT 'Login itmgruser: the ' + CAST(@N AS VARCHAR(12)) + ' items at AC (open agenda) of his departments that are not routed to him: each refused with Reason 14 and still at AC; none of them in his function rows',
-               CAST(@N AS VARCHAR(12)) + ' of ' + CAST(@N AS VARCHAR(12)) + ' refused, 0 function rows',
+        INSERT INTO @T SELECT 'Login itmgruser: the ' + CAST(@N AS VARCHAR(12)) + ' items at AC (open agenda) of his departments that are not routed to him: each refused with Reason 14 and still at AC; none of them in his function rows'
+               + CASE WHEN @S53 = 1 THEN ' [step 53: he is a Manager of their department: in his function rows, none refused with Reason 14]' ELSE '' END,
+               CASE WHEN @S53 = 1 THEN '0 of ' + CAST(@N AS VARCHAR(12)) + ' refused, ' + CAST(@N AS VARCHAR(12)) + ' function rows'
+                    ELSE CAST(@N AS VARCHAR(12)) + ' of ' + CAST(@N AS VARCHAR(12)) + ' refused, 0 function rows' END,
                CAST(@Refused AS VARCHAR(12)) + ' of ' + CAST(@N AS VARCHAR(12)) + ' refused, '
              + CAST((SELECT COUNT(*) FROM dbo.fn_AgendaWaitingFor(@Id, @Today)) AS VARCHAR(12)) + ' function rows';
     END
@@ -1204,9 +1222,9 @@ END');
                          ORDER BY i.Label FOR XML PATH('')), 1, 2, ''), 'no rows')
     FROM (SELECT 1 AS Seq, 'the manager of the creator: the creator''s four items at AC; waiting only where the agenda is open and the date has not passed' AS Name, @Mg1 AS UserId,
                  'fAC=11010; nAC=11111; oAC=11111; pAC=11100' AS Expected
-          UNION ALL SELECT 2, 'the manager with an alert row: every item at AC, also the one of nobody''s manager', @Mg2, 'fAC=11010; nAC=11111; oAC=11111; pAC=11100; xAC=11111'
-          UNION ALL SELECT 3, 'the manager who removed his alert row from his list: the same (the row still counts)', @Mg3, 'fAC=11010; nAC=11111; oAC=11111; pAC=11100; xAC=11111'
-          UNION ALL SELECT 4, 'the manager not routed (same department as the items): nothing', @Mg4, 'no rows'
+          UNION ALL SELECT 2, 'the manager with an alert row: every item at AC, also the one of nobody''s manager [step 53: only xAC, of his department B]', @Mg2, CASE WHEN @S53 = 1 THEN 'xAC=11111' ELSE 'fAC=11010; nAC=11111; oAC=11111; pAC=11100; xAC=11111' END
+          UNION ALL SELECT 3, 'the manager who removed his alert row from his list: the same (the row still counts) [step 53: only xAC]', @Mg3, CASE WHEN @S53 = 1 THEN 'xAC=11111' ELSE 'fAC=11010; nAC=11111; oAC=11111; pAC=11100; xAC=11111' END
+          UNION ALL SELECT 4, 'the manager not routed (same department as the items): nothing [step 53: the items of A]', @Mg4, CASE WHEN @S53 = 1 THEN 'fAC=11010; nAC=11111; oAC=11111; pAC=11100' ELSE 'no rows' END
           UNION ALL SELECT 5, 'the Controller: AMA approve and reject, AC reject only', @Ctl, 'fAC=01010; fAMA=11010; nAC=01110; oAC=01110; oAMA=11111; pAC=01100; pAMA=11100; xAC=01110'
           UNION ALL SELECT 6, 'the user (the creator)', @Usr, 'no rows'
           UNION ALL SELECT 7, 'Management', @Gmt, 'no rows'
@@ -1240,11 +1258,16 @@ END');
         INSERT INTO @R EXEC dbo.spr_UpdateAgendaByAgendaId @AgendaId = @cAgenda, @ShortText = N'ZZ44 changed', @ProposedResolution = N'ZZ44 resolution',
             @MgrComments = N'ZZ44 mc', @ControllerComments = N'ZZ44 cc', @ControllerApprovedStatus = @cC, @MgrApprovedStatus = @cM, @UpdatedBy = @cUser;
         SET @NewRR = ISNULL((SELECT TOP 1 'Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(3)) FROM @R), 'no answer');
+        SET @NewH = NULL;
+        IF (COL_LENGTH('dbo.Alert_User_Map', 'HandledReason') IS NOT NULL)
+            EXEC sp_executesql N'SELECT @h = COUNT(*) FROM Alert_User_Map mp JOIN Alert_Master am ON am.AlertId = mp.AlertId
+                                 WHERE am.SourceType = ''Agenda'' AND am.SourceTypeId = @a AND mp.HandledReason = ''H''',
+                 N'@a INT, @h INT OUTPUT', @a = @cAgenda, @h = @NewH OUTPUT;
         SET @NewOut = @NewRR + ISNULL((SELECT TOP 1 ' [' + ISNULL(ReasonDetail, N'null') + ']' FROM @R), '') + ' rows ' + CAST((SELECT COUNT(*) FROM @R) AS VARCHAR(3))
                     + ' # ' + dbo.fn_ZZ44_State(@cAgenda);
         ROLLBACK TRANSACTION ZZ44Case;
 
-        INSERT INTO @Case (Actor, Item, Act, OldRR, NewRR, OldOut, NewOut) VALUES (@cActor, @cItem, @cAct, @OldRR, @NewRR, @OldOut, @NewOut);
+        INSERT INTO @Case (Actor, Item, Act, OldRR, NewRR, OldOut, NewOut, NewH) VALUES (@cActor, @cItem, @cAct, @OldRR, @NewRR, @OldOut, @NewOut, @NewH);
         FETCH NEXT FROM CaseCursor INTO @cActor, @cUser, @cItem, @cAgenda, @cAct, @cM, @cC;
     END
     CLOSE CaseCursor;
@@ -1253,18 +1276,74 @@ END');
     -- Step 52 (MR1): the earlier text does not look at the meeting date, step 52 refuses a Manager's decision after it
     -- (Reason 28). Those differences are counted apart (the routed managers' approve and reject of the past item pAC, now
     -- Reason 28: 6); any OTHER difference is still named. Expected value and the count changed.
-    INSERT INTO @T SELECT 'Approval, earlier text beside the new one: cases run (13 actors x 13 items x 8 actions); cases whose Result, Reason, ReasonDetail or written rows differ',
-           '1352 cases, 6 differ (6 of them a manager''s decision on pAC, now Reason 28), 0 other',
-           CAST((SELECT COUNT(*) FROM @Case) AS VARCHAR(12)) + ' cases, ' + CAST((SELECT COUNT(*) FROM @Case WHERE OldOut <> NewOut OR OldOut IS NULL OR NewOut IS NULL) AS VARCHAR(12)) + ' differ ('
-         + CAST((SELECT COUNT(*) FROM @Case WHERE (OldOut <> NewOut OR OldOut IS NULL OR NewOut IS NULL)
-                 AND Item = 'pAC' AND Act IN ('mgr approve', 'mgr reject') AND NewRR = 'Result 0, Reason 28') AS VARCHAR(12))
-         + ' of them a manager''s decision on pAC, now Reason 28), '
-         + CAST((SELECT COUNT(*) FROM @Case WHERE (OldOut <> NewOut OR OldOut IS NULL OR NewOut IS NULL)
-                 AND NOT (Item = 'pAC' AND Act IN ('mgr approve', 'mgr reject') AND ISNULL(NewRR, '') = 'Result 0, Reason 28')) AS VARCHAR(12)) + ' other'
-         + ISNULL((SELECT TOP 1 ': ' + Actor + ' / ' + Item + ' / ' + Act + ': ' + LEFT(ISNULL(OldOut, 'null'), 200) + ' <> ' + LEFT(ISNULL(NewOut, 'null'), 200)
-                   FROM @Case WHERE (OldOut <> NewOut OR OldOut IS NULL OR NewOut IS NULL)
-                   AND NOT (Item = 'pAC' AND Act IN ('mgr approve', 'mgr reject') AND ISNULL(NewRR, '') = 'Result 0, Reason 28')
-                   ORDER BY Actor, Item, Act), '');
+    -- Step 53 (UD1b, owner 2026-11-23): the differences of step 53 are the 28 cases listed here, each with its outcome:
+    -- 4 a Manager's decision on pAC now Reason 28 (mg1, mg4), and 24 by design (mg1 and mg4: the Managers of A decide
+    -- nAC and oAC, the other Managers' rows marked H; mg2 and mg3, Managers of B: Reason 14 on the items of A, and they
+    -- decide xAC with the other rows marked H). A case not on the list, or with another outcome, is named as a failure.
+    IF (@S53 = 1)
+    BEGIN
+        INSERT INTO @ByDesign (Actor, Item, Act, NewRR, StatusAfter, Marked, PacReason28)
+        SELECT a.Actor, i.Item, x.Act,
+               CASE WHEN a.Kind = 'A' THEN 'Result 1, Reason 0' ELSE 'Result 0, Reason 14' END,
+               CASE WHEN a.Kind = 'A' THEN CASE WHEN x.Act = 'mgr approve' THEN 'AMA' ELSE 'AMR' END ELSE 'AC' END,
+               CASE WHEN a.Kind = 'A' THEN 1 ELSE 0 END, 0
+        FROM (SELECT 'mg1' AS Actor, 'nAC' AS Item, 'A' AS Kind UNION ALL SELECT 'mg1', 'oAC', 'A'
+              UNION ALL SELECT 'mg4', 'nAC', 'A' UNION ALL SELECT 'mg4', 'oAC', 'A'
+              UNION ALL SELECT 'mg2', 'xAC', 'A' UNION ALL SELECT 'mg3', 'xAC', 'A'
+              UNION ALL SELECT 'mg2', 'nAC', 'R' UNION ALL SELECT 'mg2', 'oAC', 'R' UNION ALL SELECT 'mg2', 'pAC', 'R'
+              UNION ALL SELECT 'mg3', 'nAC', 'R' UNION ALL SELECT 'mg3', 'oAC', 'R' UNION ALL SELECT 'mg3', 'pAC', 'R') a
+        CROSS APPLY (SELECT a.Item AS Item) i
+        CROSS JOIN (SELECT 'mgr approve' AS Act UNION ALL SELECT 'mgr reject') x;
+        INSERT INTO @ByDesign (Actor, Item, Act, NewRR, StatusAfter, Marked, PacReason28)
+        SELECT a.Actor, 'pAC', x.Act, 'Result 0, Reason 28', 'AC', 0, 1
+        FROM (SELECT 'mg1' AS Actor UNION ALL SELECT 'mg4') a CROSS JOIN (SELECT 'mgr approve' AS Act UNION ALL SELECT 'mgr reject') x;
+
+        INSERT INTO @T SELECT 'Approval, earlier text beside the new one: cases run (13 actors x 13 items x 8 actions); cases whose Result, Reason, ReasonDetail or written rows differ [step 53: the 28 listed cases]',
+               '1352 cases, 28 differ (4 of them a manager''s decision on pAC, now Reason 28), 24 by design (each listed case with its outcome), 0 other',
+               CAST((SELECT COUNT(*) FROM @Case) AS VARCHAR(12)) + ' cases, '
+             + CAST((SELECT COUNT(*) FROM @Case WHERE OldOut <> NewOut OR OldOut IS NULL OR NewOut IS NULL) AS VARCHAR(12)) + ' differ ('
+             + CAST((SELECT COUNT(*) FROM @Case c JOIN @ByDesign b ON b.Actor = c.Actor AND b.Item = c.Item AND b.Act = c.Act
+                     WHERE b.PacReason28 = 1 AND (c.OldOut <> c.NewOut OR c.OldOut IS NULL OR c.NewOut IS NULL)
+                       AND c.NewRR = b.NewRR AND c.NewOut LIKE '%# ' + b.StatusAfter + '|%' AND ISNULL(c.NewH, 0) = 0) AS VARCHAR(12))
+             + ' of them a manager''s decision on pAC, now Reason 28), '
+             + CAST((SELECT COUNT(*) FROM @Case c JOIN @ByDesign b ON b.Actor = c.Actor AND b.Item = c.Item AND b.Act = c.Act
+                     WHERE b.PacReason28 = 0 AND (c.OldOut <> c.NewOut OR c.OldOut IS NULL OR c.NewOut IS NULL)
+                       AND c.NewRR = b.NewRR AND c.NewOut LIKE '%# ' + b.StatusAfter + '|%'
+                       AND ((b.Marked = 1 AND ISNULL(c.NewH, 0) > 0) OR (b.Marked = 0 AND ISNULL(c.NewH, 0) = 0))) AS VARCHAR(12))
+             + ' by design (each listed case with its outcome), '
+             + CAST((SELECT COUNT(*) FROM @Case c
+                     LEFT JOIN @ByDesign b ON b.Actor = c.Actor AND b.Item = c.Item AND b.Act = c.Act
+                     WHERE ((c.OldOut <> c.NewOut OR c.OldOut IS NULL OR c.NewOut IS NULL)
+                            AND (b.Actor IS NULL OR c.NewRR <> b.NewRR OR c.NewOut NOT LIKE '%# ' + b.StatusAfter + '|%'
+                                 OR (b.Marked = 1 AND ISNULL(c.NewH, 0) = 0) OR (b.Marked = 0 AND ISNULL(c.NewH, 0) > 0)))
+                        OR (b.Actor IS NOT NULL AND NOT (c.OldOut <> c.NewOut OR c.OldOut IS NULL OR c.NewOut IS NULL))) AS VARCHAR(12)) + ' other'
+             + ISNULL((SELECT TOP 1 ': ' + c.Actor + ' / ' + c.Item + ' / ' + c.Act + ': ' + ISNULL(c.NewRR, 'null') + ' H ' + CAST(ISNULL(c.NewH, 0) AS VARCHAR(4))
+                              + ' (listed: ' + ISNULL(b.NewRR + ' -> ' + b.StatusAfter + CASE WHEN b.Marked = 1 THEN ', rows H' ELSE '' END, 'not listed') + ')'
+                       FROM @Case c
+                       LEFT JOIN @ByDesign b ON b.Actor = c.Actor AND b.Item = c.Item AND b.Act = c.Act
+                       WHERE ((c.OldOut <> c.NewOut OR c.OldOut IS NULL OR c.NewOut IS NULL)
+                              AND (b.Actor IS NULL OR c.NewRR <> b.NewRR OR c.NewOut NOT LIKE '%# ' + b.StatusAfter + '|%'
+                                   OR (b.Marked = 1 AND ISNULL(c.NewH, 0) = 0) OR (b.Marked = 0 AND ISNULL(c.NewH, 0) > 0)))
+                          OR (b.Actor IS NOT NULL AND NOT (c.OldOut <> c.NewOut OR c.OldOut IS NULL OR c.NewOut IS NULL))
+                       ORDER BY c.Actor, c.Item, c.Act), '');
+        INSERT INTO @T SELECT 'Approval [step 53]: the 28 listed cases are all in the comparison', '28',
+               CAST((SELECT COUNT(*) FROM @ByDesign b JOIN @Case c ON c.Actor = b.Actor AND c.Item = b.Item AND c.Act = b.Act) AS VARCHAR(12));
+    END
+    ELSE
+    BEGIN
+        INSERT INTO @T SELECT 'Approval, earlier text beside the new one: cases run (13 actors x 13 items x 8 actions); cases whose Result, Reason, ReasonDetail or written rows differ',
+               '1352 cases, 6 differ (6 of them a manager''s decision on pAC, now Reason 28), 0 other',
+               CAST((SELECT COUNT(*) FROM @Case) AS VARCHAR(12)) + ' cases, ' + CAST((SELECT COUNT(*) FROM @Case WHERE OldOut <> NewOut OR OldOut IS NULL OR NewOut IS NULL) AS VARCHAR(12)) + ' differ ('
+             + CAST((SELECT COUNT(*) FROM @Case WHERE (OldOut <> NewOut OR OldOut IS NULL OR NewOut IS NULL)
+                     AND Item = 'pAC' AND Act IN ('mgr approve', 'mgr reject') AND NewRR = 'Result 0, Reason 28') AS VARCHAR(12))
+             + ' of them a manager''s decision on pAC, now Reason 28), '
+             + CAST((SELECT COUNT(*) FROM @Case WHERE (OldOut <> NewOut OR OldOut IS NULL OR NewOut IS NULL)
+                     AND NOT (Item = 'pAC' AND Act IN ('mgr approve', 'mgr reject') AND ISNULL(NewRR, '') = 'Result 0, Reason 28')) AS VARCHAR(12)) + ' other'
+             + ISNULL((SELECT TOP 1 ': ' + Actor + ' / ' + Item + ' / ' + Act + ': ' + LEFT(ISNULL(OldOut, 'null'), 200) + ' <> ' + LEFT(ISNULL(NewOut, 'null'), 200)
+                       FROM @Case WHERE (OldOut <> NewOut OR OldOut IS NULL OR NewOut IS NULL)
+                       AND NOT (Item = 'pAC' AND Act IN ('mgr approve', 'mgr reject') AND ISNULL(NewRR, '') = 'Result 0, Reason 28')
+                       ORDER BY Actor, Item, Act), '');
+    END
     -- 1352 cases = 13 x 13 x 8. The system account: 104 (Reason 12). The inactive, the unknown and the missing user:
     -- 312 (Reason 8). The other nine actors: the unknown item 72 (Reason 4); the two items of the finalised agenda 144
     -- (Reason 5); the ten other items 720, of which allowed: the creator's manager 3 items x 2 actions = 6, each of the
@@ -1272,7 +1351,8 @@ END');
     -- = 10; in all 32, and 688 refused with Reason 14.
     -- Step 52 (MR1): the 6 decisions of the routed managers on the past item pAC (3 managers x approve, reject) are
     -- refused with Reason 28 (expected value changed: allowed 32 to 26, Reason 28: 6)
-    INSERT INTO @T SELECT 'The comparison is not empty: cases that were allowed (Result 1), and each refusal that occurs', 'allowed 26; Reason 12: 104, Reason 14: 688, Reason 28: 6, Reason 4: 72, Reason 5: 144, Reason 8: 312',
+    INSERT INTO @T SELECT 'The comparison is not empty: cases that were allowed (Result 1), and each refusal that occurs [step 53: 22 allowed, Reason 14 694, Reason 28 4]',
+           CASE WHEN @S53 = 1 THEN 'allowed 22; Reason 12: 104, Reason 14: 694, Reason 28: 4, Reason 4: 72, Reason 5: 144, Reason 8: 312' ELSE 'allowed 26; Reason 12: 104, Reason 14: 688, Reason 28: 6, Reason 4: 72, Reason 5: 144, Reason 8: 312' END,
            'allowed ' + CAST((SELECT COUNT(*) FROM @Case WHERE NewRR = 'Result 1, Reason 0') AS VARCHAR(12)) + '; '
          + ISNULL(STUFF((SELECT ', ' + REPLACE(NewRR, 'Result 0, ', '') + ': ' + CAST(COUNT(*) AS VARCHAR(12)) FROM @Case WHERE NewRR LIKE 'Result 0,%' GROUP BY NewRR ORDER BY NewRR FOR XML PATH('')), 1, 2, ''), 'none');
 
@@ -1281,9 +1361,9 @@ END');
     SELECT 'Approval (new text): ' + x.Name, x.Expected, ISNULL((SELECT c.NewRR FROM @Case c WHERE c.Actor = x.Actor AND c.Item = x.Item AND c.Act = x.Act), 'case missing')
     FROM (SELECT 1 AS Seq, 'the manager of the creator approves the item at AC' AS Name, 'mg1' AS Actor, 'oAC' AS Item, 'mgr approve' AS Act, 'Result 1, Reason 0' AS Expected
           UNION ALL SELECT 2, 'the manager of the creator rejects it', 'mg1', 'oAC', 'mgr reject', 'Result 1, Reason 0'
-          UNION ALL SELECT 3, 'a manager routed by his alert row approves', 'mg2', 'oAC', 'mgr approve', 'Result 1, Reason 0'
-          UNION ALL SELECT 4, 'a manager whose alert row was REMOVED from his list still approves (the row counts as routing)', 'mg3', 'oAC', 'mgr approve', 'Result 1, Reason 0'
-          UNION ALL SELECT 5, 'a manager of the same department who is not routed is refused', 'mg4', 'oAC', 'mgr approve', 'Result 0, Reason 14'
+          UNION ALL SELECT 3, 'a manager routed by his alert row approves [step 53: refused, a Manager of B]', 'mg2', 'oAC', 'mgr approve', CASE WHEN @S53 = 1 THEN 'Result 0, Reason 14' ELSE 'Result 1, Reason 0' END
+          UNION ALL SELECT 4, 'a manager whose alert row was REMOVED from his list still approves (the row counts as routing) [step 53: refused]', 'mg3', 'oAC', 'mgr approve', CASE WHEN @S53 = 1 THEN 'Result 0, Reason 14' ELSE 'Result 1, Reason 0' END
+          UNION ALL SELECT 5, 'a manager of the same department who is not routed is refused [step 53: allowed, a Manager of A]', 'mg4', 'oAC', 'mgr approve', CASE WHEN @S53 = 1 THEN 'Result 1, Reason 0' ELSE 'Result 0, Reason 14' END
           UNION ALL SELECT 6, 'the manager of the creator on the item of nobody''s manager (no alert row of his) is refused', 'mg1', 'xAC', 'mgr approve', 'Result 0, Reason 14'
           UNION ALL SELECT 7, 'a manager cannot approve at AMA', 'mg1', 'oAMA', 'mgr approve', 'Result 0, Reason 14'
           UNION ALL SELECT 8, 'a manager with the Controller''s action word is refused', 'mg1', 'oAC', 'ctl approve', 'Result 0, Reason 14'
@@ -1311,10 +1391,11 @@ END');
           UNION ALL SELECT 29, 'a meeting without a date: the routed manager approves', 'mg1', 'nAC', 'mgr approve', 'Result 1, Reason 0') x
     ORDER BY x.Seq;
 
-    INSERT INTO @T SELECT 'What an approval by the manager with the removed row writes (new text): the item at AMA, his name as approver, the alert AMA, his own row read',
-           (SELECT TOP 1 OldOut FROM @Case WHERE Actor = 'mg3' AND Item = 'oAC' AND Act = 'mgr approve'),
+    INSERT INTO @T SELECT 'What an approval by the manager with the removed row writes (new text): the item at AMA, his name as approver, the alert AMA, his own row read [step 53: refused, nothing written]',
+           CASE WHEN @S53 = 1 THEN (SELECT TOP 1 NewOut FROM @Case WHERE Actor = 'mg3' AND Item = 'oAC' AND Act = 'nothing')
+                ELSE (SELECT TOP 1 OldOut FROM @Case WHERE Actor = 'mg3' AND Item = 'oAC' AND Act = 'mgr approve') END,
            (SELECT TOP 1 NewOut FROM @Case WHERE Actor = 'mg3' AND Item = 'oAC' AND Act = 'mgr approve');
-    INSERT INTO @T SELECT 'That approval did change the item (the state string names AMA and Approved)', 'yes',
+    INSERT INTO @T SELECT 'That approval did change the item (the state string names AMA and Approved) [step 53: no]', CASE WHEN @S53 = 1 THEN 'no' ELSE 'yes' END,
            CASE WHEN (SELECT TOP 1 NewOut FROM @Case WHERE Actor = 'mg3' AND Item = 'oAC' AND Act = 'mgr approve') LIKE '%# AMA|Approved|%alert AMA%' THEN 'yes' ELSE 'no' END;
     INSERT INTO @T SELECT 'The comparison left nothing behind: the twelve items at their statuses, no audit row of the test', 'AC 5, ACA 1, ACR 1, AF 1, AMA 3, AMR 1; 0',
            ISNULL(STUFF((SELECT ', ' + a.AgendaStatusCode + ' ' + CAST(COUNT(*) AS VARCHAR(12)) FROM Agenda a WHERE a.CommitteeId = @Com GROUP BY a.AgendaStatusCode ORDER BY a.AgendaStatusCode FOR XML PATH('')), 1, 2, ''), 'none')
@@ -1329,8 +1410,8 @@ END');
               UNION ALL SELECT 2, 'the same, the meeting date passed: he may by routing, the date is closed', @Mg1, (SELECT AgendaId FROM @Items WHERE Label = 'pAC'), 'Result 1, Reason 0: 1 1 1 0'
               UNION ALL SELECT 3, 'the same, the agenda finalised', @Mg1, (SELECT AgendaId FROM @Items WHERE Label = 'fAC'), 'Result 1, Reason 0: 1 1 0 1'
               UNION ALL SELECT 4, 'the same, a meeting without a date', @Mg1, (SELECT AgendaId FROM @Items WHERE Label = 'nAC'), 'Result 1, Reason 0: 1 1 1 1'
-              UNION ALL SELECT 5, 'a manager who is not routed: no button', @Mg4, (SELECT AgendaId FROM @Items WHERE Label = 'oAC'), 'Result 1, Reason 0: 0 0 1 1'
-              UNION ALL SELECT 6, 'the manager with the removed alert row', @Mg3, (SELECT AgendaId FROM @Items WHERE Label = 'oAC'), 'Result 1, Reason 0: 1 1 1 1'
+              UNION ALL SELECT 5, 'a manager who is not routed: no button [step 53: both, a Manager of A]', @Mg4, (SELECT AgendaId FROM @Items WHERE Label = 'oAC'), CASE WHEN @S53 = 1 THEN 'Result 1, Reason 0: 1 1 1 1' ELSE 'Result 1, Reason 0: 0 0 1 1' END
+              UNION ALL SELECT 6, 'the manager with the removed alert row [step 53: no button]', @Mg3, (SELECT AgendaId FROM @Items WHERE Label = 'oAC'), CASE WHEN @S53 = 1 THEN 'Result 1, Reason 0: 0 0 1 1' ELSE 'Result 1, Reason 0: 1 1 1 1' END
               UNION ALL SELECT 7, 'the Controller at AC: reject only', @Ctl, (SELECT AgendaId FROM @Items WHERE Label = 'oAC'), 'Result 1, Reason 0: 0 1 1 1'
               UNION ALL SELECT 8, 'the Controller at AMA', @Ctl, (SELECT AgendaId FROM @Items WHERE Label = 'oAMA'), 'Result 1, Reason 0: 1 1 1 1'
               UNION ALL SELECT 9, 'the Controller, an approved item', @Ctl, (SELECT AgendaId FROM @Items WHERE Label = 'oACA'), 'Result 1, Reason 0: 0 0 1 1'
@@ -1365,9 +1446,9 @@ END');
         FROM (SELECT 1 AS Seq, 'the Controller, committee Z44: one item at AMA waits in the open meeting; nothing in the finalised one, the one without a date and the completed one' AS Name,
                      @Ctl AS UserId, @Com AS CommitteeId, 0 AS DepartmentId, 'Result 1, Reason 0, shown 1: 94401:S:1; 94402:C:-; 94403:S:0; 94404:S:0' AS Expected
               UNION ALL SELECT 2, 'the manager of the creator, committee Z44', @Mg1, @Com, 0, 'Result 1, Reason 0, shown 1: 94401:S:1; 94402:C:-; 94403:S:0; 94404:S:1'
-              UNION ALL SELECT 3, 'the manager with an alert row (department B), committee Z44: two items wait in the open meeting', @Mg2, @Com, 0, 'Result 1, Reason 0, shown 1: 94401:S:2; 94403:S:0; 94404:S:1'
+              UNION ALL SELECT 3, 'the manager with an alert row (department B), committee Z44: two items wait in the open meeting [step 53: only xAC]', @Mg2, @Com, 0, CASE WHEN @S53 = 1 THEN 'Result 1, Reason 0, shown 1: 94401:S:1; 94403:S:0; 94404:S:0' ELSE 'Result 1, Reason 0, shown 1: 94401:S:2; 94403:S:0; 94404:S:1' END
               UNION ALL SELECT 4, 'the same with his department B chosen: only the item of B', @Mg2, @Com, @DB, 'Result 1, Reason 0, shown 1: 94401:S:1; 94403:S:0; 94404:S:0'
-              UNION ALL SELECT 5, 'the manager not routed', @Mg4, @Com, 0, 'Result 1, Reason 0, shown 1: 94401:S:0; 94402:C:-; 94403:S:0; 94404:S:0'
+              UNION ALL SELECT 5, 'the manager not routed [step 53: the items of A]', @Mg4, @Com, 0, CASE WHEN @S53 = 1 THEN 'Result 1, Reason 0, shown 1: 94401:S:1; 94402:C:-; 94403:S:0; 94404:S:1' ELSE 'Result 1, Reason 0, shown 1: 94401:S:0; 94402:C:-; 94403:S:0; 94404:S:0' END
               UNION ALL SELECT 6, 'the user: the column is not shown', @Usr, @Com, 0, 'Result 1, Reason 0, shown 0: 94401:S:-; 94402:C:-; 94403:S:-; 94404:S:-'
               UNION ALL SELECT 7, 'Management: not shown', @Gmt, @Com, 0, 'Result 1, Reason 0, shown 0: 94401:S:-; 94402:C:-; 94403:S:-; 94404:S:-'
               UNION ALL SELECT 8, 'MD Secretariat: not shown', @Mds, @Com, 0, 'Result 1, Reason 0, shown 0: 94401:S:-; 94402:C:-; 94403:S:-; 94404:S:-'
@@ -1486,11 +1567,11 @@ END');
               UNION ALL SELECT 2, 'the Controller, page 2', @Ctl, @Com, 0, 2, 'Result 1, Reason 0, total 12, page 2: y10, y11'
               UNION ALL SELECT 3, 'the Controller, a page past the end: the last page', @Ctl, @Com, 0, 9, 'Result 1, Reason 0, total 12, page 2: y10, y11'
               UNION ALL SELECT 4, 'the manager of the creator: the open meeting first, then the one without a date; not the passed date, not the finalised agenda', @Mg1, 0, 0, 1, 'Result 1, Reason 0, total 2, page 1: oAC, nAC'
-              UNION ALL SELECT 5, 'the manager with an alert row: also the item of department B', @Mg2, 0, 0, 1, 'Result 1, Reason 0, total 3, page 1: oAC, xAC, nAC'
+              UNION ALL SELECT 5, 'the manager with an alert row: also the item of department B [step 53: only xAC]', @Mg2, 0, 0, 1, CASE WHEN @S53 = 1 THEN 'Result 1, Reason 0, total 1, page 1: xAC' ELSE 'Result 1, Reason 0, total 3, page 1: oAC, xAC, nAC' END
               UNION ALL SELECT 6, 'the same, his department B chosen', @Mg2, 0, @DB, 1, 'Result 1, Reason 0, total 1, page 1: xAC'
               UNION ALL SELECT 7, 'the same, a department that is not his', @Mg2, 0, @DA, 1, 'Result 0, Reason 4, total 0, page 1: no rows'
-              UNION ALL SELECT 8, 'the manager who removed his alert row', @Mg3, @Com, 0, 1, 'Result 1, Reason 0, total 3, page 1: oAC, xAC, nAC'
-              UNION ALL SELECT 9, 'the manager not routed: allowed, nothing waits', @Mg4, 0, 0, 1, 'Result 1, Reason 0, total 0, page 1: no rows'
+              UNION ALL SELECT 8, 'the manager who removed his alert row [step 53: only xAC]', @Mg3, @Com, 0, 1, CASE WHEN @S53 = 1 THEN 'Result 1, Reason 0, total 1, page 1: xAC' ELSE 'Result 1, Reason 0, total 3, page 1: oAC, xAC, nAC' END
+              UNION ALL SELECT 9, 'the manager not routed: allowed, nothing waits [step 53: the items of A wait]', @Mg4, 0, 0, 1, CASE WHEN @S53 = 1 THEN 'Result 1, Reason 0, total 2, page 1: oAC, nAC' ELSE 'Result 1, Reason 0, total 0, page 1: no rows' END
               UNION ALL SELECT 10, 'the user: no panel', @Usr, 0, 0, 1, 'Result 0, Reason 4, total 0, page 1: no rows'
               UNION ALL SELECT 11, 'Management: no panel', @Gmt, 0, 0, 1, 'Result 0, Reason 4, total 0, page 1: no rows'
               UNION ALL SELECT 12, 'MD Secretariat: no panel', @Mds, 0, 0, 1, 'Result 0, Reason 4, total 0, page 1: no rows'
@@ -1526,7 +1607,7 @@ END');
            ISNULL((SELECT p.CommitteeName + ' | ' + p.MeetingNo + ' | ' + p.AgendaNo + ' | ' + CAST(p.ShortText AS VARCHAR(100)) + ' | ' + p.DepartmentName + ' | '
                         + CASE WHEN p.AlertId = (SELECT TOP 1 am.AlertId FROM Alert_Master am WHERE am.SourceType = 'Agenda' AND am.SourceTypeId = p.AgendaId) THEN 'alert of the item' ELSE 'another alert' END
                    FROM #AP p WHERE p.AgendaNo = 'ZZ44-xAC'), 'row missing');
-    INSERT INTO @T SELECT 'The panel and the column agree: the manager''s rows in the panel = the sum of his Waiting for me counts (committee Z44)', '3 = 3',
+    INSERT INTO @T SELECT 'The panel and the column agree: the manager''s rows in the panel = the sum of his Waiting for me counts (committee Z44) [step 53: 1]', CASE WHEN @S53 = 1 THEN '1 = 1' ELSE '3 = 3' END,
            CAST((SELECT COUNT(*) FROM #AP) AS VARCHAR(12)) + ' = '
          + CAST((SELECT COUNT(*) FROM dbo.fn_AgendaWaitingFor(@Mg2, @Today) w WHERE w.IsWaiting = 1 AND w.CommitteeId = @Com) AS VARCHAR(12));
 

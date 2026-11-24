@@ -95,6 +95,8 @@ namespace BMMSBAL
                     return MeetingChangeReason.DueDateBeforeMeetingDateMessage(ReasonDetail);
                 case MeetingChangeReason.DecisionAfterMeetingDate:
                     return MeetingChangeReason.DecisionAfterMeetingDateMessage;
+                case MeetingChangeReason.DepartmentHasNoManager:
+                    return MeetingChangeReason.DepartmentHasNoManagerMessage(ReasonDetail);
                 default:
                     return "Record Not Saved";
             }
@@ -127,6 +129,20 @@ namespace BMMSBAL
         public const int MeetingInUse = 21;            // step D1: meeting delete while it has members, agenda items or attendance; ReasonDetail names them
         public const int DueDateBeforeMeetingDate = 22; // step 38 (UN6a): a Followup due date before the meeting date; ReasonDetail the meeting date
         public const int DecisionAfterMeetingDate = 28; // step 52 (MR1): a Manager's approve or reject after the meeting date (database server date)
+        public const int DepartmentHasNoManager = 29;   // step 53 (UD1b): a new item's department has no active Manager and the setting says refuse; ReasonDetail the department
+
+        /// <summary>Step UD1b (BMMS-Fix-DepartmentApprovers-Step53.sql): a new agenda item of a department without an
+        /// active Manager, while the System Settings say such items are refused. Nothing was saved.</summary>
+        public static string DepartmentHasNoManagerMessage(string departmentName)
+        {
+            string name = string.IsNullOrEmpty(departmentName) ? "of this item" : System.Web.HttpUtility.HtmlEncode(departmentName);
+            return "Not saved: the department " + name + " has no active Manager. Ask the Admin to nominate a Manager for the department.";
+        }
+
+        /// <summary>Step UD1b: the line added to the save message and to the "has been Created" mail when a new item went to
+        /// the Controller because its department had no active Manager (Agenda.RouteNote "N").</summary>
+        public const string SentToControllerNoManagerNote =
+            "Sent to the Controller: the department had no active Manager.";
 
         /// <summary>Step MR1 (BMMS-Fix-ManagerRelease-Step52.sql): a Manager's approve or reject after the meeting date. The
         /// same text as the Dashboard's own meeting-date check (step M6a), which normally stops the request first.</summary>

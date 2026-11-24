@@ -46,7 +46,9 @@ BEGIN
 END
 GO
 
-DECLARE @T TABLE (TestNo INT IDENTITY(1,1), Test VARCHAR(160), Expected VARCHAR(120), Actual VARCHAR(400));
+DECLARE @T TABLE (TestNo INT IDENTITY(1,1), Test VARCHAR(220), Expected VARCHAR(120), Actual VARCHAR(400));   -- step 53: longer names
+-- Step 53 (step UD1b): no new alert row for the Admin role; a user without a manager waits for the department's Managers
+DECLARE @S53 INT = CASE WHEN OBJECT_ID('dbo.fn_DepartmentManagers', 'IF') IS NOT NULL THEN 1 ELSE 0 END;
 DECLARE @R TABLE (Result INT, Reason INT, ReasonDetail NVARCHAR(2000),
                   Txt AS ('Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(3))
                           + CASE WHEN ReasonDetail <> '' THEN ', ' + CAST(ReasonDetail AS VARCHAR(200)) ELSE '' END));
@@ -240,7 +242,8 @@ BEGIN TRY
     SET @AgA = (SELECT TOP 1 AgendaId FROM Agenda WHERE MeetingId = @Mt AND CreatedBy = @UsrA ORDER BY AgendaId DESC);
     SET @A = (SELECT TOP 1 AlertId FROM Alert_Master WHERE SourceType = 'Agenda' AND SourceTypeId = @AgA ORDER BY AlertId DESC);
     INSERT INTO @T SELECT 'Agenda by User, manager active: AC alert to the manager', '1', CAST(COUNT(*) AS VARCHAR(12)) FROM Alert_User_Map WHERE AlertId = @A AND UserId = @MgrA;
-    INSERT INTO @T SELECT 'Agenda by User, manager active: active Admins mapped / inactive Admin mapped' + @Note18, CAST(@ActiveAdmins AS VARCHAR(12)) + ' 0',
+    INSERT INTO @T SELECT 'Agenda by User, manager active: active Admins mapped / inactive Admin mapped' + @Note18 + CASE WHEN @S53 = 1 THEN ' [step 53: none]' ELSE '' END,
+           CAST(CASE WHEN @S53 = 1 THEN 0 ELSE @ActiveAdmins END AS VARCHAR(12)) + ' 0',
            CAST((SELECT COUNT(*) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId WHERE m.AlertId = @A AND u.RoleId = 1 AND u.AccountStatus = 1) AS VARCHAR(12)) + ' '
          + CAST((SELECT COUNT(*) FROM Alert_User_Map WHERE AlertId = @A AND UserId = @AdmOff) AS VARCHAR(12));
     INSERT INTO @T SELECT 'Agenda by User, manager active: inactive users anywhere in the alert', '0',
@@ -274,8 +277,10 @@ BEGIN TRY
                'admins ' + CAST((SELECT COUNT(*) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId WHERE m.AlertId = @A AND u.RoleId = 1 AND u.AccountStatus = 1) AS VARCHAR(12))
              + ', others ' + CAST((SELECT COUNT(*) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId WHERE m.AlertId = @A AND NOT (u.RoleId = 1 AND u.AccountStatus = 1)) AS VARCHAR(12));
     ELSE
-        INSERT INTO @T SELECT 'Agenda by User, no manager: AMA alert to the active Admins and Controllers only [step 20: straight to the Controllers]' + @Note18,
-               'AMA; admins ' + CAST(@ActiveAdmins AS VARCHAR(12)) + ', controllers ' + CAST(@ActiveCtrls AS VARCHAR(12)) + ', others 0',
+        INSERT INTO @T SELECT 'Agenda by User, no manager: AMA alert to the active Admins and Controllers only [step 20: straight to the Controllers]' + @Note18
+               + CASE WHEN @S53 = 1 THEN ' [step 53: AC]' ELSE '' END,
+               CASE WHEN @S53 = 1 THEN 'AC; admins 0, controllers 0, others 1'
+                    ELSE 'AMA; admins ' + CAST(@ActiveAdmins AS VARCHAR(12)) + ', controllers ' + CAST(@ActiveCtrls AS VARCHAR(12)) + ', others 0' END,
                ISNULL((SELECT AlertTypeCode FROM Alert_Master WHERE AlertId = @A), 'none') + '; admins '
              + CAST((SELECT COUNT(*) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId WHERE m.AlertId = @A AND u.RoleId = 1 AND u.AccountStatus = 1) AS VARCHAR(12))
              + ', controllers ' + CAST((SELECT COUNT(*) FROM Alert_User_Map m JOIN Users u ON u.UserId = m.UserId WHERE m.AlertId = @A AND u.RoleId = 2 AND u.AccountStatus = 1) AS VARCHAR(12))

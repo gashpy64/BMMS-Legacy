@@ -3,13 +3,14 @@
 - Title: Workflow: Alerts
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: MR1 (step 52): two rows of the decision points of the section "Approval from the Dashboard"; UN6c2b (step 45): the Unread alerts card and the note that the filters do not apply to the Alerts card; UN6c2a (step 44): the section "Approval from the Dashboard: My approvals and Approve or Reject"; UN6c1 (step 43): how an alert is listed, read, removed and counted; the rest not written yet
-- Last updated by: MR1, based on e1b90dc
+- Applies to: UD1b (step 53): the new section "Alerts of the Managers of a department: created, handled, closed" and two changed decision rows; MR1 (step 52): two rows of the decision points of the section "Approval from the Dashboard"; UN6c2b (step 45): the Unread alerts card and the note that the filters do not apply to the Alerts card; UN6c2a (step 44): the section "Approval from the Dashboard: My approvals and Approve or Reject"; UN6c1 (step 43): how an alert is listed, read, removed and counted; the rest not written yet
+- Commit: db1d641
+- Last updated by: UD1b, based on db1d641
 - Status: Draft
-- Verified against: for MR1: Database/README.md (section Step MR1), BMMSBAL/UserMgr.cs and MeetingMgr.cs (diff); the Fix script was not read line by line; for UN6c2b: BMMS/DashBoard/DashBoard.aspx and .aspx.cs (the note of the Alerts card, SetUnreadAlerts in LoadAlertGRV), BMMS/UserControl/MeetingSummary.ascx.cs (SetUnreadAlerts, SetCount), Database/README.md (section Step UN6c2b); for UN6c2a: BMMS/DashBoard/DashBoard.aspx.cs (LoadApprovals, lnkApproval_Click, BindAgendaDetails, btnApprove_Click, btnReject_Click), Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (read in full), Database/README.md (section Step UN6c2a, Known items), the tester run of 2026-11-14 and the owner's tests as given; for UN6c1: BMMS/DashBoard/DashBoard.aspx.cs (alert region, lnkSource_Click, Remove), BMMS/MasterPage/Main.Master.cs
+- Verified against: for UD1b: Database/BMMS-Fix-DepartmentApprovers-Step53.sql (the functions and procedures named in the section's "Drawn from"), BMMS/Master/User.aspx.cs and BMMSBAL/UserMgr.cs (diff), Database/README.md (section Step UD1b), Tests/packs/two-approvers/README.md; for MR1: Database/README.md (section Step MR1), BMMSBAL/UserMgr.cs and MeetingMgr.cs (diff); the Fix script was not read line by line; for UN6c2b: BMMS/DashBoard/DashBoard.aspx and .aspx.cs (the note of the Alerts card, SetUnreadAlerts in LoadAlertGRV), BMMS/UserControl/MeetingSummary.ascx.cs (SetUnreadAlerts, SetCount), Database/README.md (section Step UN6c2b); for UN6c2a: BMMS/DashBoard/DashBoard.aspx.cs (LoadApprovals, lnkApproval_Click, BindAgendaDetails, btnApprove_Click, btnReject_Click), Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (read in full), Database/README.md (section Step UN6c2a, Known items), the tester run of 2026-11-14 and the owner's tests as given; for UN6c1: BMMS/DashBoard/DashBoard.aspx.cs (alert region, lnkSource_Click, Remove), BMMS/MasterPage/Main.Master.cs
   (alert count), Database/BMMS-Fix-DashboardAlerts-Step43.sql (fn_DashboardAlerts, spr_GetDashboardAlerts, spr_GetAlertCount,
   spr_RemoveAlertForUser, the two mail procedures), Database/README.md (section Step UN6c1), the owner's test result as given
-- To confirm: the creation of alerts (which action writes which alert to whom) is not drawn yet (WF2c4)
+- To confirm: the creation of alerts (which action writes which alert to whom) is drawn only for the Managers of a department (step UD1b); the other alert types are not drawn yet (WF2c4)
 
 This workflow follows an alert after it exists: who sees it, how it is read, removed and counted. The writing
 of alerts (an agenda item entered, approved or rejected, a meeting or a committee saved) is done by the save
@@ -89,7 +90,7 @@ flowchart LR
 
 | Decision | Who | Rule | Where it lives |
 |---|---|---|---|
-| Which alerts a person may see | Database | Admin none; Controller not ACA and ACR; Manager not AMA and AMR; removed rows never | fn_DashboardAlerts |
+| Which alerts a person may see | Database | Admin none; Controller not ACA and ACR; Manager not AMA and AMR, except a row marked as handled, which is listed whatever its type (since step 53); removed rows never | fn_DashboardAlerts |
 | Which alerts Recent shows | Recipient (by link) | Every unread alert and the read alerts of the last 7 days (database server date); Unread and All as named | spr_GetDashboardAlerts (@Mode) |
 | The date and the person on an alert | Database | The event: entry, decision, or an edit more than one minute after the decision; a dash where no approver is recorded (before step 35) | fn_DashboardAlerts (EventOn, ActorUserId) |
 | Whether a row may be removed | Database | Only the acting user's own row | spr_RemoveAlertForUser |
@@ -108,8 +109,8 @@ Secretariat and the Admin see items and alerts but are never offered Approve or 
 - Controller: sees the items at AMA in My approvals (by the rule he may also reject an item at AC, but the panel and
   the buttons are about AMA); opens one; Approve or Reject; the decision is saved, the mail goes out, the lists load
   again.
-- Manager: sees the items routed to him at AC (he is the creator's manager, or has an alert row of the item,
-  also one he removed from his list); the same steps. A Manager sees only what the server lets him approve.
+- Manager: sees the items at AC of his departments, other than his own (since step 53 every active Manager of the
+  item's department; before: the items routed to him by the creator's manager or an alert row); the same steps. A Manager sees only what the server lets him approve.
 - Other roles (User, Management, MD Secretariat, Admin): no panel; an opened item is read-only.
 - Database: lists by the rule from the acting user id and the database server's date; answers what the person may do
   with an opened item; refuses what the rule does not allow.
@@ -178,13 +179,99 @@ flowchart LR
 |---|---|---|---|
 | Whether a person has the My approvals panel | Database | Controller and Manager only (Reason 4 for every other role, Reason 12 for the system account) | spr_GetDashboardApprovals |
 | Which items are in the panel and in Waiting for me | Database | The person may approve it, the meeting's agenda is Open and the meeting date is today or later (database server's date) | fn_AgendaWaitingFor (IsWaiting) |
-| Which items a Manager may decide | Database | At AC, and he is the creator's manager or has any alert row of the item (also a removed one); the department plays no part until step UD1b | fn_AgendaWaitingFor |
+| Which items a Manager may decide | Database | At AC, and he is an active Manager of the item's department, not the creator; the Reporting Person and the alert rows no longer decide (since step 53; before: the creator's manager, or any alert row of the item) | fn_AgendaWaitingFor |
 | Which items a Controller may decide | Database | Approve at AMA; reject at AC or AMA. The panel and the buttons are shown at AMA only | fn_AgendaWaitingFor; DashBoard.aspx.cs `BindAgendaDetails` |
 | Whether Approve and Reject are shown | Database | May approve and the agenda Open; with the meeting date passed, read-only with the message | spr_GetAgendaApprovalState |
 | Whether a decision is saved | Database | The rule again (Reason 14 when not allowed); since step 52 a Manager's decision after the meeting date is also refused by the procedure (Reason 28, nothing saved, no mail, no alert); the page checks the date first (step M6a); the Controller's reject after the meeting date stays possible | spr_UpdateAgendaByAgendaId; DashBoard.aspx.cs |
 | Whether a Manager may be released (role changed away from Manager, a department removed, Deactivate) | Database | Refused (Reason 24) while items routed to him wait: open ones (meeting date not passed, or no date) and past ones (date passed, agenda never finalized, which only the Controller's Agenda Finalization closes), and while he is the last active Manager of a department with items waiting. The personal part reads the same rule as the panel | fn_ManagerReleaseRefusal (reads fn_AgendaWaitingFor); spr_AddEditUser; spr_SetUserStatusByUserId |
 | What the person sees when the state cannot be read | Page | Read-only, with "Whether you may approve this item could not be checked, so it is shown read-only. Close it and open it again." (before a decision: "The item could not be checked, so nothing was changed. Try again.") | DashBoard.aspx.cs |
 | What happens to an item of a meeting whose date has passed | Database | It is not listed in My approvals or counted in Waiting for me; nobody can approve it; the message tells the person it will be rejected when the agenda is finalised (Agenda Finalize, as the Glossary records) | fn_AgendaWaitingFor; DashBoard.aspx.cs (message text) |
+
+## Alerts of the Managers of a department: created, handled, closed (step UD1b)
+
+Since step 53 an item waiting at AC has one alert, and every active Manager of the item's department has a row on it. The rows
+are written and changed in the database; each Manager sees only his own row.
+
+### Lanes
+
+- User: saves a new item. By the route, the item waits at AC (every Manager of the department gets an unread row), or goes to the
+  Controllers (they get the alert), or is refused (no alert).
+- Manager (any of the department): sees the item under Unread; decides it; or finds his row greyed under All when another Manager
+  decided, when he left the department, or when the Controller moved the item.
+- Controller: may move an item at AC to another department; decides at AMA.
+- Admin: changes a Manager's role, departments or status in User Master; gets no alert of any kind of the agenda, meeting or
+  committee.
+- Database: writes the rows, marks them, lists them.
+
+### Workflow diagram
+
+```mermaid
+flowchart LR
+    subgraph User
+        u1(["Saves a new item"])
+    end
+    subgraph Manager
+        m1(["Sees the item under Unread"])
+        m2{"Decides it?"}
+        m3(["Sees a grey row under All with the line"])
+    end
+    subgraph Controller
+        c1(["Moves the item at AC to another department"])
+    end
+    subgraph Admin
+        a1(["Changes a Manager: role, department removed, or Deactivate"])
+    end
+    subgraph Database
+        d1{"Route of the item"}
+        d2["Unread row for every active Manager of the department"]
+        d3["Alert for the active Controllers"]
+        d4["Refused: Reason 29, 11 or 15"]
+        d5["Other Managers' rows: Handled by [Name (login)]"]
+        d6["Rule 12 allows it: his waiting rows: No longer Manager of the department"]
+        d7["Rows of the old department's Managers: Item moved to another department; rows of the new department's Managers"]
+    end
+
+    u1 --> d1
+    d1 -->|"M: the department has an active Manager"| d2
+    d1 -->|"C: Reporting Person is an active Controller, or no Manager and the setting says Controller"| d3
+    d1 -->|"I or R, or C with no active Controller"| d4
+    d2 --> m1
+    m1 --> m2
+    m2 -->|"first decision"| d5
+    d5 --> m3
+    a1 --> d6
+    d6 --> m3
+    c1 --> d7
+    d7 --> m3
+```
+
+| From | To | Data | Notes |
+|---|---|---|---|
+| User | Database | New item, department | The route is read for the item's department (fn_AgendaRoute) |
+| Database | Manager | One unread row on route M | spr_SetManagerAlertRows; the creator is left out; no row for the Admin role |
+| Manager | Database | Approve or Reject | The first decision wins; a second Manager gets Reason 14 |
+| Database | Other Managers | Rows marked 'H' (HandledBy the deciding Manager) | Same transaction as the decision; read; never unread again |
+| Admin | Database | Role change, department removed, Deactivate | Allowed only when another Manager of the department could decide the waiting items |
+| Database | The Manager who leaves | His waiting rows of those departments marked 'N' | User Master says "Saved. [n] waiting approval alert(s) of [departments] were closed; the other Managers of the department still have them." |
+| Controller | Database | A move of an item at AC to another department | The other Managers' rows 'M'; the new department's Managers get rows; a move back opens the 'M' rows |
+| Database | A new, re-activated or newly mapped Manager | Unread rows of the waiting items of his departments | Items on open agendas whose meeting date is today or later; his own 'N' or 'M' row opens again, an 'H' row never |
+
+### Decision points
+
+| Decision | Who | Rule | Where it lives |
+|---|---|---|---|
+| Whether an item waits for the Managers, goes to the Controllers or is refused | Database | Reporting Person inactive: refused; an active Controller: Controllers; department with an active Manager other than the creator: Managers; else the setting "Department without an active Manager" (Refused or Sent to the Controller) | fn_AgendaRoute |
+| Who gets a row on route M | Database | Every active Manager of the department except the creator; never the Admin role | spr_SetManagerAlertRows, fn_DepartmentManagers |
+| What happens to the other Managers' rows at a decision | Database | Marked handled 'H' with the deciding Manager and the time | spr_UpdateAgendaByAgendaId |
+| Whether a handled row is counted or shown unread | Database | Never; listed under All only | fn_DashboardAlerts, spr_GetDashboardAlerts, spr_GetAlertCount |
+| Whether a row can come back to life | Database | 'N' and 'M' rows open again when the Manager is mapped to the department again or the item moves back; 'H' never | spr_SetManagerAlertRows |
+| Whether a Manager may leave a department | Database | Refused (Reason 24) only when no other Manager of the department could decide an item waiting for him; otherwise allowed, and his waiting rows of it are closed | fn_ManagerReleaseRefusal |
+| Who gets mail of the item later | Database | A handled Manager gets no later mail of the item | spr_GetAlertMailId, spr_GetAgendaUpdateMailId |
+
+Drawn from (UD1b): Database/BMMS-Fix-DepartmentApprovers-Step53.sql (fn_AgendaRoute, fn_DepartmentManagers, spr_SetManagerAlertRows,
+fn_DashboardAlerts, spr_GetAlertMailId, spr_GetAgendaUpdateMailId; the comment blocks of spr_AddEditAgenda, spr_UpdateAgendaByAgendaId,
+spr_AddEditAgendaByController, spr_AddEditUser and spr_SetUserStatusByUserId), BMMS/Master/User.aspx.cs and BMMSBAL/UserMgr.cs (the Released
+message), Database/README.md (section Step UD1b), Tests/packs/two-approvers/README.md.
 
 ## Drawn from
 

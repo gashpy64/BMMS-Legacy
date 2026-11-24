@@ -3,11 +3,11 @@
 - Title: Testing and Release
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: DA1 (the new section "Documentation audit (step DA1)"); MR1 (the new section "Step 52 (MR1): the Test script, the older tests, the session-check pack check 4b, the repair of BMMS_Test"; the pack line); RA1d (the new section "Step 51 (RA1d): the Test script, the changed expectation of step 18, the session-check pack" and the packs row of "What it is"); UN6e (the section "Step 50 (UN6e): the Test script, the page-assets pack, the results folder (WF3a3)" and the packs row of "What it is"); FU2b (the section "Step 49 (FU2b): the Test script, the changed expectation of step 47, the followup-reports pack"); FU2a (the section "Step 48 (FU2a): the Test script, the changed expectations of steps 43 and 45, the dashboard pack check 18"); FU1 (the section "Step 47 (FU1): the Test script, the followup pack and the run"); UN6d (the step 46 Test script section "Step 46 (UN6d): the Followup saves", the followup pack, the dashboard pack check 8, the packs line of the tester table); UN6c2b (the step 45 Test script section, "The dashboard pack since step UN6c2b", the fixture and baseline notes); UN6c2a (the step 44 Test script section, "The dashboard pack since step UN6c2a", check 4 of the dashboard pack, the fixture and baseline notes); UN6c1 (the step 43 Test script section, "The dashboard pack since step UN6c1", the fixture and baseline notes); UN6b (the step 42 Test script section, the dashboard pack, the memory preflight, the fixture's committee QA2, the baseline upkeep note); the rest RA1c2
-- Commit: 5f8c4fe
-- Last updated by: DA1, based on 5f8c4fe
+- Applies to: UD1b (the new section "Step 53 (UD1b): the Test script, the older tests that follow step 53, the two-approvers pack, the changed packs"; the packs row); DA1 (the new section "Documentation audit (step DA1)"); MR1 (the new section "Step 52 (MR1): the Test script, the older tests, the session-check pack check 4b, the repair of BMMS_Test"; the pack line); RA1d (the new section "Step 51 (RA1d): the Test script, the changed expectation of step 18, the session-check pack" and the packs row of "What it is"); UN6e (the section "Step 50 (UN6e): the Test script, the page-assets pack, the results folder (WF3a3)" and the packs row of "What it is"); FU2b (the section "Step 49 (FU2b): the Test script, the changed expectation of step 47, the followup-reports pack"); FU2a (the section "Step 48 (FU2a): the Test script, the changed expectations of steps 43 and 45, the dashboard pack check 18"); FU1 (the section "Step 47 (FU1): the Test script, the followup pack and the run"); UN6d (the step 46 Test script section "Step 46 (UN6d): the Followup saves", the followup pack, the dashboard pack check 8, the packs line of the tester table); UN6c2b (the step 45 Test script section, "The dashboard pack since step UN6c2b", the fixture and baseline notes); UN6c2a (the step 44 Test script section, "The dashboard pack since step UN6c2a", check 4 of the dashboard pack, the fixture and baseline notes); UN6c1 (the step 43 Test script section, "The dashboard pack since step UN6c1", the fixture and baseline notes); UN6b (the step 42 Test script section, the dashboard pack, the memory preflight, the fixture's committee QA2, the baseline upkeep note); the rest RA1c2
+- Commit: db1d641
+- Last updated by: UD1b, based on db1d641
 - Status: Draft
-- Verified against: for step DA1: CLAUDE.md (diff, the documentation audit rules), Documents/Audit/README.md, .claude/agents/doc-auditor.md, the DA1 test result as given (run DA-20261119-5f8c4fe; the run folder's figures taken from the step's record, not re-read); for step MR1: Database/README.md (section Step MR1: the Test script, the older tests, the repair of BMMS_Test, the tester paragraph), Tests/packs/session-check/README.md and pack.js (diff, listed as changed; not read line by line), the Test and tester results as given; the owner's tests of MR1 as given; for step RA1d: Database/README.md (section Step RA1d: the Test script description, the results, the tester paragraph, "What to run where"), Tests/README.md (diff), Tests/packs/session-check/README.md (read), Tests/packs/session-check/pack.js (not read in full), BMMS-Test-SystemAccount-Stage3.sql (diff), BMMS-Test-SessionCheck-Step51.sql (as described in Database/README.md, not read line by line), the Test results, the tester run 2026-11-19_104149 and the owner's tests as given; for step UN6e: Database/README.md (section Step UN6e: the Test script description, the results, the tester paragraph and WF3a3), Tests/README.md and Tests/_runner/Run-Tests.ps1 (diff), Tests/packs/page-assets/README.md (read), the Test results and the tester run 2026-11-18_123549 as given; the step 50 Test script and the pack.js and expected.json of page-assets were not read in full; for step FU2b: Database/README.md (section Step FU2b: the Test script description, the changed expected value, the tester paragraph, "What to run where"), Tests/packs/followup-reports/README.md (read), BMMS-Test-FollowupFinal-Step47.sql (diff), the Test results and the tester runs 2026-11-17_133514 and 2026-11-17_135000 as given; the step 49 Test script and pack.js were not read in full;
+- Verified against: for step UD1b: Database/README.md (section Step UD1b), Tests/README.md (diff), Tests/packs/two-approvers/README.md (read in full), Tests/packs/session-check/README.md and Tests/packs/dashboard/README.md and expected.json (diff), the diffs of the older Test scripts of steps 16, 31, 36, 37, 39 and 52, Tests/fixture/* (listed; the diff not read line by line), the Test results and the tester run 2026-11-23_182026 as given; the step 53 Test script, pack.js and expected.json of two-approvers were not read in full; for step DA1: CLAUDE.md (diff, the documentation audit rules), Documents/Audit/README.md, .claude/agents/doc-auditor.md, the DA1 test result as given (run DA-20261119-5f8c4fe; the run folder's figures taken from the step's record, not re-read); for step MR1: Database/README.md (section Step MR1: the Test script, the older tests, the repair of BMMS_Test, the tester paragraph), Tests/packs/session-check/README.md and pack.js (diff, listed as changed; not read line by line), the Test and tester results as given; the owner's tests of MR1 as given; for step RA1d: Database/README.md (section Step RA1d: the Test script description, the results, the tester paragraph, "What to run where"), Tests/README.md (diff), Tests/packs/session-check/README.md (read), Tests/packs/session-check/pack.js (not read in full), BMMS-Test-SystemAccount-Stage3.sql (diff), BMMS-Test-SessionCheck-Step51.sql (as described in Database/README.md, not read line by line), the Test results, the tester run 2026-11-19_104149 and the owner's tests as given; for step UN6e: Database/README.md (section Step UN6e: the Test script description, the results, the tester paragraph and WF3a3), Tests/README.md and Tests/_runner/Run-Tests.ps1 (diff), Tests/packs/page-assets/README.md (read), the Test results and the tester run 2026-11-18_123549 as given; the step 50 Test script and the pack.js and expected.json of page-assets were not read in full; for step FU2b: Database/README.md (section Step FU2b: the Test script description, the changed expected value, the tester paragraph, "What to run where"), Tests/packs/followup-reports/README.md (read), BMMS-Test-FollowupFinal-Step47.sql (diff), the Test results and the tester runs 2026-11-17_133514 and 2026-11-17_135000 as given; the step 49 Test script and pack.js were not read in full;
   for step FU2a: Database/README.md (section Step FU2a: the Test script description, the changed expected values, the tester paragraph, "What to run where"), Tests/packs/dashboard/README.md (diff), Database/BMMS-Test-DashboardAlerts-Step43.sql and BMMS-Test-DashboardSummary-Step45.sql (diff stat only), the Test script result (43 of 43) and the tester run 2026-11-16_181041 as given; the step 48 Test script and pack.js were not read in full;
   for step FU1: Database/README.md (section Step FU1: the Test script description, the tester paragraph, the changed expected values, "What to run where"), Tests/packs/followup/README.md (read in full), Tests/README.md and Database/BMMS-Check-InstalledSteps.sql (diff), the Test script result (95 of 95) and the tester run 2026-11-16_133023 as given; the Test script itself and pack.js were not read in full;
   for step UN6d: Database/README.md (section Step UN6d: the Test script description, the tester paragraph, the changed expected values), Tests/packs/followup/README.md and expected.json, Tests/packs/dashboard/README.md and expected.json (diff), Tests/packs/access-matrix/README.md and Tests/README.md (diff), the Test script result (56 of 56) and the tester runs of 2026-11-15 as given; the Test script itself (632 lines) and pack.js were not read in full;
@@ -35,7 +35,7 @@
   section Database/BMMS-Test-RoleAccess-Step40.sql (header), the diff of the three changed Test scripts
   and the owner's test result of step RA1a; for the step 41 section Database/BMMS-Test-ReportAccess-Step41.sql
   (header), Database/README.md (section RA1b) and the owner's test result of step RA1b
-- To confirm: the UN6b tester result (649 checks, access-matrix and dashboard together, run folder 2026-11-12_214642, memory 1522 MB available of 7886 MB) is as given for the step, not re-read from the results folder; the count of the step 42 Test script (71 in the owner's run) is as given, not recounted; the number of checks of the dashboard pack alone and its run time are not recorded here; the fixture check count after QA2 (29 before, three rows added) was not re-run; the counts of the RA1c2 run (477 checks) are as given for the step, not re-read from the results folder; the run time and counts of the RA1c1 run are as given for the step, not re-read from the results folder; the run times and request count of the access matrix are the owner's measurements as given for the step, not re-measured; the count of 44 checks and the counts of the older Test scripts are Database/README.md's, not
+- To confirm: the figure "Test 44 121/120" (what it counts); the number of checks of Test 53 (70 as given for the step; Database/README.md, section Step UD1b, still says 66); the UN6b tester result (649 checks, access-matrix and dashboard together, run folder 2026-11-12_214642, memory 1522 MB available of 7886 MB) is as given for the step, not re-read from the results folder; the count of the step 42 Test script (71 in the owner's run) is as given, not recounted; the number of checks of the dashboard pack alone and its run time are not recorded here; the fixture check count after QA2 (29 before, three rows added) was not re-run; the counts of the RA1c2 run (477 checks) are as given for the step, not re-read from the results folder; the run time and counts of the RA1c1 run are as given for the step, not re-read from the results folder; the run times and request count of the access matrix are the owner's measurements as given for the step, not re-measured; the count of 44 checks and the counts of the older Test scripts are Database/README.md's, not
   recounted from the scripts; the three UN6d tester runs (871, 399 and 871 checks) are as given for the step, and which packs each held and the number of checks of the followup pack alone are not recorded here; chapter not written yet (WF2b2); leads from the old Architecture notes to verify
 
 ## Test database
@@ -167,7 +167,7 @@ Database/README.md, section "Step WF3a1". What the development machine needs is 
 | SQL logins | Two, made by the setup. bmms_tester owns BMMS_Quality; the runner restores and checks as this login. bmms_site is the site copy's login: a user in BMMS_Quality with db_datareader, db_datawriter, db_backupoperator and EXECUTE on the dbo schema. Neither has a server role or access to any other database. Before every run the runner asks the server, as each login, what it can reach, and refuses when that is more than BMMS_Quality (any other database, BMMS or BMMS_Test, a server role, CONTROL SERVER, IMPERSONATE). Since WF3a2 the server permissions are an allow-list: in effect only CONNECT SQL and VIEW ANY DATABASE, and granted to the login only CONNECT SQL, otherwise the run is refused; the check is made again after the restore (Run-Tests.ps1), and Update-Baseline.ps1 makes it after the Fix scripts and before the baseline backup. The application login bmms_app is not used |
 | Browser | The installed Chrome, headless, driven by Node scripts (playwright-core). Requests to any host other than localhost are aborted and listed |
 | Mail | BMMS_Quality has the safe default (localhost, port 25); no real mail can be sent |
-| Packs | One folder per pack under Tests/packs (pack.js and data files). The packs are selftest (WF3a1), access-matrix (WF3a2), dashboard (UN6b), followup (UN6d), followup-reports (FU2b), page-assets (UN6e) and session-check (RA1d, run last). A pack is Node code: it is written in a step's build and reviewed there, and the tester cannot change it |
+| Packs | One folder per pack under Tests/packs (pack.js and data files). The packs are selftest (WF3a1), access-matrix (WF3a2), dashboard (UN6b), followup (UN6d), followup-reports (FU2b), page-assets (UN6e), two-approvers (UD1b) and session-check (RA1d, run last). A pack is Node code: it is written in a step's build and reviewed there, and the tester cannot change it |
 
 ### How it is run
 
@@ -979,6 +979,65 @@ for the role change and the Deactivate (HRD 9 items of the department), HRD then
 Chrome and Edge; mgruser's My approvals shows only C06-00004-001, an old item opened from Alerts shows the meeting-date
 message with no Approve or Reject; mgruser approved C06-00004-001 (mail sent); the Controller finalized 00004 (its item
 rejected, mail sent) and 00001 (2 items rejected, mails sent); the refusal then counted 6; the error log clean.
+
+### Step 53 (UD1b): the Test script, the older tests that follow step 53, the two-approvers pack, the changed packs
+
+BMMS-Test-DepartmentApprovers-Step53.sql runs on BMMS_Test only: 70 numbered checks. It checks the marker in the 20 objects, the
+markers of the earlier steps in the 18 replaced texts, the parameter counts, that no feature above compatibility level 100 is added,
+the columns, their checks and the key, and that the internal procedure refuses a direct call. In one transaction that is rolled
+back, with made-up data ZZ53 (department A with two active Managers, an inactive Manager, a Manager without history rows and a
+fourth Manager; B without a Manager; C with one Manager; Users of A whose Reporting Person is a Manager of A, a Manager of C, a
+Controller, nobody, an inactive Manager; a User of B and of C; an Admin and two Controllers; a meeting to come and one passed) it
+checks: who may decide (every Manager of the department, not the creator), the route of a new item in each case (Reason 11, to the
+Controllers, to the Managers, Reason 29, sent to the Controller with RouteNote 'N'), the alert rows of each route and none for the
+Admin role, the first decision wins and the second Manager's Reason 14, the other Managers' rows marked 'H' and never made unread
+again, the mail lists of every branch, the lists Recent, Unread and All, the header count and Remove from my list on a marked row,
+rule 12 in each case with the 'N' rows and the Released detail, the new, added and activated Manager's rows, the back-fill run
+twice, a Controller's move to another department and back ('M'), and the internal procedure refusing the system account's case
+and an inactive acting user. Afterwards Users, User_Role, User_Department, Agenda, Alert_User_Map and the setting are as before, no
+ZZ53 row is left and every identity counter is put back.
+
+Older tests that follow step 53 (the Test scripts only; each change carries a comment naming step 53 or UD1b):
+
+- Step 52 (28 of 28), step 39 (59), step 20 and step 44: expected values that differ with step 53 are written `[step 53: ...]` and
+  chosen by whether fn_DepartmentManagers exists, so the script passes before and after the step. In Test 52 the rows that step 53
+  now allows (a role change, a Deactivate) are undone at once with a savepoint, so the later checks keep their meaning; Test 44 reads
+  121 checks with step 53 installed and 120 with it rolled back, all PASS.
+- Steps 16, 31, 36 and 37: the one open meeting whose items a Manager decides is dated 10 days ahead (its agenda submission date
+  stays in the past), as step 52 did for Tests 20 and 35, because a Manager's decision after the meeting date is refused (Reason 28).
+  Test 36 and Test 37 give the user of item B a Controller as Reporting Person (route C before and after step 53). Test 16 takes
+  the home department of its Manager as the department of its items when step 53 is installed. Without step 53 they pass again
+  (100, 41, 37 and 42 checks).
+- Test 43, ResetDatabase, SystemAccount-Stage3, UserKey-Workflows and UserStatus-Stage2b were changed for step 53 as well
+  (their diffs were listed, not read line by line). Each passes with step 53 installed and rolled back, as given for the step.
+
+Packs for step 53:
+
+- New pack two-approvers (Tests/packs/two-approvers: pack.js, expected.json, README.md; 15 checks), with the new account
+  qa_manager3 (Manager, Credit; first a Manager of HRD too). It checks that qa_manager and qa_manager3 both see the two waiting
+  Credit items in My approvals, in the Waiting for me column and in their alerts; that qa_manager3's rows handled by qa_manager
+  and his row closed when HRD was taken from him are listed under All only, greyed (`bmms-row-handled`), not bold, with the words
+  "Handled by QA Manager (qa_manager) on dd-MMM-yyyy" and "No longer Manager of the department (dd-MMM-yyyy)", and are not counted in
+  the header; and that opening the closed row shows the same line in the Agenda Alert panel with no Approve and no Reject, and
+  that "Remove from my list" takes it off. Approve and Reject are not driven (they send mail); that one Manager's decision handles
+  the other's row is proven by the Test script and is in the owner's browser checks.
+- session-check, check 4b rewritten: the refusal of rule 12 is shown on qa_manager2 (the only Manager of HRD and of Secretarial)
+  instead of qa_manager, because Credit has other active Managers (qa_manager3 and credmanager) and the change of qa_manager is
+  allowed. The message box reads "Not saved: this Manager is still needed.", "2 items routed to them are still open for approval:
+  approve or reject them first.", "Last active Manager of HRD (1 item of the department waiting), Secretarial (1 item of the
+  department waiting): give the department another active Manager first." and "Nothing was changed.".
+- dashboard pack: the values of qa_manager2 follow step 53 (QA2-00001-2, a Secretarial item at AC, is now in his My approvals and in
+  the Waiting for me column; "My approvals (2)", and "(1)" with Secretarial or with the committee QA Dashboard Committee chosen).
+- Fixture: ten qa_ accounts (qa_manager3 added); the fixture dates the meetings 00004, 00005 and 00006 ahead while their items are
+  decided (the step 52 rule).
+
+The tester's baseline for step 53: `Update-Baseline.ps1 -ConfirmDatabase BMMS_Quality -FixScript BMMS-Fix-DepartmentApprovers-Step53.sql`.
+
+Results on BMMS_Test: Test 53 70 of 70; every changed older test passes with step 53 installed and with it rolled back.
+
+Result of the step: tester run Tests\_results\2026-11-23_182026: PASSED, 909 checks run, 909 passed: access-matrix 472,
+dashboard 397, two-approvers 15, session-check 20; the error log had 0 new lines. Owner browser tests passed 24-Nov-2026 (all
+seven; the error log clean).
 
 ## Reviewer stage
 

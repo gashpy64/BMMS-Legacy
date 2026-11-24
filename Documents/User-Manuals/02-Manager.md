@@ -40,11 +40,12 @@ loaded. Wait a moment, then reload the page."
 Fields and buttons, in the My approvals card (above the Meetings and Alerts cards, the full width of the page):
 
 - The title is "My approvals (n)", where n is the number of items that wait for your approval.
-- The list holds the items sent to you for approval, of meetings whose agenda is open and whose date has not
-  passed: the items entered by the people who report to you, and the items about which BMMS sent you an alert (also
-  when you removed the alert from your list). You see only the items you may approve: an item of your department
-  that was sent to another Manager is not listed. The newest meeting is first; 10 items to a page, with page links
-  under the list.
+- The list holds the items that wait for your approval, of meetings whose agenda is open and whose date has not
+  passed: the items of your departments that wait for a Manager, except the items you entered yourself. Every active
+  Manager of the department sees the same items, and any one of them may approve or reject; whoever decides first
+  decides (see "Alerts and mails you receive"). It does not matter who entered the item or who that person reports to.
+  You see only the items you may approve. The newest meeting is first; 10 items to a page, with page links under
+  the list.
 - The columns are Item (the agenda number as a link, with the short text under it), Committee, Meeting (the meeting
   number and under it its date) and Department.
 - The card follows the Committee drop-down and the Department drop-down of the Meetings card.
@@ -92,9 +93,12 @@ Steps:
 3. To decide an item that waits for you, click its agenda number in My approvals. The Agenda Alert panel opens. If
    you have an alert about the item, it is marked read and the number in the header "Alerts (n)" goes down (only
    your own alert is marked). Read the item, add your comment if you wish, then press Approve or Reject. Approve and
-   Reject are shown only when the item was sent to you for approval, the agenda is open and the meeting date has not
-   passed. When you open an item that was sent to another Manager, it is shown read-only, without Approve and
-   Reject.
+   Reject are shown only when the item waits for your approval, the agenda is open and the meeting date has not
+   passed. When you open an item you may not decide (for example an item you entered yourself, or one that another
+   Manager of your department has already approved or rejected), it is shown read-only, without Approve and
+   Reject. If another Manager decides the item while your panel is open, pressing Approve or Reject says "You cannot
+   approve or reject this agenda item at its current stage ([status name]). Reload the Dashboard to see its current
+   state." and nothing is saved; reload the Dashboard.
 4. After you approve or reject an item in its panel, My approvals, the Waiting for me counts, the Alerts card and
    the counts in the Meetings card are read again, and the item leaves My approvals.
 
@@ -146,6 +150,17 @@ not be loaded. Reload the page to try again." (or "The server is busy and the al
 Wait a moment, then reload the page.", or "The alerts are not available: your account is not active. Sign
 in again.").
 
+Handled alerts: when another Manager of your department approves or rejects an item that was waiting for you too,
+your alert of that item is handled. It is listed under All only (not under Recent or Unread), in grey, and under
+the alert type line it says "Handled by [Name (login)] on [dd-MMM-yyyy]", with the name and login of the Manager who
+decided and the day. Two other lines can stand there: "No longer Manager of the department ([dd-MMM-yyyy])", when you
+stopped being a Manager of that department while the item was waiting, and "Item moved to another department
+([dd-MMM-yyyy])", when the Controller moved the item to another department. The date in the Date column is the day
+it was handled. A handled alert is never counted in the header "Alerts (n)" or in the Unread alerts card, and it
+never becomes unread again. You can still open it: the Agenda Alert panel shows the same line and no Approve or
+Reject. "Remove from my list" works on it as on any alert. If the Controller moves the item back to your department,
+the alert becomes live again, unread.
+
 Action Items card: the newest meeting is first. It has a "Due date" column; when the date is before today
 and the item is not complied with or confirmed, a red "Overdue" label stands beside it. The links Show All |
 Read | Unread narrow the list; the one you are looking at is in bold and stays chosen when you open an item
@@ -188,6 +203,8 @@ labels sit above the fields. On a window 1240 pixels wide or narrower the cards 
 [Screenshot: Dashboard as a Manager, the three summary cards and the Committee and Department drop-downs - supplied by Gashpy Software]
 [Screenshot: Dashboard as a Manager, My approvals card with items waiting and the Waiting for me column - supplied by Gashpy Software]
 [Screenshot: Agenda Alert panel as a Manager, item of a meeting whose date has passed, message above the buttons - supplied by Gashpy Software]
+[Screenshot: Dashboard as a Manager, Alerts card under All with greyed handled alerts and their lines - supplied by Gashpy Software]
+[Screenshot: Agenda Alert panel as a Manager, opened from a handled alert, the line "Handled by" and no Approve or Reject - supplied by Gashpy Software]
 
 [[CONFIRM: the other screens are not written yet]]
 
@@ -197,7 +214,34 @@ labels sit above the fields. On a window 1240 pixels wide or narrower the cards 
 
 ## Alerts and mails you receive
 
-[[CONFIRM: not written yet]]
+Approval of items is shared by all the active Managers of a department. The Reporting Person of the person who entered
+the item does not decide, and the Admin does not approve items.
+
+Alerts:
+
+- When a User enters a new item for your department and it waits for a Manager, every active Manager of the
+  department gets an unread alert. You do not get an alert for an item you entered yourself.
+- When you are made a Manager, a department is added to you, or your account is activated again, you get the
+  alerts of the items of your departments that are waiting for a Manager (only items of meetings whose agenda is
+  open and whose date is today or later).
+- When one Manager decides an item, the alerts of the other Managers of the department are handled (see "Handled
+  alerts" above): they stay in the All list, in grey, with "Handled by [Name (login)] on [dd-MMM-yyyy]".
+- When you stop being a Manager of a department (the Admin changes your role, takes the department away or deactivates
+  you), your waiting alerts of that department show "No longer Manager of the department ([dd-MMM-yyyy])". The Admin is
+  told how many were closed and that the other Managers of the department still have them.
+- When the Controller moves an item that waits at the Manager step to another department, the alerts of the old
+  department's Managers show "Item moved to another department ([dd-MMM-yyyy])".
+
+Mails:
+
+- When a User enters a new item that waits for a Manager, the "has been Created" mail goes to every active Manager of the
+  department. If the department had no active Manager and the Admin has set System Settings to send such items to the
+  Controller, the mail goes to the Controllers instead and says "Sent to the Controller: the department had no active
+  Manager."
+- When another Manager of your department approves or rejects an item, you also get the mail of that decision.
+- After one Manager has decided, the Managers whose alerts were handled get no later mail about that item.
+
+[[CONFIRM: the rest of this section (the other alerts and mails a Manager receives) is not written yet]]
 
 ## Common problems
 

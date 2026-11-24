@@ -20,7 +20,7 @@ the meetings, the minutes, the follow-up and the reports) and has all of the fun
 | Role | In short |
 |---|---|
 | User | Enters agenda items on Agenda Entry. |
-| Manager | Enters agenda items, approves or rejects the agenda items sent to them, and uses the Reports menu. |
+| Manager | Enters agenda items, approves or rejects the agenda items of their departments that wait for a Manager (never their own), and uses the Reports menu. |
 | Controller | Approves or rejects agenda items after the Manager, or items sent straight to the Controllers. Uses Agenda Entry, Agenda Finalize, Update Minutes, Finalize Minutes, Minutes Confirmation, Followup and the reports. The Minutes report shows the Controller every meeting that has minutes, in every minutes status, each marked Draft (not finalised), Finalised or Confirmed. The Master menu shows Member Master, Committee Master, Committee Member Tag / UnTag, Meeting Master, Meeting - Member Tag / UnTag and Attendance. A Controller has no Admin menu, cannot open User Master, the code masters, Reset Password, Backup Database or Audit Trail, and changes only their own password. |
 | Admin | Is the only role that uses User Master, Department, Designation, Member Type, Subject Type and Decision Type (Master menu), and the Admin menu (Reset Password, Backup Database, SMTP Configuration, System Settings, Audit Trail, Reset Database). Views agenda items on the dashboard but does not approve them. The menu has no Home link for Admin; the dashboard opens after sign-in. |
 | MD Secretariat | Opens the Followup screen to read it only: a line says the role cannot change the followups, the Status column is text without a drop-down, there is no Submit or Reopen button and the Action Text button reads "View". Views agenda items on the dashboard but does not approve them. The menu has no Home link for MD Secretariat; the dashboard opens after sign-in. |
@@ -33,11 +33,26 @@ then approved or rejected.
 
 **Proposed Resolution** - The resolution suggested with an agenda item when it is entered.
 
-**Approve, reject** - The decision on an agenda item. An item entered by a User whose own Manager
-is active waits for that Manager first; otherwise it goes straight to the Controllers. After the
-Manager has approved it, a Controller decides. The Approve and Reject buttons appear on the
+**Approve, reject** - The decision on an agenda item. An item entered by a User whose Reporting
+Person is an active Controller goes straight to the Controllers. Otherwise it waits for the Managers of
+its department: any active Manager of the department may decide it, the first decision stands, and the
+person who entered the item never decides it. If the department has no active Manager, the Admin's
+setting decides whether the item is refused or sent to the Controller. After a Manager has approved it,
+a Controller decides. The Approve and Reject buttons appear on the
 dashboard only for the person who decides the item at that moment. Each decision sends a mail;
 if the mail cannot be sent, the decision is still saved and the screen says so.
+
+**Handled alert** - An alert of a Manager about an agenda item that another Manager of the department
+decided, that the Manager can no longer decide because he stopped being a Manager of the department, or
+that the Controller moved to another department. It is listed under All on the Dashboard only, in grey,
+with a line such as "Handled by [Name (login)] on [dd-MMM-yyyy]", "No longer Manager of the department
+([dd-MMM-yyyy])" or "Item moved to another department ([dd-MMM-yyyy])". It is never counted as unread and
+never becomes unread again.
+
+**Sent to the Controller** - What happens to a new item of a User when its department has no active
+Manager and the Admin has chosen "Sent to the Controller" in System Settings. The item is saved and goes to
+the Controllers; the message after saving and the "has been Created" mail say "Sent to the Controller: the
+department had no active Manager." With the choice "Refused (default)" the item is not saved.
 
 **Meeting date passed** - Once the date of the meeting has passed, its agenda items can no longer
 be approved or rejected. The dashboard shows them read-only with the message "The meeting date

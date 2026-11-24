@@ -372,8 +372,10 @@ BEGIN TRY
     DELETE FROM @R; INSERT INTO @R EXEC #ZZ39_Edit @UserId = @M1, @RoleId = @rMgr, @DepartmentId = @DC, @List = @L, @PassList = 1, @Actor = @Adm;
     EXEC #ZZ39_State @UserId = @M1, @Text = @S OUTPUT;
     -- Step 52 (MR1): the Reason 24 ReasonDetail is 'open:<n>|past:<n>|<department part>' (expected value changed)
-    INSERT INTO @T SELECT 'Edit removes A, of which he is the last active Manager with an item waiting',
-           'Result 0, Reason 24, open:0|past:0|last active Manager of ZZ step 39 department A (1 item waiting) | role manager; open ZZ39A,ZZ39C*; closed 3/0/0', (SELECT Txt FROM @R) + ' | ' + @S;
+    -- Step 53 (UD1b): every Manager of the department may decide the item, so it also counts as open for him (Q9)
+    INSERT INTO @T SELECT 'Edit removes A, of which he is the last active Manager with an item waiting [step 53: open:1]',
+           'Result 0, Reason 24, open:' + CASE WHEN OBJECT_ID('dbo.fn_DepartmentManagers', 'IF') IS NOT NULL THEN '1' ELSE '0' END
+           + '|past:0|last active Manager of ZZ step 39 department A (1 item waiting) | role manager; open ZZ39A,ZZ39C*; closed 3/0/0', (SELECT Txt FROM @R) + ' | ' + @S;
 
     DELETE FROM @R; INSERT INTO @R EXEC #ZZ39_Edit @UserId = @M1, @RoleId = @rUser, @DepartmentId = @DC, @List = @L, @PassList = 1, @Actor = @Adm;
     EXEC #ZZ39_State @UserId = @M1, @Text = @S OUTPUT;
@@ -388,10 +390,15 @@ BEGIN TRY
     SET @M2 = (SELECT UserId FROM Users WHERE LoginName = 'zz39m2');
 
     SET @L = CAST(@DC AS VARCHAR(12));
+    -- Step 53 (UD1b): with a second Manager in A the change is allowed (the other Manager may decide the item); it is
+    -- undone at once (savepoint), so the checks below start from the same state as before step 53
+    SAVE TRANSACTION ZZ39Row26;
     DELETE FROM @R; INSERT INTO @R EXEC #ZZ39_Edit @UserId = @M1, @RoleId = @rUser, @DepartmentId = @DC, @List = @L, @PassList = 1, @Actor = @Adm;
     -- Step 52 (MR1): the Reason 24 ReasonDetail is 'open:<n>|past:<n>|<department part>' (expected value changed)
-    INSERT INTO @T SELECT 'Role change with a second Manager in A: still the item routed to him',
-           'Result 0, Reason 24, open:1|past:0|', (SELECT Txt FROM @R);
+    INSERT INTO @T SELECT 'Role change with a second Manager in A: still the item routed to him [step 53: allowed, A closed]',
+           CASE WHEN OBJECT_ID('dbo.fn_DepartmentManagers', 'IF') IS NOT NULL THEN 'Result 1, Reason 0, MappingsClosed:ZZ step 39 department A'
+                ELSE 'Result 0, Reason 24, open:1|past:0|' END, (SELECT Txt FROM @R);
+    ROLLBACK TRANSACTION ZZ39Row26;
 
     UPDATE Users SET ManagerId = @M2 WHERE UserId = @U1;
     DELETE FROM @R; INSERT INTO @R EXEC #ZZ39_Edit @UserId = @M1, @RoleId = @rUser, @DepartmentId = @DC, @List = @L, @PassList = 1, @Actor = @Adm;
@@ -413,8 +420,9 @@ BEGIN TRY
     SET @L = CAST(@DB AS VARCHAR(12));
     DELETE FROM @R; INSERT INTO @R EXEC #ZZ39_Edit @UserId = @M2, @RoleId = @rMgr, @DepartmentId = @DB, @List = @L, @PassList = 1, @Actor = @Adm;
     -- Step 52 (MR1): the Reason 24 ReasonDetail is 'open:<n>|past:<n>|<department part>' (expected value changed)
-    INSERT INTO @T SELECT 'Edit moves him from A (last active Manager, item waiting) to B: the department only is named',
-           'Result 0, Reason 24, open:0|past:0|last active Manager of ZZ step 39 department A (1 item waiting)', (SELECT Txt FROM @R);
+    INSERT INTO @T SELECT 'Edit moves him from A (last active Manager, item waiting) to B: the department only is named [step 53: open:1]',
+           'Result 0, Reason 24, open:' + CASE WHEN OBJECT_ID('dbo.fn_DepartmentManagers', 'IF') IS NOT NULL THEN '1' ELSE '0' END
+           + '|past:0|last active Manager of ZZ step 39 department A (1 item waiting)', (SELECT Txt FROM @R);
 
     -- An older caller (no @DepartmentIds) keeps the Manager's mappings and writes no row
     SET @L = CAST(@DA AS VARCHAR(12)) + ',' + CAST(@DB AS VARCHAR(12));

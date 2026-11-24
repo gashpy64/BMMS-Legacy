@@ -3,11 +3,14 @@
 - Title: Configuration and Settings
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: access-ra1a
-- Last updated by: RA1a (step 40), based on ea268e5
+- Applies to: UD1b (step 53: the setting DeptNoManagerAction and the System Settings card text); access-ra1a
+- Commit: db1d641
+- Last updated by: UD1b, based on db1d641
 - Status: Draft
 - Verified against: none yet (leads from the old Architecture notes added in WF2b1); for
-  "Page access policy" BMMS/XML/PageAccess.xml and BMMS/PageAccessModule.cs (step RA1a)
+  "Page access policy" BMMS/XML/PageAccess.xml and BMMS/PageAccessModule.cs (step RA1a); for UD1b:
+  BMMS/Master/SystemSettings.aspx and .aspx.cs (the card, the messages), Database/BMMS-Fix-DepartmentApprovers-Step53.sql
+  (fn_AgendaRoute, spr_AddEditAgenda comments), BMMSBAL/MeetingMgr.cs (Reason 29 text)
 - To confirm: chapter not written yet (WF2b2); leads from the old Architecture notes to verify
 
 ## Configuration files
@@ -28,10 +31,31 @@
 [[CONFIRM: lead from old Architecture notes: the SMTP settings are stored in the database and edited on the SMTP Server Config page]]
 [[CONFIRM: lead from old Architecture notes: the App_Setting table holds the system settings (added in step 16)]]
 
+Setting DeptNoManagerAction (App_Setting row added by step 39; read since step 53, UD1b). Values `refuse` (the default,
+also used when the row is missing or holds another value) and `controller`. It is read by fn_AgendaRoute when a User saves
+a new agenda item whose department has no active Manager (an active Manager of the department other than the creator;
+the Reporting Person is an active Controller: the item goes to the Controllers whatever the setting says):
+
+- `refuse`: the item is not saved; Reason 29, "Not saved: the department [department name] has no active Manager. Ask the Admin
+  to nominate a Manager for the department."
+- `controller`: the item is saved at AMA (Agenda.RouteNote 'N'), the Controllers get the alert, and the save message and the
+  "has been Created" mail add "Sent to the Controller: the department had no active Manager."
+
+Items entered by a Manager or by the Controller are not affected. A change of the value is written to Audit_Trail_Master
+(chapter 04, "Settings rows").
+
 ## System Settings page
 
 [[CONFIRM: not written yet (WF2b2)]]
 [[CONFIRM: lead from old Architecture notes: the App_Setting rows are edited on the System Settings page]]
+
+The card "Department without an active Manager" (BMMS/Master/SystemSettings.aspx; shown only when the setting row exists) offers
+"A new agenda item is" with the choices "Refused (default)" and "Sent to the Controller", and the help text "Used when a new
+agenda item's department has no active Manager. A change is written to the audit trail." (before step 53: "Stored now, used from
+a later step: today agenda items are routed as before."). Only an Admin may save it. The two confirmation messages after Save
+(BMMS/Master/SystemSettings.aspx.cs, btnSaveDeptRule_Click) are "Saved: when a department has no active Manager, a new agenda
+item will be sent to the Controller. The setting is now in use." and "Saved: when a department has no active Manager, a new agenda item will be
+refused. The setting is now in use." (until step 53 they ended "This is stored now and used from a later step.").
 
 ## Page access policy
 

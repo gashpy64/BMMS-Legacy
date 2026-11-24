@@ -106,13 +106,18 @@
                                          below it, neither wraps).
                                          Step UN6c1: the muted line ends with the person who caused the alert (entered,
                                          approved, rejected, edited; the login ID as tooltip, as in the header; a dash when
-                                         nobody is recorded), and the date is that of this event. --%>
+                                         nobody is recorded), and the date is that of this event.
+                                         Step UD1b: a row marked as handled (another Manager decided the item, the
+                                         person is no longer a Manager of its department, or the Controller moved the
+                                         item to another department) is listed under All only,
+                                         greyed, with a line that says so in words; its date is that of the marking. --%>
                                     <asp:TemplateField HeaderText="Alert">
                                         <ItemTemplate>
                                             <div class="wb-dash-alert">
                                                 <asp:LinkButton ID="lnkSource" runat="server" CssClass="wb-dash-alert-source" Text='<%# HttpUtility.HtmlEncode(Eval("DisplayText")) %>' OnClick="lnkSource_Click">
                                                 </asp:LinkButton>
                                                 <span class="wb-dash-alert-meta"><%# HttpUtility.HtmlEncode(AlertDetails(Eval("AlertTypeName"), Eval("CommitteeName"), Eval("DepartmentName"))) %> | by <span class="wb-dash-alert-actor" title='<%# HttpUtility.HtmlAttributeEncode(ActorLogin(Eval("ActorLogin"))) %>'><%# HttpUtility.HtmlEncode(ActorName(Eval("ActorName"))) %></span></span>
+                                                <asp:Label ID="lblHandled" runat="server" CssClass="wb-dash-alert-handled" Text='<%# HttpUtility.HtmlEncode(HandledCaption(Container.DataItem)) %>' Visible='<%# HandledCaption(Container.DataItem).Length > 0 %>'></asp:Label>
                                             </div>
                                             <asp:Label ID="lblSourceType" runat="server" Text='<%#Bind("SourceType") %>' Visible="false"></asp:Label>
                                             <asp:Label ID="lblSourceTypeId" runat="server" Text='<%#Bind("SourceTypeId") %>'

@@ -515,7 +515,8 @@ namespace BMMS.DashBoard
             Label lblSourceTypeId = (Label)gv.FindControl("lblSourceTypeId");
             Label lblAlertUserId = (Label)gv.FindControl("lblAlertUserId");
             Label lblAlert = (Label)gv.FindControl("lblAlert");
-            gv.CssClass = "contentTabletd bmms-row-read";
+            Label lblHandled = (Label)gv.FindControl("lblHandled");
+            gv.CssClass = lblHandled != null && lblHandled.Visible ? "contentTabletd bmms-row-read bmms-row-handled" : "contentTabletd bmms-row-read";
 
             hdnAlertUserId.Value = lblAlertUserId.Text.Trim();
 
@@ -546,7 +547,18 @@ namespace BMMS.DashBoard
             {
                 found = hasSourceId && BindAgendaDetails(SourceTypeId);
                 if (found)
+                {
                     pnlAgenda.Visible = true;
+
+                    // Step UD1b: opened from a row marked as handled: the same line in the panel (the panel is read-only,
+                    // as for anyone who may not decide the item). The label holds encoded text; the message is set as text.
+                    if (lblHandled != null && lblHandled.Visible)
+                    {
+                        string handled = HttpUtility.HtmlDecode(lblHandled.Text);
+                        ShowAgendaPanelMessage(pAgendaPanelMessage.Visible && pAgendaPanelMessage.InnerText.Length > 0
+                            ? pAgendaPanelMessage.InnerText + " " + handled : handled);
+                    }
+                }
             }
 
             if (!found)
@@ -755,7 +767,12 @@ namespace BMMS.DashBoard
             if (e.Row.RowType == DataControlRowType.DataRow)
             {
                 string read = Convert.ToString(DataBinder.Eval(e.Row.DataItem, "ReadStatus"));
-                if (read.Equals("1"))
+                if (HandledCaption(e.Row.DataItem).Length > 0)
+                {
+                    // Step UD1b: a row marked as handled is greyed; its line says why (not by colour alone)
+                    e.Row.CssClass = "contentTabletd bmms-row-read bmms-row-handled";
+                }
+                else if (read.Equals("1"))
                 {
                     e.Row.CssClass = "contentTabletd bmms-row-read";
                 }
@@ -1643,6 +1660,30 @@ namespace BMMS.DashBoard
         protected static string ActorLogin(object value)
         {
             return value == null || value == DBNull.Value ? string.Empty : value.ToString().Trim();
+        }
+
+        // Step UD1b (BMMS-Fix-DepartmentApprovers-Step53.sql): the line of an alert row marked as handled, plain text
+        // (the markup encodes it); "" for an ordinary row, or when the list has no handled columns
+        protected static string HandledCaption(object dataItem)
+        {
+            System.Data.DataRowView row = dataItem as System.Data.DataRowView;
+            if (row == null || !row.Row.Table.Columns.Contains("HandledReason"))
+                return string.Empty;
+
+            string reason = Convert.ToString(row["HandledReason"]).Trim();
+            if (reason.Length == 0)
+                return string.Empty;
+
+            string on = FormatDate(row["HandledOn"]);
+            if (reason == "N")
+                return "No longer Manager of the department" + (on.Length > 0 ? " (" + on + ")" : "");
+            if (reason == "M")
+                return "Item moved to another department" + (on.Length > 0 ? " (" + on + ")" : "");
+
+            string name = Convert.ToString(row["HandledByName"]).Trim();
+            string login = Convert.ToString(row["HandledByLogin"]).Trim();
+            string who = name.Length == 0 ? "another Manager" : name + (login.Length > 0 ? " (" + login + ")" : "");
+            return "Handled by " + who + (on.Length > 0 ? " on " + on : "");
         }
 
         // The Action Items card (step UN6c1): IsOverdue of spr_GetDashboardActionItems

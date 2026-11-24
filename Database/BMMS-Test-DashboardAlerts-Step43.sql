@@ -115,6 +115,9 @@ CREATE TABLE #AL (RowNo INT, AlertUserId INT, AlertId INT, UserId INT, ReadStatu
                   DepartmentId INT, DepartmentName NVARCHAR(200), AlertTypeCode VARCHAR(10), AlertTypeName VARCHAR(50), CommitteeId INT,
                   CommitteeCode VARCHAR(50), CommitteeName NVARCHAR(200), DisplayText VARCHAR(150), CreatedOn DATETIME, EventOn DATETIME,
                   ActorUserId INT, ActorName NVARCHAR(200), ActorLogin NVARCHAR(200));
+-- Step 53 (step UD1b): spr_GetDashboardAlerts returns four more columns at the end
+IF (OBJECT_ID('dbo.fn_DepartmentManagers', 'IF') IS NOT NULL)
+    ALTER TABLE #AL ADD HandledReason CHAR(1) NULL, HandledOn DATETIME NULL, HandledByName NVARCHAR(200) NULL, HandledByLogin NVARCHAR(200) NULL;
 CREATE TABLE #AI (ActionItemId INT, MinutesId INT, ActionText NVARCHAR(MAX), ActionStatus VARCHAR(50), AgendaId INT, DecisionTypeId INT,
                   DueDate DATETIME, AgendaNo VARCHAR(50), CommitteeId INT, MeetingId INT, DecisionTypeCode VARCHAR(50),
                   DecisionTypeName NVARCHAR(200), SubjectNo NVARCHAR(50), DepartmentCode VARCHAR(50), DepartmentName NVARCHAR(200),
@@ -158,8 +161,9 @@ INSERT INTO #T SELECT 'Parameters (all, OUTPUT): alerts 8 5, count 4 3, remove 4
 
 DECLARE @Cols VARCHAR(MAX);
 SELECT @Cols = ISNULL(@Cols + ',', '') + name FROM sys.dm_exec_describe_first_result_set_for_object(OBJECT_ID('dbo.spr_GetDashboardAlerts'), 0) ORDER BY column_ordinal;
-INSERT INTO #T SELECT 'spr_GetDashboardAlerts: the result columns the page reads, in this order',
-       'RowNo,AlertUserId,AlertId,UserId,ReadStatus,SourceType,SourceTypeId,DepartmentId,DepartmentName,AlertTypeCode,AlertTypeName,CommitteeId,CommitteeCode,CommitteeName,DisplayText,CreatedOn,EventOn,ActorUserId,ActorName,ActorLogin',
+INSERT INTO #T SELECT 'spr_GetDashboardAlerts: the result columns the page reads, in this order [step 53: four handled columns at the end]',
+       'RowNo,AlertUserId,AlertId,UserId,ReadStatus,SourceType,SourceTypeId,DepartmentId,DepartmentName,AlertTypeCode,AlertTypeName,CommitteeId,CommitteeCode,CommitteeName,DisplayText,CreatedOn,EventOn,ActorUserId,ActorName,ActorLogin'
+       + CASE WHEN OBJECT_ID('dbo.fn_DepartmentManagers', 'IF') IS NOT NULL THEN ',HandledReason,HandledOn,HandledByName,HandledByLogin' ELSE '' END,
        ISNULL(@Cols, 'none');
 SET @Cols = NULL;
 SELECT @Cols = ISNULL(@Cols + ',', '') + name FROM sys.dm_exec_describe_first_result_set_for_object(OBJECT_ID('dbo.spr_GetDashboardActionItems'), 0) ORDER BY column_ordinal;

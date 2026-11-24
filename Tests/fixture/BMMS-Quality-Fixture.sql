@@ -22,6 +22,9 @@
        qa_ctrl        Controller       Secretarial
        qa_manager     Manager          Credit
        qa_manager2    Manager          HRD (home) and Secretarial
+       qa_manager3    Manager          Credit (step UD1b, database step 53: a second Manager of Credit; also of
+                                       HRD until the HRD item is saved, then HRD is removed, so his row of that
+                                       item is marked 'N'; qa_manager's decisions mark his Credit rows 'H')
        qa_user        User             Credit, manager qa_manager
        qa_user2       User             HRD, manager qa_manager2
        qa_mgmt        Management       Secretarial
@@ -133,6 +136,7 @@ DECLARE @Sys INT;
 DECLARE @RoleAdmin INT, @RoleController INT, @RoleManager INT, @RoleUser INT, @RoleMgmt INT, @RoleMdSec INT;
 DECLARE @DeptAdmin INT, @DeptSec INT, @DeptHrd INT, @DeptCredit INT;
 DECLARE @Design INT;
+DECLARE @QaManager3 INT;   -- step UD1b
 DECLARE @QaAdmin INT, @QaController INT, @QaManager INT, @QaManager2 INT, @QaUser INT, @QaUser2 INT, @QaMgmt INT, @QaMdSec INT, @QaInactive INT;
 DECLARE @DeptList VARCHAR(50);
 DECLARE @C INT;
@@ -215,6 +219,16 @@ BEGIN TRY
     IF NOT EXISTS (SELECT 1 FROM @R WHERE Result = 1) RAISERROR('refused', 16, 1);
     SET @QaManager2 = (SELECT UserId FROM Users WHERE LoginName = 'qa_manager2');
 
+    -- Step UD1b (database step 53): every active Manager of the item's department decides it; qa_manager3 is the second
+    -- Manager of Credit (and of HRD until the HRD item is saved, below)
+    SET @Step = 'account qa_manager3 (Credit and HRD; step UD1b)';
+    SET @DeptList = CAST(@DeptCredit AS VARCHAR(12)) + ',' + CAST(@DeptHrd AS VARCHAR(12));
+    DELETE FROM @R; INSERT INTO @R EXEC spr_AddEditUser @Code = 'Save', @UserId = 0, @UserName = 'QA Manager Three', @DepartmentId = @DeptCredit,
+        @DesignationId = @Design, @ManagerId = NULL, @RoleId = @RoleManager, @EmailId = 'qa_manager3@example.invalid', @LoginName = 'qa_manager3',
+        @Password = '$(H_manager3)', @CreatedOn = @Now, @CreatedBy = @Sys, @UpdatedOn = @Now, @UpdatedBy = @Sys, @DepartmentIds = @DeptList;
+    IF NOT EXISTS (SELECT 1 FROM @R WHERE Result = 1) RAISERROR('refused', 16, 1);
+    SET @QaManager3 = (SELECT UserId FROM Users WHERE LoginName = 'qa_manager3');
+
     SET @Step = 'account qa_user';
     DELETE FROM @R; INSERT INTO @R EXEC spr_AddEditUser @Code = 'Save', @UserId = 0, @UserName = 'QA User', @DepartmentId = @DeptCredit,
         @DesignationId = @Design, @ManagerId = @QaManager, @RoleId = @RoleUser, @EmailId = 'qa_user@example.invalid', @LoginName = 'qa_user',
@@ -290,7 +304,8 @@ BEGIN TRY
     IF NOT EXISTS (SELECT 1 FROM @R WHERE Result = 1) RAISERROR('refused', 16, 1);
 
     ---------------------------------------------------------------------------
-    -- Meetings (direct rows: four need a past date; see the header). CreatedOn is now,
+    -- Meetings (direct rows: four need a past date; see the header; step UD1b: 00004 to 00006 get it after their
+    -- items are decided, below). CreatedOn is now,
     -- so the workflow order of step 23 applies to all of them.
     ---------------------------------------------------------------------------
     SET @Step = 'meetings';
@@ -304,13 +319,13 @@ BEGIN TRY
     VALUES ('00003', @C, 'QA', 'QA agenda finalised', DATEADD(DAY, 5, @Today), '10:00', DATEADD(DAY, -5, @Today), '', 'Open', 'Open', @Now, @QaController);
     SET @Mt3 = SCOPE_IDENTITY();
     INSERT INTO Meeting (MeetingNo, CommitteeId, Place, Venue, MeetingDate, MeetingTime, AgendaSubmissionDate, MeetingColorCode, AgendaStatus, MinutesStatus, CreatedOn, CreatedBy)
-    VALUES ('00004', @C, 'QA', 'QA minutes draft', DATEADD(DAY, -10, @Today), '10:00', DATEADD(DAY, -20, @Today), '', 'Open', 'Open', @Now, @QaController);
+    VALUES ('00004', @C, 'QA', 'QA minutes draft', DATEADD(DAY, 44, @Today), '10:00', DATEADD(DAY, -20, @Today), '', 'Open', 'Open', @Now, @QaController);   -- step UD1b: dated ahead while its items are decided (below)
     SET @Mt4 = SCOPE_IDENTITY();
     INSERT INTO Meeting (MeetingNo, CommitteeId, Place, Venue, MeetingDate, MeetingTime, AgendaSubmissionDate, MeetingColorCode, AgendaStatus, MinutesStatus, CreatedOn, CreatedBy)
-    VALUES ('00005', @C, 'QA', 'QA minutes finalised', DATEADD(DAY, -20, @Today), '10:00', DATEADD(DAY, -30, @Today), '', 'Open', 'Open', @Now, @QaController);
+    VALUES ('00005', @C, 'QA', 'QA minutes finalised', DATEADD(DAY, 45, @Today), '10:00', DATEADD(DAY, -30, @Today), '', 'Open', 'Open', @Now, @QaController);   -- step UD1b: dated ahead while its items are decided (below)
     SET @Mt5 = SCOPE_IDENTITY();
     INSERT INTO Meeting (MeetingNo, CommitteeId, Place, Venue, MeetingDate, MeetingTime, AgendaSubmissionDate, MeetingColorCode, AgendaStatus, MinutesStatus, CreatedOn, CreatedBy)
-    VALUES ('00006', @C, 'QA', 'QA minutes confirmed', DATEADD(DAY, -30, @Today), '10:00', DATEADD(DAY, -40, @Today), '', 'Open', 'Open', @Now, @QaController);
+    VALUES ('00006', @C, 'QA', 'QA minutes confirmed', DATEADD(DAY, 46, @Today), '10:00', DATEADD(DAY, -40, @Today), '', 'Open', 'Open', @Now, @QaController);   -- step UD1b: dated ahead while its items are decided (below)
     SET @Mt6 = SCOPE_IDENTITY();
 
     ---------------------------------------------------------------------------
@@ -378,6 +393,13 @@ BEGIN TRY
         SET @No = @No + 1;
     END
 
+    -- Step UD1b: since step 52 a Manager's decision after the meeting date is refused (Reason 28), so meetings 00004 to
+    -- 00006 were dated ahead while their items were decided; now they get their past dates (as the dates script sets
+    -- them at every run) before Agenda Finalisation, attendance and minutes
+    SET @Step = 'meetings 00004 to 00006: their past dates';
+    UPDATE Meeting SET MeetingDate = DATEADD(DAY, CASE MeetingId WHEN @Mt4 THEN -10 WHEN @Mt5 THEN -20 ELSE -30 END, @Today)
+    WHERE MeetingId IN (@Mt4, @Mt5, @Mt6);
+
     -- The second department: one HRD item at AC on meeting 00001, saved by qa_user2 (manager qa_manager2)
     SET @Step = 'agenda item 13: save by qa_user2 (HRD)';
     DELETE FROM @R; INSERT INTO @R EXEC spr_AddEditAgenda @Code = 'Save', @AgendaId = 0, @AgendaNo = '', @CommitteeId = @C, @MeetingId = @Mt1,
@@ -385,6 +407,15 @@ BEGIN TRY
         @AgendaText = N'<p>QA agenda text.</p>', @AgendaTextPath = N'', @ProposedResolution = N'<p>QA proposed resolution.</p>', @FilePath = N'',
         @MgrComments = N'', @ControllerComments = N'', @CurrentStatus = 'New', @CreatedOn = @Now, @CreatedBy = @QaUser2,
         @UpdatedOn = @Now, @UpdatedBy = @QaUser2, @SubjectNo = NULL, @ActingUserId = @QaUser2, @ChangedFields = @Changed OUTPUT;
+    IF NOT EXISTS (SELECT 1 FROM @R WHERE Result = 1) RAISERROR('refused', 16, 1);
+
+    -- Step UD1b: qa_admin removes HRD from qa_manager3 (qa_manager2 is still HRD's Manager, so rule 12 allows it); his row
+    -- of the HRD item is marked 'N' (no longer Manager of the department) by qa_admin
+    SET @Step = 'qa_manager3: HRD removed (step UD1b)';
+    SET @DeptList = CAST(@DeptCredit AS VARCHAR(12));
+    DELETE FROM @R; INSERT INTO @R EXEC spr_AddEditUser @Code = 'Update', @UserId = @QaManager3, @UserName = 'QA Manager Three', @DepartmentId = @DeptCredit,
+        @DesignationId = @Design, @ManagerId = NULL, @RoleId = @RoleManager, @EmailId = 'qa_manager3@example.invalid', @LoginName = 'qa_manager3',
+        @Password = '', @CreatedOn = @Now, @CreatedBy = @QaAdmin, @UpdatedOn = @Now, @UpdatedBy = @QaAdmin, @DepartmentIds = @DeptList;
     IF NOT EXISTS (SELECT 1 FROM @R WHERE Result = 1) RAISERROR('refused', 16, 1);
 
     ---------------------------------------------------------------------------

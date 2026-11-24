@@ -620,10 +620,13 @@ namespace BMMSDAL
         #region GetAgendaCreationMailId
         // The creator's route and the Bcc of the "agenda created" mail: Route, ManagerName,
         // ActiveControllers, EmailId; at least one row (BMMS-Fix-AgendaRouting-Step20.sql)
-        public static DataTable GetAgendaCreationMailId(int UserId)
+        // Step UD1b (BMMS-Fix-DepartmentApprovers-Step53.sql): the route of a new item of DepartmentId; also
+        // DepartmentManagers, RouteNote and DepartmentName
+        public static DataTable GetAgendaCreationMailId(int UserId, int DepartmentId)
         {
-            SqlParameter[] parameter = new SqlParameter[1];
+            SqlParameter[] parameter = new SqlParameter[2];
             parameter[0] = new SqlParameter("@UserId", UserId);
+            parameter[1] = new SqlParameter("@DepartmentId", DepartmentId);
 
             return CommonDB.GetDataTable("spr_GetAgendaCreationMailId", parameter);
         }

@@ -3,11 +3,12 @@
 - Title: Mail
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UN6c2a (section "Recipients and addresses", one paragraph: no mail change, who may decide); UN6c1 (section "Recipients and addresses", the Admin role left out); the rest user-ud1a
-- Last updated by: UN6c2a, based on 493cb45
+- Applies to: UD1b (step 53: section "Recipients and addresses", the table of recipients); UN6c2a (section "Recipients and addresses", one paragraph: no mail change, who may decide); UN6c1 (section "Recipients and addresses", the Admin role left out); the rest user-ud1a
+- Commit: db1d641
+- Last updated by: UD1b, based on db1d641
 - Status: Draft
-- Verified against: for UN6c2a: BMMS/DashBoard/DashBoard.aspx.cs (btnApprove_Click and btnReject_Click read in full: the mail after Result 1 only), Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (spr_UpdateAgendaByAgendaId: nothing written or mailed changes); for UN6c1: Database/BMMS-Fix-DashboardAlerts-Step43.sql (the two mail procedures, comment and text), BMMS-Rollback-DashboardAlerts-Step43.sql (messages), Database/README.md (section Step UN6c1: callers checked)
-- To confirm: chapter not written yet (WF2b2), except the Admin rule of step UN6c1
+- Verified against: for UD1b: Database/BMMS-Fix-DepartmentApprovers-Step53.sql (spr_GetAlertMailId, spr_GetAgendaUpdateMailId, spr_GetAgendaCreationMailId, read in full), BMMS/Master/Agenda.aspx.cs (diff: GenerateMail, the Controller line, the Admin Bcc rule); for UN6c2a: BMMS/DashBoard/DashBoard.aspx.cs (btnApprove_Click and btnReject_Click read in full: the mail after Result 1 only), Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (spr_UpdateAgendaByAgendaId: nothing written or mailed changes); for UN6c1: Database/BMMS-Fix-DashboardAlerts-Step43.sql (the two mail procedures, comment and text), BMMS-Rollback-DashboardAlerts-Step43.sql (messages), Database/README.md (section Step UN6c1: callers checked)
+- To confirm: chapter not written yet (WF2b2), except the Admin rule of step UN6c1 and the recipient table of step UD1b
 
 ## Mail server settings
 
@@ -31,7 +32,7 @@ alerts). Both recipient procedures leave it out:
 
 The Controller, the Manager and the creator get their mails as before; the other conditions (active users, not
 the protected system account, with an address) are unchanged. No other procedure calls either of the two. The
-five procedures that write alerts still add alert rows for Admins until step UD1b; those rows are not listed and
+five procedures that write alerts added alert rows for Admins until step UD1b (step 53 stopped that; older rows stay); those rows are not listed and
 get no mail. To undo, BMMS-Rollback-DashboardAlerts-Step43.sql puts both procedures back as the texts of steps 18
 and 37.
 
@@ -42,6 +43,22 @@ buttons, and again before a decision, and the approval procedure refuses an acti
 the two rejections is generated only after the procedure returns Result 1, as before; so a refusal (Reason 14, a
 meeting date that has passed, or a state that cannot be read) sends no mail. A mail that fails after the decision
 leaves the decision saved and shows the existing "not sent" warning.
+
+Step 53 (UD1b, any Manager of the item's department approves) changes the recipient lists below. The Admin role is in none of
+them, and no mail text changes except the one added line of the Created mail.
+
+| Mail | Recipients since step 53 | Where it lives |
+|---|---|---|
+| "Agenda created" of a User's new item (BMMS/Master/Agenda.aspx.cs, GenerateMail) | Route M (waits at AC): every active Manager of the item's department other than the creator, in Bcc. Route C (straight to the Controllers): the active Controllers. When the item was sent to the Controller because the department had no active Manager (setting "Sent to the Controller"), the body adds "Sent to the Controller: the department had no active Manager." | spr_GetAgendaCreationMailId (@DepartmentId); fn_AgendaRoute; fn_DepartmentManagers |
+| "Agenda created" of a Manager's or the Controller's own item | The Reporting Person gets a Bcc as before, except when the Reporting Person has the Admin role (no Bcc) | BMMS/Master/Agenda.aspx.cs (GenerateMail) |
+| Approved or rejected by a Manager (AMA, AMR) | As before (the Controllers and the creator for AMA; the creator for AMR), and also every other active Manager of the item's department (the Manager who decided is left out) | spr_GetAlertMailId |
+| Approved or rejected by the Controller (ACA, ACR) | The users of the item's alert as before, but not a row marked as handled: a Manager who was handled ('H', 'N' or 'M') gets no later mail of the item | spr_GetAlertMailId |
+| "Agenda updated" | The users the refreshed alert is shown to, as before, but not a row marked as handled | spr_GetAgendaUpdateMailId |
+
+The Created mail is sent after the database accepted the item, so a refusal (Reason 29, 11 or 15) sends none. If the mail fails,
+the item stays saved and the "not sent" message carries the Controller line too ("Sent to the Controller: the department had no
+active Manager."). Alerts for the Admin role are no longer written by the procedures of the agenda, the meeting and the committee
+(chapter 04, "Step 53 (UD1b)"); the older rows stay and are not listed.
 
 [[CONFIRM: the rest of this section (who gets which mail) is not written yet (WF2b2)]]
 

@@ -109,8 +109,9 @@ and the counts could not be loaded. Wait a moment, then reload the page."
 Fields and buttons, in the My approvals card (above the Meetings and Alerts cards, the full width of the page):
 
 - The title is "My approvals (n)", where n is the number of items that wait for your approval.
-- The list holds the items that the Manager has approved and that wait for you, of meetings whose agenda is open
-  and whose date has not passed. The newest meeting is first; 10 items to a page, with page links under the list.
+- The list holds the items that wait for your approval: the items that a Manager has approved, and the items that
+  went straight to the Controllers, of meetings whose agenda is open and whose date has not passed. The newest
+  meeting is first; 10 items to a page, with page links under the list.
 - The columns are Item (the agenda number as a link, with the short text under it), Committee, Meeting (the meeting
   number and under it its date) and Department.
 - The card follows the Committee drop-down of the Meetings card.
@@ -322,7 +323,21 @@ Messages and what to do:
 
 ## Alerts and mails you receive
 
-[[CONFIRM: not written yet]]
+- When a User's new item goes straight to the Controllers (the person the User reports to is an active Controller, or the
+  User's department has no active Manager and the Admin's System Settings send such items to the Controller), every
+  active Controller gets an alert and the "has been Created" mail. When the reason is that the department had no active
+  Manager, the mail says "Sent to the Controller: the department had no active Manager."
+- When the department has no active Manager and the System Settings say such items are refused, the User's item is not
+  saved and nobody receives an alert or a mail.
+- When a Manager of the item's department approves or rejects an item, you receive the mail of the decision as before.
+  The Managers of the department who did not decide have their alerts of the item handled, and get no later mail of it.
+- When you edit an item that waits for the Manager and move it to another department, the Managers of the new
+  department get an alert of it, and the alerts of the Managers of the old department show "Item moved to another
+  department ([dd-MMM-yyyy])" under All. If you move the item back, those alerts become live again.
+- The Admin gets no alert and no mail about agenda items, meetings or committees. Your own rules for approving are
+  unchanged.
+
+[[CONFIRM: the rest of this section (the other alerts and mails a Controller receives) is not written yet]]
 
 ## Common problems
 

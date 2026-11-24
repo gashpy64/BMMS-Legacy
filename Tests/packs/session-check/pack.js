@@ -19,10 +19,14 @@
     After each ended session the ASP.NET_SessionId cookie of that browser differs from the one before (the ended
     session's cookie was expired): after a fresh sign-in for qa_mdsec and qa_manager2; on the sign-in page for
     qa_user2, who cannot sign in.
-    4b. Step MR1 (database step 52): the Admin tries to make qa_manager a User. Refused (rule 12): the message box
-       has the header, the line of the 2 items routed to qa_manager that are still open for approval, the line of
-       the 1 item of a past meeting whose agenda was never finalized, and "Nothing was changed."; no department
-       line (Credit has another active Manager). qa_manager stays a Manager.
+    4b. Step MR1 (database step 52), rewritten in step UD1b (database step 53): the Admin tries to make qa_manager2
+       a User. Since step 53 every Manager of a department decides its items, and Credit has other active Managers
+       (qa_manager3, credmanager), so the
+       refusal is shown on qa_manager2, the only Manager of HRD and of Secretarial (step 3 gave him Credit too).
+       Refused (rule 12): the message box has the header, the line of the 2 items routed to him that are still open
+       for approval (QA1-00001-006 of HRD and QA2-00001-2 of Secretarial), the department line (last active Manager
+       of HRD and Secretarial, one item of each waiting), and "Nothing was changed."; no past-meeting line.
+       qa_manager2 stays a Manager.
     5. qa_ctrl, unchanged, opens a page after every change and is never sent to the sign-in page; no
        SESSION-ENDED line for qa_ctrl or qa_admin.
     6. Finally (also after a failure): the three users are put back through User Master, and User Master must
@@ -37,12 +41,12 @@ const USERS = 'Master/User.aspx';
 const DASH = 'DashBoard/DashBoard.aspx';
 const CHANGED_TEXT = 'Your access has changed. Please sign in again.';
 const SESSION_COOKIE = 'ASP.NET_SessionId';
-// Step MR1: the Reason 24 message, one line per part (BMMSBAL/UserMgr.cs, LastManagerMessage)
+// Step MR1: the Reason 24 message, one line per part (BMMSBAL/UserMgr.cs, LastManagerMessage); step UD1b: for qa_manager2
 const MANAGER_NEEDED_LINES = [
   'Not saved: this Manager is still needed.',
   '2 items routed to them are still open for approval: approve or reject them first.',
-  '1 item routed to them belongs to meetings whose date has passed and whose agenda was never finalized: the Controller should '
-    + 'finalize the agenda of those meetings first (finalizing rejects the items not yet approved).',
+  'Last active Manager of HRD (1 item of the department waiting), Secretarial (1 item of the department waiting): '
+    + 'give the department another active Manager first.',
   'Nothing was changed.',
 ];
 const INACTIVE_TEXT = 'Your account is inactive. Contact the administrator.';
@@ -263,16 +267,17 @@ module.exports = {
       await t.endSession('user2');
       await ctrlClick(DASH, 'after the deactivation');
 
-      // 4b. Step MR1: rule 12 refuses qa_manager's change to User; the message names the open and the past items
+      // 4b. Step MR1, rewritten in step UD1b: rule 12 refuses qa_manager2's change to User (the only Manager of HRD and
+      //     Secretarial); the message names the open items and the two departments
       await openUsers(t, admin);
-      await editUser(admin, L.manager);
+      await editUser(admin, L.manager2);
       await setRole(admin, 'User');
       await fullPost(admin, () => admin.locator('input[id$="btnSave"]').click());
       const refusal = await messageLines(admin);
       const shot = await t.shot(admin, 'manager-still-needed');
       await openUsers(t, admin);
-      const managerNow = (await readUsers(admin))[L.manager];
-      rec('admin', 'The Admin makes qa_manager a User: refused, the message with the open (2) and the past (1) items and no department line; qa_manager still a Manager',
+      const managerNow = (await readUsers(admin))[L.manager2];
+      rec('admin', 'The Admin makes qa_manager2 a User: refused, the message with the open items (2) and the department line (HRD, Secretarial), no past line; qa_manager2 still a Manager',
         { lines: MANAGER_NEEDED_LINES, role: 'Manager' }, { lines: refusal, role: managerNow ? managerNow.role : '' }, { screenshot: shot });
 
       // The page access log: one SESSION-ENDED line per ended session, with its reason; none for the others
@@ -299,7 +304,9 @@ module.exports = {
       }
       now = await readUsers(admin).catch(() => ({}));
       if (!ok(now[L.manager2], fixture[L.manager2])) {
-        await attempt(L.manager2, async () => { await openUsers(t, admin); await editUser(admin, L.manager2); await setDepartment(admin, 'Credit', false); await setDepartment(admin, 'Secretarial', true); await save(admin); });
+        // Step UD1b: 4b tries to make qa_manager2 a User; if that refusal ever did not hold, his role is put back too
+        const roleWrong = now[L.manager2] && now[L.manager2].role !== fixture[L.manager2].role;
+        await attempt(L.manager2, async () => { await openUsers(t, admin); await editUser(admin, L.manager2); if (roleWrong) await setRole(admin, 'Manager'); await setDepartment(admin, 'Credit', false); await setDepartment(admin, 'Secretarial', true); await save(admin); });
       }
       now = await readUsers(admin).catch(() => ({}));
       if (!ok(now[L.user2], fixture[L.user2])) {
@@ -307,7 +314,8 @@ module.exports = {
       }
       now = await readUsers(admin).catch(() => ({}));
       if (!ok(now[L.manager], fixture[L.manager])) {
-        // Step MR1: only if the refusal of 4b did not hold; Credit is ticked by the page for the Manager role
+        // Step MR1 (until step UD1b, when 4b was on qa_manager): only if qa_manager was left changed; Credit is ticked by
+        // the page for the Manager role
         await attempt(L.manager, async () => { await openUsers(t, admin); await editUser(admin, L.manager); await setRole(admin, 'Manager'); await save(admin); });
       }
       await attempt('admin page', async () => { await openUsers(t, admin); });
