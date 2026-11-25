@@ -41,6 +41,12 @@ BEGIN
     RAISERROR('Current database is "%s". Select the BMMS database (or its test copy) and run again. Nothing was changed.', 16, 1, @CurrentDatabase);
     SET NOEXEC ON;
 END
+-- GovernanceLog-Step56 (step GM1a): step 56 replaced spr_AddEditUser after this step; this script would put an older text back
+ELSE IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_WriteGovernanceChange')), '') LIKE '%GovernanceLog-Step56%')
+BEGIN
+    RAISERROR('Step 56 (BMMS-Fix-GovernanceLog-Step56.sql) is installed in "%s" and replaced spr_AddEditUser after this step: this script would put an older text back. Roll back step 56 first (BMMS-Rollback-GovernanceLog-Step56.sql). Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
 ELSE IF NOT EXISTS (SELECT 1 FROM (VALUES ('fn_ManagerDepartments'), ('fn_ReportingPersonAllowed'), ('spr_GetManagerDepartments'),
                                           ('spr_GetReportingPersonList'), ('spr_GetAgendaReport'), ('spr_GetMinutesReportByUser'),
                                           ('spr_GetReportSubjectNos'), ('spr_GetAgendaByMeetingIdDeptId'), ('spr_AddEditAgendaByManager'),

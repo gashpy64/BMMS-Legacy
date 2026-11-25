@@ -370,6 +370,13 @@
     <Compile Include="Report\AuditTrail.aspx.designer.cs">
       <DependentUpon>AuditTrail.aspx</DependentUpon>
     </Compile>
+    <Compile Include="Report\GovernanceMatrix.aspx.cs">
+      <DependentUpon>GovernanceMatrix.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Report\GovernanceMatrix.aspx.designer.cs">
+      <DependentUpon>GovernanceMatrix.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Report\Reports.aspx.cs">
       <DependentUpon>Reports.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -533,6 +540,7 @@
     <Content Include="Report\CommitteeMember.aspx" />
     <Content Include="Report\AgendaApproval.aspx" />
     <Content Include="Report\AuditTrail.aspx" />
+    <Content Include="Report\GovernanceMatrix.aspx" />
     <Content Include="Report\SittingFeesApplicable.aspx" />
     <Content Include="Report\MeetingCalendar.aspx" />
     <Content Include="Report\Notice.aspx" />

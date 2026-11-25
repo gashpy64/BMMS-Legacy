@@ -182,9 +182,16 @@ namespace BMMSDAL
         #endregion
 
         #region AddEditDepartment
-        public static int AddEditDepartment(DepartmentDAL deptDAL)
+        // Step GM1a (BMMS-Fix-GovernanceLog-Step56.sql): the acting user is passed and checked by the procedure (Reason 8
+        // missing or inactive, 4 not an Admin; nothing saved); Result 1 when saved. Reason 0 when saved.
+        public static int AddEditDepartment(DepartmentDAL deptDAL, int ActingUserId, out int Reason)
         {
-            SqlParameter[] parameter = new SqlParameter[10];
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+
+            SqlParameter[] parameter = new SqlParameter[13];
             parameter[0] = new SqlParameter("@Code", deptDAL.Code);
             parameter[1] = new SqlParameter("@DepartmentId", deptDAL.DepartmentId);
             parameter[2] = new SqlParameter("@DepartmentCode", deptDAL.DepartmentCode);
@@ -195,8 +202,13 @@ namespace BMMSDAL
             parameter[7] = new SqlParameter("@CreatedBy", deptDAL.CreatedBy);
             parameter[8] = new SqlParameter("@UpdatedOn", deptDAL.UpdatedOn);
             parameter[9] = new SqlParameter("@UpdatedBy", deptDAL.UpdatedBy);
+            parameter[10] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[11] = result;
+            parameter[12] = reason;
 
-            return CommonDB.ExecuteProcedure("spr_AddEditDepartment", parameter);           
+            CommonDB.GetDataTable("spr_AddEditDepartment", parameter);
+            Reason = MinutesDB.RefusalReason(result, reason);
+            return Reason == 0 ? 1 : 0;
         }
         #endregion
 

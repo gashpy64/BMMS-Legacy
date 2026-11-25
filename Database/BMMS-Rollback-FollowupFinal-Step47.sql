@@ -45,6 +45,12 @@ BEGIN
     RAISERROR('Current database is "%s". Select the BMMS database (or its test copy) and run again. Nothing was changed.', 16, 1, @CurrentDatabase);
     SET NOEXEC ON;
 END
+-- GovernanceLog-Step56 (step GM1a): step 56 replaced spr_DeleteUserByUserId after this step; this script would put an older text back
+ELSE IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_WriteGovernanceChange')), '') LIKE '%GovernanceLog-Step56%')
+BEGIN
+    RAISERROR('Step 56 (BMMS-Fix-GovernanceLog-Step56.sql) is installed in "%s" and replaced spr_DeleteUserByUserId after this step: this script would put an older text back. Roll back step 56 first (BMMS-Rollback-GovernanceLog-Step56.sql). Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
 ELSE IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_SaveFollowupActionText')), '') NOT LIKE '%FollowupFinal-Step47%'
          AND ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_SaveFollowupConfirmed')), '') NOT LIKE '%FollowupFinal-Step47%'
          AND ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_DeleteUserByUserId')), '') NOT LIKE '%FollowupFinal-Step47%'

@@ -13,6 +13,8 @@ items: the agenda, the meetings, the minutes, the follow-up and the reports. You
 functional rights, and you do not use the technical items. You have no Admin menu, you cannot open
 User Master, the code masters, Reset Password, Backup Database or Audit Trail, and you change
 only your own password. If you open one of those screens by its address, BMMS shows "Access denied".
+The one screen you share with the Admin is the Governance Matrix (Reports menu). It only shows information; it saves
+nothing.
 
 The Minutes report shows you every meeting that has minutes, in every status, drafts included.
 Each meeting carries its minutes status, in the report and in the list you choose from:
@@ -314,6 +316,104 @@ Messages and what to do:
 [Screenshot: Followup as the Controller, the panel ":: View Action Text" of a confirmed followup - supplied by Gashpy Software]
 [Screenshot: Followup as the Controller, the panel ":: Reopen Followup" - supplied by Gashpy Software]
 [Screenshot: Followup as the Controller, a reopened row with its Reopened by line - supplied by Gashpy Software]
+
+### Governance Matrix
+
+Purpose: shows, as on a date, who can enter and who approves each kind of transaction in each department, who the
+Controllers are, and which settings applied. A second view, the Change log, lists the changes made to users,
+departments and two settings. The screen only shows information: nothing on it can be changed or saved. Only you and the
+Admin can open it. Open it from the Reports menu; the breadcrumb reads "Reports / Governance Matrix".
+
+Fields and buttons: two buttons at the top switch the view, "Matrix" and "Change log". Every time you open the screen
+afresh it starts from the defaults below; your choices are kept while you stay on the screen.
+
+In the Matrix view:
+
+- "As on": the date, written dd-MMM-yyyy, for example 25-Nov-2026; click the box to pick a date. The default is today.
+  The matrix shows the state at the end of that day.
+- "Department": "All departments" (the default) or one department. A department that is not active on that date is
+  marked "(inactive)".
+- "Transaction": "All transactions" (the default) or one transaction.
+- "Show": reads the matrix for your choices.
+
+After Show the screen says "As on [date] (today)" or "As on [date], end of the day", and shows three blocks, with the
+buttons "Print", "Export to Excel (CSV)" and "Export to PDF" above them:
+
+- "Settings": the setting "Department without an active Manager" ("Sent to the Controller" or "Refused") and the setting
+  "Controller changes the agenda after finalisation" ("Allowed" or "Not allowed"), as they were on the date. Where a
+  setting was never changed the block says so, for example "Refused (not set: the default)".
+- "Who enters and who approves": one row for each transaction and department; where a rule is not per department the
+  department is "All departments". The columns are "Transaction", "Department", "Who enters", "Who approves",
+  "Controller(s)" and "Rule note". Managers who approve are listed as "Any one of: [names]", because any one of them
+  can decide.
+- "Read-only access": the roles that only read, with the people who hold each role and what each can read. Management
+  reads "Dashboard (read only), Minutes report, Followup report, Followup Summary report". MD Secretariat reads
+  "Dashboard, Followup page (read only)". These roles approve nothing.
+
+How to read the rows:
+
+- People are shown as "Name (login)". A person who is inactive is never shown as able to act. On an earlier date, a
+  person who was active then but is inactive now is marked "(inactive now)". The protected system account appears in
+  the Admin rows only, marked "(system account)".
+- The transactions are: agenda entry by a User, by a Manager and by the Controller; Manager approval or rejection;
+  Controller approval or rejection; agenda finalisation; minutes update, finalisation and confirmation; Followup save,
+  confirm and reopen; action items (who receives them, and who can open them on the Dashboard); meeting and committee
+  create and update; attendance; User Master; Department Master; System Settings.
+- The "Rule note" explains the route. For agenda entry by a User it says whether a Manager approves first and then a
+  Controller, which Users go straight to the Controller (their Reporting Person is a Controller), which Users cannot
+  enter new items (their Reporting Person is inactive), and, where the department has no active Manager, what the
+  setting "Department without an active Manager" does. An inactive department says "Department inactive: no new agenda
+  items." For the transactions that follow the rules of a page, the note names the roles of that page.
+
+Steps for a date in the past: type the date in "As on" and press Show. Under the heading the screen adds notes:
+
+- "As on [date], end of the day. The rules are those installed now."
+- "Deleted users are not shown; see the change log."
+- Where BMMS has no record for that date: "Reporting Person not recorded before [date]: the route to the Controller is
+  not shown for earlier dates." and "Department status not recorded before [date]: today's status is shown."
+
+In the Change log view you choose:
+
+- "From" and "To": the dates. The default is the last 30 days, ending today.
+- "User": "- All -" or one user. A deleted user is marked "(deleted)" and an inactive user "(inactive)".
+- "Department": "All departments" or one department.
+- "Change type": "All change types" or one of: User added, Role changed, Home department changed, Manager department
+  added, Manager department removed, Reporting Person changed, Activated, Deactivated, Deleted, Department activated,
+  Department deactivated, Setting changed.
+- "Show": lists the changes. The heading reads "Changes from [date] to [date]: [number] changes", and the buttons
+  "Print", "Export to Excel (CSV)" and "Export to PDF" appear.
+
+The columns are "Changed on", "Changed by", "Change", "User", "Department or setting", "Old value", "New value" and
+"Source". "Source" is "Recorded" for a change saved after the log was started, and "From history" or "From audit
+trail" for a change taken from older records when the log was started. A save that changes nothing leaves no row.
+
+Print, Export to Excel (CSV) and Export to PDF work for the view you are in, with the rows you chose. Print uses a
+landscape page without the header, the menu, the filters and the buttons. In the Excel (CSV) file a cell that starts
+with = + - @ or a tab gets a ' in front, so that Excel does not read it as a formula.
+
+Messages and what to do:
+
+- "History starts on [date]. Choose that date or a later one.": the matrix is not available for dates before the
+  history starts; no rows are shown. Choose the date shown or a later one.
+- "The As-on date cannot be after today. Choose today or an earlier date.": change the "As on" date.
+- "Enter a valid date (dd-MMM-yyyy).": write the "As on" date, for example 25-Nov-2026.
+- "Enter valid From and To dates (dd-MMM-yyyy).": write both dates in that form.
+- "Choose a From date that is not after the To date, and a To date that is not after today.": change the dates.
+- "No rows for the chosen filters." and "No changes for the chosen filters.": nothing matches; change the filters.
+- "The governance matrix could not be loaded. Reload the page to try again." and "The change log could not be loaded.
+  Reload the page to try again.": reload the screen.
+- "Your account is not active. Sign in again.": sign in again.
+- "You are not allowed to see this page.": your role cannot open the matrix.
+- In "Changed by", "(user no longer exists)" means the person who made the change has been removed.
+
+Notes: for an earlier date the matrix applies the rules installed now, as the notes on the screen say; it shows who
+held each role on that date. If you reload the screen after Show, the browser may ask whether to send the form again;
+a fresh visit starts from the defaults.
+
+[Screenshot: Governance Matrix as the Controller (Reports menu), the Matrix view for today - supplied by Gashpy Software]
+[Screenshot: Governance Matrix, an earlier date with its notes - supplied by Gashpy Software]
+[Screenshot: Governance Matrix, the Change log view - supplied by Gashpy Software]
+[Screenshot: Governance Matrix, the print preview - supplied by Gashpy Software]
 
 [[CONFIRM: the other screens are not written yet]]
 

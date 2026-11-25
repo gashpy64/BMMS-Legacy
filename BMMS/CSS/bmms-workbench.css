@@ -1679,3 +1679,128 @@ body.wb .wb-dash-status-line
 		padding-left: 0;
 	}
 }
+
+/* ---------- Step GM1a: Governance Matrix (Report/GovernanceMatrix.aspx) ---------- */
+.wb-gov-tabs
+{
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--wb-space-2);
+	margin-bottom: var(--wb-space-3);
+}
+.wb-gov .wb-actions
+{
+	padding-left: 0;
+	margin-bottom: var(--wb-space-3);
+}
+.wb-gov-filters
+{
+	justify-content: flex-start;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: var(--wb-space-3);
+}
+.wb-gov-filters .wb-filter
+{
+	flex: 0 1 auto;
+	flex-direction: column;
+	align-items: flex-start;
+}
+/* the shared .wb-filter select rule grows along the main axis; in a column that would be the height */
+.wb-gov-filters .wb-filter select
+{
+	flex: 0 0 auto;
+	min-width: 12em;
+}
+.wb-gov-filters .wb-gov-show
+{
+	flex: 0 0 auto;
+}
+.wb-gov-filters .wb-label
+{
+	display: block;
+	flex: 0 0 auto;      /* the shared .wb-label basis (200px) would be its height in a column */
+	width: auto;
+	padding-top: 0;
+	margin-bottom: 2px;
+}
+.wb-gov-filters input[type="text"].wb-gov-date-input
+{
+	width: 10em;
+	flex: 0 0 auto;
+}
+.wb-gov-asof
+{
+	font-weight: 600;
+	margin: var(--wb-space-2) 0;
+}
+.wb-gov-table td
+{
+	vertical-align: top;
+}
+.wb-gov-tx
+{
+	min-width: 11em;
+}
+.wb-gov-dept,
+.wb-gov-date
+{
+	white-space: nowrap;
+}
+.wb-gov-note
+{
+	min-width: 16em;
+}
+
+/* Print: the page without the header, the menu, the filters, the buttons and the footer */
+@media print
+{
+	.wb-header,
+	.wb-nav,
+	.wb-noprint,
+	div#footer
+	{
+		display: none !important;
+	}
+	.wb-gov .wb-table-scroll
+	{
+		overflow: visible !important;
+	}
+	/* The Governance Matrix tables fit the page width: fixed column widths, no min-width or nowrap of the screen
+	   rules, words wrap only at spaces (break-word lets a single over-long login break). Landscape is set by the
+	   page itself (a print-only style in its head), so no page break is forced before the content. */
+	.wb-gov
+	{
+		max-width: none !important;
+	}
+	.wb-gov .wb-gov-table
+	{
+		width: 100% !important;
+		table-layout: fixed;
+	}
+	.wb-gov .wb-gov-table th,
+	.wb-gov .wb-gov-table td
+	{
+		min-width: 0 !important;
+		white-space: normal !important;
+		overflow-wrap: break-word;
+		word-break: normal;
+	}
+	.wb-gov .wb-gov-matrix th:nth-child(1) { width: 14%; }
+	.wb-gov .wb-gov-matrix th:nth-child(2) { width: 12%; }
+	.wb-gov .wb-gov-matrix th:nth-child(3) { width: 15%; }
+	.wb-gov .wb-gov-matrix th:nth-child(4) { width: 19%; }
+	.wb-gov .wb-gov-matrix th:nth-child(5) { width: 15%; }
+	.wb-gov .wb-gov-matrix th:nth-child(6) { width: 25%; }
+	.wb-gov .wb-gov-readonly th:nth-child(1) { width: 15%; }
+	.wb-gov .wb-gov-readonly th:nth-child(2) { width: 40%; }
+	.wb-gov .wb-gov-readonly th:nth-child(3) { width: 45%; }
+	.wb-gov .wb-gov-log th:nth-child(1) { width: 12%; }
+	.wb-gov .wb-gov-log th:nth-child(2) { width: 13%; }
+	.wb-gov .wb-gov-log th:nth-child(3) { width: 12%; }
+	.wb-gov .wb-gov-log th:nth-child(4) { width: 13%; }
+	.wb-gov .wb-gov-log th:nth-child(5) { width: 12%; }
+	.wb-gov .wb-gov-log th:nth-child(6) { width: 14%; }
+	.wb-gov .wb-gov-log th:nth-child(7) { width: 14%; }
+	.wb-gov .wb-gov-log th:nth-child(8) { width: 10%; }
+}

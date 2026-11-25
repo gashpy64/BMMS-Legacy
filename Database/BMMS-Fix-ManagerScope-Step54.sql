@@ -120,6 +120,12 @@ BEGIN
     RAISERROR('Current database is "%s". Select the BMMS database (or its test copy) and run again. Nothing was changed.', 16, 1, @CurrentDatabase);
     SET NOEXEC ON;
 END
+-- GovernanceLog-Step56 (step GM1a): step 56 replaced spr_AddEditUser after this step; this script would put an older text back
+ELSE IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_WriteGovernanceChange')), '') LIKE '%GovernanceLog-Step56%')
+BEGIN
+    RAISERROR('Step 56 (BMMS-Fix-GovernanceLog-Step56.sql) is installed in "%s" and replaced spr_AddEditUser after this step: this script would put an older text back. Roll back step 56 first (BMMS-Rollback-GovernanceLog-Step56.sql). Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
 ELSE IF (ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_GetAgendaByMeetingIdDeptId')), '') NOT LIKE '%ManagerDepartment-Step33%')
 BEGIN
     RAISERROR('Step 33 (BMMS-Fix-ManagerDepartment-Step33.sql) is not installed in "%s". The steps are installed in order: run steps 33 to 53 first, then this script. Nothing was changed.', 16, 1, @CurrentDatabase);

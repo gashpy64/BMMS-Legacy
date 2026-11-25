@@ -143,4 +143,9 @@
 		<pageURL>~/Report/SendMail.aspx</pageURL>
 	</page>
 
+	<page Name="GovernanceMatrix">
+		<pageTitle>Governance Matrix</pageTitle>
+		<pageURL>~/Report/GovernanceMatrix.aspx</pageURL>
+	</page>
+
 </pageSettings>

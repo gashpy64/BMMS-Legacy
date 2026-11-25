@@ -50,6 +50,9 @@
     <page path="Master/MeetingMember.aspx" roles="admin,controller"/>
     <page path="Master/Attendance.aspx" roles="admin,controller"/>
 
+    <!-- Step GM1a: the Governance Matrix and the governance change log, read only (also checked in the page) -->
+    <page path="Report/GovernanceMatrix.aspx" roles="admin,controller"/>
+
     <!-- agenda entry -->
     <page path="Master/Agenda.aspx" roles="controller,manager,user"/>
 

@@ -79,6 +79,7 @@
     <Compile Include="MemberTypeDB.cs" />
     <Compile Include="SysCodeDB.cs" />
     <Compile Include="DepartmentDB.cs" />
+    <Compile Include="GovernanceDB.cs" />
     <Compile Include="UserDB.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

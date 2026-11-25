@@ -3,11 +3,11 @@
 - Title: Program to Program: System Settings
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UD1b (step 53: the setting "Department without an active Manager" is read by the route of a new item); user-ud1a
-- Commit: db1d641
-- Last updated by: UD1b, based on db1d641
+- Applies to: GM1a (step 56: one paragraph under "Tables read and written"); UD1b (step 53: the setting "Department without an active Manager" is read by the route of a new item); user-ud1a
+- Commit: 32c619d
+- Last updated by: GM1a, based on 32c619d (the one paragraph; the rest was last updated by UD1b, based on db1d641)
 - Status: Draft
-- Verified against: for UD1b: BMMS/Master/SystemSettings.aspx and .aspx.cs (the card, LoadDeptRule, btnSaveDeptRule_Click), BMMSBAL/Utilities.cs (DeptNoManagerAction), Database/BMMS-Fix-DepartmentApprovers-Step53.sql (fn_AgendaRoute), Database/README.md (section Step UD1b)
+- Verified against: for GM1a: Database/README.md (section Step GM1a), Database/BMMS-Fix-GovernanceLog-Step56.sql (the Reason lines of spr_SetDepartmentManagerRule and spr_SetAppSetting); for UD1b: BMMS/Master/SystemSettings.aspx and .aspx.cs (the card, LoadDeptRule, btnSaveDeptRule_Click), BMMSBAL/Utilities.cs (DeptNoManagerAction), Database/BMMS-Fix-DepartmentApprovers-Step53.sql (fn_AgendaRoute), Database/README.md (section Step UD1b)
 - To confirm: feature area written only for the setting DeptNoManagerAction (WF2c3); the other settings of the page (the agenda lock option, the organisation details) are not written yet
 
 ## Scope
@@ -83,6 +83,11 @@ sequenceDiagram
 |---|---|---|
 | spr_SetDepartmentManagerRule | App_Setting (the acting-user check is not described here) | App_Setting, Audit_Trail_Master |
 | fn_AgendaRoute | App_Setting, Users, Roles, Department, and fn_DepartmentManagers | none |
+
+Since step GM1a (database step 56) spr_SetDepartmentManagerRule, like spr_SetAppSetting, also writes one row of change type ST (setting
+changed) into Governance_Change_Log when the value changed, in the same transaction; a save that changes nothing writes no row. The
+row is read on the Governance Matrix page (Data-Flow/03-Program-to-Program/15-Governance-Matrix.md). The System Settings page, its messages
+and the audit row are unchanged.
 
 ## Drawn from
 

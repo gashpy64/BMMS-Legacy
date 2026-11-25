@@ -3,11 +3,11 @@
 - Title: Application Code
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: IU1 (the table of mail failure messages: the Meeting, Committee and ResetPassword rows); RA1d (the Default.aspx row, "Set at login", "Cleared at logout", the keys table row DepartmentSet and the bullets of "PageAccessModule": the session check, the log, the cleaning of logged values); UN6e (the new sections "Lists are not kept in ViewState (step UN6e)" and "Stylesheet version stamp (step UN6e)", the Action Items paragraph of "The Dashboard Alerts and Action Items cards (step UN6c1)" and the Ctrl+F5 sentence and the list sentence of "The Action Item Details panel and the Followup page saves (step UN6d)"); FU2b (the new section "The Followup reports (step FU2b)" and the Followup by Department note in "Pages in no menu and the unlisted page"); FU2a ("The Action Item Details panel and the Followup page saves (step UN6d)": the new FU2a paragraph on FollowupStatusText, the panel mode, the status line, the Reopened chip); FU1 ("The Action Item Details panel and the Followup page saves (step UN6d)": the Followup page bullets, the FU1 bullets for the list, Submit and Reopen); UN6d ("The Action Item Details panel and the Followup page saves (step UN6d)", the Followup.aspx row, the Dashboard Action Items paragraph note); UN6c2b ("The Dashboard summary cards and the Committee filter (step UN6c2b)"); UN6c2a ("The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)" and the layout line of "The Dashboard Meetings card (step UN6b)"); UN6c1 (the Main.Master row and paragraph, "The Dashboard Alerts and Action Items cards (step UN6c1)"); UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
-- Commit: 79f50ea
-- Last updated by: IU1, based on 79f50ea (only the three message rows; the rest of the chapter was last updated by RA1d, based on d642746)
+- Applies to: GM1a (the Report folder now has 16 pages with GovernanceMatrix.aspx; the Department row of the area classes and the new GovernanceMgr row; the new bullets "RolesForPage" in "PageAccessModule" and the new section "The Governance Matrix page (step GM1a)"); IU1 (the table of mail failure messages: the Meeting, Committee and ResetPassword rows); RA1d (the Default.aspx row, "Set at login", "Cleared at logout", the keys table row DepartmentSet and the bullets of "PageAccessModule": the session check, the log, the cleaning of logged values); UN6e (the new sections "Lists are not kept in ViewState (step UN6e)" and "Stylesheet version stamp (step UN6e)", the Action Items paragraph of "The Dashboard Alerts and Action Items cards (step UN6c1)" and the Ctrl+F5 sentence and the list sentence of "The Action Item Details panel and the Followup page saves (step UN6d)"); FU2b (the new section "The Followup reports (step FU2b)" and the Followup by Department note in "Pages in no menu and the unlisted page"); FU2a ("The Action Item Details panel and the Followup page saves (step UN6d)": the new FU2a paragraph on FollowupStatusText, the panel mode, the status line, the Reopened chip); FU1 ("The Action Item Details panel and the Followup page saves (step UN6d)": the Followup page bullets, the FU1 bullets for the list, Submit and Reopen); UN6d ("The Action Item Details panel and the Followup page saves (step UN6d)", the Followup.aspx row, the Dashboard Action Items paragraph note); UN6c2b ("The Dashboard summary cards and the Committee filter (step UN6c2b)"); UN6c2a ("The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)" and the layout line of "The Dashboard Meetings card (step UN6b)"); UN6c1 (the Main.Master row and paragraph, "The Dashboard Alerts and Action Items cards (step UN6c1)"); UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
+- Commit: 32c619d
+- Last updated by: GM1a, based on 32c619d (the Report folder table, the area classes, the PageAccessModule bullet and the new GovernanceMatrix section; the rest of the chapter was last updated by IU1 and RA1d)
 - Status: Draft
-- Verified against: for step IU1: BMMS/Master/Meeting.aspx.cs, Committee.aspx.cs and ResetPassword.aspx.cs (diff: the message constants only); for step RA1d: BMMS/PageAccessModule.cs, BMMS/Default.aspx.cs and BMMS/Global.asax.cs (diff), BMMSBAL/UserMgr.cs and BMMSDAL/UserDB.cs (diff), Database/README.md (section Step RA1d), Tests/packs/session-check/README.md;
+- Verified against: for step GM1a: BMMS/Report/GovernanceMatrix.aspx and .aspx.cs, BMMSBAL/GovernanceMgr.cs (read in full), BMMS/PageAccessModule.cs (diff: RolesForPage), BMMS/UserControl/MenuUserControl.ascx, BMMS/XML/PageAccess.xml and PageSettings.xml (diff), BMMS/Master/Department.aspx.cs, BMMSBAL/DepartmentMgr.cs and BMMSDAL/DepartmentDB.cs (diff), Database/README.md (section Step GM1a); BMMSDAL/GovernanceDB.cs and BMMS/CSS/bmms-workbench.css only listed by the diff stat; for step IU1: BMMS/Master/Meeting.aspx.cs, Committee.aspx.cs and ResetPassword.aspx.cs (diff: the message constants only); for step RA1d: BMMS/PageAccessModule.cs, BMMS/Default.aspx.cs and BMMS/Global.asax.cs (diff), BMMSBAL/UserMgr.cs and BMMSDAL/UserDB.cs (diff), Database/README.md (section Step RA1d), Tests/packs/session-check/README.md;
   for step UN6e: BMMS/AssetVersion.cs (read in full), BMMS/DashBoard/DashBoard.aspx.cs, BMMS/MasterPage/Main.Master.cs, MainNoMenu.Master.cs, BMMS/Default.aspx.cs, BMMS/Master/Committee.aspx and BMMS.csproj (diff), Database/README.md (section Step UN6e and its Known items), Tests/packs/page-assets/README.md, the owner's tests and the tester run 2026-11-18_123549 as given; the .aspx changes of Agenda, MinutesUpdate and Meeting were taken from Database/README.md, not read in the diff; for step FU2b: git diff c4300b5 of BMMS/Report/Followup.aspx(.cs), BMMS/Report/FollowupActionTaken.aspx(.cs), BMMS/Master/Followup.aspx(.cs), BMMS/FollowupStatusText.cs, BMMSBAL/ReportsMgr.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/README.md (section Step FU2b and its Known items), the owner's tests as given; for step FU2a: git diff 9336d29 of BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs, BMMS/Master/Followup.aspx.cs, BMMS/BMMS.csproj and BMMS/CSS/bmms-workbench.css, BMMS/FollowupStatusText.cs (read in full), Database/README.md (section Step FU2a and its Known items), the owner's tests as given; for step FU1: BMMS/Master/Followup.aspx and Followup.aspx.cs (read in full: CanSave, Page_Load, BindFollowup, grvFollowup_RowDataBound, grvFollowup_RowCommand, the save, Submit and Reopen handlers, the script), Database/README.md (section Step FU1); and before: for step UN6d: git diff ce7358a 276e402 of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/Master/Followup.aspx and .aspx.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, BMMS/CSS/CommonHTML.css and bmms-workbench.css; Database/README.md (section Step UN6d and its Known items), the tester runs of 2026-11-15 as given; for step UN6c2b: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs; Database/README.md (section Step UN6c2b, Known items), the tester run of 2026-11-15 as given; for step UN6c2a: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff, and BindAgendaDetails read in full), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (diff), BMMS/CSS/bmms-workbench.css (diff),
   BMMSBAL/AgendaMgr.cs and MeetingMgr.cs (diff), BMMSDAL/AgendaDB.cs and MeetingDB.cs (diff), Database/README.md (section Step UN6c2a, Known items), Tests/packs/dashboard/README.md, the tester run of 2026-11-14 as given; for step UN6c1: BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (read: the Alerts and Action Items regions, the message constants, lnkSource_Click),
   BMMS/MasterPage/Main.Master.cs (alert count region), BMMSBAL/AlertMgr.cs, ActionItemMgr.cs and Common.cs (diff),
@@ -119,9 +119,9 @@ How the tables are read:
 | SystemSettings.aspx | System Settings (menu "Admin", Admin only) | admin | No call |
 | User.aspx | User Master | admin (since RA1a; page check RequireRole) | Yes |
 
-### Report folder (BMMS/Report, 15 pages)
+### Report folder (BMMS/Report, 16 pages)
 
-All entries except Reports.aspx, Followup.aspx, AuditTrail.aspx and ViewReport.aspx are in the "Reports" menu of the Controller (FollowupActionTaken.aspx, "Followup by Department", since RA1c2).
+All entries except Reports.aspx, Followup.aspx, AuditTrail.aspx and ViewReport.aspx are in the "Reports" menu of the Controller (FollowupActionTaken.aspx, "Followup by Department", since RA1c2; GovernanceMatrix.aspx, "Governance Matrix", since GM1a, which is also in the "Admin" menu).
 Since RA1a, Audit Trail is in the "Admin" menu (Admin only), after System Settings and before Reset Database,
 and the Controller's "Reports" menu no longer has it. The Manager's "Reports" menu holds the four Reports.aspx
 entries only.
@@ -135,6 +135,7 @@ entries only.
 | CommitteeMember.aspx | Committee Member report | controller | Yes |
 | Followup.aspx | Followup (`?fc=followup`) and Followup Summary (`?fc=summary`) | controller | Yes (name `followup_report`) |
 | FollowupActionTaken.aspx | Followup by Department (menu "Reports" of the Controller, after Followup Summary; the heading and the page title are "Followup by Department"): the follow-up items of one committee, one meeting or a range of meetings, all departments or one, all subjects or a range; View shows the grid, Generate Report opens the report in ViewReport.aspx | controller (since RA1c2; `RequireRole("controller")` first in Page_Load and again first in the Generate Report handler); the Manager gets "Access denied" | Yes |
+| GovernanceMatrix.aspx | Governance Matrix (menu "Admin" for the Admin, "Reports" for the Controller; step GM1a): the Matrix view and the Change log view, read only; see "The Governance Matrix page (step GM1a)" | admin, controller (PageAccess.xml; `RequireRole("admin", "controller")` first in Page_Load) | Yes (name GovernanceMatrix) |
 | MeetingCalendar.aspx | Meeting Calendar | controller | Yes |
 | MeetingMaster.aspx | Meeting Master report | controller | Yes |
 | Notice.aspx | Notice (report and Send Mail of the notice) | controller | Yes |
@@ -630,6 +631,58 @@ Drawn from: BMMS/AssetVersion.cs (read in full), BMMS/MasterPage/Main.Master.cs,
 (diff), BMMS/DashBoard/DashBoard.aspx.cs (diff), BMMS/Master/Agenda.aspx, MinutesUpdate.aspx, Committee.aspx and Meeting.aspx
 (diff), BMMS/BMMS.csproj (diff), Database/README.md (section Step UN6e and its Known items), Tests/packs/page-assets/README.md.
 
+### The Governance Matrix page (step GM1a)
+
+BMMS/Report/GovernanceMatrix.aspx(.cs, .designer.cs) is read only: no control saves anything. It is listed in
+PageAccess.xml for `admin,controller`, has an entry in PageSettings.xml (title "Governance Matrix") and one link in each of
+two menus in MenuUserControl.ascx (the Admin menu, between Audit Trail and Reset Database, and the Controller's Reports
+menu, after Followup by Department). `Page_Load` calls `RequireRole("admin", "controller")` first (the role is read from the
+database on every request), then `Common.InitSetup`.
+
+- Two views in two panels, switched by the buttons "Matrix" and "Change log" (`aria-pressed` and the button style show the
+  active one). The matrix view opens with As on today, All departments and All transactions; the change log filters are
+  loaded when the Change log button is first clicked (last 30 days, "- All -", "All departments", "All change types"; the
+  users from spr_GetGovernanceLogUsers, the departments of today). A refused or failed read of the filters leaves them
+  unloaded, so the next click tries again.
+- Every fresh visit starts from the defaults: the response is no-cache and no-store, and the fields carry
+  `autocomplete="off"`. The choices are kept within the page by the postback. A reload after a postback re-sends the form.
+- The breadcrumb names the menu: "Admin" when the user has the Admin role, else "Reports".
+- The matrix is read by three procedures in this order: `GetSettings`, `GetDepartments`, `GetMatrix` (each takes the
+  acting user from `Session["UserId"]`; a Reason other than 0 becomes the text of `GovernanceMgr.RefusalMessage`, and a failure
+  writes the error log and shows "The governance matrix could not be loaded. Reload the page to try again."). The date is parsed
+  as dd-MMM-yyyy or d-MMM-yyyy; a text that does not parse gives "Enter a valid date (dd-MMM-yyyy)." before any call. The
+  Department filter is filled with the departments of the day, a department not active on that date marked "(inactive)".
+- `GovernanceMgr.BuildMatrix` makes one row per transaction and department. A transaction is a rule of the database
+  (agenda entry, Manager and Controller approval, action items: people from the procedure; the notes are written in the
+  class) or a page rule (agenda finalisation, minutes update, finalisation and confirmation, Followup, meeting, committee,
+  attendance, User Master, Department Master, System Settings): the roles come from `PageAccessModule.RolesForPage` and
+  the people of those roles from the "H" rows of the procedure. MD Secretariat is left out of the Followup row as "can open the page
+  to read only" (a list in `GovernanceMgr`, because PageAccess.xml lets it open the page and only the procedures refuse its
+  saves).
+- The Settings block shows `DeptNoManagerAction` and `AgendaControllerBypass` as on the date, as words. The Read-only access
+  block is built from the menu and the page rules: `GovernanceMgr.ReadMenu` reads MenuUserControl.ascx itself (the role
+  blocks and the drop-downs, with comments left out; a text with no link gives null and the block says "The menu or the page
+  rules could not be read.") and `BuildReadOnly` keeps, for Management and MD Secretariat, the entries the menu shows and
+  PageAccess.xml allows, named "Dashboard", "Dashboard (read only)" (Management), "[title] report" for a page under Report/ and
+  "[title] page" (with "(read only)" for MD Secretariat on Followup). The "read only" mark of the Management Dashboard comes
+  from a one-line list in `GovernanceMgr` (Known items in Database/README.md).
+- People are "Name (login)" through `Common.UserDisplayName`; "(system account)" and, for an earlier date, "(inactive now)"
+  are added by `GovernanceMgr`. The notes of an earlier date are added by the page (the four texts of the requirement).
+- Exports: both views have Print (a client script, `window.print()`; the page adds a print-only `@page { size: landscape; }`
+  style to its head, and the filters, buttons and breadcrumb carry the class `wb-noprint`), Export to Excel (CSV) and
+  Export to PDF. The CSV and the PDF are built by the page from the same reads as the grids (the page reads again at the click):
+  `GovernanceMgr.Csv` (every cell quoted; a cell that begins with = + - @, a tab or a carriage return gets a leading '; UTF-8
+  with a byte order mark; the file name GovernanceMatrix-yyyymmdd.csv or GovernanceChangeLog-yyyymmdd-yyyymmdd.csv) and
+  `GovernanceMgr.HtmlTable` through `PDFUtilities.HtmlReportToPdf` with `OrganisationDetails.ReportBannerHtml()` (every value
+  HTML-encoded). The download is sent with `X-Content-Type-Options: nosniff` and ends the request with `Response.End()`.
+- The change log rows are shown as "Changed on" (dd-MMM-yyyy HH:mm), "Changed by" ("(user no longer exists)" when the key is
+  empty), the change type name, the user, the department or the setting name, the old and new value (a setting value as
+  words) and the source ("Recorded", "From history", "From audit trail"). A deleted user in the user filter is marked
+  "(deleted)", an inactive one "(inactive)".
+- Every value on the page is plain text, encoded by the `BoundField` columns, the literals (`HtmlEncode`) and the exports.
+
+Drawn from: BMMS/Report/GovernanceMatrix.aspx and .aspx.cs (read in full), BMMSBAL/GovernanceMgr.cs (read in full), BMMS/PageAccessModule.cs (diff), BMMS/UserControl/MenuUserControl.ascx (diff), BMMS/XML/PageAccess.xml and PageSettings.xml (diff), Database/README.md (section Step GM1a).
+
 ### Pages in no menu and the unlisted page
 
 - Report/FollowupActionTaken.aspx was in no menu until step RA1c2. It is now the last entry of the Controller's
@@ -704,8 +757,9 @@ data layer calls them" and the tables of "Stored procedures and functions").
 | CommitteeMemberMgr | Committee members, sitting fees applicable | CommitteeMemberDB |
 | CommitteeMgr | Committees | CommitteeDB |
 | DecisionTypeMgr | Decision types | DecisionTypeDB |
-| DepartmentMgr | Departments; `DeleteDepartment` turns Reason 5 and 25 into the message | DepartmentDB |
+| DepartmentMgr | Departments; `DeleteDepartment` turns Reason 5 and 25 into the message; since GM1a `AddEditDepartment(dept, actingUserId, out message)` turns Reason 8 and 4 into the two "Not saved" messages | DepartmentDB |
 | DesignationMgr | Designations | DesignationDB |
+| GovernanceMgr | Governance Matrix and change log (step GM1a): the transactions list, the rows of the matrix, the rule notes, the reading of the menu, the Read-only access block, the refusal and change type texts, the CSV and PDF text; no state | GovernanceDB |
 | MeetingMemberMgr | Meeting members | MeetingMemberDB |
 | MeetingMgr | Meetings; also holds `MeetingChangeResult` and `MeetingChangeReason` (the result row of every procedure with a Reason, except the user ones) | MeetingDB, and MinutesDB for the list of meetings of the minutes reports |
 | MemberMgr | Members | MemberDB |
@@ -1068,6 +1122,11 @@ The request flow is in chapter 01 ("Request life cycle"). The points a developer
   ResetPassword, BackupDatabase and Report/AuditTrail, each with `RequireRole("admin")`; and again first in the
   Reset Password and Backup Database button handlers. Since step RA1d a role changed
   during the session also ends the session before any page runs (the session check above); see chapter 08, "Page access".
+- `PageAccessModule.RolesForPage(path)` (step GM1a) returns the roles PageAccess.xml allows for an application-relative page path,
+  read from the same cached policy the module enforces: an empty array for a page that is not listed (not allowed), `*` as
+  written, null when the policy could not be read or there is no request. The Governance Matrix uses it for the transactions
+  whose rule is a page rule, so it keeps no copy of the policy. Since GM1a `Report/GovernanceMatrix.aspx` also calls
+  `RequireRole("admin", "controller")` first in `Page_Load` (a tenth page with the check).
 - The logged-in check by user id (step UN2) replaced a test of the person's name: before it, pages tested
   `Session["UserName"]`, which is display text and not an identity.
 - The menu and the module are two lists to keep in step: MenuUserControl.ascx shows links by role, and

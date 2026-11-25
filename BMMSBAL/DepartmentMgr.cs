@@ -154,7 +154,12 @@ namespace BMMSBAL
         #endregion
 
         #region AddEditDepartment
-        public int AddEditDepartment(DepartmentBAL deptBAL)
+        /// <summary>
+        /// Step GM1a (BMMS-Fix-GovernanceLog-Step56.sql): the save with the acting user, which the procedure checks
+        /// before anything is changed (Reason 8 missing or inactive, 4 not an Admin). 1 when saved; Message the text for
+        /// the page when not (null when saved).
+        /// </summary>
+        public int AddEditDepartment(DepartmentBAL deptBAL, int ActingUserId, out string Message)
         {
             DepartmentDAL deptDAL = new DepartmentDAL();
             deptDAL.Code = deptBAL.Code;
@@ -168,7 +173,18 @@ namespace BMMSBAL
             deptDAL.UpdatedOn = deptBAL.UpdatedOn;
             deptDAL.UpdatedBy = deptBAL.UpdatedBy;
 
-            return DepartmentDB.AddEditDepartment(deptDAL);
+            int reason;
+            int result = DepartmentDB.AddEditDepartment(deptDAL, ActingUserId, out reason);
+
+            if (result == 1)
+                Message = null;
+            else if (reason == 8)
+                Message = "Not saved: your account is not active. Sign in again. Nothing was changed.";
+            else if (reason == 4)
+                Message = "Not saved: only an Admin can change departments. Nothing was changed.";
+            else
+                Message = "Record Not Saved";
+            return result;
         }
         #endregion
 

@@ -431,12 +431,15 @@ BEGIN TRY
     INSERT INTO @T
     -- Replaced by step 47 (step FU1): Action_Item_Status_History.ActedBy is one more key to Users
     -- Step 53 (step UD1b): Alert_User_Map.HandledBy is one more (kept by its rollback)
+    -- Step 56 (step GM1a): Governance_Change_Log.ChangedBy is one more (kept by its rollback); approved 2026-11-25
     SELECT 'Keys to Users still present and trusted' + CASE WHEN OBJECT_ID('dbo.User_Role', 'U') IS NOT NULL THEN ' [step 39: +6]' ELSE '' END
            + CASE WHEN OBJECT_ID('dbo.Action_Item_Status_History', 'U') IS NOT NULL THEN ' [step 47: +1]' ELSE '' END
-           + CASE WHEN OBJECT_ID('dbo.FK_Alert_User_Map_HandledBy', 'F') IS NOT NULL THEN ' [step 53: +1]' ELSE '' END,
+           + CASE WHEN OBJECT_ID('dbo.FK_Alert_User_Map_HandledBy', 'F') IS NOT NULL THEN ' [step 53: +1]' ELSE '' END
+           + CASE WHEN OBJECT_ID('dbo.FK_Governance_Change_Log_ChangedBy', 'F') IS NOT NULL THEN ' [step 56: +1]' ELSE '' END,
            CAST(CASE WHEN OBJECT_ID('dbo.User_Role', 'U') IS NOT NULL THEN 29 ELSE 23 END
                 + CASE WHEN OBJECT_ID('dbo.Action_Item_Status_History', 'U') IS NOT NULL THEN 1 ELSE 0 END
-                + CASE WHEN OBJECT_ID('dbo.FK_Alert_User_Map_HandledBy', 'F') IS NOT NULL THEN 1 ELSE 0 END AS VARCHAR(12)),
+                + CASE WHEN OBJECT_ID('dbo.FK_Alert_User_Map_HandledBy', 'F') IS NOT NULL THEN 1 ELSE 0 END
+                + CASE WHEN OBJECT_ID('dbo.FK_Governance_Change_Log_ChangedBy', 'F') IS NOT NULL THEN 1 ELSE 0 END AS VARCHAR(12)),
            CAST(SUM(CASE WHEN fk.is_not_trusted = 0 AND fk.is_disabled = 0 THEN 1 ELSE 0 END) AS VARCHAR(12))
     FROM sys.foreign_keys fk WHERE fk.referenced_object_id = OBJECT_ID('dbo.Users');
 

@@ -229,6 +229,18 @@
    step 55 is installed; a re-run of step 8, 15, 16, 17, 18 or 21 brings
    back an older text: step 55 reads Partly (see the README of step 55).
    After BMMS-Rollback-InactiveUsers-Step55.sql it reads Missing.
+   Step 56 (step GM1a) adds the table Governance_Change_Log (with its key
+   to Users and the setting row GovernanceLogFrom: one marker), 12
+   functions and 7 procedures, and replaces spr_AddEditUser (step 54),
+   spr_SetUserStatusByUserId (step 53), spr_DeleteUserByUserId (step 47),
+   spr_AddEditDepartment (baseline), spr_SetDepartmentManagerRule (step
+   39), spr_SetAppSetting (step 16) and spr_sys_ResetDatabase (step 39),
+   which keep the markers of their earlier steps: 27 markers. The Fix and
+   Rollback scripts of steps 47 and 54 stop while step 56 is installed; a
+   re-run of step 2, 3, 6, 10, 13, 16, 18, 21, 29 or 30 brings back an
+   older text: step 56 reads Partly (see the README of step 56). After
+   BMMS-Rollback-GovernanceLog-Step56.sql it reads Partly, 1 of 27 (the
+   table, its rows and the setting stay).
    Step 32 is reserved and not built; it has no row.
    Step D1 (shown as step 100) replaces spr_DeleteMeetingByMeetingId, which
    no numbered script contains: it reads Missing only on a database restored
@@ -626,6 +638,21 @@ SELECT 55, o.Name + ' (InactiveUsers-Step55)', CASE WHEN ISNULL(OBJECT_DEFINITIO
 FROM (VALUES ('fn_FunctionalUsers'), ('spr_GetMeetingCommitteeMailId'), ('spr_GetResetPasswordMail'),
              ('spr_AddEditMeeting'), ('spr_AddEditCommittee'), ('spr_MinutesFinalizeByMeetingId')) o(Name);
 
+-- 56. BMMS-Fix-GovernanceLog-Step56.sql, installed after step 55 (the log table, 19 new objects, seven replaced)
+INSERT INTO @M
+SELECT 56, o.Name + ' (GovernanceLog-Step56)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%GovernanceLog-Step56%' THEN 1 ELSE 0 END
+FROM (VALUES ('fn_GovernanceHistoryStart'), ('fn_UserRoleOn'), ('fn_UserDepartmentsOn'), ('fn_DepartmentManagersOn'),
+             ('fn_ReportingPersonOn'), ('fn_SettingOn'), ('fn_DepartmentActiveOn'), ('fn_GovernanceRoleHolders'),
+             ('fn_GovernanceMatrixPeople'), ('fn_GovernanceRefusal'), ('fn_GovernanceDeptList'), ('fn_GovernanceUserSummary'),
+             ('spr_WriteGovernanceChange'), ('spr_WriteGovernanceUserChanges'), ('spr_GetGovernanceMatrix'),
+             ('spr_GetGovernanceSettings'), ('spr_GetGovernanceDepartments'), ('spr_GetGovernanceChangeLog'),
+             ('spr_GetGovernanceLogUsers'), ('spr_AddEditUser'), ('spr_SetUserStatusByUserId'), ('spr_DeleteUserByUserId'),
+             ('spr_AddEditDepartment'), ('spr_SetDepartmentManagerRule'), ('spr_SetAppSetting'), ('spr_sys_ResetDatabase')) o(Name);
+INSERT INTO @M VALUES
+(56, 'Governance_Change_Log, its key to Users and the setting GovernanceLogFrom (GovernanceLog-Step56)',
+ CASE WHEN OBJECT_ID('dbo.Governance_Change_Log', 'U') IS NOT NULL AND OBJECT_ID('dbo.FK_Governance_Change_Log_ChangedBy', 'F') IS NOT NULL
+           AND EXISTS (SELECT 1 FROM dbo.App_Setting WHERE SettingCode = 'GovernanceLogFrom') THEN 1 ELSE 0 END);
+
 -- D1 (shown as step 100). BMMS-Fix-MeetingDelete-D1.sql; no numbered script contains spr_DeleteMeetingByMeetingId
 INSERT INTO @M VALUES
 (100, 'spr_DeleteMeetingByMeetingId (MeetingDelete-D1)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_DeleteMeetingByMeetingId')), '') LIKE '%MeetingDelete-D1%' THEN 1 ELSE 0 END);
@@ -682,6 +709,7 @@ INSERT INTO @Steps VALUES
 (53, 'BMMS-Fix-DepartmentApprovers-Step53.sql', 'an earlier step that holds one of its 18 objects was re-run, or step 53 was rolled back (1 of 21: the columns stay): run step 53 again (after step 52)'),
 (54, 'BMMS-Fix-ManagerScope-Step54.sql', 'step 13, 16, 17, 18, 31 or 35 was re-run after step 54 (7 to 9 of 10): see the README of step 54 (Rollback 54, the step 53 notes, then step 54 again)'),
 (55, 'BMMS-Fix-InactiveUsers-Step55.sql', 'step 8, 15, 16, 17, 18 or 21 was re-run after step 55 (3 to 5 of 6): see the README of step 55'),
+(56, 'BMMS-Fix-GovernanceLog-Step56.sql', 'step 2, 3, 6, 10, 13, 16, 18, 21, 29 or 30 was re-run after step 56, or step 56 was rolled back (1 of 27: the table stays): see the README of step 56'),
 (100, 'BMMS-Fix-MeetingDelete-D1.sql (step D1)', '');
 
 SELECT s.Step, s.Script,

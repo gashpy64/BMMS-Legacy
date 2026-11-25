@@ -3,11 +3,11 @@
 - Title: Program to Program: User Master and History Tables
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UD1c (step 54: the new section "The Reporting Person (step UD1c)"); UD1b (step 53: a Manager's role change, removed department or Deactivate, and the closed alerts); user-ud1a
-- Commit: 42cb88c
-- Last updated by: UD1c, based on 42cb88c
+- Applies to: GM1a (step 56: the new section "The governance change log (step GM1a)"); UD1c (step 54: the new section "The Reporting Person (step UD1c)"); UD1b (step 53: a Manager's role change, removed department or Deactivate, and the closed alerts); user-ud1a
+- Commit: 32c619d
+- Last updated by: GM1a, based on 32c619d (the new section only; the rest was last updated by UD1c, based on 42cb88c)
 - Status: Draft
-- Verified against: for UD1c: BMMS/Master/User.aspx.cs (diff: LoadMgrController, NotAllowedManagerChosen, PageValidation, the Department change), BMMSBAL/UserMgr.cs (diff), Database/BMMS-Fix-ManagerScope-Step54.sql (fn_ReportingPersonAllowed and spr_GetReportingPersonList read in full; spr_AddEditUser read at its comment block and the two Reason 31 checks), Database/README.md (section Step UD1c); for UD1b: BMMS/Master/User.aspx.cs (diff: the save and the status messages), BMMSBAL/UserMgr.cs (diff: ReleasedMessage, SuccessDetail), BMMSDAL/UserDB.cs (the two procedure calls), Database/BMMS-Fix-DepartmentApprovers-Step53.sql (fn_ManagerReleaseRefusal, spr_SetManagerAlertRows and the comment blocks of spr_AddEditUser and spr_SetUserStatusByUserId read; the long procedure texts not read line by line), Database/README.md (section Step UD1b)
+- Verified against: for GM1a: Database/BMMS-Fix-GovernanceLog-Step56.sql (comment blocks of the log writers and the replaced procedures), Database/README.md (section Step GM1a); for UD1c: BMMS/Master/User.aspx.cs (diff: LoadMgrController, NotAllowedManagerChosen, PageValidation, the Department change), BMMSBAL/UserMgr.cs (diff), Database/BMMS-Fix-ManagerScope-Step54.sql (fn_ReportingPersonAllowed and spr_GetReportingPersonList read in full; spr_AddEditUser read at its comment block and the two Reason 31 checks), Database/README.md (section Step UD1c); for UD1b: BMMS/Master/User.aspx.cs (diff: the save and the status messages), BMMSBAL/UserMgr.cs (diff: ReleasedMessage, SuccessDetail), BMMSDAL/UserDB.cs (the two procedure calls), Database/BMMS-Fix-DepartmentApprovers-Step53.sql (fn_ManagerReleaseRefusal, spr_SetManagerAlertRows and the comment blocks of spr_AddEditUser and spr_SetUserStatusByUserId read; the long procedure texts not read line by line), Database/README.md (section Step UD1b)
 - To confirm: feature area written only for the release of a Manager since step UD1b (WF2c2); the rest of User Master (save, role history, department history, delete, reset password) is not written yet
 
 ## Scope
@@ -156,7 +156,21 @@ fn_ReportingPersonAllowed: the active Controllers other than the protected syste
 fn_DepartmentManagers(department), each without the user himself. Tables read: Users, Roles, and those of
 fn_DepartmentManagers (Users, Roles, User_Department). Nothing is written by the list or the function.
 
+## The governance change log (step GM1a)
+
+Since step GM1a (database step 56) spr_AddEditUser, spr_SetUserStatusByUserId and spr_DeleteUserByUserId write one row into
+Governance_Change_Log for each thing that changed, in the same transaction as the change and through the internal procedures
+spr_WriteGovernanceUserChanges and spr_WriteGovernanceChange: UA user added, RC role changed, HC home department changed, DA and DR
+Manager department added and removed, RP Reporting Person changed, UV activated, UD deactivated, UX deleted (OldValue the role, the home
+department and the Manager's departments held at the delete). A save that changes nothing writes no row. The rows are read on the Governance
+Matrix page, view Change log. Nothing in User Master (the page, UserMgr, UserDB) changed: the page and the messages are as before.
+A user who is ChangedBy of a log row cannot be deleted (Reason 6, group "user changes"). The full flow is in
+Data-Flow/03-Program-to-Program/15-Governance-Matrix.md.
+
 ## Drawn from
+
+Since step GM1a: Database/BMMS-Fix-GovernanceLog-Step56.sql (the comment blocks of the log writers and of the three replaced procedures
+read; the long texts not read line by line), Database/README.md (section Step GM1a).
 
 BMMS/Master/User.aspx.cs (btnSave_Click, grvUser_RowCommand), BMMSBAL/UserMgr.cs (UserChangeResult.ReleasedMessage,
 SuccessDetail, UserChangeReason.ReleasedMarker), BMMSDAL/UserDB.cs, Database/BMMS-Fix-DepartmentApprovers-Step53.sql

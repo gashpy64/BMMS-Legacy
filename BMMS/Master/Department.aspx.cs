@@ -191,12 +191,15 @@ namespace BMMS.Master
                     myDept.UpdatedOn = System.DateTime.Now;
                     myDept.UpdatedBy = int.Parse(Session["UserId"].ToString());
 
-                    int result = myDeptMgr.AddEditDepartment(myDept);
+                    // Step GM1a: the signed-in user is the acting user; the procedure refuses any role but Admin (Reason 4)
+                    // and an inactive account (Reason 8) before anything is changed
+                    string refusal;
+                    int result = myDeptMgr.AddEditDepartment(myDept, int.Parse(Session["UserId"].ToString()), out refusal);
 
                     if (result == 1)
                         sMsg = "Successfully Saved";
                     else
-                        sMsg = "Record Not Saved";
+                        sMsg = refusal ?? "Record Not Saved";
                 }
                 catch (Exception ex)
                 {

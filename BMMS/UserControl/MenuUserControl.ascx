@@ -82,6 +82,8 @@
     <li><a href="../Master/SMTPServerConfig.aspx">SMTP Configuration</a></li>
     <li><a href="../Master/SystemSettings.aspx">System Settings</a></li>
     <li><a href="../Report/AuditTrail.aspx">Audit Trail</a></li>
+    <%-- Step GM1a: the Governance Matrix, read only, for Admin and the Controller --%>
+    <li><a href="../Report/GovernanceMatrix.aspx">Governance Matrix</a></li>
     <li><a href="../Master/ResetDatabase.aspx">Reset Database</a></li>
     <%
         } %>
@@ -107,6 +109,7 @@
     <li><a href="../Report/Followup.aspx?fc=summary">Followup Summary</a></li>
     <%-- Step RA1c2: Followup by Department (Report/FollowupActionTaken.aspx), Controller only --%>
     <li><a href="../Report/FollowupActionTaken.aspx">Followup by Department</a></li>
+    <li><a href="../Report/GovernanceMatrix.aspx">Governance Matrix</a></li>
     <%
         } %>
     <%if (Session["RoleCode"].ToString() == "manager")

@@ -3,11 +3,11 @@
 - Title: Configuration and Settings
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UD1b (step 53: the setting DeptNoManagerAction and the System Settings card text); access-ra1a
-- Commit: db1d641
-- Last updated by: UD1b, based on db1d641
+- Applies to: GM1a (step 56: the setting GovernanceLogFrom); UD1b (step 53: the setting DeptNoManagerAction and the System Settings card text); access-ra1a
+- Commit: 32c619d
+- Last updated by: GM1a, based on 32c619d (the paragraph on GovernanceLogFrom; the rest of the chapter was last updated by UD1b, based on db1d641)
 - Status: Draft
-- Verified against: none yet (leads from the old Architecture notes added in WF2b1); for
+- Verified against: for GM1a: Database/BMMS-Fix-GovernanceLog-Step56.sql (the setting insert and the comment of fn_GovernanceHistoryStart), Database/README.md (section Step GM1a); none yet (leads from the old Architecture notes added in WF2b1); for
   "Page access policy" BMMS/XML/PageAccess.xml and BMMS/PageAccessModule.cs (step RA1a); for UD1b:
   BMMS/Master/SystemSettings.aspx and .aspx.cs (the card, the messages), Database/BMMS-Fix-DepartmentApprovers-Step53.sql
   (fn_AgendaRoute, spr_AddEditAgenda comments), BMMSBAL/MeetingMgr.cs (Reason 29 text)
@@ -43,6 +43,14 @@ the Reporting Person is an active Controller: the item goes to the Controllers w
 
 Items entered by a Manager or by the Controller are not affected. A change of the value is written to Audit_Trail_Master
 (chapter 04, "Settings rows").
+
+Setting GovernanceLogFrom (App_Setting row inserted by step 56, GM1a, when missing). A date and time as text
+(`CONVERT(..., 126)`), the install time of step 56. fn_GovernanceHistoryStart reads it: the Governance Matrix and the change
+log record the Reporting Person and the department status from the later of this value and the last Reset Database (Reset
+Database clears the log and does not touch App_Setting). No page changes it. It is not a System Settings card. Before that date the
+Governance Matrix says "Reporting Person not recorded before [date]: the route to the Controller is not shown for earlier dates." and
+"Department status not recorded before [date]: today's status is shown." (chapter 04, "Step 56 (GM1a)" and "Settings rows").
+A change of DeptNoManagerAction or AgendaControllerBypass is also written to the governance change log (change type ST) since step 56.
 
 ## System Settings page
 

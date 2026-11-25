@@ -193,6 +193,26 @@ namespace BMMS.Security
             RefuseRequest(ctx, ReadDatabaseRole(ctx, "RefuseRequest"), reason);
         }
 
+        /// <summary>
+        /// Step GM1a: the roles PageAccess.xml allows for a page (application-relative path, for example
+        /// "Master/AgendaFinalization.aspx"), read from the same cached policy the module enforces, so the Governance
+        /// Matrix shows the rule that is applied and keeps no copy of it. An empty array for a page that is not listed
+        /// (not allowed), "*" as written for any signed-in user; null when the policy could not be read.
+        /// </summary>
+        public static string[] RolesForPage(string path)
+        {
+            HttpContext ctx = HttpContext.Current;
+            if (ctx == null)
+                return null;
+
+            Policy policy = GetPolicy(ctx);
+            if (policy.LoadError != null)
+                return null;
+
+            string[] roles;
+            return policy.Pages.TryGetValue(NormalizePath(path), out roles) ? (string[])roles.Clone() : new string[0];
+        }
+
         private static void RefuseRequest(HttpContext ctx, string role, string reason)
         {
             string page = (ctx.Request.AppRelativeCurrentExecutionFilePath ?? string.Empty).TrimStart('~', '/');
