@@ -106,6 +106,14 @@ BEGIN
     RAISERROR('Current database is "%s". Select the BMMS database (or its test copy) and run again. Nothing was changed.', 16, 1, @CurrentDatabase);
     SET NOEXEC ON;
 END
+-- Step 55 (step IU1) replaced spr_MinutesFinalizeByMeetingId of this step again, keeping its markers, so a run now
+-- would put an older text back without a word (InactiveUsers-Step55)
+ELSE IF (OBJECT_ID('dbo.fn_FunctionalUsers', 'IF') IS NOT NULL
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_MinutesFinalizeByMeetingId')), '') LIKE '%InactiveUsers-Step55%')
+BEGIN
+    RAISERROR('Step 55 is installed in "%s": it replaced spr_MinutesFinalizeByMeetingId of this step again. Roll back the build of step IU1, run BMMS-Rollback-InactiveUsers-Step55.sql first, then this script, then BMMS-Fix-InactiveUsers-Step55.sql again and the build. Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
 ELSE IF (OBJECT_ID('dbo.App_Setting', 'U') IS NULL)
 BEGIN
     RAISERROR('Step 16 (BMMS-Fix-MeetingLocks-Step16.sql) is not installed in "%s": table App_Setting is missing. Nothing was changed.', 16, 1, @CurrentDatabase);

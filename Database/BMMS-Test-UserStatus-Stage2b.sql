@@ -49,6 +49,8 @@ GO
 DECLARE @T TABLE (TestNo INT IDENTITY(1,1), Test VARCHAR(220), Expected VARCHAR(120), Actual VARCHAR(400));   -- step 53: longer names
 -- Step 53 (step UD1b): no new alert row for the Admin role; a user without a manager waits for the department's Managers
 DECLARE @S53 INT = CASE WHEN OBJECT_ID('dbo.fn_DepartmentManagers', 'IF') IS NOT NULL THEN 1 ELSE 0 END;
+-- Step 55 (step IU1): no new action item row for the Admin role at a finalisation; the value that differs reads [step 55: ...]
+DECLARE @S55 INT = CASE WHEN OBJECT_ID('dbo.fn_FunctionalUsers', 'IF') IS NOT NULL THEN 1 ELSE 0 END;
 DECLARE @R TABLE (Result INT, Reason INT, ReasonDetail NVARCHAR(2000),
                   Txt AS ('Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(3))
                           + CASE WHEN ReasonDetail <> '' THEN ', ' + CAST(ReasonDetail AS VARCHAR(200)) ELSE '' END));
@@ -484,7 +486,7 @@ BEGIN TRY
                  WHERE a.MinutesId = @MinF1 AND u.AccountStatus = 1) AS VARCHAR(12)) + ' '
          + CAST((SELECT COUNT(*) FROM ActionItem_User_Map m JOIN Action_Item a ON a.ActionItemId = m.ActionItemId JOIN @TU t ON t.UserId = m.UserId JOIN Users u ON u.UserId = m.UserId
                  WHERE a.MinutesId = @MinF1 AND u.AccountStatus <> 1) AS VARCHAR(12));
-    INSERT INTO @T SELECT 'Minutes finalize, new item: inactive users anywhere / all active users mapped' + @Note18, '0 ' + CAST((SELECT COUNT(*) FROM Users WHERE AccountStatus = 1 AND UserId <> ISNULL(@SystemUser, -1)) AS VARCHAR(12)),
+    INSERT INTO @T SELECT 'Minutes finalize, new item: inactive users anywhere / all active users mapped' + @Note18 + CASE WHEN @S55 = 1 THEN ' [step 55: not the Admin role]' ELSE '' END, '0 ' + CAST((SELECT COUNT(*) FROM Users u WHERE u.AccountStatus = 1 AND u.UserId <> ISNULL(@SystemUser, -1) AND (@S55 = 0 OR NOT EXISTS (SELECT 1 FROM Roles ar WHERE ar.RoleId = u.RoleId AND ar.RoleCode = 'admin'))) AS VARCHAR(12)),
            CAST((SELECT COUNT(*) FROM ActionItem_User_Map m JOIN Action_Item a ON a.ActionItemId = m.ActionItemId JOIN Users u ON u.UserId = m.UserId
                  WHERE a.MinutesId = @MinF1 AND u.AccountStatus <> 1) AS VARCHAR(12)) + ' '
          + CAST((SELECT COUNT(*) FROM ActionItem_User_Map m JOIN Action_Item a ON a.ActionItemId = m.ActionItemId JOIN Users u ON u.UserId = m.UserId

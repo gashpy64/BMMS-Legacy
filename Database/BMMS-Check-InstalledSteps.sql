@@ -221,6 +221,14 @@
    step 54 is installed; a re-run of step 13, 16, 17, 18, 31 or 35 brings
    back an older text: steps 53 and 54 read Partly (see the README of step
    54). After BMMS-Rollback-ManagerScope-Step54.sql it reads Missing.
+   Step 55 (step IU1) adds fn_FunctionalUsers, spr_GetMeetingCommitteeMailId
+   and spr_GetResetPasswordMail and replaces spr_AddEditMeeting and
+   spr_AddEditCommittee (step 53) and spr_MinutesFinalizeByMeetingId (step
+   23), which keep the markers of their earlier steps: 6 markers. The Fix
+   scripts of steps 23 and 53 and the Rollback script of step 53 stop while
+   step 55 is installed; a re-run of step 8, 15, 16, 17, 18 or 21 brings
+   back an older text: step 55 reads Partly (see the README of step 55).
+   After BMMS-Rollback-InactiveUsers-Step55.sql it reads Missing.
    Step 32 is reserved and not built; it has no row.
    Step D1 (shown as step 100) replaces spr_DeleteMeetingByMeetingId, which
    no numbered script contains: it reads Missing only on a database restored
@@ -612,6 +620,12 @@ FROM (VALUES ('fn_ManagerDepartments'), ('fn_ReportingPersonAllowed'), ('spr_Get
              ('spr_GetAgendaReport'), ('spr_GetMinutesReportByUser'), ('spr_GetReportSubjectNos'),
              ('spr_GetAgendaByMeetingIdDeptId'), ('spr_AddEditAgendaByManager'), ('spr_AddEditUser')) o(Name);
 
+-- 55. BMMS-Fix-InactiveUsers-Step55.sql, installed after step 54 (three new objects, three replaced)
+INSERT INTO @M
+SELECT 55, o.Name + ' (InactiveUsers-Step55)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%InactiveUsers-Step55%' THEN 1 ELSE 0 END
+FROM (VALUES ('fn_FunctionalUsers'), ('spr_GetMeetingCommitteeMailId'), ('spr_GetResetPasswordMail'),
+             ('spr_AddEditMeeting'), ('spr_AddEditCommittee'), ('spr_MinutesFinalizeByMeetingId')) o(Name);
+
 -- D1 (shown as step 100). BMMS-Fix-MeetingDelete-D1.sql; no numbered script contains spr_DeleteMeetingByMeetingId
 INSERT INTO @M VALUES
 (100, 'spr_DeleteMeetingByMeetingId (MeetingDelete-D1)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_DeleteMeetingByMeetingId')), '') LIKE '%MeetingDelete-D1%' THEN 1 ELSE 0 END);
@@ -667,6 +681,7 @@ INSERT INTO @Steps VALUES
 (52, 'BMMS-Fix-ManagerRelease-Step52.sql', 'an earlier step that holds one of its four objects was re-run (1 to 3 of 4): run step 52 again (after step 51)'),
 (53, 'BMMS-Fix-DepartmentApprovers-Step53.sql', 'an earlier step that holds one of its 18 objects was re-run, or step 53 was rolled back (1 of 21: the columns stay): run step 53 again (after step 52)'),
 (54, 'BMMS-Fix-ManagerScope-Step54.sql', 'step 13, 16, 17, 18, 31 or 35 was re-run after step 54 (7 to 9 of 10): see the README of step 54 (Rollback 54, the step 53 notes, then step 54 again)'),
+(55, 'BMMS-Fix-InactiveUsers-Step55.sql', 'step 8, 15, 16, 17, 18 or 21 was re-run after step 55 (3 to 5 of 6): see the README of step 55'),
 (100, 'BMMS-Fix-MeetingDelete-D1.sql (step D1)', '');
 
 SELECT s.Step, s.Script,

@@ -242,6 +242,15 @@ BEGIN
     RAISERROR('Current database is "%s". Select the BMMS database (or its test copy) and run again. Nothing was changed.', 16, 1, @CurrentDatabase);
     SET NOEXEC ON;
 END
+-- Step 55 (step IU1) replaced spr_AddEditMeeting and spr_AddEditCommittee of this step again, keeping its markers, so a run now
+-- would put an older text back without a word (InactiveUsers-Step55)
+ELSE IF (OBJECT_ID('dbo.fn_FunctionalUsers', 'IF') IS NOT NULL
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_AddEditMeeting')), '') LIKE '%InactiveUsers-Step55%'
+         OR ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_AddEditCommittee')), '') LIKE '%InactiveUsers-Step55%')
+BEGIN
+    RAISERROR('Step 55 is installed in "%s": it replaced spr_AddEditMeeting and spr_AddEditCommittee of this step again. Roll back the build of step IU1, run BMMS-Rollback-InactiveUsers-Step55.sql first, then this script, then BMMS-Fix-InactiveUsers-Step55.sql again and the build. Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
 -- Step 54 (step UD1c) replaced spr_AddEditAgendaByManager and spr_AddEditUser of this step again, keeping its markers, so a run now
 -- would put an older text back without a word (ManagerScope-Step54)
 ELSE IF (OBJECT_ID('dbo.fn_ManagerDepartments', 'IF') IS NOT NULL

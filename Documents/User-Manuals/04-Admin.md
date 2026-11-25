@@ -143,6 +143,32 @@ Messages and what to do:
 
 [Screenshot: System Settings, the card Department without an active Manager - supplied by Gashpy Software]
 
+### Reset Password
+
+Purpose: sets the password of a user back to the default password and tells the user by mail. Only you use this screen.
+
+Fields and buttons: the heading ":: Reset Password"; the drop-down "User :" and the button "Reset Password". The drop-down
+lists the active and the inactive users by name and login; an inactive user is marked "(inactive)". When you choose a user, his details are shown under the drop-down and the button appears.
+
+Steps:
+
+1. Choose the user in the "User :" drop-down.
+2. Press "Reset Password" and answer "OK" to "Are you sure to reset password?".
+
+Messages and what to do:
+
+- "New passward was sent through mail.": the password was reset to the default password and the user was sent a mail (the
+  screen shows this text with that spelling).
+- "The password was reset to the default password. No mail was sent because the user is inactive.": the user is inactive. The
+  password was reset, in green, and no mail was sent.
+- "The password was reset to the default password, but the mail could not be sent. The error is in the error log.": the password
+  was reset, but the mail did not go out.
+- "The password was not reset. Please try again.": nothing was changed; try again.
+
+The mail goes to the address stored for the user. You cannot change it on this screen.
+
+[Screenshot: Reset Password, an inactive user chosen and the message after Reset Password - supplied by Gashpy Software]
+
 [[CONFIRM: the other screens are not written yet]]
 
 ## Tasks by goal
@@ -154,6 +180,11 @@ Messages and what to do:
 You receive no alert and no mail about agenda items, meetings or committees. BMMS no longer even writes these alerts
 for the Admin role. If you are the Reporting Person of a Manager or of the Controller, you get no copy of the "has been
 Created" mail of their items.
+
+The Admin role is not in the list of those who get the mail of a meeting or a committee another person saved, and BMMS does not
+give you the action items of finalised minutes. If you save a meeting or a committee yourself (the Meeting and Committee screens
+are open to you and to the Controller), the "has been Created" or "has been Updated" mail is sent to you as the person who saved,
+and to the other active users. Action items given to the Admin role before are kept and shown to nobody.
 
 [[CONFIRM: the rest of this section is not written yet]]
 

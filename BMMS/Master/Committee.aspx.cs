@@ -16,6 +16,11 @@ namespace BMMS.Master
     {
         private string className = "Committee";
 
+        // Step IU1: the messages of the Meeting page
+        private const string MailNotSentMessage = "The committee was saved, but the mail could not be sent. The error is in the error log.";
+        private const string NoRecipientsMessage = "The committee was saved. No mail was sent because there were no recipients.";
+        private const string NoRecipientsResult = "NoRecipients";
+
         protected void Page_Load(object sender, EventArgs e)
         {
             Common.InitSetup(className);
@@ -193,22 +198,21 @@ namespace BMMS.Master
                     myCommittee.UpdatedBy = int.Parse(Session["UserId"].ToString());
 
 
+                    // Step IU1: save first; the "Committee Created / Updated" mail goes out only after the save, as on the
+                    // Meeting page. A save error goes to the error page as before (nothing is mailed then).
+                    int result = myCommitteeMgr.AddEditCommittee(myCommittee);
+
                     string strResult = "Success";
 
-                    //if (btnSave.Text == "Save")
-                    //    strResult = GenerateMail("Created");
-                    //if (btnSave.Text == "Update")
-                    //    strResult = GenerateMail("Updated");
+                    if (btnSave.Text == "Save")
+                        strResult = GenerateMail("Created");
+                    else if (btnSave.Text == "Update")
+                        strResult = GenerateMail("Updated");
 
-                    if (strResult == "Success")
-                    {
-                        int result = myCommitteeMgr.AddEditCommittee(myCommittee);
-                        sMsg = "Successfully Saved";
-                    }
-                    else
-                    {
-                        sMsg = strResult;
-                    }
+                    // The committee is saved either way; the mail error itself is in the error log
+                    sMsg = strResult == "Success" ? "Successfully Saved"
+                         : strResult == NoRecipientsResult ? NoRecipientsMessage
+                         : MailNotSentMessage;
                 }
                 catch (Exception ex)
                 {
@@ -220,7 +224,7 @@ namespace BMMS.Master
                     myCommittee = null;
                 }
 
-                MsgDisplay(sMsg, sMsg == "Successfully Saved" ? MessageKind.Success : MessageKind.Warning);
+                MsgDisplay(sMsg, (sMsg == "Successfully Saved" || sMsg == NoRecipientsMessage) ? MessageKind.Success : MessageKind.Warning);
 
                 pnlViewCommittee.Visible = true;
                 pnlEditCommittee.Visible = false;
@@ -274,63 +278,80 @@ namespace BMMS.Master
         #endregion
 
         #region GenerateMail
+        // Step IU1: "Success", NoRecipientsResult (nothing sent), or an error: Mail_Mgr logs its own failures; anything
+        // else here is logged once below. The rule of the Meeting mail (BMMS-Fix-InactiveUsers-Step55.sql).
         private string GenerateMail(string SubjectStatus)
         {
-            string ToMailId = string.Empty;
-            string Bcc = string.Empty;
-
-            DataTable dtUser = UserMgr.GetActiveUserList();   // active users only (stage 2a)
-            if (dtUser.Rows.Count > 0)
+            try
             {
-                for (int i = 0; i <= dtUser.Rows.Count - 1; i++)
+                string ToMailId = MailToActingUser();
+
+                // The Bcc is the users the CC / CU alert rows were written for (active, not the system account, not the
+                // Admin role, not the person who saved), with an address
+                int reason;
+                string Bcc = AlertMgr.GetMeetingCommitteeMailId(int.Parse(Session["UserId"].ToString()), out reason);
+
+                if (reason != 0)
                 {
-                    if (dtUser.Rows[i]["UserId"].ToString() == Session["UserId"].ToString())
-                    {
-                        ToMailId = dtUser.Rows[i]["EmailId"].ToString();
-                    }
-                    else
-                    {
-                        if (i == dtUser.Rows.Count - 1)
-                            Bcc += dtUser.Rows[i]["EmailId"].ToString();
-                        else
-                            Bcc += dtUser.Rows[i]["EmailId"].ToString() + ", ";
-                    }
+                    Utilities.WriteErrorLog(className, "GenerateMail", "spr_GetMeetingCommitteeMailId refused the acting user: Reason " + reason);
+                    return "Error";
                 }
+
+                if (Bcc.Trim() == string.Empty)
+                    return NoRecipientsResult;
+
+                string Subject = "Committee (" + txtCommitteeCode.Text.Trim() + ") has been " + SubjectStatus;
+                string BodyText = string.Empty;
+                BodyText += "<table>";
+
+                BodyText += "<tr>";
+                BodyText += "<td style='text-align:left; font-weight:bold;'>";
+                BodyText += "Committee Code <br /><br />";
+                BodyText += "Committee Name <br /><br />";
+                BodyText += "Is Board <br /><br />";
+                BodyText += "Incorporation Date <br /><br />";
+                BodyText += "</td>";
+
+                BodyText += "<td style='text-align:left; font-weight:normal;'>";
+                BodyText += ": " + HttpUtility.HtmlEncode(txtCommitteeCode.Text.Trim()) + "<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(txtCommitteeName.Text.Trim()) + "<br /><br />";
+                if (chkBoard.Checked)
+                    BodyText += ": Yes<br /><br />";
+                else
+                    BodyText += ": No<br /><br />";
+                BodyText += ": " + HttpUtility.HtmlEncode(txtIncorporationDate.Text.Trim()) + "<br /><br />";
+                BodyText += "</td>";
+
+                BodyText += "</tr>";
+
+                BodyText += "</table>";
+
+
+                string result = Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, Bcc);
+
+                return result;
             }
+            catch (Exception ex)
+            {
+                // The committee is already saved: log, and let the page say the mail was not sent
+                Utilities.WriteErrorLog(className, "GenerateMail", ex.ToString());
+                return "Error";
+            }
+        }
+        #endregion
 
+        #region MailToActingUser
+        // The To of the Committee mail: the address of the person who saved (an active user other than the system
+        // account; empty otherwise), as on the Meeting page
+        private string MailToActingUser()
+        {
+            DataTable dtUser = UserMgr.GetActiveUserList();   // active users only (stage 2a)
 
-            string Subject = "Committee (" + txtCommitteeCode.Text.Trim() + ") has been " + SubjectStatus;
-            string BodyText = string.Empty;
-            BodyText += "<table>";
+            foreach (DataRow row in dtUser.Rows)
+                if (row["UserId"].ToString() == Session["UserId"].ToString())
+                    return row["EmailId"].ToString();
 
-            BodyText += "<tr>";
-            BodyText += "<td style='text-align:left; font-weight:bold;'>";
-            BodyText += "Committee Code <br /><br />";
-            BodyText += "Committee Name <br /><br />";
-            BodyText += "Is Board <br /><br />";
-            BodyText += "Incorporation Date <br /><br />";
-            BodyText += "</td>";
-
-            BodyText += "<td style='text-align:left; font-weight:normal;'>";
-            BodyText += ": " + HttpUtility.HtmlEncode(txtCommitteeCode.Text.Trim()) + "<br /><br />";
-            BodyText += ": " + HttpUtility.HtmlEncode(txtCommitteeName.Text.Trim()) + "<br /><br />";
-            if (chkBoard.Checked)
-                BodyText += ": Yes<br /><br />";
-            else
-                BodyText += ": No<br /><br />";
-            BodyText += ": " + HttpUtility.HtmlEncode(txtIncorporationDate.Text.Trim()) + "<br /><br />";
-            BodyText += "</td>";
-
-            BodyText += "</tr>";
-
-            BodyText += "</table>";
-
-
-            string result = Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, Bcc);
-
-            
-
-            return result;
+            return string.Empty;
         }
         #endregion
 

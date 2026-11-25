@@ -42,7 +42,6 @@
                                 <br />
                                 <div style="float: left; width: 75%; line-height: 20pt;">
                                     <asp:Literal ID="ltrlUserDetails" runat="server"></asp:Literal>
-                                    <asp:HiddenField ID="hdnEmailId" runat="server" />
                                 </div>
                                 <div class="divRow">
                                     <asp:Panel ID="pnlResetPassword" runat="server">

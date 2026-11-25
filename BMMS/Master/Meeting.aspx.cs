@@ -19,6 +19,9 @@ namespace BMMS.Master
         private const string MeetingClosedMessage = MeetingChangeReason.MeetingDatePassedMessage;
         private const string DeleteFailedMessage = "The meeting could not be deleted. The error is in the error log.";
         private const string MailNotSentMessage = "The meeting was saved, but the mail could not be sent. The error is in the error log.";
+        // Step IU1: nobody to mail (the MC / MU alert users have no address, or there are none): no mail at all
+        private const string NoRecipientsMessage = "The meeting was saved. No mail was sent because there were no recipients.";
+        private const string NoRecipientsResult = "NoRecipients";
 
         #region Page_Load
         protected void Page_Load(object sender, EventArgs e)
@@ -348,7 +351,9 @@ namespace BMMS.Master
                                 strResult = GenerateMail("Updated");
 
                             // The meeting is saved either way; the mail error itself is in the error log (step M1)
-                            sMsg = strResult == "Success" ? "Successfully Saved" : MailNotSentMessage;
+                            sMsg = strResult == "Success" ? "Successfully Saved"
+                                 : strResult == NoRecipientsResult ? NoRecipientsMessage
+                                 : MailNotSentMessage;
                         }
                     }
 
@@ -363,7 +368,8 @@ namespace BMMS.Master
                     myMeeting = null;
                 }
 
-                MsgDisplay(sMsg, sMsg == "Successfully Saved" ? MessageKind.Success : sMsg.StartsWith("Error: ") ? MessageKind.Error : MessageKind.Warning);
+                MsgDisplay(sMsg, (sMsg == "Successfully Saved" || sMsg == NoRecipientsMessage) ? MessageKind.Success
+                    : sMsg.StartsWith("Error: ") ? MessageKind.Error : MessageKind.Warning);
 
                 pnlViewMeeting.Visible = true;
                 pnlEditMeeting.Visible = false;
@@ -438,32 +444,27 @@ namespace BMMS.Master
         #endregion
 
         #region GenerateMail
-        // "Success", or an error: Mail_Mgr logs its own failures; anything else here is logged once below (step M1)
+        // "Success", NoRecipientsResult (nothing sent), or an error: Mail_Mgr logs its own failures; anything else here
+        // is logged once below (step M1)
         private string GenerateMail(string SubjectStatus)
         {
             try
             {
-                string ToMailId = string.Empty;
-                string Bcc = string.Empty;
+                string ToMailId = MailToActingUser();
 
-                DataTable dtUser = UserMgr.GetActiveUserList();   // active users only (stage 2a)
-                if (dtUser.Rows.Count > 0)
+                // Step IU1 (BMMS-Fix-InactiveUsers-Step55.sql): the Bcc is the users the MC / MU alert rows were written
+                // for (active, not the system account, not the Admin role, not the person who saved), with an address
+                int reason;
+                string Bcc = AlertMgr.GetMeetingCommitteeMailId(int.Parse(Session["UserId"].ToString()), out reason);
+
+                if (reason != 0)
                 {
-                    for (int i = 0; i <= dtUser.Rows.Count - 1; i++)
-                    {
-                        if (dtUser.Rows[i]["UserId"].ToString() == Session["UserId"].ToString())
-                        {
-                            ToMailId = dtUser.Rows[i]["EmailId"].ToString();
-                        }
-                        else
-                        {
-                            if (i == dtUser.Rows.Count - 1)
-                                Bcc += dtUser.Rows[i]["EmailId"].ToString();
-                            else
-                                Bcc += dtUser.Rows[i]["EmailId"].ToString() + ", ";
-                        }
-                    }
+                    Utilities.WriteErrorLog(className, "GenerateMail", "spr_GetMeetingCommitteeMailId refused the acting user: Reason " + reason);
+                    return "Error";
                 }
+
+                if (Bcc.Trim() == string.Empty)
+                    return NoRecipientsResult;
 
 
                 string Subject = "Meeting (" + txtMeetingNo.Text.Trim() + ") has been " + SubjectStatus;
@@ -505,6 +506,21 @@ namespace BMMS.Master
                 Utilities.WriteErrorLog(className, "GenerateMail", ex.ToString());
                 return "Error";
             }
+        }
+        #endregion
+
+        #region MailToActingUser
+        // The To of the Meeting mail: the address of the person who saved, as before step IU1 (an active user other than
+        // the system account; empty otherwise)
+        private string MailToActingUser()
+        {
+            DataTable dtUser = UserMgr.GetActiveUserList();   // active users only (stage 2a)
+
+            foreach (DataRow row in dtUser.Rows)
+                if (row["UserId"].ToString() == Session["UserId"].ToString())
+                    return row["EmailId"].ToString();
+
+            return string.Empty;
         }
         #endregion
 

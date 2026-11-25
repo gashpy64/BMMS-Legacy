@@ -219,6 +219,40 @@ namespace BMMSDAL
         }
         #endregion
 
+        #region GetResetPasswordMail
+        // Step IU1 (BMMS-Fix-InactiveUsers-Step55.sql): the stored address and the status of the user whose password
+        // is reset, under the rule of the reset itself (spr_GetResetPasswordMail); the page never supplies an address.
+        // Returns true and fills EmailId and IsActive when allowed (Reason 0); otherwise false, Reason the refusal
+        // (8, 4 or 7), EmailId empty and IsActive false.
+        public static bool GetResetPasswordMail(int ActingUserId, int UserId, out int Reason, out string EmailId, out bool IsActive)
+        {
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+
+            SqlParameter[] parameter = new SqlParameter[3];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = new SqlParameter("@UserId", UserId);
+            parameter[2] = reason;
+
+            DataTable dt = CommonDB.GetDataTable("spr_GetResetPasswordMail", parameter);
+            Reason = reason.Value == null || reason.Value == DBNull.Value ? 8 : Convert.ToInt32(reason.Value);
+
+            EmailId = string.Empty;
+            IsActive = false;
+
+            if (Reason != 0 || dt.Rows.Count == 0)
+            {
+                if (Reason == 0)
+                    Reason = 4;
+                return false;
+            }
+
+            EmailId = Convert.ToString(dt.Rows[0]["EmailId"]).Trim();
+            IsActive = ToInt(dt.Rows[0]["IsActive"]) == 1;
+            return true;
+        }
+        #endregion
+
         #region GetUserAccessState
         // Step RA1d (BMMS-Fix-SessionCheck-Step51.sql): what a signed-in session is compared with on every request.
         // No row: the user is not in View_Users. One row: UserId, RoleCode, RoleName, AccountStatus, IsSystem,

@@ -521,6 +521,14 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region GetResetPasswordMail
+        // Step IU1 (step 55): the stored address and status of the user whose password is reset; see UserDB
+        public static bool GetResetPasswordMail(int ActingUserId, int UserId, out int Reason, out string EmailId, out bool IsActive)
+        {
+            return UserDB.GetResetPasswordMail(ActingUserId, UserId, out Reason, out EmailId, out IsActive);
+        }
+        #endregion
+
         #region GetUserAccessState
         // Step RA1d: the role, status, system flag and department set of one user, read from the database
         // (spr_GetUserAccessState, step 51); null when the user is not in View_Users. A database error is thrown.

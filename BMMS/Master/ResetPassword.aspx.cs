@@ -16,6 +16,10 @@ namespace BMMS.Master
     {
         private string className = "ResetPassword";
 
+        // Step IU1: the reset of an inactive user (no mail); the mail failure text of step M1
+        private const string InactiveNoMailMessage = "The password was reset to the default password. No mail was sent because the user is inactive.";
+        private const string MailNotSentMessage = "The password was reset to the default password, but the mail could not be sent. The error is in the error log.";
+
         #region Page_Load
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -26,7 +30,6 @@ namespace BMMS.Master
             {
                 pnlResetPassword.Visible = false;
                 ltrlUserDetails.Text = string.Empty;
-                hdnEmailId.Value = string.Empty;
                 MsgHide();
                 LoadLoginUser();
             }
@@ -70,7 +73,6 @@ namespace BMMS.Master
             {
                 pnlResetPassword.Visible = false;
                 ltrlUserDetails.Text = string.Empty;
-                hdnEmailId.Value = string.Empty;
             }
             else
             {
@@ -80,7 +82,6 @@ namespace BMMS.Master
 
                 DataTable dtUser = new DataTable();
                 dtUser = UserMgr.GetUserDataTableByUserId(UserId);
-                hdnEmailId.Value = dtUser.Rows[0]["EmailId"].ToString();
 
                 ltrlUserDetails.Text = Common.LoadUserDetails(dtUser);
             }
@@ -96,7 +97,6 @@ namespace BMMS.Master
             int PasswordLength = 8; // Convert.ToInt16(Common.GetAppSetting("PasswordMaxLength"));
             string NewPassword = Common.DefaultPassword; // Common.CreateRandomPassword(PasswordLength);
 
-            string ToMailId = hdnEmailId.Value.ToString();
             string Subject = "Your password has been reset to default password";
             string BodyText = "Your password has been reset to default password. <br />";
             BodyText += "Please change your password after login.";
@@ -119,23 +119,37 @@ namespace BMMS.Master
             {
                 errMsg = "The password was not reset. Please try again.";
             }
-            else if (UserMgr.GetUserStatusByUserId(UserId) != 1)
-            {
-                // An inactive user receives no mail (BMMS-Fix-UserStatus-Stage2b.sql)
-                errMsg = "Password reset; no mail sent because the account is inactive.";
-            }
             else
             {
-                // Step ML2c: ToRequired: the mail is for this user; without a valid To address it fails (no Bcc-only mail)
-                result = Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, null, true);
+                // Step IU1 (BMMS-Fix-InactiveUsers-Step55.sql): the address and the status of the chosen user come from
+                // the database, under the rule of the reset itself; nothing the page holds is used for the mail
+                int mailReason;
+                string ToMailId;
+                bool isActive;
 
-                if (result == "Success")
-                    errMsg = "New passward was sent through mail.";
+                if (!UserMgr.GetResetPasswordMail(UpdatedBy, UserId, out mailReason, out ToMailId, out isActive))
+                {
+                    Utilities.WriteErrorLog(className, "btnResetPassword_Click", "spr_GetResetPasswordMail refused after the reset: Reason " + mailReason);
+                    errMsg = MailNotSentMessage;
+                }
+                else if (!isActive)
+                {
+                    // An inactive user receives no mail (BMMS-Fix-UserStatus-Stage2b.sql)
+                    errMsg = InactiveNoMailMessage;
+                }
                 else
-                    errMsg = "The password was reset to the default password, but the mail could not be sent. The error is in the error log.";   // step M1
+                {
+                    // Step ML2c: ToRequired: the mail is for this user; without a valid To address it fails (no Bcc-only mail)
+                    result = Mail_Mgr.SendWebEmail(ToMailId, Subject, BodyText, null, null, true);
+
+                    if (result == "Success")
+                        errMsg = "New passward was sent through mail.";
+                    else
+                        errMsg = MailNotSentMessage;   // step M1
+                }
             }
 
-            MsgDisplay(errMsg, (errMsg == "New passward was sent through mail." || errMsg == "Password reset; no mail sent because the account is inactive.") ? MessageKind.Success
+            MsgDisplay(errMsg, (errMsg == "New passward was sent through mail." || errMsg == InactiveNoMailMessage) ? MessageKind.Success
                     : errMsg == "The password was not reset. Please try again." ? MessageKind.Error : MessageKind.Warning);
             pnlResetPassword.Visible = false;
         }

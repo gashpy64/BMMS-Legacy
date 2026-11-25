@@ -45,6 +45,14 @@ namespace BMMSBAL
         }
         #endregion
 
+        #region GetMeetingCommitteeMailId
+        // Step IU1 (step 55): the Bcc of the Meeting and Committee mails; see AlertDB
+        public static string GetMeetingCommitteeMailId(int ActingUserId, out int Reason)
+        {
+            return AlertDB.GetMeetingCommitteeMailId(ActingUserId, out Reason);
+        }
+        #endregion
+
         #region GetDashboardAlerts / GetAlertCount / RemoveAlertForUser
         // Step UN6c1 (step 43): see AlertDB
         public static DataTable GetDashboardAlerts(int ActingUserId, string Mode, int PageNo,

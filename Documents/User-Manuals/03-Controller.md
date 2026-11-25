@@ -336,6 +336,20 @@ Messages and what to do:
   department ([dd-MMM-yyyy])" under All. If you move the item back, those alerts become live again.
 - The Admin gets no alert and no mail about agenda items, meetings or committees. Your own rules for approving are
   unchanged.
+- When you save a meeting or a committee (Create or Update), BMMS sends a "has been Created" or "has been Updated" mail. It is
+  sent to you, and to the same people who get the alert of that meeting or committee: every active user except you and the
+  Admin role. A person without a mail address still gets the alert, and no mail. The Committee mail is sent too, as the
+  Meeting mail always was.
+- After you save a meeting or a committee, the screen can say:
+  - "Successfully Saved": the item is saved and the mail was sent.
+  - "The meeting was saved. No mail was sent because there were no recipients." (for a committee: "The committee was saved.
+    No mail was sent because there were no recipients."): the item is saved, in green. Nobody had a mail address to send to,
+    so no mail was sent at all.
+  - "The meeting was saved, but the mail could not be sent. The error is in the error log." (for a committee: "The committee
+    was saved, but the mail could not be sent. The error is in the error log."): the item is saved. The mail was not sent.
+- When you finalise the minutes of a meeting, the action items are given to every active user except the Admin role. A user who
+  is made active later does not get the action items of minutes finalised before. Action items already given to an Admin, or to
+  a user who is now inactive, are kept and shown to nobody. You still see every action item that is not confirmed.
 
 [[CONFIRM: the rest of this section (the other alerts and mails a Controller receives) is not written yet]]
 

@@ -3,11 +3,11 @@
 - Title: Program to Program: Mail Sending
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UD1b (step 53: the recipients of the agenda mails); user-ud1a
-- Commit: db1d641
-- Last updated by: UD1b, based on db1d641
+- Applies to: IU1 (step 55: the section "Meeting, Committee and Reset Password mails"); UD1b (step 53: the recipients of the agenda mails); user-ud1a
+- Commit: 79f50ea
+- Last updated by: IU1, based on 79f50ea
 - Status: Draft
-- Verified against: for UD1b: BMMS/Master/Agenda.aspx.cs (GenerateMail, GenerateUpdateMail), BMMS/DashBoard/DashBoard.aspx.cs (the mail after Result 1), BMMS/Master/AgendaFinalization.aspx.cs (the call of AlertMgr.GetAlertMailId), Database/BMMS-Fix-DepartmentApprovers-Step53.sql (spr_GetAlertMailId, spr_GetAgendaUpdateMailId, spr_GetAgendaCreationMailId read in full), Database/README.md (section Step UD1b)
+- Verified against: for IU1: the step's diff (BMMS/Master/Meeting.aspx.cs, Committee.aspx.cs, ResetPassword.aspx.cs, BMMSBAL/AlertMgr.cs, UserMgr.cs), Database/BMMS-Fix-InactiveUsers-Step55.sql, Database/README.md (section Step IU1); for UD1b: BMMS/Master/Agenda.aspx.cs (GenerateMail, GenerateUpdateMail), BMMS/DashBoard/DashBoard.aspx.cs (the mail after Result 1), BMMS/Master/AgendaFinalization.aspx.cs (the call of AlertMgr.GetAlertMailId), Database/BMMS-Fix-DepartmentApprovers-Step53.sql (spr_GetAlertMailId, spr_GetAgendaUpdateMailId, spr_GetAgendaCreationMailId read in full), Database/README.md (section Step UD1b)
 - To confirm: feature area written only for the recipients of the agenda mails since step UD1b (WF2c3); the mail server settings, the Mail_Mgr send, the mail log and the other mails are not written yet
 
 ## Scope
@@ -87,8 +87,58 @@ flowchart TD
 | spr_GetAgendaUpdateMailId | Alert_Master, Alert_User_Map, Users, Roles | none |
 | spr_GetAlertMailId | Users, Roles, Agenda, Alert_Master, Alert_User_Map, User_Department (through fn_DepartmentManagers) | none |
 
+## Meeting, Committee and Reset Password mails (step IU1)
+
+Since step IU1 (database step 55) the Meeting and Committee "Created" and "Updated" mails (MC, MU, CC, CU) go to the users who
+get the alert row of the same event, by one rule (fn_FunctionalUsers: active, not the protected system account, not the Admin
+role, not the person who saved). The To stays the person who saved. The Committee mail, switched off in Committee.aspx.cs since
+the baseline, is sent again after a successful save. The Reset Password mail reads the address and the active status from the
+database. The flows are drawn in 07-Meeting and 03-Masters; this section gives the mail side.
+
+```mermaid
+flowchart TD
+    pMeeting("Meeting - Meeting.aspx")
+    pCommittee("Committee - Committee.aspx")
+    pReset("Reset Password - ResetPassword.aspx")
+    sMailId{{"spr_GetMeetingCommitteeMailId"}}
+    sResetMail{{"spr_GetResetPasswordMail"}}
+    fFunc{{"fn_FunctionalUsers"}}
+    tUsers[("Users")]
+    fMail[/"Meeting, Committee or Reset Password mail"/]
+
+    pMeeting -->|"acting user"| sMailId
+    pCommittee -->|"acting user"| sMailId
+    sMailId --> fFunc
+    tUsers -->|"active, not system, not Admin role"| fFunc
+    sMailId -->|"Bcc addresses, Reason"| pMeeting
+    sMailId -->|"Bcc addresses, Reason"| pCommittee
+    pReset -->|"acting user, chosen user"| sResetMail
+    tUsers -->|"address, active status"| sResetMail
+    sResetMail -->|"address, IsActive, Reason"| pReset
+    pMeeting -->|"saved"| fMail
+    pCommittee -->|"saved"| fMail
+    pReset -->|"active user only"| fMail
+```
+
+| From | To | Data | Notes |
+|---|---|---|---|
+| Meeting.aspx, Committee.aspx | spr_GetMeetingCommitteeMailId | Acting user | Read after the save. Reason 8: acting user missing, 0 or inactive; Reason 4: a role other than Admin and Controller; then no rows |
+| spr_GetMeetingCommitteeMailId | Meeting.aspx, Committee.aspx | The addresses of the users of fn_FunctionalUsers, except the person who saved | A user without an address keeps the alert and gets no mail |
+| Meeting.aspx, Committee.aspx | Mail_Mgr | To: the person who saved; Bcc: the list | The ML2c address checks are unchanged. No address in the list: no mail at all, green "The meeting was saved. No mail was sent because there were no recipients." (Committee: "The committee was saved. ...") |
+| Meeting.aspx, Committee.aspx | The person who saved | "The meeting was saved, but the mail could not be sent. The error is in the error log." (Committee: "The committee was saved, but ...") | A mail failure or a refusal of the Bcc procedure never undoes the save |
+| ResetPassword.aspx | spr_GetResetPasswordMail | Acting user, chosen user | Called after the reset, under the acting-user check of the reset (fn_UserChangeRefusal 'ResetPassword'). The page holds no address: the hidden field hdnEmailId is removed (G3) |
+| spr_GetResetPasswordMail | ResetPassword.aspx | The address, IsActive, Reason | Reason 4 for a user that does not exist; the refusals of the reset rule |
+| ResetPassword.aspx | The Admin | Active user: the mail, "New passward was sent through mail."; inactive user: no mail, green "The password was reset to the default password. No mail was sent because the user is inactive." | If the procedure refuses after the reset: "The password was reset to the default password, but the mail could not be sent. The error is in the error log." |
+
+Where the rules live: the recipient rule in fn_FunctionalUsers (also read by spr_AddEditMeeting, spr_AddEditCommittee and
+spr_MinutesFinalizeByMeetingId for their rows); the To, the "no recipients" result and the messages in Meeting.aspx.cs and
+Committee.aspx.cs (GenerateMail, MailToActingUser); the inactive-user branch in ResetPassword.aspx.cs
+(btnResetPassword_Click). Tables read: Users, Roles. Nothing is written by the three mail procedures.
+
 ## Drawn from
 
-BMMS/Master/Agenda.aspx.cs (GenerateMail, GenerateUpdateMail), BMMS/DashBoard/DashBoard.aspx.cs, BMMS/Master/AgendaFinalization.aspx.cs,
+Database/BMMS-Fix-InactiveUsers-Step55.sql (fn_FunctionalUsers, spr_GetMeetingCommitteeMailId, spr_GetResetPasswordMail),
+BMMS/Master/Meeting.aspx.cs, Committee.aspx.cs and ResetPassword.aspx.cs (the messages), Database/README.md (section Step IU1).
+Agenda mails: BMMS/Master/Agenda.aspx.cs (GenerateMail, GenerateUpdateMail), BMMS/DashBoard/DashBoard.aspx.cs, BMMS/Master/AgendaFinalization.aspx.cs,
 Database/BMMS-Fix-DepartmentApprovers-Step53.sql (spr_GetAgendaCreationMailId, spr_GetAgendaUpdateMailId, spr_GetAlertMailId), System-Manual/07-Mail,
 Database/README.md (section Step UD1b).

@@ -200,6 +200,16 @@ Admin also receives no mail about agenda items, meetings or committees. The Cont
 alerts of the Controller's own decisions (approved or rejected), and the Manager does not see the alerts of
 the Manager's own decisions.
 
+The mail of a saved meeting or committee ("has been Created", "has been Updated") goes to the same people as
+the alert of it: every active user except the person who saved and the Admin role. The person who saved
+receives the mail too. A person without a mail address still gets the alert, and no mail. An inactive user gets
+neither. The committee mail is now sent as well, in the same way as the meeting mail. After the save the screen says
+"Successfully Saved"; or, when nobody had a mail address to send to, in green: "The meeting was saved. No mail was
+sent because there were no recipients." (for a committee: "The committee was saved. No mail was sent because there
+were no recipients."); or, when the mail failed, "The meeting was saved, but the mail could not be sent. The error is
+in the error log." (for a committee: "The committee was saved, but the mail could not be sent. The error is in the
+error log."). The meeting or committee is saved in every case.
+
 The Action Items card is below. It lists the action items of the follow-up decisions, the newest meeting
 first. Its columns include Meeting Date (for example 12-Nov-2026) and Due date. When the due date is before
 today and the item is not complied with or confirmed, a red "Overdue" label stands beside the date. The
@@ -216,6 +226,11 @@ Who sees which action items is decided from your own sign-in:
 | User | Items of your department whose minutes are finalised or confirmed | Yes, for an item of your department |
 | MD Secretariat | No Action Items card | - |
 | Admin | No Action Items card | - |
+
+When the minutes of a meeting are finalised, the action items are given only to active users other than the Admin
+role: the Admin gets none. A user who is made active later does not get the action items of minutes finalised
+before. Action items given earlier to an Admin or to a user who is now inactive are kept, and no screen or count
+shows them.
 
 The Controller, the Manager and the User see Submit and Cancel in the Action Item Details panel. After Submit the
 panel closes, the list is read again with the link and filters you had chosen, and BMMS says "The action text was

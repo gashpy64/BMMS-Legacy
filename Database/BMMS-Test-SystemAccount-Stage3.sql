@@ -53,6 +53,8 @@ GO
 DECLARE @T TABLE (TestNo INT IDENTITY(1,1), Test VARCHAR(160), Expected VARCHAR(120), Actual VARCHAR(400));
 -- Step 53 (step UD1b): no new alert row for the Admin role; the values that differ read [step 53: ...]
 DECLARE @S53 INT = CASE WHEN OBJECT_ID('dbo.fn_DepartmentManagers', 'IF') IS NOT NULL THEN 1 ELSE 0 END;
+-- Step 55 (step IU1): no new action item row for the Admin role at a finalisation; the value that differs reads [step 55: ...]
+DECLARE @S55 INT = CASE WHEN OBJECT_ID('dbo.fn_FunctionalUsers', 'IF') IS NOT NULL THEN 1 ELSE 0 END;
 DECLARE @R TABLE (Result INT, Reason INT, ReasonDetail NVARCHAR(2000),
                   Txt AS ('Result ' + CAST(Result AS VARCHAR(2)) + ', Reason ' + CAST(Reason AS VARCHAR(3))
                           + CASE WHEN ReasonDetail <> '' THEN ', ' + CAST(ReasonDetail AS VARCHAR(200)) ELSE '' END));
@@ -404,7 +406,7 @@ BEGIN TRY
     SET @AISaved = SCOPE_IDENTITY();
 
     DELETE FROM @R; INSERT INTO @R (Result, Reason, ReasonDetail) EXEC spr_MinutesFinalizeByMeetingId @MeetingId = @MtF, @UserId = @CtlA;
-    INSERT INTO @T SELECT 'Minutes finalize, new item: ordinary Admin / system account mapped', 'Result 1, Reason 0; 1 0',
+    INSERT INTO @T SELECT 'Minutes finalize, new item: ordinary Admin / system account mapped [step 55: no Admin row]', CASE WHEN @S55 = 1 THEN 'Result 1, Reason 0; 0 0' ELSE 'Result 1, Reason 0; 1 0' END,
            (SELECT Txt FROM @R) + '; '
          + CAST((SELECT COUNT(*) FROM ActionItem_User_Map m JOIN Action_Item a ON a.ActionItemId = m.ActionItemId WHERE a.MinutesId = @MinF1 AND m.UserId = @AdmA) AS VARCHAR(12)) + ' '
          + CAST((SELECT COUNT(*) FROM ActionItem_User_Map m JOIN Action_Item a ON a.ActionItemId = m.ActionItemId WHERE a.MinutesId = @MinF1 AND m.UserId = @Sys) AS VARCHAR(12));

@@ -191,6 +191,42 @@ namespace BMMSDAL
             CommonDB.ExecuteProcedure("spr_UpdateAlertByMeetingId", parameter); ;
         }
         #endregion
+
+        #region GetMeetingCommitteeMailId
+        // Step IU1 (BMMS-Fix-InactiveUsers-Step55.sql): the Bcc of the Meeting and Committee Created / Updated mails:
+        // the addresses of the users the MC / MU / CC / CU alert rows are written for (fn_FunctionalUsers: active, not
+        // the system account, not the Admin role), without the acting user, blank addresses left out; as one
+        // comma-separated list (empty when there is nobody). Reason 0 when allowed, otherwise 8 (acting user missing or
+        // inactive) or 4 (a role other than Admin and Controller), and then an empty list.
+        public static string GetMeetingCommitteeMailId(int ActingUserId, out int Reason)
+        {
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+
+            SqlParameter[] parameter = new SqlParameter[2];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = reason;
+
+            DataTable dt = CommonDB.GetDataTable("spr_GetMeetingCommitteeMailId", parameter);
+            Reason = OutputInt(reason, 8);
+
+            StringBuilder list = new StringBuilder();
+            if (Reason == 0)
+            {
+                foreach (DataRow row in dt.Rows)
+                {
+                    string emailId = Convert.ToString(row["EmailId"]).Trim();
+                    if (emailId.Length == 0)
+                        continue;
+                    if (list.Length > 0)
+                        list.Append(", ");
+                    list.Append(emailId);
+                }
+            }
+
+            return list.ToString();
+        }
+        #endregion
     }
     #endregion
 

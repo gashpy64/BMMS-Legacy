@@ -310,8 +310,11 @@ BEGIN TRY
         INSERT INTO @T
         -- From step 17 only active users are mapped; the row saved above stays even if that user is inactive.
         -- From step 18 the protected system account is not mapped either (unless it holds the saved row)
-        SELECT 17, 'Minutes finalize: every user mapped once (step 17/18: active, not system + saved row)',
-               CAST(CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_MinutesFinalizeByMeetingId')), '') LIKE '%UserStatus2b-Step17%'
+        SELECT 17, 'Minutes finalize: every user mapped once (17/18: active, not system; 55: not Admin; + saved row)',
+               CAST(CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_MinutesFinalizeByMeetingId')), '') LIKE '%InactiveUsers-Step55%'
+                         THEN (SELECT COUNT(*) FROM Users u WHERE (u.AccountStatus = 1 AND u.UserId <> ISNULL(@SystemUser, -1)
+                               AND NOT EXISTS (SELECT 1 FROM Roles ar WHERE ar.RoleId = u.RoleId AND ar.RoleCode = 'admin')) OR u.UserId = @AnyUserId)
+                         WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_MinutesFinalizeByMeetingId')), '') LIKE '%UserStatus2b-Step17%'
                          THEN (SELECT COUNT(*) FROM Users WHERE (AccountStatus = 1 AND UserId <> ISNULL(@SystemUser, -1)) OR UserId = @AnyUserId)
                          ELSE (SELECT COUNT(*) FROM Users) END AS VARCHAR(12)),
                CAST(COUNT(*) AS VARCHAR(12))
