@@ -3,10 +3,11 @@
 - Title: Overview and Architecture
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: RA1b (step 41)
-- Last updated by: RA1b (step 41), based on 1d1bbbe
+- Applies to: AZ1 (section "Third-party components"); RA1b (step 41)
+- Commit: 00838ed
+- Last updated by: AZ1, based on 00838ed (the third-party components, Office and Word, the origin of the DLLs, the licences)
 - Status: Draft
-- Verified against: BMMS.sln, BMMS/BMMS.csproj, BMMSBAL/BMMSBAL.csproj, BMMSDAL/BMMSDAL.csproj,
+- Verified against: for AZ1: git diff HEAD (BMMS/BMMS.csproj, BMMSBAL/BMMSBAL.csproj, BMMSBAL/WordUtilities.cs, the deleted BMMSBAL/DocToString.cs, the deleted and moved files under bin), Lib/iTextSharp/README.txt, Lib/AjaxControlToolkit/README.txt, Database/README.md (section Step AZ1 and Known items), the build and owner results as given; before: BMMS.sln, BMMS/BMMS.csproj, BMMSBAL/BMMSBAL.csproj, BMMSDAL/BMMSDAL.csproj,
   BMMS/Web.config (structure), BMMS/Global.asax.cs, BMMS/PageAccessModule.cs,
   BMMS/XML/PageAccess.xml, BMMS/UserControl/MenuUserControl.ascx, BMMS/Default.aspx.cs,
   BMMS/Master/Department.aspx(.cs), BMMSDAL/CommonDB.cs, BMMSDAL/ConnectDB.cs,
@@ -21,8 +22,8 @@
   RA1b), BMMS/UserControl/MenuUserControl.ascx and BMMS/XML/PageAccess.xml (diff)
 - To confirm: the owner's principle for Admin and Controller as a written decision (Purpose of
   BMMS), and whether every functional page already gives the Controller the right; whether the installed site runs with compilation debug="true"; where
-  itextsharp.dll and Microsoft.Office.Interop.Word.dll are to come from when BMMS/dll is restored
-  (git tracks no file there); the licence of the iTextSharp version in use; that
+  the licence texts of iTextSharp 4.0.2 and AjaxControlToolkit 1.0.20229 (none came with the
+  copies in Lib; AZ1); that
   Documentation/Pages.xlsx is the only file left in Documentation/ after WF2b1
 
 ## Purpose of BMMS
@@ -199,24 +200,39 @@ debug="true"` is set in the file. [[CONFIRM: whether the installed site runs wit
 
 | Component | Version in the project files | Where it is referenced | Notes |
 |---|---|---|---|
-| AjaxControlToolkit | 1.0.20229.20821 | BMMS.csproj (no hint path) | A tracked copy is in BMMS/bin |
-| iTextSharp (PDF output) | 4.0.2.0 | BMMSBAL.csproj (hint path `..\BMMS\dll\itextsharp.dll`) and BMMS.csproj (no hint path) | Tracked copies are in BMMS/bin and BMMSBAL/bin/Debug; the folder BMMS/dll named by the hint path is not tracked |
-| Microsoft.Office.Interop.Word (Word output) | 12.0.0.0 | BMMSBAL.csproj (hint path `..\BMMS\dll\Microsoft.Office.Interop.Word.dll`) | A tracked copy is in BMMSBAL/bin/Debug. Word is not needed on the server: the reference stays in BMMSBAL.csproj and the two classes that use it (`WordUtilities.CreateWord`, `DocToString.ConvertDocToString`) remain in the code, but nothing calls them: `CreateWord` has no caller, and `ConvertDocToString` is called only in a commented line (Master/Agenda.aspx.cs, line 1413). The commented WordUtilities calls in Report/ViewReport.aspx.cs (lines 90, 149, 150) are `ExportToWord` and `ExportToPdf`, which do not use Interop (the only Interop code in WordUtilities.cs is inside `CreateWord`, lines 178-196). No late-bound Word call exists and Web.config names no Office assembly. The Export to Word button sends the report HTML as a `.doc` download (content type `application/msword`) and starts no Word. The DLL is needed to build, not to run |
+| AjaxControlToolkit | 1.0.20229.20821 | BMMS.csproj (hint path `..\Lib\AjaxControlToolkit\AjaxControlToolkit.dll`, Private True) | Tracked in Lib/AjaxControlToolkit with a README.txt (version, size, SHA-256); the build copies it to BMMS/bin |
+| iTextSharp (PDF output) | 4.0.2.0 | BMMSBAL.csproj and BMMS.csproj (hint path `..\Lib\iTextSharp\itextsharp.dll`, Private True) | Tracked in Lib/iTextSharp with a README.txt (version, size, SHA-256); the build copies it to BMMS/bin |
 | HtmlAgilityPack | not versioned in the reference | BMMS.csproj and BMMSBAL.csproj (hint path `..\Lib\HtmlAgilityPack\HtmlAgilityPack.dll`) | Tracked in Lib/HtmlAgilityPack with its LICENSE.txt and README.txt |
-| VBIDE (COM reference) | 5.3 | BMMSBAL.csproj | A COM reference of the project file |
 
 BMMS.Controls.RichTextEditor is the project's own rich-text control (BMMS/RichTextEditor.cs); the
 project file has no reference to FreeTextBox.
 
-The projects refer to the DLLs by hint paths that point into BMMS/dll, a folder that git does not
-track (`git ls-files BMMS/dll` lists nothing). The hint paths in BMMSBAL.csproj are
-`..\BMMS\dll\itextsharp.dll` and `..\BMMS\dll\Microsoft.Office.Interop.Word.dll`. A fresh clone
-therefore cannot build until both DLLs are restored into BMMS/dll.
-[[CONFIRM: where the two DLLs are to come from (a shared location, the tracked copies in BMMS/bin and BMMSBAL/bin/Debug, or a package); confirm on a clean build machine]]
+Office and Word. Since step AZ1 the projects have no Office reference: the Microsoft.Office.Interop.Word
+reference and the VBIDE COM reference (which had brought Microsoft.Vbe.Interop, office.dll and
+stdole.dll into the build) are removed from BMMSBAL.csproj, together with `DocToString.cs`
+(`ConvertDocToString` was called only in a commented line of Master/Agenda.aspx.cs) and
+`WordUtilities.CreateWord` (no caller). Nothing uses Word or Interop at run time: the Export to
+Word button of a report (Report/ViewReport.aspx.cs) sends the report HTML as a `.doc` download and
+starts no Word. Word is needed neither to build nor to run the site. The two SQL Server DLLs
+(Microsoft.SqlServer.BatchParser and Replication) that were tracked under BMMS/bin/backupdlls and
+BMMSBAL/bin/Debug are removed too: no code uses Microsoft.SqlServer (Backup Database is a plain
+`BACKUP DATABASE` through System.Data.SqlClient, BMMSBAL/Sql_Backup_Mgr.cs).
 
-iTextSharp licence. The project references iTextSharp 4.0.2.0. The old notes say that the AGPL
-licence came with iText 5 and that 4.0.2 is under LGPL/MPL, so no licence problem arises from the
-version in use. [[CONFIRM: lead from old Errata notes: iTextSharp 4.0.2 is LGPL/MPL; check the licence text that comes with the library or the project's published licence for that version]]
+Where the DLLs come from. Since step AZ1 every third-party DLL is tracked in Lib/ (one folder per
+library, as Lib/HtmlAgilityPack) and every reference has a HintPath into Lib; no reference relies on
+a bin folder, and git tracks no file under any bin or obj folder. A fresh clone builds Debug and
+Release (0 errors, checked on a fresh clone at step AZ1); the build copies the DLLs to BMMS/bin.
+The folder BMMS/dll no longer plays a part.
+
+Licences. Lib/HtmlAgilityPack has its LICENSE.txt. Lib/iTextSharp and Lib/AjaxControlToolkit each have
+a README.txt that names the version, size and SHA-256 of the DLL; no licence text came with either
+copy. The READMEs name the licence as published and as to be confirmed: iTextSharp 4.x MPL 1.1 / LGPL
+(the old Errata notes say the AGPL came with iText 5, not with 4.0.2), the toolkit Ms-PL.
+[[CONFIRM: the licence texts of iTextSharp 4.0.2 and AjaxControlToolkit 1.0.20229 are to be added beside the DLLs by the owner (Database/README.md, Known items); check them against the published licence of each version]]
+
+Both libraries stay at their old versions (iTextSharp 4.0.2, toolkit 1.0.20229). Database/README.md
+lists their review (known vulnerabilities, upgrade path) for the security pass before the fresh
+install.
 
 ## Superseded documents
 

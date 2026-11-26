@@ -4,8 +4,8 @@
 *.suo
  
 # Build folders
-# The third-party DLLs still tracked under BMMS/bin and BMMSBAL/bin/Debug are
-# kept on purpose: the projects reference them from there.
+# Nothing is tracked under bin or obj (step AZ1): the third-party DLLs are in Lib\,
+# referenced with a HintPath, and the build copies them to BMMS\bin.
 bin/
 obj/
  

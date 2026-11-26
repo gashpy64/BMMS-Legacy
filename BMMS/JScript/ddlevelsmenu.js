@@ -9,7 +9,7 @@ if (typeof dd_domreadycheck=="undefined") //global variable to detect if DOM is 
 
 var ddlevelsmenu={
 
-enableshim: true, //enable IFRAME shim to prevent drop down menus from being hidden below SELECT or FLASH elements? (tip: disable if not in use, for efficiency)
+enableshim: false, //Step AZ1: off. The shim is for old IE only; over https it loaded "blank.htm" (no such page) and showed a 404 above the header. Chrome and Edge draw the menu over SELECT without it. Enable IFRAME shim to prevent drop down menus from being hidden below SELECT or FLASH elements? (tip: disable if not in use, for efficiency)
 
 arrowpointers:{
 	downarrow: ["Images/arrow-down.gif", 0,0], //[path_to_down_arrow, arrowwidth, arrowheight]

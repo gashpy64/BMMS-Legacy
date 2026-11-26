@@ -327,7 +327,6 @@ function Invoke-QaBuild {
     $rsp = Join-Path $QaBuildDir 'build.rsp'
     @('/nologo', '/v:m', '/t:Build', '/p:Configuration=Debug',
       "/p:OutDir=`"$out\\`"", "/p:IntermediateOutputPath=`"$obj\\`"",
-      "/p:ReferencePath=`"$QaRepo\BMMSBAL\bin\Debug;$QaRepo\BMMS\bin`"",
       '/p:UseSharedCompilation=false') | Set-Content -LiteralPath $rsp -Encoding utf8
     $log = @(& (Get-QaMsBuild) (Join-Path $QaRepo 'BMMS\BMMS.csproj') "@$rsp" 2>&1 | ForEach-Object { "$_" })
     if ($LASTEXITCODE -ne 0) {

@@ -163,50 +163,8 @@ namespace BMMSBAL
         }
         #endregion
 
-        public static void CreateWord(String HtmlFile)
-        {
-
-
-
-            object filename1 = HtmlFile;
-
-            object oMissing = System.Reflection.Missing.Value;
-
-
-            object oFalse = false;
-
-            Microsoft.Office.Interop.Word.Application oWord = new
-            Microsoft.Office.Interop.Word.Application();
-
-            Microsoft.Office.Interop.Word.Document oDoc = new
-            Microsoft.Office.Interop.Word.Document();
-
-            oDoc = oWord.Documents.Add(ref oMissing, ref oMissing, ref oMissing, ref oMissing);
-
-            oWord.Visible = false;
-
-            oDoc = oWord.Documents.Open(ref filename1, ref oMissing,
-            ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing,
-            ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing,
-            ref oMissing, ref oMissing, ref oMissing, ref oMissing);
-
-            filename1 = @"S:\Report.doc";
-
-            object fileFormat =
-            Microsoft.Office.Interop.Word.WdSaveFormat.wdFormatDocument;
-
-            oDoc.SaveAs(ref filename1, ref fileFormat, ref oMissing,
-            ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing,
-            ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing,
-            ref oMissing, ref oMissing, ref oMissing);
-
-            oDoc.Close(ref oFalse, ref oMissing, ref oMissing);
-
-            oWord.Quit(ref oMissing, ref oMissing, ref oMissing);
-
-
-
-        }
+        // Step AZ1: CreateWord (Word started through Office Interop) is removed; it had no caller.
+        // Export to Word sends the report HTML as a .doc download and needs no Word on the server.
 
     }
 }

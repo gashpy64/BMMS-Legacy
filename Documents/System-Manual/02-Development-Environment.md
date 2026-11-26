@@ -3,11 +3,11 @@
 - Title: Development Environment
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UD1c (the Database BMMS_Quality row of "The tester: what the development machine needs": eleven qa_ accounts, qa_manager4 and the pack manager-scope); UD1b (the Database BMMS_Quality row of "The tester: what the development machine needs": the account qa_manager3 and the pack two-approvers); DA1 (the doc-auditor row of "The agents", the section "The doc-auditor and its guard", the section "The audit catalog"); UN6e (the SQL Server row and the App_Data row of "The tester: what the development machine needs"); UN6b (the memory reading in "The tester: what the development machine needs"); the rest WF3a2
-- Commit: 42cb88c
-- Last updated by: UD1c, based on 42cb88c
+- Applies to: AZ1 (the output folders, the MSBuild row of "The tester: what the development machine needs", the list of files a new working copy lacks, "Building without touching bin and obj"); UD1c (the Database BMMS_Quality row of "The tester: what the development machine needs": eleven qa_ accounts, qa_manager4 and the pack manager-scope); UD1b (the Database BMMS_Quality row of "The tester: what the development machine needs": the account qa_manager3 and the pack two-approvers); DA1 (the doc-auditor row of "The agents", the section "The doc-auditor and its guard", the section "The audit catalog"); UN6e (the SQL Server row and the App_Data row of "The tester: what the development machine needs"); UN6b (the memory reading in "The tester: what the development machine needs"); the rest WF3a2
+- Commit: 00838ed
+- Last updated by: AZ1, based on 00838ed
 - Status: Draft
-- Verified against: for step UD1c: Tests/README.md, Tests/_runner/Tester.Common.ps1 and Setup-Quality.ps1, Tests/credentials.json.example (diff), Tests/fixture/BMMS-Quality-Fixture.sql and BMMS-Quality-Fixture-Check.sql (diff), Tests/packs/manager-scope/README.md; for step UD1b: Tests/README.md, Tests/_runner/Tester.Common.ps1 and Setup-Quality.ps1, Tests/credentials.json.example (diff), Tests/packs/two-approvers/README.md; for step DA1: .claude/agents/doc-auditor.md, .claude/hooks/doc-auditor-guard.ps1 (header comment and the lines that name the write pattern and the Grep extension list; not read line by line), Documents/_build/Export-Catalog.ps1 (parameters, the output-folder rule, the fingerprint), Documents/Audit/README.md, CLAUDE.md (diff); for step UN6e: Tests/README.md (diff: the Server and Site lines), Database/README.md (section Step UN6e, Tester); for step UN6b: Tests/_runner/Tester.Common.ps1 (diff: Get-QaMemory, QaMemoryWarnMB),
+- Verified against: for step AZ1: git diff HEAD (.gitignore, BMMS/BMMS.csproj, BMMSBAL/BMMSBAL.csproj, Tests/_runner/Tester.Common.ps1, the deleted and moved files under bin), Lib/iTextSharp/README.txt, Lib/AjaxControlToolkit/README.txt, Database/README.md (section Step AZ1), the build and owner results as given; for step UD1c: Tests/README.md, Tests/_runner/Tester.Common.ps1 and Setup-Quality.ps1, Tests/credentials.json.example (diff), Tests/fixture/BMMS-Quality-Fixture.sql and BMMS-Quality-Fixture-Check.sql (diff), Tests/packs/manager-scope/README.md; for step UD1b: Tests/README.md, Tests/_runner/Tester.Common.ps1 and Setup-Quality.ps1, Tests/credentials.json.example (diff), Tests/packs/two-approvers/README.md; for step DA1: .claude/agents/doc-auditor.md, .claude/hooks/doc-auditor-guard.ps1 (header comment and the lines that name the write pattern and the Grep extension list; not read line by line), Documents/_build/Export-Catalog.ps1 (parameters, the output-folder rule, the fingerprint), Documents/Audit/README.md, CLAUDE.md (diff); for step UN6e: Tests/README.md (diff: the Server and Site lines), Database/README.md (section Step UN6e, Tester); for step UN6b: Tests/_runner/Tester.Common.ps1 (diff: Get-QaMemory, QaMemoryWarnMB),
   Run-Tests.ps1 (diff, preflight), Tests/README.md (diff, the memory warning row); for the development workflow (steps 1, 5, 6, 7 and 9) and the agents: CLAUDE.md (diff),
   .claude/agents/tester.md; for the section "The tester: what the development machine needs": Tests/package.json,
   Tests/README.md, Tests/_runner/Tester.Common.ps1 and Run-Tests.ps1 (tool lookup), Tests/lib/run.js,
@@ -23,8 +23,7 @@
   BMMSBAL/BMMSBAL.csproj
 - To confirm: the exact command lines for the compile, the site precompile and the SQL parse; the
   branch policy (master protected, modernization for development); which Visual Studio workloads
-  and which SQL Server edition a developer needs; where itextsharp.dll and
-  Microsoft.Office.Interop.Word.dll are to come from when BMMS/dll is restored; how the
+  and which SQL Server edition a developer needs; how the
   documentation tools are installed
 
 This chapter describes what a developer needs to build and test BMMS. The projects, the layers and
@@ -47,9 +46,10 @@ Installing BMMS on a server is in 03-Deployment-and-Installation.
 
 Output folders. In BMMS.csproj every configuration writes to `bin\`. In BMMSBAL.csproj and
 BMMSDAL.csproj the Debug configuration writes to `bin\Debug\` and Release to `bin\Release\` (the
-x86 configurations to `bin\x86\Debug\` and `bin\x86\Release\`). `.gitignore` lists `bin/` and `obj/`
-(the third-party DLLs tracked under BMMS/bin and BMMSBAL/bin/Debug are kept on purpose; see
-01-Overview-and-Architecture for the components and the open question about BMMS/dll).
+x86 configurations to `bin\x86\Debug\` and `bin\x86\Release\`). `.gitignore` lists `bin/` and `obj/`.
+Since step AZ1 git tracks no file under any bin or obj folder: the third-party DLLs are in `Lib\`
+(one folder per library) and the projects reference them with a HintPath (see
+01-Overview-and-Architecture for the components). The build copies them to `BMMS\bin`.
 
 [[CONFIRM: which Visual Studio workloads and which SQL Server edition a developer needs; the files name only the solution's Visual Studio version and the edition of the test server in the export]]
 
@@ -94,7 +94,7 @@ development machine:
 | Node.js | Version 20 or later (`engines` in Tests/package.json); the runner refuses when node is not found |
 | playwright-core | The one Node package, version 1.65.0 (Tests/package.json, with package-lock.json). Install once per machine, and after Tests/package.json changes, with `npm ci` in the Tests folder (needs the internet). No browser is downloaded |
 | Chrome | The installed Google Chrome, started headless through playwright-core (`channel: 'chrome'` in Tests/lib/run.js) |
-| MSBuild | Found with vswhere from the Visual Studio Installer, else at a fixed Visual Studio 18 Community path; the runner builds BMMS/BMMS.csproj into Tests/_build (the projects' own bin and obj are not written) |
+| MSBuild | Found with vswhere from the Visual Studio Installer, else at a fixed Visual Studio 18 Community path; the runner builds BMMS/BMMS.csproj into Tests/_build (the projects' own bin and obj are not written). Since step AZ1 the build passes no `/p:ReferencePath`: the references resolve from Lib through their HintPaths, so the tester's build also proves that a fresh clone builds |
 | IIS Express | `C:\Program Files (x86)\IIS Express\iisexpress.exe`, run on port 18573 with the .NET 4 runtime |
 | SQL Server | The local default instance (the tester's server name is fixed as `.`), with sysadmin rights for the owner's Windows login for the one-time setup. Since step UN6e (Tests/README.md) the two instances are named: the owner's BMMS, BMMS_Test and BMMS_New stay on `.\SQLEXPRESS`, which the tester never connects to; BMMS_Quality on `.` is made from a COPY_ONLY backup of BMMS_Test taken on `.\SQLEXPRESS` and passed through a folder both instances' service accounts can use (neither can read the other's backup folder); on `.` bmms_app is a login of its own, linked to its user in BMMS_Quality, with a password nobody keeps |
 | Folder `BMMS\App_Data` | Must exist in the working tree (empty is enough). A fresh clone lacks it, because git keeps no empty folder, and the site sync then refuses the run; create it once with `mkdir BMMS\App_Data` |
@@ -129,7 +129,7 @@ say that `master` is the recovery baseline with no direct changes (emergency fix
 Working rules that apply to the source (CLAUDE.md): one tag per step; commits are staged by
 explicit path (`git add <path>`), never as a whole; the owner commits, tags and pushes, not the
 tools. Left out of commits: BMMS/Files/AgendaText/, Database/BMMS-Check-SmallintParameters.sql,
-bin and obj. Rebuilt binaries are never committed, although bin/ and obj/ files are tracked.
+bin and obj. Rebuilt binaries are never committed (since step AZ1 none is tracked).
 
 Files that git does not hold and a new working copy therefore lacks (`.gitignore`):
 
@@ -139,11 +139,16 @@ Files that git does not hold and a new working copy therefore lacks (`.gitignore
   `BMMS/Files/SqlBackup/`, `BMMS/Files/Branding/` and the contents of `BMMS/Files/Temp/` (the
   folder itself is kept by a `.gitkeep` file, which the Send Mail page needs);
 - the `Log/` folders and `*.bak` files;
-- `BMMS/dll/`, which the project references use as hint paths for itextsharp.dll and
-  Microsoft.Office.Interop.Word.dll; it is not in `.gitignore` but git tracks no file there
-  (`git ls-files BMMS/dll` lists nothing). A fresh clone cannot build until itextsharp.dll and the
-  Interop DLL are restored into BMMS/dll (hint paths in BMMSBAL.csproj; 01-Overview-and-Architecture).
-  [[CONFIRM: where the two DLLs are to come from; confirm on a clean build machine]]
+- the build output: `bin/` and `obj/` of every project. A fresh clone has none of them; the build
+  makes them.
+
+A fresh clone builds as it is (step AZ1): every third-party DLL is tracked in `Lib\`
+(`Lib\HtmlAgilityPack`, `Lib\iTextSharp`, `Lib\AjaxControlToolkit`) and referenced with a HintPath, so
+Build or Rebuild Solution, Debug or Release, needs nothing restored by hand. The folder `BMMS\dll`
+is not used any more, and no Office or Word installation is needed (01-Overview-and-Architecture).
+After a pull that deletes DLLs from `BMMS\bin` (the pull of step AZ1 did), build before opening the
+site: until the build copies the DLLs back from Lib, every page answers with the error page "BMMS -
+Error" (Database/README.md, section Step AZ1).
 
 ## Connection settings (placeholders only)
 
@@ -174,15 +179,15 @@ test copy must start with BMMS (see 03-Deployment-and-Installation for the scrip
 
 The house rule (CLAUDE.md, step 2 of the development workflow) is: compile into a scratch folder,
 with Build and not Rebuild, so that `bin` and `obj` of the repository stay untouched. This matters
-because bin/ and obj/ files are tracked in git and a rebuild would change them; rebuilt binaries
-must not go into commits.
+because a rebuild changes the binaries in the working tree; rebuilt binaries must not go into
+commits. (Since step AZ1 git tracks none, so a rebuild no longer shows in git status; the rule
+stays, so the owner's own bin and obj are not disturbed.)
 
 Method:
 
 1. Compile the projects with the Roslyn compiler (csc), with the output folder set to a scratch
    folder outside the repository, `<scratch folder>`. The order follows the references: BMMSDAL,
-   then BMMSBAL (references BMMSDAL, `HtmlAgilityPack`, `itextsharp`,
-   `Microsoft.Office.Interop.Word`), then BMMS (references BMMSBAL, `AjaxControlToolkit`,
+   then BMMSBAL (references BMMSDAL, `HtmlAgilityPack`, `itextsharp`), then BMMS (references BMMSBAL, `AjaxControlToolkit`,
    `HtmlAgilityPack`, `itextsharp`). The sources and references are those of the three project
    files (01-Overview-and-Architecture).
 2. The compile must end with 0 errors. Nothing is written under `bin` or `obj`.
