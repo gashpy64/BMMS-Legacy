@@ -241,6 +241,16 @@
    older text: step 56 reads Partly (see the README of step 56). After
    BMMS-Rollback-GovernanceLog-Step56.sql it reads Partly, 1 of 27 (the
    table, its rows and the setting stay).
+   Step 57 (step AZ2) replaces spr_SetOrganisationSettings (step 19) and
+   spr_AddEditMemberType (step 40), which keep the markers of steps 19, 21
+   and 40, so those still read Installed; a third marker is that no object
+   names another database or server (sys.sql_expression_dependencies; the
+   x.n.value row of spr_SaveFollowupConfirmed, an XML method call, is left
+   out): 3 markers. Re-running step 19, 21 or 40, or
+   BMMS-Rollback-RoleAccess-Step40.sql, after step 57 brings back the
+   reference to master.dbo.spt_values: step 57 reads Partly; run step 57
+   again (after step 56). After BMMS-Rollback-DatabaseLocal-Step57.sql it
+   reads Missing.
    Step 32 is reserved and not built; it has no row.
    Step D1 (shown as step 100) replaces spr_DeleteMeetingByMeetingId, which
    no numbered script contains: it reads Missing only on a database restored
@@ -653,6 +663,20 @@ INSERT INTO @M VALUES
  CASE WHEN OBJECT_ID('dbo.Governance_Change_Log', 'U') IS NOT NULL AND OBJECT_ID('dbo.FK_Governance_Change_Log_ChangedBy', 'F') IS NOT NULL
            AND EXISTS (SELECT 1 FROM dbo.App_Setting WHERE SettingCode = 'GovernanceLogFrom') THEN 1 ELSE 0 END);
 
+-- 57. BMMS-Fix-DatabaseLocal-Step57.sql, installed after step 56 (two replaced; no reference to another database)
+INSERT INTO @M
+SELECT 57, o.Name + ' (DatabaseLocal-Step57)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.' + o.Name)), '') LIKE '%DatabaseLocal-Step57%' THEN 1 ELSE 0 END
+FROM (VALUES ('spr_SetOrganisationSettings'), ('spr_AddEditMemberType')) o(Name);
+INSERT INTO @M VALUES
+(57, 'No procedure, function, view or trigger names another database or server (the x.n.value row of spr_SaveFollowupConfirmed left out)',
+ CASE WHEN EXISTS (SELECT 1 FROM sys.sql_expression_dependencies d
+                   WHERE (d.referenced_database_name IS NOT NULL OR d.referenced_server_name IS NOT NULL)
+                     AND NOT (d.referencing_id = OBJECT_ID('dbo.spr_SaveFollowupConfirmed')
+                              AND d.referenced_server_name IS NULL
+                              AND d.referenced_database_name = 'x'
+                              AND d.referenced_schema_name = 'n'
+                              AND d.referenced_entity_name = 'value')) THEN 0 ELSE 1 END);
+
 -- D1 (shown as step 100). BMMS-Fix-MeetingDelete-D1.sql; no numbered script contains spr_DeleteMeetingByMeetingId
 INSERT INTO @M VALUES
 (100, 'spr_DeleteMeetingByMeetingId (MeetingDelete-D1)', CASE WHEN ISNULL(OBJECT_DEFINITION(OBJECT_ID('dbo.spr_DeleteMeetingByMeetingId')), '') LIKE '%MeetingDelete-D1%' THEN 1 ELSE 0 END);
@@ -710,6 +734,7 @@ INSERT INTO @Steps VALUES
 (54, 'BMMS-Fix-ManagerScope-Step54.sql', 'step 13, 16, 17, 18, 31 or 35 was re-run after step 54 (7 to 9 of 10): see the README of step 54 (Rollback 54, the step 53 notes, then step 54 again)'),
 (55, 'BMMS-Fix-InactiveUsers-Step55.sql', 'step 8, 15, 16, 17, 18 or 21 was re-run after step 55 (3 to 5 of 6): see the README of step 55'),
 (56, 'BMMS-Fix-GovernanceLog-Step56.sql', 'step 2, 3, 6, 10, 13, 16, 18, 21, 29 or 30 was re-run after step 56, or step 56 was rolled back (1 of 27: the table stays): see the README of step 56'),
+(57, 'BMMS-Fix-DatabaseLocal-Step57.sql', 'step 19, 21 or 40 was re-run, or step 40 was rolled back, after step 57: run step 57 again (after step 56)'),
 (100, 'BMMS-Fix-MeetingDelete-D1.sql (step D1)', '');
 
 SELECT s.Step, s.Script,

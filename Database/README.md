@@ -3850,8 +3850,70 @@ Tester (2026-11-26, Tests\_results\2026-11-26_224034; no baseline update, no dat
 
 Owner tests (Work Laptop, BMMS_Test, 2026-11-26): PASSED (Rebuild first; the menus open over the drop-down lists on Agenda Finalize, Followup and Committee Master in Chrome and Edge; both .woff2 fonts 200; View Report Export to Pdf and Export to Word open; the calendar and the User Master Email filter work; no " M BMMS/bin/stdole.dll" in git status after the build; error log 0 new lines). The check on Azure is deferred until after step AZ2 (the Azure database is at step 51).
 
+## Step AZ2: no reference to another database in two procedures, so the database deploys to Azure SQL Database (database script step 57; test script for BMMS_Test)
+
+Why: the SSMS "Deploy Database to Microsoft Azure SQL Database" of BMMS_Test failed with SQL71562: spr_AddEditMemberType and spr_SetOrganisationSettings reference [master].[dbo].[spt_values]. Both filled their list of control characters (NCHAR 0 to 31 and 127) from master.dbo.spt_values (type 'P') before the role check; the list refuses a control character with Reason 3 and the setting code, MemberTypeCode or MemberTypeName. An Azure SQL database cannot name another database.
+
+The Azure copy of BMMS_Test (at step 51) has an undocumented hand change of 2026-11-18: a view dbo.vw_spt_values_P and both procedures reading it, with their markers kept. It is not in git. The redeploy from the local BMMS_Test replaces it; step 57 does not create or use such a view.
+
+Owner decisions 2026-11-26 (requirement AZ2; the plan approved with the answers A, B and C as recommended):
+
+- Marker DatabaseLocal-Step57. A numbers list (common table expression) inside each procedure; no new object, no catalog view.
+- Fix 19, Fix 21, Fix 40 and Rollback 40 are not changed (they still contain the spt_values text; see "Re-run" below).
+- spr_SetOrganisationSettings keeps its THROW in the CATCH block (identical behaviour); spr_AddEditMemberType keeps RAISERROR (Test 40 checks that it has no THROW).
+- A: the closing count of the Fix and the Check row leave out exactly one row of sys.sql_expression_dependencies: spr_SaveFollowupConfirmed with referenced database x, schema n and entity value. That row is the XML method call x.n.value(...) in its text, which SQL Server lists as a three-part name; it names no database. Every other reference to another database or server counts, so a correct install prints 0.
+- C: Test 57 has 30 rows; the 33 characters are checked inside 3 rows, which list the code points that did not give the expected answer.
+
+What changes: both procedures get the step 19 and step 40 texts word for word, except the fill of the list and one comment line naming DatabaseLocal-Step57:
+
+    ;WITH d (n) AS (SELECT n FROM (VALUES (0),(1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12),
+                    (13),(14),(15)) v (n)),
+          num (number) AS (SELECT a.n * 16 + b.n FROM d a CROSS JOIN d b)
+    INSERT INTO @Ctrl (Ch)
+    SELECT NCHAR(number) FROM num WHERE number BETWEEN 0 AND 31 OR number = 127;
+
+The same 33 characters. Parameters, result sets, Reasons, ReasonDetail and messages are unchanged; no data change; no C# change. The markers OrganisationSettings-Step19, MemberTypes-Step21 and RoleAccess-Step40 stay in the texts (the Check rows of steps 19, 21 and 40, Test 19 line 106, Test 21 line 131, Test 40 and the guards of Fix 20, 21, 29, 30, 39 and 40 read them). The new comment line contains neither "THROW" nor "master.". Checked on BMMS_Test: the installed texts differ from the step 19 and step 40 texts only in these lines.
+
+- Database step 57 (BMMS-Fix-DatabaseLocal-Step57.sql; marker DatabaseLocal-Step57; 3 markers in BMMS-Check-InstalledSteps.sql: the two procedures and "no procedure, function, view or trigger names another database or server"). Guards: the name like BMMS%; step 56 (spr_sys_ResetDatabase carries GovernanceLog-Step56); spr_SetOrganisationSettings with OrganisationSettings-Step19 and spr_AddEditMemberType with RoleAccess-Step40 (both keep them after step 57, so a re-run is safe). It ends with "Step 57 installed ..." and the count of references to another database or server (0 expected).
+- BMMS-Rollback-DatabaseLocal-Step57.sql puts the step 19 and step 40 texts back unchanged and prints the SHA-256 of both definitions. It stops when step 57 is not installed and on Azure SQL Database (SERVERPROPERTY('EngineEdition') = 5), where the restored texts cannot run. On BMMS_Test the restored definitions have the same SHA-256 (HASHBYTES('SHA2_256') of OBJECT_DEFINITION) as before step 57: spr_SetOrganisationSettings 0x228A8FBBCC0DF254230625A9085F09E1A1A73A1273BB379F6859DB2F3E334CAE, spr_AddEditMemberType 0xAE706ABF18BC2865142CFFB27D66ECB1648CB5722E772B4BC58174B5F606EB75. (SQL Server stores CREATE OR ALTER as "CREATE   PROCEDURE"; the hashes compare the stored texts.)
+- Re-run: BMMS-Fix-OrganisationSettings-Step19.sql, BMMS-Fix-MemberTypes-Step21.sql, BMMS-Fix-RoleAccess-Step40.sql and BMMS-Rollback-RoleAccess-Step40.sql still contain master.dbo.spt_values. Run after step 57, they bring the reference back: step 57 reads Partly; run step 57 again (after step 56). Not guarded (owner decision); see Known items.
+
+Test script BMMS-Test-DatabaseLocal-Step57.sql (TEST DATABASE ONLY: it refuses a database named BMMS; it names no other database, so it also runs on Azure; 30 checks): part 1 read only (the new and the older markers, neither text with spt_values or "master.", no reference to another database or server for either procedure, the parameters unchanged, no THROW in spr_AddEditMemberType, THROW still in spr_SetOrganisationSettings); part 2 in one transaction rolled back, with made-up ZZ57 users (an Admin, an inactive Admin, a Controller): each of the 33 characters inside an organisation value (the seven free-text settings in turn), a member type code and a member type name (Result 0, Reason 3 and that setting code, MemberTypeCode or MemberTypeName; nothing written); space (32), ~ (126) and NCHAR(160) accepted in each (each member type save with its own code and name); NCHAR(129) accepted in each, as before step 57; Controller Reason 4, unknown, NULL and inactive acting user Reason 8 for both; afterwards Users, App_Setting, Member_Type and Audit_Trail_Master as before, no ZZ57 row left, every identity counter put back.
+
+Results on BMMS_Test (.\SQLEXPRESS, 2026-11-27): all four scripts parse under NOEXEC. Check before: step 57 Missing (0 of 3). Fix: "Step 57 installed ... References to another database or server: 0 (0 expected)". Test 57: 27 of 30 (before the owner decision of 2026-11-27; now 30 of 30, see below); the 3 rows of NCHAR(129) FAIL (Result 1, Reason 0: accepted), see below. Fix again: the same message. Check: step 57 Installed 3 of 3, every step Installed. Rollback: the two hashes above, equal to the values before step 57; Rollback again: refused ("nothing to roll back"); Test 57 refused (step 57 not installed); Check: step 57 Missing, steps 19, 21 and 40 Installed. Fix again, then Test 19 52 of 52, Test 21 100 of 100, Test 40 43 of 43, Test 57 27 of 30 (before the owner decision of 2026-11-27; now 30 of 30, see below) (the same three rows), Check: every step Installed.
+
+Found (pre-existing, not changed): NCHAR(129) is accepted by both procedures, before and after step 57. On BMMS_Test (collation SQL_Latin1_General_CP1_CI_AS, code page 1252) U+0081 converts to VARCHAR and back unchanged, so the code-page rule does not refuse it, and it is not one of the 33 control characters. A call inside a rolled-back transaction with the step 19 and step 40 texts (after the Rollback, both reading spt_values) gave Result 1, Reason 0 in the organisation name, the member type code and the member type name. All 33 control characters gave Reason 3 in all three places.
+
+Owner decision 2026-11-27 (NCHAR(129)): the requirement line "NCHAR(129) still refused (code-page rule, unchanged)" was wrong: NCHAR(129) was never refused. The expected result of the three NCHAR(129) rows of Test 57 is changed to "accepted: Result 1, Reason 0", as before step 57 (code page 1252 keeps 129, 141, 143, 144 and 157 unchanged; each row carries a comment saying so); the procedures are not changed and the row count stays 30. These rows check the unchanged behaviour; whether to refuse these characters is step CC1 (Known items). Re-run on BMMS_Test after the change: Test 57 30 of 30, Check: every step Installed.
+
+What to run where:
+
+1. Work Laptop `BMMS_Test`: BMMS-Check-InstalledSteps.sql (step 56 Installed, step 57 Missing), BMMS-Fix-DatabaseLocal-Step57.sql, BMMS-Test-DatabaseLocal-Step57.sql, then BMMS-Test-OrganisationSettings-Step19.sql, BMMS-Test-MemberTypes-Step21.sql and BMMS-Test-RoleAccess-Step40.sql.
+2. The tester's baseline: `pwsh -NoProfile -File Tests\_runner\Update-Baseline.ps1 -ConfirmDatabase BMMS_Quality -FixScript BMMS-Fix-DatabaseLocal-Step57.sql`.
+3. Base Laptop: its local `BMMS_Test`, the same as 1.
+4. Azure: redeploy BMMS_Test from the local copy (SSMS "Deploy Database to Microsoft Azure SQL Database"); this replaces the hand change of 2026-11-18. Test 57 may then run there.
+5. `BMMS`: only after steps 38 to 56 are installed there, after the backup. Not on the Work Laptop's BMMS (step 37).
+6. To undo (not on Azure): BMMS-Rollback-DatabaseLocal-Step57.sql, then BMMS-Check-InstalledSteps.sql. No build to roll back.
+
+Reviewers (2026-11-27): security and ux Pass with notes, ui Not applicable (no markup, CSS or script). No High. Medium (both, the same point): the three NCHAR(129) rows of Test 57 fail against the requirement; pre-existing behaviour, settled by the owner decision above (expected result changed). Lows in Known items.
+Re-review after the decision (security-reviewer, ux-reviewer, Test script and README): Pass, no High or Medium.
+
+Tester (2026-11-27; baseline updated with step 57 by Update-Baseline.ps1: 53 step rows, all Installed, fixture check PASS; Tests\_results\2026-11-27_000952): access-matrix PASSED, 485 of 485 checks (448 access cells ok), error log 0 new lines.
+
+Browser checks: tester: access-matrix. Owner by eye: Member Type add and edit with a normal value and with a pasted tab; System Settings organisation save with a normal value and with a line break in an address line; the messages as before.
+
+Owner tests (Work Laptop, BMMS_Test, 2026-11-27): PASSED (Member Type add and edit saved; a pasted tab in the code and in the name refused with the same message as before; System Settings organisation save saved and kept after a reload; a line break in Registered Office Line 1 refused with the same message as before; error log no new lines).
+
 ## Known items for later steps
 
+- Step CC1 (later, before the fresh install): spr_SetOrganisationSettings and spr_AddEditMemberType accept the C1 characters 129, 141, 143, 144 and 157; decide whether to refuse 128-159 or these five. (Found in step AZ2: of 128 to 159 exactly these five survive the code page 1252 round trip on BMMS_Test, checked 2026-11-27; the three NCHAR(129) rows of BMMS-Test-DatabaseLocal-Step57.sql expect them accepted, and change with step CC1.)
+- Step AZ2: the Azure copy of BMMS_Test (step 51) has an undocumented hand change of 2026-11-18 (view dbo.vw_spt_values_P, both procedures reading it, markers kept), not in git. The redeploy from the local BMMS_Test after step 57 replaces it; check afterwards that dbo.vw_spt_values_P is gone.
+- Step AZ2 (pre-install guard audit): BMMS-Fix-OrganisationSettings-Step19.sql, BMMS-Fix-MemberTypes-Step21.sql, BMMS-Fix-RoleAccess-Step40.sql and BMMS-Rollback-RoleAccess-Step40.sql still contain master.dbo.spt_values and do not stop while step 57 is installed; a re-run brings the reference back (step 57 Partly). Add guards in the guard audit before the fresh install.
+- Step AZ2 (house rule): spr_SetOrganisationSettings keeps THROW in its CATCH block, against the house rule "no THROW" (compatibility level 100 lists THROW as not allowed); kept by owner decision for identical behaviour. Replace it with RAISERROR in a later step (Test 19 and Test 57 then change).
+- Step AZ2 security-reviewer (Low): BMMS-Fix-DatabaseLocal-Step57.sql prints "Step 57 installed" also when the count of references to another database or server is above 0 (it shows the count with "(0 expected)"; BMMS-Check-InstalledSteps.sql then reads step 57 Partly). Raise a message naming the count when it is not 0.
+- Step AZ2 ux-reviewer (Low): the third guard message of BMMS-Fix-DatabaseLocal-Step57.sql names both procedures and both markers in one line; one message per procedure (or the missing marker printed) would say which one failed.
+- Step AZ2 ux-reviewer (Low): a re-run of Fix 19, 21 or 40 after step 57 shows nothing on screen about step 57 (only the Check reads Partly); covered by the guard audit item above.
+- Step AZ1 (open): the Backup Database page on Azure (BACKUP DATABASE TO DISK does not run on Azure SQL Database): hide it or explain it there.
 - Found 2026-11-26 during AZ1 owner tests (pre-existing; small later step): Agenda Details "Generate" fails for the whole report when one attachment file is missing on disk (System.IO.IOException in Report/Reports.aspx.cs, CreateAgendaDetailsPDF; seen for Attach-C01-00001-001-...pdf, not present in BMMS\Files\AgendaAttach on the Work Laptop). Skip the missing file with a note in the report instead of failing.
 - Step AZ1 ui-reviewer (Low, optional cleanup): JScript/ddlevelsmenu.js keeps httpsiframesrc "blank.htm" and the shim code (addshimmy, positionshim, hideshim), dead with enableshim false; a later cleanup may remove them.
 - Step AZ1 ux-reviewer (Low): after a pull the site shows only the generic "BMMS - Error" page until the solution is built (the DLLs leave BMMS\bin); the build-first line is in this README, the step's owner report and the CHANGELOG entry, nothing in the site.
