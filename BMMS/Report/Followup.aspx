@@ -32,10 +32,10 @@
                                 <div class="divRow">
                                     <table cellspacing="12" cellpadding="0" border="0" width="100%">
                                         <tr>
-                                            <td class="Lable" style="width: 20%">
+                                            <td class="Lable wb-label">
                                                 Meeting Date From :
                                             </td>
-                                            <td style="width: 30%">
+                                            <td>
                                                 <table>
                                                     <tr>
                                                         <td>
@@ -59,7 +59,7 @@
                                                         </td>
                                                         <td>
                                                             <asp:ImageButton runat="Server" ID="imgToDate" Width="18px" ImageUrl="~/Images/Common/calendar.png" />
-                                                            <span class="spanMandatory">*</span>
+                                                            <span class="spanMandatory wb-req">*</span>
                                                         </td>
                                                         <td>
                                                             <cc1:CalendarExtender CssClass="cal_Theme1" ID="CalendarExtender2" runat="server"
@@ -70,17 +70,17 @@
                                                     </tr>
                                                 </table>
                                             </td>
-                                            <td class="Lable" style="width: 15%">
+                                            <td class="Lable wb-label">
                                                 Committee Name :
                                             </td>
-                                            <td style="width: 35%">
-                                                <asp:DropDownList ID="ddlCommittee" runat="server" Width="300px" AutoPostBack="true"
+                                            <td>
+                                                <asp:DropDownList ID="ddlCommittee" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
                                                     OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
                                                 </asp:DropDownList>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="Lable">
+                                            <td class="Lable wb-label">
                                                 Meeting No. Search :
                                             </td>
                                             <td>
@@ -90,32 +90,32 @@
                                                     <asp:ListItem Text="Between" Value="1"></asp:ListItem>
                                                 </asp:RadioButtonList>
                                             </td>
-                                            <td class="Lable">
+                                            <td class="Lable wb-label">
                                                 Department :
                                             </td>
                                             <td>
-                                                <asp:DropDownList ID="ddlDepartment" runat="server" Width="300px">
+                                                <asp:DropDownList ID="ddlDepartment" runat="server" CssClass="wb-filter-select">
                                                 </asp:DropDownList>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="Lable">
+                                            <td class="Lable wb-label">
                                                 Meeting No. :
                                             </td>
                                             <td>
                                                 <asp:Panel ID="pnlMeetingNoParticular" runat="server">
-                                                    <asp:DropDownList ID="ddlMeetingNo" runat="server" Width="80px">
+                                                    <asp:DropDownList ID="ddlMeetingNo" runat="server" CssClass="wb-filter-select wb-filter-short">
                                                     </asp:DropDownList>
                                                 </asp:Panel>
                                                 <asp:Panel ID="pnlMeetingNoBetween" runat="server">
-                                                    <asp:DropDownList ID="ddlMeetingNoFrom" runat="server" Width="80px">
+                                                    <asp:DropDownList ID="ddlMeetingNoFrom" runat="server" CssClass="wb-filter-select wb-filter-short">
                                                     </asp:DropDownList>
                                                     <asp:Label ID="lblMeetingNo" runat="server" Text=" to "></asp:Label>
-                                                    <asp:DropDownList ID="ddlMeetingNoTo" runat="server" Width="80px">
+                                                    <asp:DropDownList ID="ddlMeetingNoTo" runat="server" CssClass="wb-filter-select wb-filter-short">
                                                     </asp:DropDownList>
                                                 </asp:Panel>
                                             </td>
-                                            <td class="Lable">
+                                            <td class="Lable wb-label">
                                                 Confirmed Status :
                                             </td>
                                             <td colspan="3">

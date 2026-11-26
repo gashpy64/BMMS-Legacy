@@ -17,25 +17,25 @@
         </div>
         <div class="divRow">
             <div class="divRow">
-                <div class="divRowLeft">
+                <div class="divRowLeft wb-label">
                     Committee Name :
                 </div>
                 <div class="divRowRight">
-                    <asp:DropDownList ID="ddlCommittee" runat="server" Width="150px" AutoPostBack="true"
+                    <asp:DropDownList ID="ddlCommittee" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
                         OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
                     </asp:DropDownList>
-                    <span class="spanMandatory">*</span>
+                    <span class="spanMandatory wb-req">*</span>
                 </div>
             </div>
             <div class="divRow">
-                <div class="divRowLeft">
+                <div class="divRowLeft wb-label">
                     Meeting No :
                 </div>
                 <div class="divRowRight">
-                    <asp:DropDownList ID="ddlMeeting" runat="server" Width="150px" AutoPostBack="true"
+                    <asp:DropDownList ID="ddlMeeting" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
                         OnSelectedIndexChanged="ddlMeeting_SelectedIndexChanged">
                     </asp:DropDownList>
-                    <span class="spanMandatory">*</span>
+                    <span class="spanMandatory wb-req">*</span>
                     <br />
                 </div>
             </div>

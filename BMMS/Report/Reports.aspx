@@ -30,27 +30,27 @@
                             <div class="divRow">
                                 <table cellspacing="12" cellpadding="0" border="0" width="100%">
                                     <tr>
-                                        <td class="Lable" style="width: 40%">
+                                        <td class="Lable wb-label">
                                             Committee Name :
                                         </td>
                                         <td>
-                                            <asp:DropDownList ID="ddlCommittee" runat="server" Width="300px" AutoPostBack="true"
+                                            <asp:DropDownList ID="ddlCommittee" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
                                                 OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
                                             </asp:DropDownList>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td class="Lable">
+                                        <td class="Lable wb-label">
                                             Department :
                                         </td>
                                         <td>
-                                            <asp:DropDownList ID="ddlDepartment" runat="server" Width="300px" AutoPostBack="true"
+                                            <asp:DropDownList ID="ddlDepartment" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
                                                 OnSelectedIndexChanged="ddlDepartment_SelectedIndexChanged">
                                             </asp:DropDownList>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td class="Lable">
+                                        <td class="Lable wb-label">
                                             Meeting No. :
                                         </td>
                                         <td>
@@ -62,25 +62,25 @@
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td class="Lable">
+                                        <td class="Lable wb-label">
                                         </td>
                                         <td>
                                             <asp:Panel ID="pnlMeetingNoParticular" runat="server">
-                                                <asp:DropDownList ID="ddlMeetingNo" runat="server" Width="80px" AutoPostBack="true"
+                                                <asp:DropDownList ID="ddlMeetingNo" runat="server" CssClass="wb-filter-select wb-filter-short" AutoPostBack="true"
                                                     OnSelectedIndexChanged="ddlMeetingNo_SelectedIndexChanged">
                                                 </asp:DropDownList>
                                             </asp:Panel>
                                             <asp:Panel ID="pnlMeetingNoBetween" runat="server">
-                                                <asp:DropDownList ID="ddlMeetingNoFrom" runat="server" Width="80px">
+                                                <asp:DropDownList ID="ddlMeetingNoFrom" runat="server" CssClass="wb-filter-select wb-filter-short">
                                                 </asp:DropDownList>
                                                 <asp:Label ID="Label1" runat="server" Text=" to "></asp:Label>
-                                                <asp:DropDownList ID="ddlMeetingNoTo" runat="server" Width="80px">
+                                                <asp:DropDownList ID="ddlMeetingNoTo" runat="server" CssClass="wb-filter-select wb-filter-short">
                                                 </asp:DropDownList>
                                             </asp:Panel>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td class="Lable">
+                                        <td class="Lable wb-label">
                                             Subject No. :
                                         </td>
                                         <td>
@@ -92,13 +92,13 @@
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td class="Lable">
+                                        <td class="Lable wb-label">
                                         </td>
                                         <td>
-                                            <asp:DropDownList ID="ddlSubjectNoFrom" runat="server" Width="80px">
+                                            <asp:DropDownList ID="ddlSubjectNoFrom" runat="server" CssClass="wb-filter-select wb-filter-short">
                                             </asp:DropDownList>
                                             To
-                                            <asp:DropDownList ID="ddlSubjectNoTo" runat="server" Width="80px">
+                                            <asp:DropDownList ID="ddlSubjectNoTo" runat="server" CssClass="wb-filter-select wb-filter-short">
                                             </asp:DropDownList>
                                         </td>
                                     </tr>

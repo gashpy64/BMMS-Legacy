@@ -29,22 +29,22 @@
                         <div class="divRow">
                             <table border="0" cellpadding="0" cellspacing="12" width="100%">
                                 <tr>
-                                    <td class="Lable" style="width: 30%;">
+                                    <td class="Lable wb-label">
                                         Committee :</td>
-                                    <td style="width: 200px">
-                                        <asp:DropDownList ID="ddlCommittee" runat="server" Width="180px" AutoPostBack="true"
+                                    <td>
+                                        <asp:DropDownList ID="ddlCommittee" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
                                             OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
                                         </asp:DropDownList>&nbsp;
                                     </td>
-                                    <td class="Lable">
+                                    <td class="Lable wb-label">
                                         Department :</td>
                                     <td>
-                                        <asp:DropDownList ID="ddlDeparment" runat="server" Width="180px" AutoPostBack="true"
+                                        <asp:DropDownList ID="ddlDeparment" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
                                             OnSelectedIndexChanged="ddlDeparment_SelectedIndexChanged">
                                         </asp:DropDownList></td>
                                 </tr>
                                 <tr>
-                                    <td class="Lable" style="width: 30%;">
+                                    <td class="Lable wb-label">
                                         Meeting No. Search :</td>
                                     <td>
                                         <asp:RadioButtonList ID="rdoMeatingNoSearch" runat="server" RepeatDirection="Horizontal"
@@ -53,7 +53,7 @@
                                             <asp:ListItem Text="Between" Value="1"></asp:ListItem>
                                         </asp:RadioButtonList>
                                     </td>
-                                    <td class="Lable">
+                                    <td class="Lable wb-label">
                                         Subject No. Search :</td>
                                     <td>
                                         <asp:RadioButtonList ID="rdoSubjectNoSearch" runat="server" RepeatDirection="Horizontal"
@@ -64,29 +64,29 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="Lable" style="width: 30%;">
+                                    <td class="Lable wb-label">
                                         Meeting No :</td>
                                     <td>
-                                        <asp:DropDownList ID="ddlMeetingNoFrom" runat="server" Width="80px" AutoPostBack="true"
+                                        <asp:DropDownList ID="ddlMeetingNoFrom" runat="server" CssClass="wb-filter-select wb-filter-short" AutoPostBack="true"
                                             DataTextField="SubjectNo" DataValueField="SubjectNo" OnSelectedIndexChanged="ddlMeetingNoFrom_SelectedIndexChanged">
                                         </asp:DropDownList>
                                         <asp:Label ID="lblMeetingNo" runat="server" Text=" to "></asp:Label>
-                                        <asp:DropDownList ID="ddlMeetingNoTo" runat="server" Width="80px" AutoPostBack="true"
+                                        <asp:DropDownList ID="ddlMeetingNoTo" runat="server" CssClass="wb-filter-select wb-filter-short" AutoPostBack="true"
                                             DataTextField="SubjectNo" DataValueField="SubjectNo" OnSelectedIndexChanged="ddlMeetingNoTo_SelectedIndexChanged">
                                         </asp:DropDownList></td>
-                                    <td class="Lable">
+                                    <td class="Lable wb-label">
                                         Subject No. :</td>
                                     <td>
-                                        <asp:DropDownList ID="ddlSubjectNoFrom" runat="server" Width="80px" AutoPostBack="true"
+                                        <asp:DropDownList ID="ddlSubjectNoFrom" runat="server" CssClass="wb-filter-select wb-filter-short" AutoPostBack="true"
                                             DataTextField="SubjectNo" DataValueField="SubjectNo">
                                         </asp:DropDownList>
                                         To
-                                        <asp:DropDownList ID="ddlSubjectNoTo" runat="server" Width="80px" AutoPostBack="true"
+                                        <asp:DropDownList ID="ddlSubjectNoTo" runat="server" CssClass="wb-filter-select wb-filter-short" AutoPostBack="true"
                                             DataTextField="SubjectNo" DataValueField="SubjectNo">
                                         </asp:DropDownList></td>
                                 </tr>
                                 <tr>
-                                    <td class="Lable">
+                                    <td class="Lable wb-label">
                                         View Format :</td>
                                     <td>
                                         <asp:RadioButtonList ID="rdoViewFormat" runat="server" AutoPostBack="True" RepeatDirection="Horizontal">

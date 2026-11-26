@@ -14,24 +14,24 @@
                     <div class="divRow">
                         <table border="0" cellpadding="0" cellspacing="12" width="100%">
                             <tr>
-                                <td class="Lable">
+                                <td class="Lable wb-label">
                                     Committee :</td>
                                 <td>
-                                    <asp:DropDownList ID="ddlCommittee" runat="server" Width="150px" AutoPostBack="true"
+                                    <asp:DropDownList ID="ddlCommittee" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
                                         OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
                                     </asp:DropDownList>&nbsp;
                                 </td>
                             </tr>
                             <tr>
-                                <td class="Lable">
+                                <td class="Lable wb-label">
                                     Meeting No :</td>
                                 <td>
-                                    <asp:DropDownList ID="ddlMeeting" runat="server" Width="150px" AutoPostBack="true"
+                                    <asp:DropDownList ID="ddlMeeting" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
                                         OnSelectedIndexChanged="ddlMeeting_SelectedIndexChanged">
                                     </asp:DropDownList></td>
                             </tr>
                             <tr>
-                                <td class="Lable">
+                                <td class="Lable wb-label">
                                 </td>
                                 <td>
                                     <asp:Button ID="btnSubmit" runat="server" CssClass="button" Text="Submit" OnClick="btnSubmit_Click" /></td>

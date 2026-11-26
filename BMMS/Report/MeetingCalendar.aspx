@@ -13,21 +13,21 @@
                     <div class="divRowFixed"></div>
                     <div class="divRow">
                         <div class="divRow">
-                            <div class="divRowLeft">
+                            <div class="divRowLeft wb-label">
                                 From Date :
                             </div>
                             <div class="divRowRight">
                                 <asp:TextBox ID="txtFromDate" runat="server" Width="100px" onfocus="this.blur();"
                                     TabIndex="-1"></asp:TextBox>
                                 <asp:ImageButton runat="Server" ID="imgFromDate" Width="18px" ImageUrl="~/Images/Common/calendar.png" />
-                                <span class="spanMandatory">*</span>
+                                <span class="spanMandatory wb-req">*</span>
                                 <cc1:CalendarExtender CssClass="cal_Theme1" ID="CalendarExtender2" runat="server" TargetControlID="txtFromDate"
                                     Animated="true" Format="dd-MMM-yyyy" PopupPosition="Right" PopupButtonID="imgFromDate">
                                 </cc1:CalendarExtender>
                             </div>
                         </div>
                         <div class="divRow">
-                            <div class="divRowLeft">
+                            <div class="divRowLeft wb-label">
                                 To Date :
                             </div>
                             <div class="divRowRight">
@@ -40,7 +40,7 @@
                             </div>
                         </div>
                         <div class="divRow">
-                            <div class="divRowLeft">
+                            <div class="divRowLeft wb-label">
                                 Sort Option :
                             </div>
                             <div class="divRowRight">

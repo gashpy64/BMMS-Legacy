@@ -44,6 +44,24 @@ body.wb div#contentArea:has(.bmms-form-agenda, .bmms-form-minutes)
 {
 	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 }
+/* Step UI1 (W2): the list strip of Agenda Entry (Committee Name, Meeting No, a Manager's Department, Add) is a
+   wrapping row instead of the grid: a grid column of at least 180 px for the Add button sent it alone to a second
+   row at 800 px. Each field takes at least 180 px and grows, Add keeps its own width at the bottom of its row, and a
+   whole item moves to the next line when the row is full. Flex row: the basis is a width. */
+.bmms-form .bmms-strip.bmms-strip-wrap
+{
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+}
+.bmms-form .bmms-strip-wrap > .bmms-strip-item
+{
+	flex: 1 1 180px;
+}
+.bmms-form .bmms-strip-wrap > .bmms-strip-action
+{
+	flex: 0 0 auto;
+}
 .bmms-form .bmms-strip-item
 {
 	display: flex;
@@ -394,6 +412,11 @@ body.wb div#contentArea:has(.bmms-form-agenda, .bmms-form-minutes)
 	.bmms-form .bmms-strip-5
 	{
 		grid-template-columns: 1fr;
+	}
+	.bmms-form .bmms-strip-wrap > .bmms-strip-item,
+	.bmms-form .bmms-strip-wrap > .bmms-strip-action
+	{
+		flex-basis: 100%;
 	}
 	.bmms-form .bmms-strip-action input[type="submit"],
 	.bmms-form .wb-actions input[type="submit"]

@@ -16,13 +16,13 @@
                             <asp:Panel ID="Panel1" runat="server">
                                 <table border="0" cellpadding="0" cellspacing="12" width="100%;">
                                     <tr>
-                                        <td class="Lable" style="width: 40%; ">
+                                        <td class="Lable wb-label">
                                             From Date :</td>
                                         <td>
                                             <asp:TextBox ID="txtFromDate" runat="server" Width="100px" onfocus="this.blur();"
                                                 TabIndex="-1"></asp:TextBox>
                                             <asp:ImageButton runat="Server" ID="imgFromDate" Width="18px" ImageUrl="~/Images/Common/calendar.png" />
-                                            <span class="spanMandatory">*</span>
+                                            <span class="spanMandatory wb-req">*</span>
                                             <cc1:CalendarExtender CssClass="cal_Theme1" ID="CalendarExtender2" runat="server"
                                                 TargetControlID="txtFromDate" Animated="true" Format="dd-MMM-yyyy" PopupPosition="Right"
                                                 PopupButtonID="imgFromDate">
@@ -30,12 +30,12 @@
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td class="Lable" style="width: 40%">
+                                        <td class="Lable wb-label">
                                             To Date :</td>
                                         <td>
                                             <asp:TextBox ID="txtToDate" runat="server" Width="100px" onfocus="this.blur();" TabIndex="-1"></asp:TextBox>
                                             <asp:ImageButton runat="Server" ID="imgToDate" Width="18px" ImageUrl="~/Images/Common/calendar.png" />
-                                            <span class="spanMandatory">*</span>
+                                            <span class="spanMandatory wb-req">*</span>
                                             <cc1:CalendarExtender CssClass="cal_Theme1" ID="CalendarExtender1" runat="server"
                                                 TargetControlID="txtToDate" Animated="true" Format="dd-MMM-yyyy" PopupPosition="Right"
                                                 PopupButtonID="imgToDate">
@@ -43,7 +43,7 @@
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td class="Lable" style="width: 40%">
+                                        <td class="Lable wb-label">
                                             Report Type :</td>
                                         <td>
                                             <asp:RadioButtonList ID="rdoReportType" runat="server" AutoPostBack="True" OnSelectedIndexChanged="rdoReportType_SelectedIndexChanged"
@@ -59,18 +59,18 @@
                             <asp:Panel ID="pnlIndividual" runat="server">
                                 <table border="0" cellpadding="0" cellspacing="12" width="100%">
                                     <%--<tr>
-                                        <td class="Lable" style="width: 40%">
+                                        <td class="Lable wb-label">
                                             Department :</td>
                                         <td>
-                                            <asp:DropDownList ID="ddlDepartment" runat="server" Width="150px" AutoPostBack="true"
+                                            <asp:DropDownList ID="ddlDepartment" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
                                                 OnSelectedIndexChanged="ddlDepartment_SelectedIndexChanged">
                                             </asp:DropDownList></td>
                                     </tr>--%>
                                     <tr>
-                                        <td class="Lable" style="width: 40%">
+                                        <td class="Lable wb-label">
                                             Member :</td>
                                         <td>
-                                            <asp:DropDownList ID="ddlMember" runat="server" Width="150px" AutoPostBack="true"
+                                            <asp:DropDownList ID="ddlMember" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
                                                 OnSelectedIndexChanged="ddlMember_SelectedIndexChanged">
                                             </asp:DropDownList></td>
                                     </tr>
@@ -79,10 +79,10 @@
                             <asp:Panel ID="pnlDesignation" runat="server">
                                 <table border="0" cellpadding="0" cellspacing="12" width="100%">
                                     <tr>
-                                        <td class="Lable" style="width: 40%">
+                                        <td class="Lable wb-label">
                                             Designation :</td>
                                         <td>
-                                            <asp:DropDownList ID="ddlDesignation" runat="server" Width="150px" AutoPostBack="true"
+                                            <asp:DropDownList ID="ddlDesignation" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
                                                 OnSelectedIndexChanged="ddlDesignation_SelectedIndexChanged">
                                             </asp:DropDownList></td>
                                     </tr>
@@ -91,10 +91,10 @@
                             <asp:Panel ID="pnlConsolidated" runat="server">
                                 <table border="0" cellpadding="0" cellspacing="12" width="100%">
                                     <tr>
-                                        <td class="Lable" style="width: 40%">
+                                        <td class="Lable wb-label">
                                             Committee :</td>
                                         <td>
-                                            <asp:DropDownList ID="ddlCommittee" runat="server" Width="150px" AutoPostBack="true"
+                                            <asp:DropDownList ID="ddlCommittee" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
                                                 OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
                                             </asp:DropDownList></td>
                                     </tr>
@@ -105,21 +105,21 @@
                             <asp:Panel ID="pnlGenerateReport" runat="server">
                                 <table border="0" cellpadding="0" cellspacing="12" width="100%">
                                     <tr>
-                                        <td class="Lable" style="width: 40%">
+                                        <td class="Lable wb-label">
                                             Authorized Person Name :</td>
                                         <td>
                                             <asp:TextBox ID="txtAuthorizedPersionName" runat="server" Width="150px"></asp:TextBox>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td class="Lable" style="width: 40%">
+                                        <td class="Lable wb-label">
                                             Authorized Person Designation :</td>
                                         <td>
                                             <asp:TextBox ID="txtAuthorizedPersionDesign" runat="server" Width="150px"></asp:TextBox>
                                         </td>
                                     </tr>                                
                                     <tr>
-                                        <td class="Lable" style="width: 40%">
+                                        <td class="Lable wb-label">
                                         </td>
                                         <td>
                                             <asp:Button ID="btnGenerateReport" runat="server" Text="Generate Report" OnClick="btnGenerateReport_Click"

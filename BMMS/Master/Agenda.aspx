@@ -33,7 +33,7 @@
 
         <%-- List screen: choose the committee and meeting, Add, and the items of the meeting --%>
         <asp:Panel ID="pnlViewAgenda" runat="server">
-            <div class="bmms-strip">
+            <div class="bmms-strip bmms-strip-wrap">
                 <div class="bmms-strip-item">
                     <label for="ctl00_ContentPlaceHolder1_ddlCommittee">
                         Committee Name <span class="wb-req">*</span></label>

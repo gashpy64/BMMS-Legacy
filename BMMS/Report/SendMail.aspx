@@ -26,45 +26,45 @@
                 <div class="divRow">
                     <table border="0" cellpadding="0" cellspacing="12" width="100%">
                         <tr>
-                            <td class="Lable" style="width: 30%">
+                            <td class="Lable wb-label">
                                 Committee :</td>
                             <td>
-                                <asp:DropDownList ID="ddlCommittee" runat="server" Width="150px" AutoPostBack="true"
+                                <asp:DropDownList ID="ddlCommittee" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
                                     OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
                                 </asp:DropDownList>&nbsp;
                             </td>
                         </tr>
                         <tr>
-                            <td class="Lable" style="width: 30%">
+                            <td class="Lable wb-label">
                                 Meeting No :</td>
                             <td>
-                                <asp:DropDownList ID="ddlMeeting" runat="server" Width="150px" AutoPostBack="true"
+                                <asp:DropDownList ID="ddlMeeting" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
                                     OnSelectedIndexChanged="ddlMeeting_SelectedIndexChanged">
                                 </asp:DropDownList></td>
                         </tr>
                         <tr>
-                            <td valign="top" class="Lable" style="width: 30%">
+                            <td valign="top" class="Lable wb-label">
                                 To :</td>
                             <td>
                                 <asp:TextBox ID="txtToMailId" runat="server" Height="50px" TextMode="MultiLine" Width="450px"></asp:TextBox>
                             </td>
                         </tr>
                         <tr>
-                            <td valign="top" class="Lable" style="width: 30%">
+                            <td valign="top" class="Lable wb-label">
                                 Subject :</td>
                             <td>
                                 <asp:TextBox ID="txtSubject" runat="server" TextMode="MultiLine" Height="50px" Width="450px"></asp:TextBox>
                             </td>
                         </tr>
                         <tr>
-                            <td valign="top" class="Lable" style="width: 30%">
+                            <td valign="top" class="Lable wb-label">
                                 Body Text :</td>
                             <td>
                                 <bmms:RichTextEditor ID="ftxtBodyText" runat="server" Height="100px" Label="Body Text" />
                             </td>
                         </tr>
                         <tr>
-                            <td class="Lable" style="width: 30%">
+                            <td class="Lable wb-label">
                                 Attachment :</td>
                             <td>
                                 <a id="aAttachment" runat="server" target="_blank">View</a>

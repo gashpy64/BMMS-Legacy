@@ -1395,28 +1395,38 @@ body.wb .wb-dash-status-line
 	padding-left: 4px;
 	padding-right: 4px;
 }
+/* Step UI1 (W1): the tighter cells and the 13 px headings of step UN6c2b now apply at every width, for every role,
+   not only at 1240 px and below: beside the Alerts card (above 1240 px) the nine-column Scheduled list had only
+   about 36 px to spare (measured on BMMS_Quality at 1366 px), so a longer committee name or larger counts made it
+   scroll inside its card. A committee name without spaces breaks inside the word instead of widening the list.
+   The chip rules below stay at 1240 px and below. */
+.wb-dash-table > tbody > tr > th,
+.wb-dash-table > tbody > tr > td,
+.wb-table.wb-dash-table > tbody > tr > th.wb-dash-num,
+.wb-table.wb-dash-table > tbody > tr > td.wb-dash-num,
+.wb-dash-table > tbody > tr > th:nth-child(4),
+.wb-dash-table > tbody > tr > td:nth-child(4)
+{
+	padding: 6px 3px;
+}
+.wb-dash-table > tbody > tr > th
+{
+	font-size: 13px;
+}
+.wb-dash-table .wb-dash-committee
+{
+	overflow-wrap: break-word;
+	word-wrap: break-word;
+}
 /* Step UN6c2b (owner's test at 200 % zoom): at 1240 px and below the Meetings card has the full width but the
-   window is narrow, so the cells are tighter and the status chip may wrap ("Open for / submission"); the dates
-   stay on one line and no column is hidden. The nine-column Scheduled list then fits its card down to 800 px;
-   narrower, it scrolls inside .wb-table-scroll (the page never scrolls sideways). */
+   window is narrow, so the status chip may wrap ("Open for / submission"); the dates stay on one line and no
+   column is hidden. The nine-column Scheduled list then fits its card down to 800 px; narrower, it scrolls inside
+   .wb-table-scroll (the page never scrolls sideways). */
 @media (max-width: 1240px)
 {
-	.wb-dash-table > tbody > tr > th,
-	.wb-dash-table > tbody > tr > td,
-	.wb-table.wb-dash-table > tbody > tr > th.wb-dash-num,
-	.wb-table.wb-dash-table > tbody > tr > td.wb-dash-num,
-	.wb-dash-table > tbody > tr > th:nth-child(4),
-	.wb-dash-table > tbody > tr > td:nth-child(4)
-	{
-		padding: 6px 3px;
-	}
-	/* Owner's second test (Edge at 200 %, a classic vertical scrollbar of about 17 px): the headings a little smaller,
-	   a narrower committee minimum and a smaller chip, so the list fits with room to spare at 768 px with the
-	   scrollbar (1536 px of desktop at 200 %) */
-	.wb-dash-table > tbody > tr > th
-	{
-		font-size: 13px;
-	}
+	/* Owner's second test (Edge at 200 %, a classic vertical scrollbar of about 17 px): a narrower committee minimum
+	   and a smaller chip, so the list fits with room to spare at 768 px with the scrollbar (1536 px of desktop at
+	   200 %) */
 	.wb-dash-table .wb-dash-committee
 	{
 		min-width: 6em;
@@ -1750,6 +1760,53 @@ body.wb .wb-dash-status-line
 .wb-gov-note
 {
 	min-width: 16em;
+}
+
+/* ---------- Step UI1: the field labels of the older pages ----------
+   The label cells of the pages not yet built on .wb-row (Agenda Finalize, Finalize Minutes, Minutes Confirmation,
+   Minutes > Followup and the report filter pages) carry .wb-label as well, so they look like the labels of the
+   Masters: the page font, 14 px, bold, left aligned, in a column of --wb-label-width. td.Lable (MainMaster.css) and
+   .divRowLeft (CommonHTML.css) set their own size, weight, alignment and width and outrank .wb-label, so this rule
+   sets each of them itself; only an element with both classes changes. The shared padding-top of .wb-label (for a
+   40 px input) is not used: these fields are the older, smaller controls. A long word breaks inside the column
+   (break-word: the column keeps its width when the row is squeezed). The required mark is the existing
+   span.spanMandatory with .wb-req added, where it was. */
+body.wb td.Lable.wb-label,
+body.wb div.divRowLeft.wb-label
+{
+	box-sizing: border-box;
+	width: var(--wb-label-width);
+	max-width: none;
+	padding: 0 var(--wb-space-4) 0 0;
+	color: var(--wb-text);
+	font-family: var(--wb-font);
+	font-size: var(--wb-font-size);
+	font-weight: 700;
+	line-height: 1.45;     /* the .wb-page line height the Masters' labels inherit */
+	text-align: left;
+	overflow-wrap: break-word;
+	word-wrap: break-word;
+}
+/* A floated .divRowLeft starts at the card's left border (its rows have no padding); the 200 px column starts
+   16 px in, as the labels of the Masters do inside .wb-card-body (owner's test F1) */
+body.wb div.divRowLeft.wb-label
+{
+	margin-left: var(--wb-space-4);
+}
+/* Step UI1 (W3): a drop-down of the same pages (was a fixed 150, 180 or 300 px wide): as wide as its cell, at most
+   300 px and at least 12em, so a filter row gives way inside its card at 1024 px and keeps 300 px at 1366 px.
+   The meeting and subject number pickers keep their 80 px (.wb-filter-short). */
+body.wb select.wb-filter-select
+{
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 300px;
+	min-width: 12em;
+}
+body.wb select.wb-filter-select.wb-filter-short
+{
+	width: 80px;
+	min-width: 0;
 }
 
 /* Print: the page without the header, the menu, the filters, the buttons and the footer */
