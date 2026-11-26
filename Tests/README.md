@@ -32,7 +32,10 @@ pwsh -NoProfile -File Tests/_runner/Run-Tests.ps1 -Pack access-matrix
 
 - `-CheckOnly` runs no checks. It proves that the site copy is the current working tree, that it
   is on BMMS_Quality, that the baseline is current and the fixture intact.
-- `-Pack <name>` runs the self-test and then the pack. Several packs: `-Pack a,b`.
+- `-Pack <name>` runs the self-test and then the pack. Several packs: `-Pack a,b`. The packs run in the order
+  given. Put `dashboard` before `followup` (step UI2a): the followup pack writes (an action text Save, a Confirm and
+  a Reopen) and the dashboard pack expects the action items as the fixture has them; with followup first, dashboard
+  checks miss an item and the run can end VOID. The usual order: `-Pack access-matrix,page-assets,dashboard,followup,followup-reports,manager-scope`.
 - `-Pack access-matrix` (step WF3a2): what each role can open, against your rules. Its rules,
   files and cells: `Tests\packs\access-matrix\README.md`. It starts with its standing proof (below)
   and takes about three minutes in all (measured on this laptop: 2 min 40 s to 3 min 40 s; most of

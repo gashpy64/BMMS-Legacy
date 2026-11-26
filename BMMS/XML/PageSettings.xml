@@ -15,7 +15,7 @@
 	</page>
 
 	<page Name="AgendaFinalization">
-		<pageTitle>Agenda Finalization</pageTitle>
+		<pageTitle>Agenda Finalize</pageTitle>
 		<pageURL>~/Master/AgendaFinalization.aspx</pageURL>
 	</page>
 
@@ -70,8 +70,18 @@
 		<pageURL>~/Master/MemberType.aspx</pageURL>
 	</page>
 
+	<page Name="Followup">
+		<pageTitle>Followup</pageTitle>
+		<pageURL>~/Master/Followup.aspx</pageURL>
+	</page>
+
+	<page Name="MinutesConfirmation">
+		<pageTitle>Minutes Confirmation</pageTitle>
+		<pageURL>~/Master/MinutesConfirmation.aspx</pageURL>
+	</page>
+
 	<page Name="MinutesFinalization">
-		<pageTitle>MinutesFinalization</pageTitle>
+		<pageTitle>Finalize Minutes</pageTitle>
 		<pageURL>~/Master/MinutesFinalization.aspx</pageURL>
 	</page>
 

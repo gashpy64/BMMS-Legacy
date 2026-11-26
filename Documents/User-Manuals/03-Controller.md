@@ -250,10 +250,15 @@ Purpose: to read the follow-up decisions of the meetings, to change the action t
 decisions as Confirmed and to reopen a confirmed decision. You are the only role that can save on this screen. (MD Secretariat
 opens the same screen to read it.)
 
+Open it from the Minutes menu, item Followup. The breadcrumb reads "Minutes / Followup", the page title is
+"Followup", and the browser tab is named "Followup" too.
+
 Fields and buttons:
 
-- The filter at the top: Committee Name, Meeting No. Search (Particular or Between), Department,
-  Meeting No., Confirmed Status (Both, Confirmed or Pending), and the buttons View and Cancel.
+- The filter at the top, in a box headed "Find followups", is one column of rows, in this order:
+  Meeting Date From (a from date, "to" and a to date; the * mark stands in this label), Committee Name, Department,
+  Meeting No. Search (Particular or Between), Meeting No., and Confirmed Status (Both, Confirmed or Pending).
+  The labels have no colon. Under the rows are the buttons View (the main button) and Cancel.
 - The list shows, for each decision, the Committee Name, Meeting No, Meeting Date, Agenda No., Subject No. and
   Decision. The column Actual Resolution has a View button that opens the actual resolution to read. The column
   Action Text has an Edit button on a Pending decision and a View button on a confirmed one. The column Status
@@ -311,6 +316,7 @@ Messages and what to do:
 - "The confirmations could not be saved. Nothing was saved. Try again." or "The server is busy and the
   confirmations could not be saved. Nothing was saved. Wait a moment, then try again.": press Submit again.
 
+[Screenshot: Followup as the Controller, the filter box "Find followups" - supplied by Gashpy Software]
 [Screenshot: Followup as the Controller, the list with the Status drop-downs, a confirmed row and Submit - supplied by Gashpy Software]
 [Screenshot: Followup as the Controller, the panel ":: Edit Action Text" - supplied by Gashpy Software]
 [Screenshot: Followup as the Controller, the panel ":: View Action Text" of a confirmed followup - supplied by Gashpy Software]

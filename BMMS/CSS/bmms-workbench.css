@@ -1763,14 +1763,14 @@ body.wb .wb-dash-status-line
 }
 
 /* ---------- Step UI1: the field labels of the older pages ----------
-   The label cells of the pages not yet built on .wb-row (Agenda Finalize, Finalize Minutes, Minutes Confirmation,
-   Minutes > Followup and the report filter pages) carry .wb-label as well, so they look like the labels of the
-   Masters: the page font, 14 px, bold, left aligned, in a column of --wb-label-width. td.Lable (MainMaster.css) and
-   .divRowLeft (CommonHTML.css) set their own size, weight, alignment and width and outrank .wb-label, so this rule
-   sets each of them itself; only an element with both classes changes. The shared padding-top of .wb-label (for a
-   40 px input) is not used: these fields are the older, smaller controls. A long word breaks inside the column
-   (break-word: the column keeps its width when the row is squeezed). The required mark is the existing
-   span.spanMandatory with .wb-req added, where it was. */
+   The label cells of the pages not yet built on .wb-row (the report filter pages; Agenda Finalize, Finalize
+   Minutes, Minutes Confirmation and Minutes > Followup are on .wb-row since step UI2a) carry .wb-label as well,
+   so they look like the labels of the Masters: the page font, 14 px, bold, left aligned, in a column of
+   --wb-label-width. td.Lable (MainMaster.css) and .divRowLeft (CommonHTML.css) set their own size, weight,
+   alignment and width and outrank .wb-label, so this rule sets each of them itself; only an element with both
+   classes changes. The shared padding-top of .wb-label (for a 40 px input) is not used: these fields are the
+   older, smaller controls. A long word breaks inside the column (break-word: the column keeps its width when the
+   row is squeezed). The required mark is the existing span.spanMandatory with .wb-req added, where it was. */
 body.wb td.Lable.wb-label,
 body.wb div.divRowLeft.wb-label
 {

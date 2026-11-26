@@ -4,47 +4,48 @@
 
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="cc1" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-    <div class="formContent">
-    <div class="formPanel">
-        <div class="divHeader">
-        :: MinutesFinalization</div>
-        <div class="divRowFixed"></div>
-        <div class="divRow" style="height: 25px">
+    <%-- Step UI2a: the Masters' form look (Committee Master): breadcrumb and title as in the menu, a card with label
+         and field rows, Finalize as the primary button and Cancel as the secondary one. Control IDs, events and the
+         confirmation are unchanged. --%>
+    <div class="wb-page">
+        <div class="wb-breadcrumb">
+            Minutes<span class="wb-breadcrumb-sep">/</span>Finalize Minutes</div>
+        <h1 class="wb-h1">
+            Finalize Minutes</h1>
+        <div aria-live="polite">
             <div id="divErrLogin" runat="server" class="divErrorHide">
                 <span id="spanErrLogin" runat="server" class="lblError"></span>
             </div>
         </div>
         <asp:Panel ID="pnlMinutesFinalize" runat="server">
-            <div class="divRow">
-                <div class="divRow">
-                    <div class="divRowLeft wb-label">
-                        Committee Name :
+            <div class="wb-card">
+                <div class="wb-card-header">
+                    Meeting</div>
+                <div class="wb-card-body">
+                    <div class="wb-row">
+                        <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlCommittee">
+                            Committee Name <span class="wb-req">*</span></label>
+                        <div class="wb-field">
+                            <asp:DropDownList ID="ddlCommittee" runat="server" AutoPostBack="true"
+                                OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
+                            </asp:DropDownList>
+                        </div>
                     </div>
-                    <div class="divRowRight">
-                        <asp:DropDownList ID="ddlCommittee" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
-                            OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
-                        </asp:DropDownList>
-                        <span class="spanMandatory wb-req">*</span>
+                    <div class="wb-row">
+                        <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlMeeting">
+                            Meeting No <span class="wb-req">*</span></label>
+                        <div class="wb-field">
+                            <asp:DropDownList ID="ddlMeeting" runat="server" AutoPostBack="true">
+                            </asp:DropDownList>
+                        </div>
                     </div>
-                </div>
-                <div class="divRow">
-                    <div class="divRowLeft wb-label">
-                        Meeting No :
-                    </div>
-                    <div class="divRowRight">
-                        <asp:DropDownList ID="ddlMeeting" runat="server" CssClass="wb-filter-select" AutoPostBack="true">
-                        </asp:DropDownList>
-                        <span class="spanMandatory wb-req">*</span>
-                        <br />
-                        <br />
-                        <br />
-                        <asp:Button ID="btnFinalize" runat="server" CssClass="button" Text="Finalize" OnClick="btnFinalize_Click"
-                            OnClientClick="return confirm('Do you want to Finalize this Meeting Minutes?');"  />
-                        <asp:Button ID="btnCancel" runat="server" CssClass="button" Text="Cancel" OnClick="btnCancel_Click" />
+                    <div class="wb-actions">
+                        <asp:Button ID="btnFinalize" runat="server" CssClass="wb-btn" Text="Finalize" OnClick="btnFinalize_Click"
+                            OnClientClick="return confirm('Do you want to Finalize this Meeting Minutes?');" />
+                        <asp:Button ID="btnCancel" runat="server" CssClass="wb-btn wb-btn-secondary" Text="Cancel" OnClick="btnCancel_Click" />
                     </div>
                 </div>
             </div>
         </asp:Panel>
-    </div>
     </div>
 </asp:Content>
