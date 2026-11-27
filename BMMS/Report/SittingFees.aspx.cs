@@ -181,9 +181,9 @@ namespace BMMS.Report
 
             dtMember = dtTemp.DefaultView.ToTable(true, "MemberId", "MemberName");
 
-            // Tamil or Hindi text: no PDF (step U1b)
+            // Tamil or Hindi text: no PDF (step U1b); the Meeting No. is printed too (step SF1)
             if (dtMeeting.Rows.Count > 0
-                && (PdfFonts.HasIndicText(dtMeeting, "CommitteeName", "Place") || PdfFonts.HasIndicText(dtMember, "MemberName")
+                && (PdfFonts.HasIndicText(dtMeeting, "CommitteeName", "MeetingNo", "Place") || PdfFonts.HasIndicText(dtMember, "MemberName")
                     || PdfFonts.OrganisationHasIndicText()))
                 ShowIndicTextMessage();
             else if (dtMeeting.Rows.Count > 0)

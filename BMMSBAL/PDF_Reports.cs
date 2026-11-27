@@ -329,20 +329,20 @@ namespace BMMSBAL
         {
             double totAmt = 0;
 
-            Table table = new Table(4);
+            // The committee table has a Meeting No. column after the committee name (step SF1); the board
+            // table already shows the meeting number as Board No. and is unchanged
+            int colCount = (code == "committee") ? 5 : 4;
+
+            Table table = new Table(colCount);
             table.Padding = 2;
             table.Spacing = 0;
 
-            float[] headerwidths = new float[4]; // = { 9, 4, 8, 10, 8, 11, 9, 7, 9, 10, 4, 10 }; // percentage
+            float[] headerwidths; // percentage
 
             if (code == "committee")
-                headerwidths[0] = 55.0f;
-            if (code == "board")
-                headerwidths[0] = 20.0f;
-
-            headerwidths[1] = 15.0f;
-            headerwidths[2] = 15.0f;
-            headerwidths[3] = 15.0f;
+                headerwidths = new float[] { 43.0f, 12.0f, 15.0f, 15.0f, 15.0f };
+            else
+                headerwidths = new float[] { 20.0f, 15.0f, 15.0f, 15.0f };
 
             table.Widths = headerwidths;
 
@@ -364,6 +364,16 @@ namespace BMMSBAL
             cell.HorizontalAlignment = Element.ALIGN_CENTER;
             cell.VerticalAlignment = Element.ALIGN_MIDDLE;
             table.AddCell(cell);
+
+            if (code == "committee")
+            {
+                cell = new Cell(PdfFonts.Phrase("Meeting No.", font10B));
+                cell.Header = true;
+                cell.BorderWidth = 0.5f;
+                cell.HorizontalAlignment = Element.ALIGN_CENTER;
+                cell.VerticalAlignment = Element.ALIGN_MIDDLE;
+                table.AddCell(cell);
+            }
 
             cell = new Cell(PdfFonts.Phrase("Date", font10B));
             cell.Header = true;
@@ -400,6 +410,16 @@ namespace BMMSBAL
                 cell.HorizontalAlignment = Element.ALIGN_LEFT;
                 cell.VerticalAlignment = Element.ALIGN_MIDDLE;
                 table.AddCell(cell);
+
+                if (code == "committee")
+                {
+                    cell = new Cell(PdfFonts.Phrase(dt.Rows[r]["MeetingNo"].ToString(), font10N));
+                    cell.Header = false;
+                    cell.BorderWidth = 0.5f;
+                    cell.HorizontalAlignment = Element.ALIGN_CENTER;
+                    cell.VerticalAlignment = Element.ALIGN_MIDDLE;
+                    table.AddCell(cell);
+                }
 
                 cell = new Cell(PdfFonts.Phrase(Convert.ToDateTime(dt.Rows[r]["MeetingDate"].ToString()).ToString("dd.MM.yyyy"), font10N));
                 cell.Header = false;
@@ -438,6 +458,17 @@ namespace BMMSBAL
             cell.HorizontalAlignment = Element.ALIGN_RIGHT;
             cell.VerticalAlignment = Element.ALIGN_MIDDLE;
             table.AddCell(cell);
+
+            // The empty cell under Meeting No. (step SF1)
+            if (code == "committee")
+            {
+                cell = new Cell(PdfFonts.Phrase("", font10N));
+                cell.Header = false;
+                cell.BorderWidth = 0.5f;
+                cell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                cell.VerticalAlignment = Element.ALIGN_MIDDLE;
+                table.AddCell(cell);
+            }
 
             cell = new Cell(PdfFonts.Phrase("TOTAL", font10B));
             cell.Header = false;
@@ -678,20 +709,24 @@ namespace BMMSBAL
 
                 document.Add(new Paragraph(Environment.NewLine));
 
-                int ColCount = 3 + dtMember.Rows.Count;
+                // Name of the Committee, Meeting No. (step SF1), Date and Place, then one column per member.
+                // The four fixed columns take 38 percent, so no header or cell word breaks mid-word; the
+                // member columns share the other 62 (they had 65 before step SF1).
+                int ColCount = 4 + dtMember.Rows.Count;
 
                 Table table = new Table(ColCount);
                 table.Padding = 2;
                 table.Spacing = 0;
 
-                float[] headerwidths = new float[ColCount]; // = { 9, 4, 8, 10, 8, 11, 9, 7, 9, 10, 4, 10 }; // percentage
+                float[] headerwidths = new float[ColCount]; // percentage
 
-                headerwidths[0] = 15.0f;
-                headerwidths[1] = 10.0f;
-                headerwidths[2] = 10.0f;
+                headerwidths[0] = 12.0f;
+                headerwidths[1] = 7.0f;
+                headerwidths[2] = 9.0f;
+                headerwidths[3] = 10.0f;
 
                 for (int i = 0; i < dtMember.Rows.Count; i++)
-                    headerwidths[i + 3] = 65.0f / (float.Parse(ColCount.ToString()) - 3.0f);
+                    headerwidths[i + 4] = 62.0f / (float.Parse(ColCount.ToString()) - 4.0f);
 
                 table.Widths = headerwidths;
 
@@ -702,6 +737,13 @@ namespace BMMSBAL
                 Cell cell = null;
 
                 cell = new Cell(PdfFonts.Phrase("Name of the Committee", font10B));
+                cell.Header = true;
+                cell.BorderWidth = 0.5f;
+                cell.HorizontalAlignment = Element.ALIGN_CENTER;
+                cell.VerticalAlignment = Element.ALIGN_MIDDLE;
+                table.AddCell(cell);
+
+                cell = new Cell(PdfFonts.Phrase("Meeting No.", font10B));
                 cell.Header = true;
                 cell.BorderWidth = 0.5f;
                 cell.HorizontalAlignment = Element.ALIGN_CENTER;
@@ -745,6 +787,13 @@ namespace BMMSBAL
                     cell.Header = false;
                     cell.BorderWidth = 0.5f;
                     cell.HorizontalAlignment = Element.ALIGN_LEFT;
+                    cell.VerticalAlignment = Element.ALIGN_MIDDLE;
+                    table.AddCell(cell);
+
+                    cell = new Cell(PdfFonts.Phrase(dtMeeting.Rows[i]["MeetingNo"].ToString(), font10N));
+                    cell.Header = false;
+                    cell.BorderWidth = 0.5f;
+                    cell.HorizontalAlignment = Element.ALIGN_CENTER;
                     cell.VerticalAlignment = Element.ALIGN_MIDDLE;
                     table.AddCell(cell);
 
