@@ -68,6 +68,7 @@ namespace BMMS.Report
             {
                 MsgHide();
                 pnlAttendance.Visible = false;
+                ViewState["dtAttendanceMember"] = null;
 
                 int _intCommitteeId = Convert.ToInt16(ddlCommittee.SelectedValue);
                 DataTable dtMeeting = new DataTable();
@@ -89,33 +90,72 @@ namespace BMMS.Report
         #endregion
 
         #region ddlMeeting_SelectedIndexChanged
+        // Step AD1 (D1): choosing a meeting no longer fills the list; it hides a list already shown. The list
+        // shows on View only. Before AD1, "- Select -" here showed an empty list.
         protected void ddlMeeting_SelectedIndexChanged(object sender, EventArgs e)
         {
             try
             {
                 MsgHide();
-                pnlAttendance.Visible = true;
-
-                int MeetingId = int.Parse(ddlMeeting.SelectedValue.ToString());
-                int CommitteeId = int.Parse(ddlCommittee.SelectedValue.ToString());
-
-                DataTable dtAttendanceMember = new DataTable();
-
-                dtAttendanceMember = AttendanceMgr.GetAttendanceByMeetingId(MeetingId, "All");
-
-                ViewState["dtAttendanceMember"] = dtAttendanceMember;
-
-                BindAttendanceMember();
-
+                pnlAttendance.Visible = false;
+                ViewState["dtAttendanceMember"] = null;
             }
             catch (Exception ex)
             {
                 Utilities.GoToErrPage(className, "ddlMeeting_SelectedIndexChanged", ex);
             }
-            finally
-            {
+        }
+        #endregion
 
+        #region btnView_Click
+        // Step AD1 (D1, D2, R2, R3): the list of the chosen meeting, read as before AD1 (same procedure, same rows)
+        protected void btnView_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                MsgHide();
+                pnlAttendance.Visible = false;
+                ViewState["dtAttendanceMember"] = null;
+
+                if (!CheckValidation())
+                    return;
+
+                int MeetingId = int.Parse(ddlMeeting.SelectedValue.ToString());
+
+                DataTable dtAttendanceMember = AttendanceMgr.GetAttendanceByMeetingId(MeetingId, "All");
+
+                ViewState["dtAttendanceMember"] = dtAttendanceMember;
+
+                BindAttendanceMember();
+
+                pnlAttendance.Visible = true;
             }
+            catch (Exception ex)
+            {
+                Utilities.GoToErrPage(className, "btnView_Click", ex);
+            }
+        }
+        #endregion
+
+        #region CheckValidation
+        // Step AD1 (R2): the same texts as Followup by Department (FollowupActionTaken.aspx.cs, CheckValidataion)
+        private bool CheckValidation()
+        {
+            if (ddlCommittee.SelectedValue.ToString() == "0")
+            {
+                MsgDisplay("Select committee name.");
+                ScriptManager.GetCurrent(this).SetFocus(ddlCommittee.ClientID);
+                return false;
+            }
+
+            if (ddlMeeting.SelectedIndex <= 0)
+            {
+                MsgDisplay("Select meeting no.");
+                ScriptManager.GetCurrent(this).SetFocus(ddlMeeting.ClientID);
+                return false;
+            }
+
+            return true;
         }
         #endregion
 

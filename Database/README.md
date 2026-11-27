@@ -3957,8 +3957,36 @@ Tester (2026-11-27, Tests\_results\2026-11-27_171334; no baseline update, no dat
 
 Browser checks: tester: the six packs above. Owner by eye: the three report types on BMMS_Test, 01-Oct-2026 to 31-Dec-2026 (Individual Ganesh Shankar and Radha Ganesh, Individual All, Designation Director, Consolidated all committees), on screen and printed.
 
+## Step AD1: View button on Reports > Attendance Details (code only, no database step)
+
+Requirement: the owner's AD1 brief (D1 the list shows only on View, and a change of Committee Name or Meeting No hides a list already shown; D2 View only, no Cancel; R1 to R5); plan approved 2026-11-27 as written.
+
+- BMMS/Report/AttendanceDetails.aspx: a View button (btnView, wb-btn in .wb-actions inside the Filter card, as on Reports) after the Meeting No row. No inline style, no CSS changed.
+- Meeting No keeps its postback (R1): its handler now only hides the message and the list (and clears the list kept in ViewState). Without the postback an old list would stay on screen under another meeting. Committee Name is unchanged (it loads the meetings and hides the list), and also clears the kept list.
+- btnView_Click reads the list as the Meeting No change did before AD1: AttendanceMgr.GetAttendanceByMeetingId(MeetingId, "All"), that is spr_GetAttendanceByMeetingId (all rows of View_Attendance for the meeting); the grid, its columns, sorting and look are unchanged (R3).
+- View with Committee Name not chosen: "Select committee name."; with Committee Name chosen and Meeting No not chosen: "Select meeting no." (the texts of Followup by Department, FollowupActionTaken.aspx.cs CheckValidataion; also Reports.aspx.cs). Checked on the server, in the page's message block, focus on the drop-down; no list shown (R2).
+- Fixed: "- Select -" in Meeting No used to show an empty list; now no list shows until View.
+- Not changed: the role checks and page access (R4), PageAccess.xml, the procedure, the UI2b look (R5).
+
+Build checks (2026-11-27): HEAD (4f9aae0) and the working tree built into the scratchpad with MSBuild (Debug, OutDir and IntermediateOutputPath in the scratchpad; 0 errors; the 18 warnings are old ones in other files; bin and obj untouched: 69 files, no difference); the working-tree site precompiled with aspnet_compiler (0 errors). No SQL script, so no SQL parse and no Test script.
+
+Proofs (2026-11-27, BMMS_Test): two scratch site copies (HEAD and the working tree, IIS Express, Windows authentication to .\SQLEXPRESS BMMS_Test), signed in as the BMMS_Test Controller by a scratch handler (never in the repository), driven by Playwright in the installed Chrome and Edge.
+
+- Rows: Board Meeting 00002 (2 rows), NRC 00002 (2 rows, both A; the only meeting of BMMS_Test with Absent rows) and Women Harassment 00002 (3 rows): every cell of the grid after the Meeting No change on HEAD and after View on the working tree, 0 differences; the same rows as spr_GetAttendanceByMeetingId(<id>, 'All'). Sorting works after View.
+- Screen states: page opened (no list); View with nothing chosen ("Select committee name.", focus Committee Name, no list); committee chosen (no list); View with no meeting ("Select meeting no.", focus Meeting No, no list); meeting chosen (no list); View (list); meeting changed (list hidden); View again (list); meeting back to "- Select -" (no list); committee changed after a list (list hidden, the new committee's meetings); committee back to "- Select -" and View ("Select committee name.").
+- Chrome and Edge at 1366 and 1024 px: no sideways scroll (scrollWidth equals clientWidth); the View button inside the Filter card, its left edge on the fields' edge (332 / 249 px) as btnView on Reports (Agenda Summary), 96 x 44 px; the gap from the card to the list 36 px before and after. No page error; no new error log file.
+
+Reviewers (2026-11-27, on the diff with the brief and the proof files): security Pass, no finding; ux Pass, Low only; ui Pass, Low only. No High or Medium. Low notes in Known items for later steps.
+
+Tester (2026-11-27, Tests\_results\2026-11-27_222326; no baseline update, no database step): access-matrix, page-assets, dashboard, followup, followup-reports, manager-scope in that order PASSED, 940 of 940 checks (448 access cells ok, standing proof holds; the self-test's 3 planted checks caught), error log 0 new lines, no request outside localhost. No pack opens the Attendance Details list (access-matrix opens the page only); its looks are the owner's tests.
+
+Browser checks: tester: the six packs above. Owner by eye: the View button and message look in the Filter card, and the list under the card, in Chrome and Edge at 1366 and 1024 px.
+
 ## Known items for later steps
 
+- Step AD1 ux-reviewer (Low, no change): after a list is shown, a change of Meeting No hides it by a full postback; while that postback is slow the old list is still on screen and View is not disabled. A timing window only (the next page load hides the list).
+- Step AD1 ux-reviewer (Low): on Attendance Details the three lines that hide the list and clear the kept list (pnlAttendance, ViewState["dtAttendanceMember"]) appear in the Committee, Meeting No and View handlers; a small helper could hold them.
+- Step AD1 ui-reviewer (Low, no change): Meeting No keeps AutoPostBack, so each change makes a full postback only to hide the list (allowed by R1 and needed for D1).
 - Step SF1 (found on the way; list only, not changed): spr_UpdateAttendance ignores the "fee applicable" choice of Committee Member Tagging (Committee_Member.IsFeeApplicable): it copies ApplicableFee into the attendance row of a member marked present anyway.
 - Step SF1 (list only): spr_AddEditCommitteeMember declares @ApplicableFee DECIMAL (that is DECIMAL(18,0)), so the fee is saved as a whole number and paise are dropped.
 - Step SF1 (list only): spr_UpdateAttendance reads the fee with a subquery on Committee_Member by CommitteeId and MemberId; two tagging rows for one member on one committee would make the attendance save fail ("Subquery returned more than 1 value").

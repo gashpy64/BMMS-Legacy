@@ -34,10 +34,15 @@
                     <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlMeeting">
                         Meeting No <span class="wb-req">*</span></label>
                     <div class="wb-field">
+                        <%-- Step AD1: the postback stays, so a change hides a list already shown (D1) --%>
                         <asp:DropDownList ID="ddlMeeting" runat="server" AutoPostBack="true"
                             OnSelectedIndexChanged="ddlMeeting_SelectedIndexChanged">
                         </asp:DropDownList>
                     </div>
+                </div>
+                <%-- Step AD1: the list shows only on View (D1, D2) --%>
+                <div class="wb-actions">
+                    <asp:Button ID="btnView" runat="server" Text="View" OnClick="btnView_Click" CssClass="wb-btn" />
                 </div>
             </div>
         </div>
