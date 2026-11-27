@@ -438,6 +438,10 @@ Fields and buttons:
 
 - The box "Meeting" has Committee Name and Meeting No (both required) and the buttons Finalize (the main button) and
   Cancel.
+- Meeting No lists only the meetings of the committee whose minutes are not yet finalized and not yet confirmed. A meeting
+  that is not ready to be finalized yet (for example its agenda is not finalized) is still listed, and BMMS tells you why
+  when you choose it or press Finalize. If the committee has no such meeting, Meeting No shows only "- Select -" and
+  BMMS says "This committee has no meeting with minutes still to finalize."
 - When you have chosen a Committee Name and a Meeting No, a second box headed "Minutes Items" appears under the first.
   It is a list you can only read, with the columns Agenda No, Subject No, Short Text, Decision and Actual Resolution. The
   rows are in Agenda No order; you cannot sort them. Long texts wrap onto several lines. Actual Resolution is shown as
@@ -447,8 +451,9 @@ Fields and buttons:
   - For an item that was saved with nothing entered, they show "Not recorded".
   - A meeting without items shows "No items in this meeting."
 - The list disappears when you set Committee Name or Meeting No back to -Select-, or choose another committee or
-  meeting, and when you press Cancel (which takes you to the Dashboard). After Finalize the same meeting stays chosen, the list is read again and the
-  message stays above it.
+  meeting, and when you press Cancel (which takes you to the Dashboard). After a successful Finalize the meeting drops out
+  of the Meeting No list, Meeting No goes back to "- Select -", the list disappears and the message stays above the boxes.
+  If BMMS refuses, the meeting stays chosen and the list is read again.
 
 Steps:
 
@@ -481,9 +486,13 @@ Messages and what to do:
   them is missing, BMMS gives no warning in advance, and shows the reason after you press Finalize and OK. The warning
   goes away when you choose another committee or meeting, when you press Cancel and when you press Finalize (its message
   replaces it).
-- "Minutes Finalized": done. The meeting stays chosen and the list shows the meeting again.
+- "Minutes Finalized": done. The meeting is no longer in the Meeting No list and Meeting No shows "- Select -". If this was
+  the last meeting of the committee to finalize, only this message shows.
+- "This committee has no meeting with minutes still to finalize.": every meeting of the committee has its minutes
+  finalized or confirmed already. Choose another committee.
 
 [Screenshot: Finalize Minutes as the Controller, a meeting chosen with the Minutes Items list - supplied by Gashpy Software]
+[Screenshot: Finalize Minutes, a committee with no meeting to finalize and its message - supplied by Gashpy Software]
 
 ### Minutes Confirmation
 
@@ -492,7 +501,9 @@ Purpose: the final step for the minutes of a meeting, with the Confirm button. B
 Open it from the Minutes menu, item Minutes Confirmation. The breadcrumb reads "Minutes / Minutes Confirmation".
 
 Fields and buttons: the box "Meeting" has Committee Name and Meeting No (both required) and the buttons Confirm (the main
-button) and Cancel. The box "Minutes Items" appears under it when both are chosen, with the same columns, wording and
+button) and Cancel. Meeting No lists only the meetings of the committee whose minutes are finalized and not yet
+confirmed. If the committee has none, Meeting No shows only "- Select -" and BMMS says "This committee has no meeting with
+finalized minutes waiting for confirmation." The box "Minutes Items" appears under it when both are chosen, with the same columns, wording and
 behaviour as on Finalize Minutes (Agenda No, Subject No, Short Text, Decision, Actual Resolution; "-", "Not yet
 recorded", "Not recorded", "No items in this meeting."; hidden again when you change or clear the choice, or press Cancel).
 
@@ -501,7 +512,10 @@ Steps:
 1. Choose Committee Name, then Meeting No. The Minutes Items list appears.
 2. Read the list.
 3. Press Confirm. BMMS asks whether you want to go on and shows the number of items ([n]). Press OK to go on, or Cancel in the question to stay.
-4. BMMS says "Minutes confirmed.", or tells you why it cannot. The meeting stays chosen and the list shows it again.
+4. BMMS says "Minutes confirmed.", or tells you why it cannot. After "Minutes confirmed." the meeting drops out of the
+   Meeting No list, Meeting No shows "- Select -", the Minutes Items list disappears and the message stays; if this was the
+   last meeting waiting for confirmation, only the message shows. If BMMS cannot confirm, the meeting stays chosen and the
+   list shows it again.
 
 [Screenshot: Minutes Confirmation as the Controller, a meeting chosen with the Minutes Items list - supplied by Gashpy Software]
 

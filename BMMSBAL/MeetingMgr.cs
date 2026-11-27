@@ -6,6 +6,16 @@ using BMMSDAL;
 
 namespace BMMSBAL
 {
+    #region MeetingAction
+    // Step AF1: the page a meeting list is for (MeetingMgr.GetMeetingsToActOn)
+    public enum MeetingAction
+    {
+        AgendaFinalize,
+        MinutesFinalize,
+        MinutesConfirm
+    }
+    #endregion
+
     #region MeetingChangeResult
     /// <summary>
     /// Answer of the meeting-state procedures (BMMS-Fix-MeetingLocks.sql and
@@ -430,6 +440,45 @@ namespace BMMSBAL
         public static DataTable GetMeetingByCommitteeId(int CommitteeId)
         {
             return MeetingDB.GetMeetingByCommitteeId(CommitteeId);
+        }
+        #endregion
+
+        #region GetMeetingsToActOn
+        // Step AF1 (R1 to R3): the meetings of a committee that a finalize or confirm page offers, from the rows of
+        // spr_GetMeetingByCommitteeId (View_Meeting gives AgendaStatus and MinutesStatus), in the same order. The
+        // values are the ones of the pages' own checks: spr_CheckAgendaFinalizeByMeetingId (AgendaStatus 'Open'),
+        // spr_CheckMinutesFinalizeByMeetingId ('F') and spr_CheckMinutesConfirmByMeetingId ('C'). Compared trimmed
+        // and ignoring case, as SQL Server compares them. AgendaStatus NULL is not offered (the page's check refuses
+        // it, Q2); MinutesStatus NULL counts as neither finalized nor confirmed. The procedures still decide.
+        public static DataTable GetMeetingsToActOn(int CommitteeId, MeetingAction Action)
+        {
+            DataTable all = MeetingDB.GetMeetingByCommitteeId(CommitteeId);
+            DataTable kept = all.Clone();
+
+            foreach (DataRow row in all.Rows)
+            {
+                string agenda = StatusValue(row, "AgendaStatus");
+                string minutes = StatusValue(row, "MinutesStatus");
+                bool keep;
+
+                if (Action == MeetingAction.AgendaFinalize)
+                    keep = agenda == "OPEN";
+                else if (Action == MeetingAction.MinutesFinalize)
+                    keep = minutes != "F" && minutes != "C";
+                else
+                    keep = minutes == "F";
+
+                if (keep)
+                    kept.ImportRow(row);
+            }
+            return kept;
+        }
+
+        // The column's value trimmed and in upper case; "" for NULL
+        private static string StatusValue(DataRow row, string column)
+        {
+            object value = row[column];
+            return value == DBNull.Value ? string.Empty : value.ToString().Trim().ToUpperInvariant();
         }
         #endregion
 

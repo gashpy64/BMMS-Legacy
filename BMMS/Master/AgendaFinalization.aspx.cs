@@ -45,16 +45,13 @@ namespace BMMS.Master
             {
                 MsgHide();
 
-                int _intCommitteeId = Convert.ToInt16(ddlCommittee.SelectedValue);
-                DataTable dtMeeting = new DataTable();
-                dtMeeting = MeetingMgr.GetMeetingByCommitteeId(_intCommitteeId);
-
-                ViewState["dtMeeting"] = dtMeeting;
-                Common.LoadDropdownlist(ddlMeeting, dtMeeting, "MeetingNo", "MeetingId", true);
+                LoadMeetings(true);
 
                 LoadAgenda();
 
                 BindGridView();
+
+                SetFinalizeConfirm();
             }
             catch (Exception ex)
             {
@@ -77,6 +74,8 @@ namespace BMMS.Master
                 LoadAgenda();
 
                 BindGridView();
+
+                SetFinalizeConfirm();
             }
             catch (Exception ex)
             {
@@ -86,6 +85,92 @@ namespace BMMS.Master
             {
 
             }
+        }
+        #endregion
+
+        #region LoadMeetings
+        // Step AF1 (R1, R6): only the meetings whose agenda is still Open (MeetingMgr.GetMeetingsToActOn). A committee
+        // with none keeps "- Select -" alone and, when showEmpty, the message says so. Not shown after a Finalize
+        // (R4: the success message stays).
+        private void LoadMeetings(bool showEmpty)
+        {
+            int _intCommitteeId = Convert.ToInt16(ddlCommittee.SelectedValue);
+            DataTable dtMeeting = MeetingMgr.GetMeetingsToActOn(_intCommitteeId, MeetingAction.AgendaFinalize);
+
+            ViewState["dtMeeting"] = dtMeeting;
+            Common.LoadDropdownlist(ddlMeeting, dtMeeting, "MeetingNo", "MeetingId", true);
+
+            if (showEmpty && ddlCommittee.SelectedValue != "0" && dtMeeting.Rows.Count == 0)
+                MsgDisplay(NoMeetingMessage);
+        }
+
+        private const string NoMeetingMessage = "This committee has no meeting with its agenda still to finalize.";
+        #endregion
+
+        #region SetFinalizeConfirm
+        // Step AF1 (R5): the Finalize confirm, built on the server from the counts of the rows the server acts on:
+        // approved = the meeting's Agenda rows (AgendaMgr.CheckAgendaByMeetingId, as btnFinalize_Click reads them)
+        // with ControllerApprovedStatus 'Approved' (the rows spr_AgendaFinalizeByMeetingId copies to the minutes);
+        // to be rejected = the list btnFinalize_Click rejects, each with a mail (ViewState dtAgenda, from
+        // spr_CheckAgendaApprovedByMeetingId). Fixed text, the committee name, the meeting number and the counts,
+        // through JavaScriptStringEncode. The markup's text when the committee or the meeting is "- Select -".
+        private void SetFinalizeConfirm()
+        {
+            if (ddlCommittee.SelectedValue == "0" || string.IsNullOrEmpty(ddlMeeting.SelectedValue) || ddlMeeting.SelectedValue == "0")
+            {
+                btnFinalize.OnClientClick = ConfirmScript(DefaultConfirmText);
+                return;
+            }
+
+            int MeetingId = int.Parse(ddlMeeting.SelectedValue);
+            DataTable dtAll = AgendaMgr.CheckAgendaByMeetingId(MeetingId);
+            DataTable dtToReject = (DataTable)ViewState["dtAgenda"];
+
+            int approved = 0;
+            foreach (DataRow row in dtAll.Rows)
+            {
+                if (row["ControllerApprovedStatus"] != DBNull.Value
+                    && string.Equals(row["ControllerApprovedStatus"].ToString().Trim(), "Approved", StringComparison.OrdinalIgnoreCase))
+                    approved += 1;
+            }
+            int toReject = dtToReject == null ? 0 : dtToReject.Rows.Count;
+
+            string text = "Finalize the agenda of " + ddlCommittee.SelectedItem.Text + ", Meeting No " + ddlMeeting.SelectedItem.Text + "?";
+
+            if (dtAll.Rows.Count == 0)
+                text += " This meeting has no agenda items, so it will have no minutes.";
+            else
+            {
+                if (approved > 0)
+                    text += " Approved items that go to the minutes: " + approved + ".";
+                else
+                    text += " No item is approved, so no item goes to the minutes.";
+
+                if (toReject > 0)
+                    text += " Items not yet approved that will be rejected, with a mail for each: " + toReject + ".";
+                else
+                    text += " No item will be rejected.";
+            }
+
+            btnFinalize.OnClientClick = ConfirmScript(text);
+        }
+
+        // The text of the markup's confirm (OnClientClick of btnFinalize)
+        private const string DefaultConfirmText = "Do you want to Finalize this Meeting Agenda?";
+
+        private static string ConfirmScript(string text)
+        {
+            return "return confirm('" + HttpUtility.JavaScriptStringEncode(text) + "');";
+        }
+
+        // Step AF1 (R4): after a successful Finalize the meeting is no longer Open: the list of the committee is read
+        // again, Meeting No is "- Select -", the pending list is hidden and the confirm is the markup's; the message stays
+        private void ReloadAfterFinalize()
+        {
+            LoadMeetings(false);
+            LoadAgenda();
+            BindGridView();
+            SetFinalizeConfirm();
         }
         #endregion
 
@@ -192,6 +277,9 @@ namespace BMMS.Master
 
                         sMsg = noItems.Result == 1 ? "Agenda Finalized (no agenda items)." : noItems.RefusalMessage();
                         MsgDisplay(sMsg, sMsg == "Agenda Finalized (no agenda items)." ? MessageKind.Success : MessageKind.Warning);
+
+                        if (noItems.Result == 1)
+                            ReloadAfterFinalize();      // step AF1 (R4)
                     }
                     else
                     {
@@ -233,6 +321,8 @@ namespace BMMS.Master
                         else
                             MsgDisplay(sMsg, (sMsg == "Agenda Finalized" || sMsg == "Agenda Finalized (no agenda items).") ? MessageKind.Success : MessageKind.Warning);
 
+                        if (result.Result == 1)
+                            ReloadAfterFinalize();      // step AF1 (R4)
                     }
 
                 }

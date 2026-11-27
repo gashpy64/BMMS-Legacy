@@ -3,11 +3,11 @@
 - Title: Program to Program: Minutes Update and Confirmation
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: MF1 (the new section "The Minutes Items list (step MF1)"; the Programs table and the Tables table: Finalize Minutes and Minutes Confirmation read spr_GetMinutesByMeetingId); IU1 (step 55: the action item rows at minutes finalisation); user-ud1a
-- Commit: 00b6062
-- Last updated by: MF1, based on 00b6062 (the MF1 section and rows); IU1, based on 79f50ea
+- Applies to: AF1 (the new section "The meeting lists of Finalize Minutes and Minutes Confirmation (step AF1)"; the Programs table row); MF1 (the new section "The Minutes Items list (step MF1)"; the Programs table and the Tables table: Finalize Minutes and Minutes Confirmation read spr_GetMinutesByMeetingId); IU1 (step 55: the action item rows at minutes finalisation); user-ud1a
+- Commit: be23b24
+- Last updated by: AF1, based on be23b24 (the AF1 section and the Programs row); MF1, based on 00b6062 (the MF1 section and rows); IU1, based on 79f50ea
 - Status: Draft
-- Verified against: for MF1: BMMS/Master/MinutesFinalization.aspx.cs and MinutesConfirmation.aspx.cs (the new code read in full), BMMSBAL/MinutesMgr.cs (GetMinutesItemList), BMMSBAL/HtmlCleaner.cs (ToPlainText), BMMSDAL/MinutesDB.cs and MeetingDB.cs (the two calls), Database/README.md (section Step MF1); for IU1: Database/BMMS-Fix-InactiveUsers-Step55.sql (spr_MinutesFinalizeByMeetingId, fn_FunctionalUsers), BMMS-Test-InactiveUsers-Step55.sql (part 2, R2 and R3), Database/README.md (section Step IU1)
+- Verified against: for AF1: BMMS/Master/MinutesFinalization.aspx.cs and MinutesConfirmation.aspx.cs and BMMSBAL/MeetingMgr.cs (GetMeetingsToActOn) read in the diff, Database/README.md (section Step AF1); for MF1: BMMS/Master/MinutesFinalization.aspx.cs and MinutesConfirmation.aspx.cs (the new code read in full), BMMSBAL/MinutesMgr.cs (GetMinutesItemList), BMMSBAL/HtmlCleaner.cs (ToPlainText), BMMSDAL/MinutesDB.cs and MeetingDB.cs (the two calls), Database/README.md (section Step MF1); for IU1: Database/BMMS-Fix-InactiveUsers-Step55.sql (spr_MinutesFinalizeByMeetingId, fn_FunctionalUsers), BMMS-Test-InactiveUsers-Step55.sql (part 2, R2 and R3), Database/README.md (section Step IU1)
 - To confirm: feature area written only for the action item rows at finalisation (IU1) and the Minutes Items list (MF1); the rest is not written yet (WF2c3)
 
 ## Scope
@@ -26,6 +26,7 @@ rest of the minutes flow (update, finalise, confirm) is not written yet.
 | fn_FunctionalUsers | Function | The users who get a row: active, not the protected system account, not the Admin role |
 | spr_UpdateMinutes | Procedure | The late action item of an inactive creator goes to the active Controllers (unchanged by step 55) |
 | spr_GetMinutesByMeetingId | Procedure | Since step MF1 read by Finalize Minutes and Minutes Confirmation for the Minutes Items list (see below) |
+| MeetingMgr.GetMeetingsToActOn | BAL | Since step AF1 filters the meetings of a committee for Finalize Minutes and Minutes Confirmation (see below) |
 
 ## Main flow
 
@@ -85,7 +86,7 @@ sequenceDiagram
 
 | From | To | Data | Notes |
 |---|---|---|---|
-| Controller | Finalize Minutes, Minutes Confirmation | Committee Name, Meeting No | Meeting No has the new handler ddlMeeting_SelectedIndexChanged; the list is read again after Finalize or Confirm |
+| Controller | Finalize Minutes, Minutes Confirmation | Committee Name, Meeting No | Meeting No has the new handler ddlMeeting_SelectedIndexChanged; the list is read again after a refused Finalize or Confirm; since step AF1 a successful one hides it (the meeting drops out of Meeting No) |
 | Finalize Minutes, Minutes Confirmation | MinutesMgr.GetMinutesItemList | MeetingId | Not called while Committee Name or Meeting No is -Select-: the list is hidden |
 | MinutesMgr.GetMinutesItemList | spr_GetMinutesByMeetingId | MeetingId, StatusId -1, DepartmentId -1 | Through MinutesDB.GetMinutesByMeetingId; all departments, as Update Minutes reads them |
 | spr_GetMinutesByMeetingId | MinutesMgr.GetMinutesItemList | One row per minute | Columns AgendaNo, SubjectNo, ShortText, DecisionTypeName, ActualResolution, StatusId |
@@ -105,6 +106,52 @@ Drawn from: BMMS/Master/MinutesFinalization.aspx.cs and MinutesConfirmation.aspx
 ddlMeeting_SelectedIndexChanged), BMMSBAL/MinutesMgr.cs (GetMinutesItemList), BMMSBAL/HtmlCleaner.cs (ToPlainText),
 BMMSDAL/MinutesDB.cs (GetMinutesByMeetingId), BMMSDAL/MeetingDB.cs (GetMeetingWorkflowState), Database/README.md (section
 Step MF1).
+
+## The meeting lists of Finalize Minutes and Minutes Confirmation (step AF1)
+
+Code only; no procedure changed. When Committee Name is chosen, both pages call MeetingMgr.GetMeetingsToActOn(CommitteeId,
+action). It reads the rows of the existing spr_GetMeetingByCommitteeId (View_Meeting, with AgendaStatus and MinutesStatus) and
+keeps, in the same order, the meetings the page can act on. The values are those of the pages' own checks, trimmed and ignoring case.
+
+```mermaid
+sequenceDiagram
+    participant C as Controller
+    participant P as MinutesFinalization.aspx or MinutesConfirmation.aspx
+    participant M as MeetingMgr.GetMeetingsToActOn
+    participant S as spr_GetMeetingByCommitteeId
+
+    C->>P: Choose Committee Name
+    P->>M: CommitteeId, MinutesFinalize or MinutesConfirm
+    M->>S: CommitteeId
+    S-->>M: every meeting of the committee
+    M-->>P: the meetings to act on
+    P-->>C: Meeting No list, or the message when it is empty
+```
+
+| From | To | Data | Notes |
+|---|---|---|---|
+| Controller | Finalize Minutes, Minutes Confirmation | Committee Name | The meeting list is read again; the Minutes Items list is hidden |
+| Finalize Minutes | MeetingMgr.GetMeetingsToActOn | CommitteeId, MeetingAction.MinutesFinalize | Keeps MinutesStatus other than 'F' and 'C' (status only: a meeting not ready stays, the MF1 messages say why); NULL is listed |
+| Minutes Confirmation | MeetingMgr.GetMeetingsToActOn | CommitteeId, MeetingAction.MinutesConfirm | Keeps MinutesStatus 'F' |
+| MeetingMgr.GetMeetingsToActOn | Finalize Minutes, Minutes Confirmation | The kept rows | An empty list: "- Select -" only and a message (below) |
+
+Messages of an empty list (shown when a committee is chosen, not after a success): Finalize Minutes "This committee has no meeting
+with minutes still to finalize."; Minutes Confirmation "This committee has no meeting with finalized minutes waiting for
+confirmation." After a successful Finalize or Confirm the page reads the list again (the meeting drops out), Meeting No is "- Select -", the
+Minutes Items list is hidden and the success message stays. After a refusal the meeting stays chosen and the Minutes Items list is
+read again (MF1). The procedures, refusals, Reasons, locks, audit rows and mails are unchanged; the procedures still decide. The
+other pages that read spr_GetMeetingByCommitteeId keep every meeting.
+
+| Rule | C# | Procedure |
+|---|---|---|
+| Finalize Minutes lists meetings not 'F' and not 'C' | MeetingMgr.GetMeetingsToActOn | none (the checks are spr_CheckMinutesFinalizeByMeetingId and spr_CheckMinutesConfirmByMeetingId, unchanged) |
+| Minutes Confirmation lists meetings 'F' | MeetingMgr.GetMeetingsToActOn | none (the check is spr_CheckMinutesConfirmByMeetingId, unchanged) |
+| Drop-out after a success | LoadMeetings(false) and HideMinutesItems in the Finalize and Confirm handlers | none |
+
+Tables read: View_Meeting (through spr_GetMeetingByCommitteeId). Tables written: none.
+
+Drawn from: BMMS/Master/MinutesFinalization.aspx.cs and MinutesConfirmation.aspx.cs (LoadMeetings, ReloadAfterFinalize, the Finalize
+and Confirm handlers), BMMSBAL/MeetingMgr.cs (MeetingAction, GetMeetingsToActOn), Database/README.md (section Step AF1).
 
 ## Refusal paths
 

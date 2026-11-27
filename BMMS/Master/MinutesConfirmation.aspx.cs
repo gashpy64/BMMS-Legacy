@@ -43,12 +43,7 @@ namespace BMMS.Master
             try
             {
                 MsgHide();
-                int _intCommitteeId = Convert.ToInt16(ddlCommittee.SelectedValue);
-                DataTable dtMeeting = new DataTable();
-                dtMeeting = MeetingMgr.GetMeetingByCommitteeId(_intCommitteeId);
-
-                ViewState["dtMeeting"] = dtMeeting;
-                Common.LoadDropdownlist(ddlMeeting, dtMeeting, "MeetingNo", "MeetingId", true);
+                LoadMeetings(true);
                 HideMinutesItems();     // step MF1: the meeting is -Select- again
 
             }
@@ -61,6 +56,25 @@ namespace BMMS.Master
 
             }
         }
+        #endregion
+
+        #region LoadMeetings
+        // Step AF1 (R3, R6): only the meetings whose minutes are finalized and not confirmed. A committee with none
+        // keeps "- Select -" alone and, when showEmpty, the message says so. Not shown after a Confirm (R4: the
+        // success message stays).
+        private void LoadMeetings(bool showEmpty)
+        {
+            int _intCommitteeId = Convert.ToInt16(ddlCommittee.SelectedValue);
+            DataTable dtMeeting = MeetingMgr.GetMeetingsToActOn(_intCommitteeId, MeetingAction.MinutesConfirm);
+
+            ViewState["dtMeeting"] = dtMeeting;
+            Common.LoadDropdownlist(ddlMeeting, dtMeeting, "MeetingNo", "MeetingId", true);
+
+            if (showEmpty && ddlCommittee.SelectedValue != "0" && dtMeeting.Rows.Count == 0)
+                MsgDisplay(NoMeetingMessage);
+        }
+
+        private const string NoMeetingMessage = "This committee has no meeting with finalized minutes waiting for confirmation.";
         #endregion
 
         #region ddlMeeting_SelectedIndexChanged
@@ -191,6 +205,15 @@ namespace BMMS.Master
                         sMsg = result.Result == 1 ? "Minutes confirmed." : result.RefusalMessage();
 
                         MsgDisplay(sMsg, sMsg == "Minutes confirmed." ? MessageKind.Success : MessageKind.Warning);
+
+                        if (result.Result == 1)
+                        {
+                            // Step AF1 (R4): the meeting drops out of the list; Meeting No is "- Select -", the
+                            // Minutes Items list is hidden and the confirm is the markup's; the message stays
+                            LoadMeetings(false);
+                            HideMinutesItems();
+                            return;
+                        }
                     }
                     LoadMinutesItems();     // step MF1: the list of the meeting, read again; the message stays
                 }

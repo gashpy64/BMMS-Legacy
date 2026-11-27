@@ -44,12 +44,7 @@ namespace BMMS.Master
             try
             {
                 MsgHide();
-                int _intCommitteeId = Convert.ToInt16(ddlCommittee.SelectedValue);
-                DataTable dtMeeting = new DataTable();
-                dtMeeting = MeetingMgr.GetMeetingByCommitteeId(_intCommitteeId);
-
-                ViewState["dtMeeting"] = dtMeeting;
-                Common.LoadDropdownlist(ddlMeeting, dtMeeting, "MeetingNo", "MeetingId", true);
+                LoadMeetings(true);
                 HideMinutesItems();     // step MF1: the meeting is -Select- again
 
             }
@@ -61,6 +56,33 @@ namespace BMMS.Master
             {
 
             }
+        }
+        #endregion
+
+        #region LoadMeetings
+        // Step AF1 (R2, R6): only the meetings whose minutes are neither finalized nor confirmed (status only; a
+        // meeting not ready yet stays, so the MF1 messages say why). A committee with none keeps "- Select -" alone
+        // and, when showEmpty, the message says so. Not shown after a Finalize (R4: the success message stays).
+        private void LoadMeetings(bool showEmpty)
+        {
+            int _intCommitteeId = Convert.ToInt16(ddlCommittee.SelectedValue);
+            DataTable dtMeeting = MeetingMgr.GetMeetingsToActOn(_intCommitteeId, MeetingAction.MinutesFinalize);
+
+            ViewState["dtMeeting"] = dtMeeting;
+            Common.LoadDropdownlist(ddlMeeting, dtMeeting, "MeetingNo", "MeetingId", true);
+
+            if (showEmpty && ddlCommittee.SelectedValue != "0" && dtMeeting.Rows.Count == 0)
+                MsgDisplay(NoMeetingMessage);
+        }
+
+        private const string NoMeetingMessage = "This committee has no meeting with minutes still to finalize.";
+
+        // Step AF1 (R4): after "Minutes Finalized" the meeting drops out of the list: Meeting No is "- Select -",
+        // the Minutes Items list is hidden and the confirm is the markup's; the message stays
+        private void ReloadAfterFinalize()
+        {
+            LoadMeetings(false);
+            HideMinutesItems();
         }
         #endregion
 
@@ -224,9 +246,14 @@ namespace BMMS.Master
                     {
                         MeetingChangeResult newResult = AgendaMgr.MinutesFinalizeByMeetingId(MeetingId, int.Parse(Session["UserId"].ToString()));
                         MsgDisplay(newResult.Result == 1 ? "Minutes Finalized" : newResult.RefusalMessage(), newResult.Result == 1 ? MessageKind.Success : MessageKind.Warning);
-                        LoadMinutesItems(false);    // step MF1: the list of the meeting, read again; the message stays
+                        if (newResult.Result == 1)
+                            ReloadAfterFinalize();      // step AF1 (R4)
+                        else
+                            LoadMinutesItems(false);    // step MF1: the list of the meeting, read again; the message stays
                         return;
                     }
+
+                    bool finalized = false;     // step AF1 (R4)
 
                     DataTable dtAgenda = new DataTable();
                     dtAgenda = AgendaMgr.CheckMinutesByMeetingId(MeetingId);
@@ -248,6 +275,7 @@ namespace BMMS.Master
                             MeetingChangeResult result = AgendaMgr.MinutesFinalizeByMeetingId(MeetingId, int.Parse(Session["UserId"].ToString()));
 
                             sMsg = result.Result == 1 ? "Minutes Finalized" : result.RefusalMessage();
+                            finalized = result.Result == 1;
 
                             MsgDisplay(sMsg, sMsg == "Minutes Finalized" ? MessageKind.Success : MessageKind.Warning);
                         }
@@ -258,7 +286,10 @@ namespace BMMS.Master
                             MsgDisplay(sMsg, sMsg == "Minutes Finalized" ? MessageKind.Success : MessageKind.Warning);
                         }
                     }
-                    LoadMinutesItems(false);    // step MF1: the list of the meeting, read again; the message stays
+                    if (finalized)
+                        ReloadAfterFinalize();      // step AF1 (R4)
+                    else
+                        LoadMinutesItems(false);    // step MF1: the list of the meeting, read again; the message stays
                 }
                 catch (Exception ex)
                 {
