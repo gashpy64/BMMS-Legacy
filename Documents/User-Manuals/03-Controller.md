@@ -46,6 +46,11 @@ and Followup Summary show no minutes status for you, but they show the followup 
   bold and, under it, the line. The printed Followup Summary has a "Followup status" column with the word only.
 - The rows, their filters and their order are as before; items that tie on every other key are listed by agenda
   number, then by action item.
+- The Followup and Followup Summary pages open from the Reports menu. The breadcrumb reads "Reports / Followup" or
+  "Reports / Followup Summary", the page title is the same, and the browser tab is named after the menu item. The filter is
+  in a box headed "Filter", one row for each choice, with labels that have no colon. The red * marks the required
+  fields inside the label: Meeting Date From (for the date range) and Committee Name. Under the rows are the buttons View
+  (the main button), Generate and Cancel. They work as before.
 - If you are not allowed to see a report you see "You are not allowed to see this report.", and if your session has
   ended "Your session is no longer valid. Please log in again."; no rows are shown, and the same applies to Export.
 
@@ -55,16 +60,18 @@ and Followup Summary show no minutes status for you, but they show the followup 
 
 The Reports menu also has "Followup by Department", after Followup Summary. It is for you only: a
 Manager who opens it gets "Access denied". It lists the subjects that have a follow-up item, for one
-committee at a time:
+committee at a time. The breadcrumb reads "Reports / Followup by Department" and the page title is the same. The
+filter is in a box headed "Filter", one row for each choice, with labels that have no colon. The red * inside the
+labels Committee and Meeting No marks the two choices you must make:
 
 1. Choose the Committee, and the Department (all departments, or one).
 2. Choose the meeting: under "Meeting No. Search" pick Particular for one meeting, or Between for a
    range, and choose the meeting number in "Meeting No". You can limit the subjects the same way
    with "Subject No. Search" (All or Between) and "Subject No.".
 3. Under "View Format" pick View to see the list on screen, or Print to make the report. Click
-   Submit.
-4. With Print, click Generate Report. The report opens in a new window, where you can Print it or
-   use Export to Pdf or Export to Word.
+   Submit (the main button of the box).
+4. With Print, a box headed "Print details" appears under the filter. Click Generate Report in it. The report opens in a
+   new window, where you can Print it or use Export to Pdf or Export to Word.
 
 The list and the report show only the meetings of the committee you chose. Each row has the meeting,
 the agenda and subject numbers, the department and the agenda short text. In the list on screen (View) the last

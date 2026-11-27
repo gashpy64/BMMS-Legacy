@@ -78,14 +78,14 @@
                                     Meeting No.</div>
                                 <div class="wb-field">
                                     <asp:Panel ID="pnlMeetingNoParticular" runat="server">
-                                        <asp:DropDownList ID="ddlMeetingNo" runat="server" CssClass="wb-filter-select wb-filter-short">
+                                        <asp:DropDownList ID="ddlMeetingNo" runat="server" CssClass="wb-filter-select wb-filter-meetno">
                                         </asp:DropDownList>
                                     </asp:Panel>
                                     <asp:Panel ID="pnlMeetingNoBetween" runat="server">
-                                        <asp:DropDownList ID="ddlMeetingNoFrom" runat="server" CssClass="wb-filter-select wb-filter-short">
+                                        <asp:DropDownList ID="ddlMeetingNoFrom" runat="server" CssClass="wb-filter-select wb-filter-meetno">
                                         </asp:DropDownList>
                                         <asp:Label ID="lblMeetingNo" runat="server" CssClass="wb-unit" Text=" to "></asp:Label>
-                                        <asp:DropDownList ID="ddlMeetingNoTo" runat="server" CssClass="wb-filter-select wb-filter-short">
+                                        <asp:DropDownList ID="ddlMeetingNoTo" runat="server" CssClass="wb-filter-select wb-filter-meetno">
                                         </asp:DropDownList>
                                     </asp:Panel>
                                 </div>

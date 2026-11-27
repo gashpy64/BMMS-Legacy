@@ -51,16 +51,16 @@ namespace BMMS.Report
             switch (reportCode)
             {
                 case "minutes":
-                    lblPageHeader.Text = ":: Minutes Report";
+                    lblPageHeader.Text = "Minutes";
                     break;
                 case "minutes_extract":
-                    lblPageHeader.Text = ":: Minutes Extract Report";
+                    lblPageHeader.Text = "Minutes Extract";
                     break;
                 case "agenda_summary":
-                    lblPageHeader.Text = ":: Agenda Summary";
+                    lblPageHeader.Text = "Agenda Summary";
                     break;
                 case "agenda_details":
-                    lblPageHeader.Text = ":: Agenda Details";
+                    lblPageHeader.Text = "Agenda Details";
                     break;
 
             }

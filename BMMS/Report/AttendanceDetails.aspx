@@ -4,44 +4,49 @@
 
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="cc1" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-    <div class="formContent">
-    <div class="formPanel">
-        <div class="divHeader">
-        :: Attendance</div>
-        <div class="divRowFixed">
-        </div>
-        <div class="divRow" style="height: 25px">
+    <%-- Step UI2b: the Masters' form look (Committee Master): breadcrumb and title as in the menu, a card with label
+         and field rows. The attendance list stays outside .wb-page in its old frame (R12). Control IDs, events
+         and the handlers are unchanged. --%>
+    <div class="wb-page wb-page-fit">
+        <div class="wb-breadcrumb">
+            Reports<span class="wb-breadcrumb-sep">/</span>Attendance Details</div>
+        <h1 class="wb-h1">
+            Attendance Details</h1>
+        <div aria-live="polite">
             <div id="divErrLogin" runat="server" class="divErrorHide">
                 <span id="spanErrLogin" runat="server" class="lblError"></span>
             </div>
         </div>
-        <div class="divRow">
-            <div class="divRow">
-                <div class="divRowLeft wb-label">
-                    Committee Name :
+        <div class="wb-card">
+            <div class="wb-card-header">
+                Filter</div>
+            <div class="wb-card-body">
+                <div class="wb-row">
+                    <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlCommittee">
+                        Committee Name <span class="wb-req">*</span></label>
+                    <div class="wb-field">
+                        <asp:DropDownList ID="ddlCommittee" runat="server" AutoPostBack="true"
+                            OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
+                        </asp:DropDownList>
+                    </div>
                 </div>
-                <div class="divRowRight">
-                    <asp:DropDownList ID="ddlCommittee" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
-                        OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
-                    </asp:DropDownList>
-                    <span class="spanMandatory wb-req">*</span>
+                <div class="wb-row">
+                    <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlMeeting">
+                        Meeting No <span class="wb-req">*</span></label>
+                    <div class="wb-field">
+                        <asp:DropDownList ID="ddlMeeting" runat="server" AutoPostBack="true"
+                            OnSelectedIndexChanged="ddlMeeting_SelectedIndexChanged">
+                        </asp:DropDownList>
+                    </div>
                 </div>
             </div>
-            <div class="divRow">
-                <div class="divRowLeft wb-label">
-                    Meeting No :
-                </div>
-                <div class="divRowRight">
-                    <asp:DropDownList ID="ddlMeeting" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
-                        OnSelectedIndexChanged="ddlMeeting_SelectedIndexChanged">
-                    </asp:DropDownList>
-                    <span class="spanMandatory wb-req">*</span>
-                    <br />
-                </div>
-            </div>
-            <div class="divRow">
-                <asp:Panel ID="pnlAttendance" runat="server">
-                    <div class="divRow">
+        </div>
+    </div>
+    <asp:Panel ID="pnlAttendance" runat="server">
+        <%-- Step UI2b (R12): the list keeps its frame and look; the frame is inside the panel --%>
+        <div class="formContent">
+            <div class="formPanel">
+                <div class="divRow">
                         <asp:GridView ID="grvAttendanceMember" runat="server" SkinID="grvSkinNoPaging" AutoGenerateColumns="false"
                             CssClass="contentTable1" AllowSorting="true" CellPadding="4" 
                             Font-Names="Verdana, Arial, Helvetica, sans-serif" Font-Size="X-Small" ForeColor="#333333"
@@ -122,10 +127,8 @@
                                 </div>
                             </EmptyDataTemplate>
                         </asp:GridView>
-                    </div>
-                </asp:Panel>
+                </div>
             </div>
         </div>
-    </div>
-    </div>
+    </asp:Panel>
 </asp:Content>

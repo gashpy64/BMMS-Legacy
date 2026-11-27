@@ -16,132 +16,118 @@
                 </ProgressTemplate>
             </asp:UpdateProgress>
             <asp:Panel ID="pnlMeetingMaster" runat="server">
-                <div class="formContent">
-                    <div class="formPanel">
-                        <div class="divHeader">
-                            <asp:Label ID="lblPageHeader" runat="server" Text=""></asp:Label></div>
-                        <div class="divRowFixed">
+                <%-- Step UI2b: the Masters' form look (Committee Master), as Minutes > Followup in UI2a: breadcrumb and
+                     title as in the menu (the text of lblPageHeader, set from the query string in Page_Load), one
+                     column of label and field rows, View as the primary button and Generate and Cancel as the
+                     secondary ones, in today's order (D8). The list stays outside .wb-page in its old frame (R12).
+                     Control IDs, events and the handlers are unchanged. --%>
+                <div class="wb-page">
+                    <div class="wb-breadcrumb">
+                        Reports<span class="wb-breadcrumb-sep">/</span><%: lblPageHeader.Text %></div>
+                    <h1 class="wb-h1">
+                        <asp:Label ID="lblPageHeader" runat="server" Text=""></asp:Label></h1>
+                    <div aria-live="polite">
+                        <div id="divErrLogin" runat="server" class="divErrorHide">
+                            <span id="spanErrLogin" runat="server" class="lblError"></span>
                         </div>
-                        <div class="divRow" style="height: 25px">
-                            <div id="divErrLogin" runat="server" class="divErrorHide">
-                                <span id="spanErrLogin" runat="server" class="lblError"></span>
+                    </div>
+                    <asp:Panel ID="pnlFollowupFilter" runat="server">
+                        <div class="wb-card">
+                            <div class="wb-card-header">
+                                Filter</div>
+                            <div class="wb-card-body">
+                                <div class="wb-row">
+                                    <label class="wb-label" for="ctl00_ContentPlaceHolder1_txtFromDate">
+                                        Meeting Date From <span class="wb-req">*</span></label>
+                                    <div class="wb-field">
+                                        <asp:TextBox ID="txtFromDate" runat="server" onfocus="this.blur();" TabIndex="-1"></asp:TextBox>
+                                        <asp:ImageButton runat="Server" ID="imgFromDate" Width="18px" ImageUrl="~/Images/Common/calendar.png" />
+                                        <cc1:CalendarExtender CssClass="cal_Theme1" ID="CalendarExtender1" runat="server"
+                                            TargetControlID="txtFromDate" Animated="true" Format="dd-MMM-yyyy" PopupPosition="Right"
+                                            PopupButtonID="imgFromDate">
+                                        </cc1:CalendarExtender>
+                                        <span class="wb-unit">to</span>
+                                        <asp:TextBox ID="txtToDate" runat="server" onfocus="this.blur();" TabIndex="-1"></asp:TextBox>
+                                        <asp:ImageButton runat="Server" ID="imgToDate" Width="18px" ImageUrl="~/Images/Common/calendar.png" />
+                                        <cc1:CalendarExtender CssClass="cal_Theme1" ID="CalendarExtender2" runat="server"
+                                            TargetControlID="txtToDate" Animated="true" Format="dd-MMM-yyyy" PopupPosition="Right"
+                                            PopupButtonID="imgToDate">
+                                        </cc1:CalendarExtender>
+                                    </div>
+                                </div>
+                                <div class="wb-row">
+                                    <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlCommittee">
+                                        Committee Name <span class="wb-req">*</span></label>
+                                    <div class="wb-field">
+                                        <asp:DropDownList ID="ddlCommittee" runat="server" AutoPostBack="true"
+                                            OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
+                                        </asp:DropDownList>
+                                    </div>
+                                </div>
+                                <div class="wb-row">
+                                    <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlDepartment">
+                                        Department</label>
+                                    <div class="wb-field">
+                                        <asp:DropDownList ID="ddlDepartment" runat="server">
+                                        </asp:DropDownList>
+                                    </div>
+                                </div>
+                                <div class="wb-row">
+                                    <div class="wb-label">
+                                        Meeting No. Search</div>
+                                    <div class="wb-field">
+                                        <asp:RadioButtonList ID="rdoMeatingNoSearch" runat="server" RepeatDirection="Horizontal"
+                                            CssClass="wb-radio-list" AutoPostBack="true" OnSelectedIndexChanged="rdoMeatingNoSearch_SelectedIndexChanged">
+                                            <asp:ListItem Text="Particular" Value="0" Selected="True"></asp:ListItem>
+                                            <asp:ListItem Text="Between" Value="1"></asp:ListItem>
+                                        </asp:RadioButtonList>
+                                    </div>
+                                </div>
+                                <div class="wb-row">
+                                    <div class="wb-label">
+                                        Meeting No.</div>
+                                    <div class="wb-field">
+                                        <asp:Panel ID="pnlMeetingNoParticular" runat="server">
+                                            <asp:DropDownList ID="ddlMeetingNo" runat="server" CssClass="wb-filter-select wb-filter-meetno">
+                                            </asp:DropDownList>
+                                        </asp:Panel>
+                                        <asp:Panel ID="pnlMeetingNoBetween" runat="server">
+                                            <asp:DropDownList ID="ddlMeetingNoFrom" runat="server" CssClass="wb-filter-select wb-filter-meetno">
+                                            </asp:DropDownList>
+                                            <asp:Label ID="lblMeetingNo" runat="server" CssClass="wb-unit" Text=" to "></asp:Label>
+                                            <asp:DropDownList ID="ddlMeetingNoTo" runat="server" CssClass="wb-filter-select wb-filter-meetno">
+                                            </asp:DropDownList>
+                                        </asp:Panel>
+                                    </div>
+                                </div>
+                                <div class="wb-row">
+                                    <div class="wb-label">
+                                        Confirmed Status</div>
+                                    <div class="wb-field">
+                                        <asp:RadioButtonList ID="rdoConfirmStatus" runat="server" RepeatDirection="Horizontal" CssClass="wb-radio-list">
+                                            <asp:ListItem Text="Both" Value="-1" Selected="True"></asp:ListItem>
+                                            <asp:ListItem Text="Confirmed" Value="1"></asp:ListItem>
+                                            <asp:ListItem Text="Pending" Value="0"></asp:ListItem>
+                                        </asp:RadioButtonList>
+                                    </div>
+                                </div>
+                                <div class="wb-actions">
+                                    <asp:Button ID="btnViewFollowup" runat="server" Text="View" OnClick="btnViewFollowup_Click"
+                                        CssClass="wb-btn" />
+                                    <asp:Button ID="btnGenerateReport" runat="server" Text="Generate" OnClick="btnGenerateReport_Click"
+                                        CssClass="wb-btn wb-btn-secondary" />
+                                    <asp:Button ID="btnCancel" runat="server" CssClass="wb-btn wb-btn-secondary" Text="Cancel" OnClick="btnCancel_Click" />
+                                </div>
                             </div>
                         </div>
-                        <div class="divRow">
-                            <asp:Panel ID="pnlFollowupFilter" runat="server">
-                                <div class="divRow">
-                                    <table cellspacing="12" cellpadding="0" border="0" width="100%">
-                                        <tr>
-                                            <td class="Lable wb-label">
-                                                Meeting Date From :
-                                            </td>
-                                            <td>
-                                                <table>
-                                                    <tr>
-                                                        <td>
-                                                            <asp:TextBox ID="txtFromDate" runat="server" Width="80px" onfocus="this.blur();"
-                                                                TabIndex="-1"></asp:TextBox>
-                                                        </td>
-                                                        <td>
-                                                            <asp:ImageButton runat="Server" ID="imgFromDate" Width="18px" ImageUrl="~/Images/Common/calendar.png" />
-                                                        </td>
-                                                        <td>
-                                                            <cc1:CalendarExtender CssClass="cal_Theme1" ID="CalendarExtender1" runat="server"
-                                                                TargetControlID="txtFromDate" Animated="true" Format="dd-MMM-yyyy" PopupPosition="Right"
-                                                                PopupButtonID="imgFromDate">
-                                                            </cc1:CalendarExtender>
-                                                        </td>
-                                                        <td>
-                                                            to
-                                                        </td>
-                                                        <td>
-                                                            <asp:TextBox ID="txtToDate" runat="server" Width="80px" onfocus="this.blur();" TabIndex="-1"></asp:TextBox>
-                                                        </td>
-                                                        <td>
-                                                            <asp:ImageButton runat="Server" ID="imgToDate" Width="18px" ImageUrl="~/Images/Common/calendar.png" />
-                                                            <span class="spanMandatory wb-req">*</span>
-                                                        </td>
-                                                        <td>
-                                                            <cc1:CalendarExtender CssClass="cal_Theme1" ID="CalendarExtender2" runat="server"
-                                                                TargetControlID="txtToDate" Animated="true" Format="dd-MMM-yyyy" PopupPosition="Right"
-                                                                PopupButtonID="imgToDate">
-                                                            </cc1:CalendarExtender>
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            </td>
-                                            <td class="Lable wb-label">
-                                                Committee Name :
-                                            </td>
-                                            <td>
-                                                <asp:DropDownList ID="ddlCommittee" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
-                                                    OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
-                                                </asp:DropDownList>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="Lable wb-label">
-                                                Meeting No. Search :
-                                            </td>
-                                            <td>
-                                                <asp:RadioButtonList ID="rdoMeatingNoSearch" runat="server" RepeatDirection="Horizontal"
-                                                    AutoPostBack="true" OnSelectedIndexChanged="rdoMeatingNoSearch_SelectedIndexChanged">
-                                                    <asp:ListItem Text="Particular" Value="0" Selected="True"></asp:ListItem>
-                                                    <asp:ListItem Text="Between" Value="1"></asp:ListItem>
-                                                </asp:RadioButtonList>
-                                            </td>
-                                            <td class="Lable wb-label">
-                                                Department :
-                                            </td>
-                                            <td>
-                                                <asp:DropDownList ID="ddlDepartment" runat="server" CssClass="wb-filter-select">
-                                                </asp:DropDownList>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="Lable wb-label">
-                                                Meeting No. :
-                                            </td>
-                                            <td>
-                                                <asp:Panel ID="pnlMeetingNoParticular" runat="server">
-                                                    <asp:DropDownList ID="ddlMeetingNo" runat="server" CssClass="wb-filter-select wb-filter-short">
-                                                    </asp:DropDownList>
-                                                </asp:Panel>
-                                                <asp:Panel ID="pnlMeetingNoBetween" runat="server">
-                                                    <asp:DropDownList ID="ddlMeetingNoFrom" runat="server" CssClass="wb-filter-select wb-filter-short">
-                                                    </asp:DropDownList>
-                                                    <asp:Label ID="lblMeetingNo" runat="server" Text=" to "></asp:Label>
-                                                    <asp:DropDownList ID="ddlMeetingNoTo" runat="server" CssClass="wb-filter-select wb-filter-short">
-                                                    </asp:DropDownList>
-                                                </asp:Panel>
-                                            </td>
-                                            <td class="Lable wb-label">
-                                                Confirmed Status :
-                                            </td>
-                                            <td colspan="3">
-                                                <asp:RadioButtonList ID="rdoConfirmStatus" runat="server" RepeatDirection="Horizontal">
-                                                    <asp:ListItem Text="Both" Value="-1" Selected="True"></asp:ListItem>
-                                                    <asp:ListItem Text="Confirmed" Value="1"></asp:ListItem>
-                                                    <asp:ListItem Text="Pending" Value="0"></asp:ListItem>
-                                                </asp:RadioButtonList>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td colspan="4" style="text-align: center;">
-                                                <asp:Button ID="btnViewFollowup" runat="server" Text="View" OnClick="btnViewFollowup_Click"
-                                                    CssClass="button" />
-                                                <asp:Button ID="btnGenerateReport" runat="server" Text="Generate" OnClick="btnGenerateReport_Click"
-                                                    CssClass="button" />
-                                                <asp:Button ID="btnCancel" runat="server" CssClass="button" Text="Cancel" OnClick="btnCancel_Click" />
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </asp:Panel>
-                        </div>
-                        <div class="divRow">
-                            <asp:Panel ID="pnlViewFollowup" runat="server">
-                                <div class="divRow">
+                    </asp:Panel>
+                </div>
+                <asp:Panel ID="pnlViewFollowup" runat="server">
+                    <%-- Step UI2b (R12): the list keeps its frame and look; the frame is inside the panel, so no empty
+                         frame shows before View --%>
+                    <div class="formContent">
+                        <div class="formPanel">
+                            <div class="divRow">
                                     <asp:GridView ID="grvFollowup" runat="server" AutoGenerateColumns="false" CssClass="contentTable1"
                                         AllowSorting="true" CellPadding="4" DataKeyNames="MeetingId" Font-Names="Verdana, Arial, Helvetica, sans-serif"
                                         Font-Size="X-Small" ForeColor="#333333" GridLines="Horizontal" Height="32px"
@@ -253,11 +239,10 @@
                                             </div>
                                         </EmptyDataTemplate>
                                     </asp:GridView>
-                                </div>
-                            </asp:Panel>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </asp:Panel>
             </asp:Panel>
         </ContentTemplate>
     </asp:UpdatePanel>

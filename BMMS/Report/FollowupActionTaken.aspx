@@ -15,117 +15,126 @@
                 </ProgressTemplate>
             </asp:UpdateProgress>
             <asp:Panel ID="pnlMeetingMaster" runat="server">
-                <div class="formContent">
-                    <div class="formPanel">
-                        <div class="divHeader">
-                            :: Followup by Department</div>
-                        <div class="divRowFixed">
+                <%-- Step UI2b: the Masters' form look (Committee Master): breadcrumb and title as in the menu, one column
+                     of label and field rows, Submit as the primary button of the filter card and Generate Report as
+                     the primary button of the print card (one primary per card, C9). The list stays outside .wb-page
+                     in its old frame (R12). Control IDs, events and the handlers are unchanged. --%>
+                <div class="wb-page">
+                    <div class="wb-breadcrumb">
+                        Reports<span class="wb-breadcrumb-sep">/</span>Followup by Department</div>
+                    <h1 class="wb-h1">
+                        Followup by Department</h1>
+                    <div aria-live="polite">
+                        <div id="divErrLogin" runat="server" class="divErrorHide">
+                            <span id="spanErrLogin" runat="server" class="lblError"></span>
                         </div>
-                        <div class="divRow" style="height: 25px">
-                            <div id="divErrLogin" runat="server" class="divErrorHide">
-                                <span id="spanErrLogin" runat="server" class="lblError"></span>
+                    </div>
+                    <div class="wb-card">
+                        <div class="wb-card-header">
+                            Filter</div>
+                        <div class="wb-card-body">
+                            <div class="wb-row">
+                                <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlCommittee">
+                                    Committee <span class="wb-req">*</span></label>
+                                <div class="wb-field">
+                                    <asp:DropDownList ID="ddlCommittee" runat="server" AutoPostBack="true"
+                                        OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
+                                    </asp:DropDownList>
+                                </div>
+                            </div>
+                            <div class="wb-row">
+                                <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlDeparment">
+                                    Department</label>
+                                <div class="wb-field">
+                                    <asp:DropDownList ID="ddlDeparment" runat="server" AutoPostBack="true"
+                                        OnSelectedIndexChanged="ddlDeparment_SelectedIndexChanged">
+                                    </asp:DropDownList>
+                                </div>
+                            </div>
+                            <div class="wb-row">
+                                <div class="wb-label">
+                                    Meeting No. Search</div>
+                                <div class="wb-field">
+                                    <asp:RadioButtonList ID="rdoMeatingNoSearch" runat="server" RepeatDirection="Horizontal"
+                                        CssClass="wb-radio-list" AutoPostBack="true" OnSelectedIndexChanged="rdoMeatingNoSearch_SelectedIndexChanged">
+                                        <asp:ListItem Text="Particular" Value="0" Selected="True"></asp:ListItem>
+                                        <asp:ListItem Text="Between" Value="1"></asp:ListItem>
+                                    </asp:RadioButtonList>
+                                </div>
+                            </div>
+                            <div class="wb-row">
+                                <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlMeetingNoFrom">
+                                    Meeting No <span class="wb-req">*</span></label>
+                                <div class="wb-field">
+                                    <asp:DropDownList ID="ddlMeetingNoFrom" runat="server" CssClass="wb-filter-select wb-filter-meetno" AutoPostBack="true"
+                                        DataTextField="SubjectNo" DataValueField="SubjectNo" OnSelectedIndexChanged="ddlMeetingNoFrom_SelectedIndexChanged">
+                                    </asp:DropDownList>
+                                    <asp:Label ID="lblMeetingNo" runat="server" CssClass="wb-unit" Text=" to "></asp:Label>
+                                    <asp:DropDownList ID="ddlMeetingNoTo" runat="server" CssClass="wb-filter-select wb-filter-meetno" AutoPostBack="true"
+                                        DataTextField="SubjectNo" DataValueField="SubjectNo" OnSelectedIndexChanged="ddlMeetingNoTo_SelectedIndexChanged">
+                                    </asp:DropDownList>
+                                </div>
+                            </div>
+                            <div class="wb-row">
+                                <div class="wb-label">
+                                    Subject No. Search</div>
+                                <div class="wb-field">
+                                    <asp:RadioButtonList ID="rdoSubjectNoSearch" runat="server" RepeatDirection="Horizontal"
+                                        CssClass="wb-radio-list" AutoPostBack="true" OnSelectedIndexChanged="rdoSubjectNoSearch_SelectedIndexChanged">
+                                        <asp:ListItem Text="All" Value="0" Selected="True"></asp:ListItem>
+                                        <asp:ListItem Text="Between" Value="1"></asp:ListItem>
+                                    </asp:RadioButtonList>
+                                </div>
+                            </div>
+                            <div class="wb-row">
+                                <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlSubjectNoFrom">
+                                    Subject No.</label>
+                                <div class="wb-field">
+                                    <asp:DropDownList ID="ddlSubjectNoFrom" runat="server" CssClass="wb-filter-select wb-filter-short" AutoPostBack="true"
+                                        DataTextField="SubjectNo" DataValueField="SubjectNo">
+                                    </asp:DropDownList>
+                                    <span class="wb-unit">To</span>
+                                    <asp:DropDownList ID="ddlSubjectNoTo" runat="server" CssClass="wb-filter-select wb-filter-short" AutoPostBack="true"
+                                        DataTextField="SubjectNo" DataValueField="SubjectNo">
+                                    </asp:DropDownList>
+                                </div>
+                            </div>
+                            <div class="wb-row">
+                                <div class="wb-label">
+                                    View Format</div>
+                                <div class="wb-field">
+                                    <asp:RadioButtonList ID="rdoViewFormat" runat="server" AutoPostBack="True" RepeatDirection="Horizontal"
+                                        CssClass="wb-radio-list">
+                                        <asp:ListItem Text="View" Value="View" Selected="True"></asp:ListItem>
+                                        <asp:ListItem Text="Print" Value="Print"></asp:ListItem>
+                                    </asp:RadioButtonList>
+                                </div>
+                            </div>
+                            <div class="wb-actions">
+                                <asp:Button ID="btnSubmit" runat="server" Text="Submit" OnClick="btnSubmit_Click"
+                                    CssClass="wb-btn" />
                             </div>
                         </div>
-                        <div class="divRow">
-                            <table border="0" cellpadding="0" cellspacing="12" width="100%">
-                                <tr>
-                                    <td class="Lable wb-label">
-                                        Committee :</td>
-                                    <td>
-                                        <asp:DropDownList ID="ddlCommittee" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
-                                            OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
-                                        </asp:DropDownList>&nbsp;
-                                    </td>
-                                    <td class="Lable wb-label">
-                                        Department :</td>
-                                    <td>
-                                        <asp:DropDownList ID="ddlDeparment" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
-                                            OnSelectedIndexChanged="ddlDeparment_SelectedIndexChanged">
-                                        </asp:DropDownList></td>
-                                </tr>
-                                <tr>
-                                    <td class="Lable wb-label">
-                                        Meeting No. Search :</td>
-                                    <td>
-                                        <asp:RadioButtonList ID="rdoMeatingNoSearch" runat="server" RepeatDirection="Horizontal"
-                                            AutoPostBack="true" OnSelectedIndexChanged="rdoMeatingNoSearch_SelectedIndexChanged">
-                                            <asp:ListItem Text="Particular" Value="0" Selected="True"></asp:ListItem>
-                                            <asp:ListItem Text="Between" Value="1"></asp:ListItem>
-                                        </asp:RadioButtonList>
-                                    </td>
-                                    <td class="Lable wb-label">
-                                        Subject No. Search :</td>
-                                    <td>
-                                        <asp:RadioButtonList ID="rdoSubjectNoSearch" runat="server" RepeatDirection="Horizontal"
-                                            AutoPostBack="true" OnSelectedIndexChanged="rdoSubjectNoSearch_SelectedIndexChanged">
-                                            <asp:ListItem Text="All" Value="0" Selected="True"></asp:ListItem>
-                                            <asp:ListItem Text="Between" Value="1"></asp:ListItem>
-                                        </asp:RadioButtonList>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="Lable wb-label">
-                                        Meeting No :</td>
-                                    <td>
-                                        <asp:DropDownList ID="ddlMeetingNoFrom" runat="server" CssClass="wb-filter-select wb-filter-short" AutoPostBack="true"
-                                            DataTextField="SubjectNo" DataValueField="SubjectNo" OnSelectedIndexChanged="ddlMeetingNoFrom_SelectedIndexChanged">
-                                        </asp:DropDownList>
-                                        <asp:Label ID="lblMeetingNo" runat="server" Text=" to "></asp:Label>
-                                        <asp:DropDownList ID="ddlMeetingNoTo" runat="server" CssClass="wb-filter-select wb-filter-short" AutoPostBack="true"
-                                            DataTextField="SubjectNo" DataValueField="SubjectNo" OnSelectedIndexChanged="ddlMeetingNoTo_SelectedIndexChanged">
-                                        </asp:DropDownList></td>
-                                    <td class="Lable wb-label">
-                                        Subject No. :</td>
-                                    <td>
-                                        <asp:DropDownList ID="ddlSubjectNoFrom" runat="server" CssClass="wb-filter-select wb-filter-short" AutoPostBack="true"
-                                            DataTextField="SubjectNo" DataValueField="SubjectNo">
-                                        </asp:DropDownList>
-                                        To
-                                        <asp:DropDownList ID="ddlSubjectNoTo" runat="server" CssClass="wb-filter-select wb-filter-short" AutoPostBack="true"
-                                            DataTextField="SubjectNo" DataValueField="SubjectNo">
-                                        </asp:DropDownList></td>
-                                </tr>
-                                <tr>
-                                    <td class="Lable wb-label">
-                                        View Format :</td>
-                                    <td>
-                                        <asp:RadioButtonList ID="rdoViewFormat" runat="server" AutoPostBack="True" RepeatDirection="Horizontal">
-                                            <asp:ListItem Text="View" Value="View" Selected="True"></asp:ListItem>
-                                            <asp:ListItem Text="Print" Value="Print"></asp:ListItem>
-                                        </asp:RadioButtonList>
-                                    </td>
-                                    <td>
-                                    </td>
-                                    <td>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td colspan="4" style="text-align: center;">
-                                        <asp:Button ID="btnSubmit" runat="server" Text="Submit" OnClick="btnSubmit_Click"
-                                            CssClass="button" />
-                                    </td>
-                                </tr>
-                            </table>
-                            <asp:Panel ID="pnlPrintReport" runat="server" Visible="false">
-                                <table border="0" cellpadding="0" cellspacing="12" width="100%">
-                                    <tr>
-                                        <td colspan="2" style="text-align:center;">
-                                            <asp:Button ID="btnCreatePDF" runat="server" Text="Generate Report" OnClick="btnCreatePDF_Click"
-                                                CssClass="button" />
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            &nbsp;</td>
-                                        <td style="">
-                                            <br />
-                                            <br />
-                                        </td>
-                                    </tr>
-                                </table>
-                            </asp:Panel>
-                            <asp:Panel ID="pnlViewReport" runat="server">
-                                <div class="divRow">
+                    </div>
+                    <asp:Panel ID="pnlPrintReport" runat="server" Visible="false">
+                        <div class="wb-card">
+                            <div class="wb-card-header">
+                                Print details</div>
+                            <div class="wb-card-body">
+                                <div class="wb-actions">
+                                    <asp:Button ID="btnCreatePDF" runat="server" Text="Generate Report" OnClick="btnCreatePDF_Click"
+                                        CssClass="wb-btn" />
+                                </div>
+                            </div>
+                        </div>
+                    </asp:Panel>
+                </div>
+                <asp:Panel ID="pnlViewReport" runat="server">
+                    <%-- Step UI2b (R12): the list keeps its frame and look; the frame is inside the panel, so no empty
+                         frame shows before Submit --%>
+                    <div class="formContent">
+                        <div class="formPanel">
+                            <div class="divRow">
                                     <asp:GridView ID="grvFollowup" runat="server" AutoGenerateColumns="false" CssClass="contentTable1"
                                         AllowSorting="true" CellPadding="4" DataKeyNames="MeetingId" Font-Names="Verdana, Arial, Helvetica, sans-serif"
                                         Font-Size="X-Small" ForeColor="#333333" GridLines="Horizontal" Height="32px"
@@ -219,11 +228,10 @@
                                             </div>
                                         </EmptyDataTemplate>
                                     </asp:GridView>
-                                </div>
-                            </asp:Panel>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </asp:Panel>
             </asp:Panel>
         </ContentTemplate>
     </asp:UpdatePanel>

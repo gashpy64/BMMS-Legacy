@@ -45,15 +45,17 @@ namespace BMMS.Report
             ViewState["reportCode"] = fc;
             reportCode = fc;
 
-            Common.InitSetup(className);
+            // Step UI2b: the tab title of the menu item ("Followup" or "Followup Summary", PageSettings.xml); the
+            // class name stays the error log's name for both
+            Common.InitSetup(reportCode == "summary" ? "followup_summary" : className);
 
             switch (reportCode)
             {
                 case "followup":
-                    lblPageHeader.Text = ":: Followup Report";
+                    lblPageHeader.Text = "Followup";
                     break;
                 case "summary":
-                    lblPageHeader.Text = ":: Followup Summary Report";
+                    lblPageHeader.Text = "Followup Summary";
                     break;
             }
 

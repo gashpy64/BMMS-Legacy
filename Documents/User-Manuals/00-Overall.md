@@ -294,6 +294,10 @@ menu with three items:
 - Followup Summary - the same decisions as a table with a "Followup status" column and a "Minutes
   status" column.
 
+Each of these pages has the breadcrumb "Reports / [menu name]" and the same page title. The filter is in a box headed
+"Filter", one row for each choice, with labels that have no colon. The red * inside the label Committee Name marks the
+choice you must make. The buttons View (the main button) and Generate work as before.
+
 The Confirmed Status choice on the Followup report has three options: Both, Confirmed and Pending. In
 the list on screen (View) each item has a "Followup status" column. It shows "Pending" or "Confirmed",
 and under it a line that says who confirmed or reopened the item: "Confirmed by [name] ([login]) on

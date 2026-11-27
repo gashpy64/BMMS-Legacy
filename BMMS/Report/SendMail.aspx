@@ -12,78 +12,77 @@
     </script>
 
     <asp:Panel ID="pnlMeetingMaster" runat="server">
-        <div class="formContent">
-            <div class="formPanel">
-                <div class="divHeader">
-                    :: Send Mail</div>
-                <div class="divRowFixed">
+        <%-- Step UI2b: the Masters' form look (Committee Master): breadcrumb and title as in the menu, a card with label
+             and field rows, Send Mail as the primary button. The hidden Add Attachment button and the upload script are
+             unchanged. Control IDs, events and the handlers are unchanged. --%>
+        <div class="wb-page">
+            <div class="wb-breadcrumb">
+                Reports<span class="wb-breadcrumb-sep">/</span>Send Mail</div>
+            <h1 class="wb-h1">
+                Send Mail</h1>
+            <div aria-live="polite">
+                <div id="divErrLogin" runat="server" class="divErrorHide">
+                    <span id="spanErrLogin" runat="server" class="lblError"></span>
                 </div>
-                <div class="divRow" style="height: 25px">
-                    <div id="divErrLogin" runat="server" class="divErrorHide">
-                        <span id="spanErrLogin" runat="server" class="lblError"></span>
+            </div>
+            <div class="wb-card">
+                <div class="wb-card-header">
+                    Mail</div>
+                <div class="wb-card-body">
+                    <div class="wb-row">
+                        <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlCommittee">
+                            Committee</label>
+                        <div class="wb-field">
+                            <asp:DropDownList ID="ddlCommittee" runat="server" AutoPostBack="true"
+                                OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
+                            </asp:DropDownList>
+                        </div>
                     </div>
-                </div>
-                <div class="divRow">
-                    <table border="0" cellpadding="0" cellspacing="12" width="100%">
-                        <tr>
-                            <td class="Lable wb-label">
-                                Committee :</td>
-                            <td>
-                                <asp:DropDownList ID="ddlCommittee" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
-                                    OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
-                                </asp:DropDownList>&nbsp;
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="Lable wb-label">
-                                Meeting No :</td>
-                            <td>
-                                <asp:DropDownList ID="ddlMeeting" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
-                                    OnSelectedIndexChanged="ddlMeeting_SelectedIndexChanged">
-                                </asp:DropDownList></td>
-                        </tr>
-                        <tr>
-                            <td valign="top" class="Lable wb-label">
-                                To :</td>
-                            <td>
-                                <asp:TextBox ID="txtToMailId" runat="server" Height="50px" TextMode="MultiLine" Width="450px"></asp:TextBox>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td valign="top" class="Lable wb-label">
-                                Subject :</td>
-                            <td>
-                                <asp:TextBox ID="txtSubject" runat="server" TextMode="MultiLine" Height="50px" Width="450px"></asp:TextBox>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td valign="top" class="Lable wb-label">
-                                Body Text :</td>
-                            <td>
-                                <bmms:RichTextEditor ID="ftxtBodyText" runat="server" Height="100px" Label="Body Text" />
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="Lable wb-label">
-                                Attachment :</td>
-                            <td>
-                                <a id="aAttachment" runat="server" target="_blank">View</a>
-                                <asp:Label ID="lblAttachmentName" runat="server"></asp:Label>
-                                <asp:FileUpload ID="FileUploadAttachment" runat="server" />
-                                <asp:Button ID="btnAddAttachment" runat="server" Text="AddAttachment" OnClick="btnAttachment_Click"
-                                    Style="visibility: hidden" />
-
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                &nbsp;</td>
-                            <td>
-                                <asp:Button ID="btnSendMail" runat="server" Text="Send Mail" OnClick="btnSendMail_Click"
-                                    CssClass="button" />
-                            </td>
-                        </tr>
-                    </table>
+                    <div class="wb-row">
+                        <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlMeeting">
+                            Meeting No</label>
+                        <div class="wb-field">
+                            <asp:DropDownList ID="ddlMeeting" runat="server" AutoPostBack="true"
+                                OnSelectedIndexChanged="ddlMeeting_SelectedIndexChanged">
+                            </asp:DropDownList>
+                        </div>
+                    </div>
+                    <div class="wb-row">
+                        <label class="wb-label" for="ctl00_ContentPlaceHolder1_txtToMailId">
+                            To <span class="wb-req">*</span></label>
+                        <div class="wb-field">
+                            <asp:TextBox ID="txtToMailId" runat="server" TextMode="MultiLine"></asp:TextBox>
+                        </div>
+                    </div>
+                    <div class="wb-row">
+                        <label class="wb-label" for="ctl00_ContentPlaceHolder1_txtSubject">
+                            Subject</label>
+                        <div class="wb-field">
+                            <asp:TextBox ID="txtSubject" runat="server" TextMode="MultiLine"></asp:TextBox>
+                        </div>
+                    </div>
+                    <div class="wb-row">
+                        <div class="wb-label">
+                            Body Text</div>
+                        <div class="wb-field">
+                            <bmms:RichTextEditor ID="ftxtBodyText" runat="server" Height="100px" Label="Body Text" />
+                        </div>
+                    </div>
+                    <div class="wb-row">
+                        <label class="wb-label" for="ctl00_ContentPlaceHolder1_FileUploadAttachment">
+                            Attachment</label>
+                        <div class="wb-field">
+                            <a id="aAttachment" runat="server" target="_blank">View</a>
+                            <asp:Label ID="lblAttachmentName" runat="server"></asp:Label>
+                            <asp:FileUpload ID="FileUploadAttachment" runat="server" />
+                            <asp:Button ID="btnAddAttachment" runat="server" Text="AddAttachment" OnClick="btnAttachment_Click"
+                                Style="visibility: hidden" />
+                        </div>
+                    </div>
+                    <div class="wb-actions">
+                        <asp:Button ID="btnSendMail" runat="server" Text="Send Mail" OnClick="btnSendMail_Click"
+                            CssClass="wb-btn" />
+                    </div>
                 </div>
             </div>
         </div>

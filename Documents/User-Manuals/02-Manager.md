@@ -258,7 +258,12 @@ Only what depends on your departments is written here.
 On each of these four reports the Department drop-down offers "All my departments" first (chosen when the page opens), then
 each of your departments, with "(home)" and "(inactive)" as in Agenda Entry. With "All my departments" the report holds the
 items of all your departments; with one department, that department only. The Controller's and Management's reports are
-not changed. The Print, PDF and Word versions hold the same rows as the report you generated.
+not changed.
+
+Each report page has the breadcrumb "Reports / [report name]" (for example "Reports / Agenda Summary") and the same page
+title. The filter is in a box headed "Filter", one row for each choice, with labels that have no colon. The red * inside the
+label Committee Name marks the choice you must make. Under the rows are the buttons View (the main button) and Generate;
+they work as before. The Print, PDF and Word versions hold the same rows as the report you generated.
 
 Agenda Summary and Agenda Details open as a PDF; print them from the PDF viewer. Minutes and Minutes Extract open in the
 report view with Print, Export to Word and Export to Pdf.

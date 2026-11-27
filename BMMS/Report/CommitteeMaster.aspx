@@ -5,38 +5,44 @@
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
         <ContentTemplate>
             <asp:Panel ID="pnlCommitteeMaster" runat="server">
+                <%-- Step UI2b: the Masters' form look (Committee Master): breadcrumb and title as in the menu, a card with
+                     label and field rows, Submit as the primary button. Control IDs, events and the handlers are unchanged. --%>
+                <div class="wb-page wb-page-fit">
+                    <div class="wb-breadcrumb">
+                        Reports<span class="wb-breadcrumb-sep">/</span>Committee Master</div>
+                    <h1 class="wb-h1">
+                        Committee Master</h1>
+                    <div class="wb-card">
+                        <div class="wb-card-header">
+                            Filter</div>
+                        <div class="wb-card-body">
+                            <div class="wb-row">
+                                <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlCommittee">
+                                    Committee</label>
+                                <div class="wb-field">
+                                    <asp:DropDownList ID="ddlCommittee" runat="server" AutoPostBack="true"
+                                        OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
+                                    </asp:DropDownList>
+                                </div>
+                            </div>
+                            <div class="wb-row">
+                                <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlStatus">
+                                    Status</label>
+                                <div class="wb-field">
+                                    <asp:DropDownList ID="ddlStatus" runat="server" AutoPostBack="true"
+                                        OnSelectedIndexChanged="ddlStatus_SelectedIndexChanged">
+                                    </asp:DropDownList>
+                                </div>
+                            </div>
+                            <div class="wb-actions">
+                                <asp:Button ID="btnSubmit" runat="server" CssClass="wb-btn" Text="Submit" OnClick="btnSubmit_Click" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <%-- Step UI2b (R12): the grid keeps its old frame and look, outside .wb-page --%>
                 <div class="formContent">
                 <div class="formPanel">
-                    <div class="divHeader">
-                    :: Committee Master Report</div>
-                    <div class="divRowFixed"></div>
-                    <div class="divRow">
-                        <table border="0" cellpadding="0" cellspacing="12" width="100%">
-                            <tr>
-                                <td class="Lable wb-label">
-                                    Committee :</td>
-                                <td>
-                                    <asp:DropDownList ID="ddlCommittee" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
-                                        OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
-                                    </asp:DropDownList>&nbsp;
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="Lable wb-label">
-                                    Status :</td>
-                                <td>
-                                    <asp:DropDownList ID="ddlStatus" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
-                                        OnSelectedIndexChanged="ddlStatus_SelectedIndexChanged">
-                                    </asp:DropDownList></td>
-                            </tr>
-                            <tr>
-                                <td class="Lable wb-label">
-                                   </td>
-                                <td>
-                                    <asp:Button ID="btnSubmit" runat="server" CssClass="button" Text="Submit" OnClick="btnSubmit_Click" /></td>
-                            </tr>
-                        </table>
-                    </div>
                     <div class="divRow">
                         <asp:GridView ID="grvCommittee" runat="server" SkinID="grvSkinNoPaging" AutoGenerateColumns="false"
                             CssClass="contentTable1" AllowSorting="true" CellPadding="4" DataKeyNames="CommitteeId"

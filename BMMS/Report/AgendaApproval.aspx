@@ -5,88 +5,92 @@
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
         <ContentTemplate>
             <asp:Panel ID="pnlMeetingMaster" runat="server">
-                <div class="formContent">
-                <div class="formPanel">
-                    <div class="divHeader">
-                    :: Agenda Approval / Reject Report</div>
-                    <div class="divRowFixed"></div>
-                    <div class="divRow">
-                    <table border="0" cellpadding="0" cellspacing="12" width="100%">
-                        <tr>
-                            <td class="Lable wb-label">
-                                Committee :</td>
-                            <td>
-                                <asp:DropDownList ID="ddlCommittee" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
-                                    OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
-                                </asp:DropDownList>&nbsp;
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="Lable wb-label">
-                                Meeting No :</td>
-                            <td>
-                                <asp:DropDownList ID="ddlMeeting" runat="server" CssClass="wb-filter-select" AutoPostBack="true"
-                                    OnSelectedIndexChanged="ddlMeeting_SelectedIndexChanged">
-                                </asp:DropDownList></td>
-                        </tr>
-                        <tr>
-                            <td class="Lable wb-label">
-                                View Format :</td>
-                            <td>
-                                <asp:RadioButtonList ID="rdoViewFormat" runat="server" AutoPostBack="True" OnSelectedIndexChanged="rdoViewFormat_SelectedIndexChanged"
-                                    RepeatDirection="Horizontal">
-                                    <asp:ListItem Text="View" Value="View" Selected="True"></asp:ListItem>
-                                    <asp:ListItem Text="Print" Value="Print"></asp:ListItem>
-                                </asp:RadioButtonList>
-                            </td>
-                        </tr>
-                    </table>
+                <%-- Step UI2b: the Masters' form look (Committee Master): breadcrumb and title as in the menu, a Filter card and,
+                     with Print, a Print details card with Create PDF as the primary button. The list stays outside .wb-page in
+                     its old frame (R12). Control IDs, panels, events and the handlers are unchanged. --%>
+                <div class="wb-page">
+                    <div class="wb-breadcrumb">
+                        Reports<span class="wb-breadcrumb-sep">/</span>Agenda Approval</div>
+                    <h1 class="wb-h1">
+                        Agenda Approval</h1>
+                    <div class="wb-card">
+                        <div class="wb-card-header">
+                            Filter</div>
+                        <div class="wb-card-body">
+                            <div class="wb-row">
+                                <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlCommittee">
+                                    Committee</label>
+                                <div class="wb-field">
+                                    <asp:DropDownList ID="ddlCommittee" runat="server" AutoPostBack="true"
+                                        OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
+                                    </asp:DropDownList>
+                                </div>
+                            </div>
+                            <div class="wb-row">
+                                <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlMeeting">
+                                    Meeting No</label>
+                                <div class="wb-field">
+                                    <asp:DropDownList ID="ddlMeeting" runat="server" AutoPostBack="true"
+                                        OnSelectedIndexChanged="ddlMeeting_SelectedIndexChanged">
+                                    </asp:DropDownList>
+                                </div>
+                            </div>
+                            <div class="wb-row">
+                                <div class="wb-label">
+                                    View Format</div>
+                                <div class="wb-field">
+                                    <asp:RadioButtonList ID="rdoViewFormat" runat="server" AutoPostBack="True" OnSelectedIndexChanged="rdoViewFormat_SelectedIndexChanged"
+                                        RepeatDirection="Horizontal" CssClass="wb-radio-list">
+                                        <asp:ListItem Text="View" Value="View" Selected="True"></asp:ListItem>
+                                        <asp:ListItem Text="Print" Value="Print"></asp:ListItem>
+                                    </asp:RadioButtonList>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <asp:Panel ID="pnlPrintReport" runat="server" Visible="false">
-                        <table border="0" cellpadding="0" cellspacing="12" width="100%">
-                            <tr>
-                                <td class="Lable wb-label">
-                                    Meeting Venue :</td>
-                                <td>
-                                    <asp:TextBox ID="txtMeetingVenue" runat="server" TextMode="MultiLine" Height="50px" ></asp:TextBox>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="Lable wb-label">
-                                    Meeting Date :</td>
-                                <td>
-                                    <asp:TextBox ID="txtMeetingDate" runat="server"></asp:TextBox>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="Lable wb-label">
-                                    Meeting Time :</td>
-                                <td>
-                                    <asp:TextBox ID="txtMeetingTime" CssClass="txtTimeFormat" runat="server"></asp:TextBox> Hrs.
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    &nbsp;</td>
-                                <td>
+                        <div class="wb-card">
+                            <div class="wb-card-header">
+                                Print details</div>
+                            <div class="wb-card-body">
+                                <div class="wb-row">
+                                    <label class="wb-label" for="ctl00_ContentPlaceHolder1_txtMeetingVenue">
+                                        Meeting Venue</label>
+                                    <div class="wb-field">
+                                        <asp:TextBox ID="txtMeetingVenue" runat="server" TextMode="MultiLine"></asp:TextBox>
+                                    </div>
+                                </div>
+                                <div class="wb-row">
+                                    <label class="wb-label" for="ctl00_ContentPlaceHolder1_txtMeetingDate">
+                                        Meeting Date</label>
+                                    <div class="wb-field">
+                                        <asp:TextBox ID="txtMeetingDate" runat="server"></asp:TextBox>
+                                    </div>
+                                </div>
+                                <div class="wb-row">
+                                    <label class="wb-label" for="ctl00_ContentPlaceHolder1_txtMeetingTime">
+                                        Meeting Time</label>
+                                    <div class="wb-field">
+                                        <asp:TextBox ID="txtMeetingTime" CssClass="txtTimeFormat" runat="server"></asp:TextBox>
+                                        <span class="wb-unit">Hrs.</span>
+                                    </div>
+                                </div>
+                                <div class="wb-actions">
                                     <asp:Button ID="btnCreatePDF" runat="server" Text="Create PDF" OnClick="btnCreatePDF_Click"
-                                        CssClass="button" />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    &nbsp;</td>
-                                <td>
-                                    <asp:Panel ID="pnlAgendaDetailsDownload" runat="server" Visible="false">
-                                        The agenda details opened in a new window; allow pop-ups if it did not.
-                                    </asp:Panel>
-                                </td>
-                            </tr>
-                        </table>
+                                        CssClass="wb-btn" />
+                                </div>
+                                <asp:Panel ID="pnlAgendaDetailsDownload" runat="server" Visible="false">
+                                    The agenda details opened in a new window; allow pop-ups if it did not.
+                                </asp:Panel>
+                            </div>
+                        </div>
                     </asp:Panel>
-                    
-                    <asp:Panel ID="pnlViewReport" runat="server">
-                        <div class="divRow">
+                </div>
+                <asp:Panel ID="pnlViewReport" runat="server">
+                    <%-- Step UI2b (R12): the list keeps its frame and look; the frame is inside the panel --%>
+                    <div class="formContent">
+                        <div class="formPanel">
+                            <div class="divRow">
                             <asp:GridView ID="grvAgendaDetails" runat="server" AutoGenerateColumns="false"
                                 CssClass="contentTable1" AllowSorting="true" CellPadding="4" DataKeyNames="MeetingId"
                                 Font-Names="Verdana, Arial, Helvetica, sans-serif" Font-Size="X-Small" ForeColor="#333333"
@@ -180,10 +184,10 @@
                                     </div>
                                 </EmptyDataTemplate>
                             </asp:GridView>
+                            </div>
                         </div>
-                    </asp:Panel>
-                </div>
-                </div>
+                    </div>
+                </asp:Panel>
             </asp:Panel>
         </ContentTemplate>
     </asp:UpdatePanel>

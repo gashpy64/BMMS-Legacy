@@ -289,6 +289,13 @@ body.wb .ddsubmenustyle li a:focus
 	line-height: 1.45;
 	min-height: 420px;     /* room for calendar pop-ups below short forms */
 }
+/* Step UI2b (owner's test G1): a page whose result grid follows .wb-page in its old frame (the report pages Committee
+   Master, Meeting Master, Committee Member, Meeting Calendar, Sitting Fees Applicable and Attendance Details): no
+   minimum height, so the grid starts right under the filter card. The calendar pop-ups open over the grid. */
+.wb-page.wb-page-fit
+{
+	min-height: 0;
+}
 .wb-page *,
 .wb-page *::before,
 .wb-page *::after
@@ -1804,7 +1811,8 @@ body.wb div.divRowLeft.wb-label
 }
 /* Step UI1 (W3): a drop-down of the same pages (was a fixed 150, 180 or 300 px wide): as wide as its cell, at most
    300 px and at least 12em, so a filter row gives way inside its card at 1024 px and keeps 300 px at 1366 px.
-   The meeting and subject number pickers keep their 80 px (.wb-filter-short). */
+   The subject number pickers keep their 80 px (.wb-filter-short); the meeting number pickers are .wb-filter-meetno
+   (below, step UI2b). */
 body.wb select.wb-filter-select
 {
 	box-sizing: border-box;
@@ -1815,6 +1823,14 @@ body.wb select.wb-filter-select
 body.wb select.wb-filter-select.wb-filter-short
 {
 	width: 80px;
+	min-width: 0;
+}
+/* Step UI2b (owner's test G2): a meeting number picker (Reports, Report Followup, Followup by Department, Minutes >
+   Followup): its widest entry shows whole with the arrow at 14 px: "- Select -" needs 106 px, a five-digit meeting
+   number 90 px, "- All -" 82 px (measured in Chrome and Edge); 112 px leaves 6 px to spare. */
+body.wb select.wb-filter-select.wb-filter-meetno
+{
+	width: 112px;
 	min-width: 0;
 }
 
