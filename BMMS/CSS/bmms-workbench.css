@@ -855,6 +855,15 @@ body.wb .bmms-comment-by-line
 	width: 1%;
 	white-space: nowrap;
 }
+/* Step MF1: a cell of long text (Short Text, Actual Resolution of the Minutes Items list) wraps between words; a word
+   longer than the column breaks only when it cannot fit a line (break-word, owner decision Q3: in the grid's auto
+   layout one unbroken string longer than the column widens it, and the list then scrolls inside .wb-table-scroll) */
+.wb-table > tbody > tr > td.wb-col-text
+{
+	white-space: normal;
+	overflow-wrap: break-word;
+	word-wrap: break-word;
+}
 
 /* Edit / Delete: buttons that read as links */
 .wb-page .wb-link-btn

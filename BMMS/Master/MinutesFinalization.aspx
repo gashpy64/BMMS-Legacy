@@ -35,7 +35,8 @@
                         <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlMeeting">
                             Meeting No <span class="wb-req">*</span></label>
                         <div class="wb-field">
-                            <asp:DropDownList ID="ddlMeeting" runat="server" AutoPostBack="true">
+                            <asp:DropDownList ID="ddlMeeting" runat="server" AutoPostBack="true"
+                                OnSelectedIndexChanged="ddlMeeting_SelectedIndexChanged">
                             </asp:DropDownList>
                         </div>
                     </div>
@@ -46,6 +47,55 @@
                     </div>
                 </div>
             </div>
+            <%-- Step MF1 (D1): the meeting's items, read only, as the Agenda Finalize list (wb-table). Shown when a
+                 committee and a meeting are chosen, hidden again when either goes back to -Select- or changes. Each
+                 cell is plain text from MinutesMgr.GetMinutesItemList, encoded once here. --%>
+            <asp:Panel ID="pnlMinutesItems" runat="server" Visible="false">
+                <div class="wb-card">
+                    <div class="wb-card-header">
+                        Minutes Items</div>
+                    <div class="wb-table-scroll">
+                        <asp:GridView ID="grvMinutesItems" runat="server" SkinID="grvSkinNoPaging" AutoGenerateColumns="false"
+                            CssClass="wb-table" GridLines="None" EnableViewState="false">
+                            <Columns>
+                                <asp:TemplateField HeaderText="Agenda No">
+                                    <ItemTemplate>
+                                        <%# HttpUtility.HtmlEncode(Eval("AgendaNo")) %>
+                                    </ItemTemplate>
+                                    <ItemStyle CssClass="wb-col-action" />
+                                </asp:TemplateField>
+                                <asp:TemplateField HeaderText="Subject No">
+                                    <ItemTemplate>
+                                        <%# HttpUtility.HtmlEncode(Eval("SubjectNo")) %>
+                                    </ItemTemplate>
+                                    <ItemStyle CssClass="wb-col-action" />
+                                </asp:TemplateField>
+                                <asp:TemplateField HeaderText="Short Text">
+                                    <ItemTemplate>
+                                        <%# HttpUtility.HtmlEncode(Eval("ShortText")) %>
+                                    </ItemTemplate>
+                                    <ItemStyle CssClass="wb-col-text" />
+                                </asp:TemplateField>
+                                <asp:TemplateField HeaderText="Decision">
+                                    <ItemTemplate>
+                                        <%# HttpUtility.HtmlEncode(Eval("Decision")) %>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+                                <asp:TemplateField HeaderText="Actual Resolution">
+                                    <ItemTemplate>
+                                        <%# HttpUtility.HtmlEncode(Eval("ActualResolution")) %>
+                                    </ItemTemplate>
+                                    <ItemStyle CssClass="wb-col-text" />
+                                </asp:TemplateField>
+                            </Columns>
+                            <EmptyDataTemplate>
+                                <div class="divNoRecord">
+                                    No items in this meeting.</div>
+                            </EmptyDataTemplate>
+                        </asp:GridView>
+                    </div>
+                </div>
+            </asp:Panel>
         </asp:Panel>
     </div>
 </asp:Content>

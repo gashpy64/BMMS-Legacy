@@ -49,6 +49,7 @@ namespace BMMS.Master
 
                 ViewState["dtMeeting"] = dtMeeting;
                 Common.LoadDropdownlist(ddlMeeting, dtMeeting, "MeetingNo", "MeetingId", true);
+                HideMinutesItems();     // step MF1: the meeting is -Select- again
 
             }
             catch (Exception ex)
@@ -59,6 +60,63 @@ namespace BMMS.Master
             {
 
             }
+        }
+        #endregion
+
+        #region ddlMeeting_SelectedIndexChanged
+        // Step MF1: the Minutes Items list follows the meeting chosen (owner-approved new handler; AutoPostBack was
+        // already set)
+        protected void ddlMeeting_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            MsgHide();
+            LoadMinutesItems();
+        }
+        #endregion
+
+        #region LoadMinutesItems
+        // Step MF1 (D1, D3): the meeting's items (MinutesMgr.GetMinutesItemList) and the Confirm confirm with the count
+        // of the same rows (fixed text and the count only). Hidden, with the default confirm, when the committee or
+        // the meeting is -Select-.
+        private void LoadMinutesItems()
+        {
+            try
+            {
+                if (ddlCommittee.SelectedValue == "0" || string.IsNullOrEmpty(ddlMeeting.SelectedValue) || ddlMeeting.SelectedValue == "0")
+                {
+                    HideMinutesItems();
+                    return;
+                }
+
+                int MeetingId = int.Parse(ddlMeeting.SelectedValue);
+                MinutesItemList list = MinutesMgr.GetMinutesItemList(MeetingId);
+
+                grvMinutesItems.DataSource = list.Items;
+                grvMinutesItems.DataBind();
+                pnlMinutesItems.Visible = true;
+
+                btnConfirm.OnClientClick = ConfirmScript(DefaultConfirmText + " Items: " + list.Total + ".");
+            }
+            catch (Exception ex)
+            {
+                Utilities.GoToErrPage(className, "LoadMinutesItems", ex);
+            }
+        }
+
+        // The list hidden and the confirm of the markup back
+        private void HideMinutesItems()
+        {
+            pnlMinutesItems.Visible = false;
+            grvMinutesItems.DataSource = null;
+            grvMinutesItems.DataBind();
+            btnConfirm.OnClientClick = ConfirmScript(DefaultConfirmText);
+        }
+
+        // The text of the markup's confirm (OnClientClick of btnConfirm)
+        private const string DefaultConfirmText = "Do you want to Confirm this Meeting Minutes?";
+
+        private static string ConfirmScript(string text)
+        {
+            return "return confirm('" + HttpUtility.JavaScriptStringEncode(text) + "');";
         }
         #endregion
 
@@ -134,12 +192,15 @@ namespace BMMS.Master
 
                         MsgDisplay(sMsg, sMsg == "Minutes confirmed." ? MessageKind.Success : MessageKind.Warning);
                     }
+                    LoadMinutesItems();     // step MF1: the list of the meeting, read again; the message stays
                 }
                 catch (Exception ex)
                 {
                     Utilities.GoToErrPage(className, "btnConfirm_Click", ex);
                 }
             }
+            else
+                LoadMinutesItems();         // step MF1: the page's message stays; the list follows the choice
 
         }
         #endregion
@@ -195,6 +256,7 @@ namespace BMMS.Master
         protected void btnCancel_Click(object sender, EventArgs e)
         {
             MsgHide();
+            HideMinutesItems();     // step MF1 (C4); Cancel then leaves for the Dashboard, as before
             Response.Redirect("~/DashBoard/DashBoard.aspx");
         }
         #endregion

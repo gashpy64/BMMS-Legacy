@@ -3,11 +3,11 @@
 - Title: Application Code
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: AZ1 (the WordUtilities row; the DocToString row removed); UI2a (the Master folder: the Followup page paragraph, the new paragraph on Agenda Finalize, Finalize Minutes and Minutes Confirmation, the page title paragraph); GM1a (the Report folder now has 16 pages with GovernanceMatrix.aspx; the Department row of the area classes and the new GovernanceMgr row; the new bullets "RolesForPage" in "PageAccessModule" and the new section "The Governance Matrix page (step GM1a)"); IU1 (the table of mail failure messages: the Meeting, Committee and ResetPassword rows); RA1d (the Default.aspx row, "Set at login", "Cleared at logout", the keys table row DepartmentSet and the bullets of "PageAccessModule": the session check, the log, the cleaning of logged values); UN6e (the new sections "Lists are not kept in ViewState (step UN6e)" and "Stylesheet version stamp (step UN6e)", the Action Items paragraph of "The Dashboard Alerts and Action Items cards (step UN6c1)" and the Ctrl+F5 sentence and the list sentence of "The Action Item Details panel and the Followup page saves (step UN6d)"); FU2b (the new section "The Followup reports (step FU2b)" and the Followup by Department note in "Pages in no menu and the unlisted page"); FU2a ("The Action Item Details panel and the Followup page saves (step UN6d)": the new FU2a paragraph on FollowupStatusText, the panel mode, the status line, the Reopened chip); FU1 ("The Action Item Details panel and the Followup page saves (step UN6d)": the Followup page bullets, the FU1 bullets for the list, Submit and Reopen); UN6d ("The Action Item Details panel and the Followup page saves (step UN6d)", the Followup.aspx row, the Dashboard Action Items paragraph note); UN6c2b ("The Dashboard summary cards and the Committee filter (step UN6c2b)"); UN6c2a ("The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)" and the layout line of "The Dashboard Meetings card (step UN6b)"); UN6c1 (the Main.Master row and paragraph, "The Dashboard Alerts and Action Items cards (step UN6c1)"); UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
-- Commit: 3744571
-- Last updated by: AZ1, based on 00838ed (the WordUtilities row, the DocToString row removed; the Commit field above still names the commit of UI2a for the rest of the chapter); UI2a, based on 3744571 (the Followup page paragraph, the paragraph on the three other pages, the page title paragraph); GM1a, based on 32c619d (the Report folder table, the area classes, the PageAccessModule bullet and the new GovernanceMatrix section; the rest of the chapter was last updated by IU1 and RA1d)
+- Applies to: MF1 (the new section "The Minutes Items list on Finalize Minutes and Minutes Confirmation (step MF1)"; the Master folder paragraph on the three pages: the confirm texts); AZ1 (the WordUtilities row; the DocToString row removed); UI2a (the Master folder: the Followup page paragraph, the new paragraph on Agenda Finalize, Finalize Minutes and Minutes Confirmation, the page title paragraph); GM1a (the Report folder now has 16 pages with GovernanceMatrix.aspx; the Department row of the area classes and the new GovernanceMgr row; the new bullets "RolesForPage" in "PageAccessModule" and the new section "The Governance Matrix page (step GM1a)"); IU1 (the table of mail failure messages: the Meeting, Committee and ResetPassword rows); RA1d (the Default.aspx row, "Set at login", "Cleared at logout", the keys table row DepartmentSet and the bullets of "PageAccessModule": the session check, the log, the cleaning of logged values); UN6e (the new sections "Lists are not kept in ViewState (step UN6e)" and "Stylesheet version stamp (step UN6e)", the Action Items paragraph of "The Dashboard Alerts and Action Items cards (step UN6c1)" and the Ctrl+F5 sentence and the list sentence of "The Action Item Details panel and the Followup page saves (step UN6d)"); FU2b (the new section "The Followup reports (step FU2b)" and the Followup by Department note in "Pages in no menu and the unlisted page"); FU2a ("The Action Item Details panel and the Followup page saves (step UN6d)": the new FU2a paragraph on FollowupStatusText, the panel mode, the status line, the Reopened chip); FU1 ("The Action Item Details panel and the Followup page saves (step UN6d)": the Followup page bullets, the FU1 bullets for the list, Submit and Reopen); UN6d ("The Action Item Details panel and the Followup page saves (step UN6d)", the Followup.aspx row, the Dashboard Action Items paragraph note); UN6c2b ("The Dashboard summary cards and the Committee filter (step UN6c2b)"); UN6c2a ("The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)" and the layout line of "The Dashboard Meetings card (step UN6b)"); UN6c1 (the Main.Master row and paragraph, "The Dashboard Alerts and Action Items cards (step UN6c1)"); UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
+- Commit: 00b6062
+- Last updated by: MF1, based on 00b6062 (the new MF1 section and the note in the UI2a paragraph; the rest of the chapter keeps the verification of the steps named below); AZ1, based on 00838ed (the WordUtilities row, the DocToString row removed; the Commit field above still names the commit of UI2a for the rest of the chapter); UI2a, based on 3744571 (the Followup page paragraph, the paragraph on the three other pages, the page title paragraph); GM1a, based on 32c619d (the Report folder table, the area classes, the PageAccessModule bullet and the new GovernanceMatrix section; the rest of the chapter was last updated by IU1 and RA1d)
 - Status: Draft
-- Verified against: for step AZ1: git diff HEAD of BMMSBAL/WordUtilities.cs and the deleted BMMSBAL/DocToString.cs, Database/README.md (section Step AZ1); for step UI2a: git diff HEAD (3744571) of BMMS/Master/AgendaFinalization.aspx, MinutesFinalization.aspx, MinutesConfirmation.aspx (button and title lines), Followup.aspx and BMMS/XML/PageSettings.xml, Database/README.md (Known items of UI2a), the test results as given; for step GM1a: BMMS/Report/GovernanceMatrix.aspx and .aspx.cs, BMMSBAL/GovernanceMgr.cs (read in full), BMMS/PageAccessModule.cs (diff: RolesForPage), BMMS/UserControl/MenuUserControl.ascx, BMMS/XML/PageAccess.xml and PageSettings.xml (diff), BMMS/Master/Department.aspx.cs, BMMSBAL/DepartmentMgr.cs and BMMSDAL/DepartmentDB.cs (diff), Database/README.md (section Step GM1a); BMMSDAL/GovernanceDB.cs and BMMS/CSS/bmms-workbench.css only listed by the diff stat; for step IU1: BMMS/Master/Meeting.aspx.cs, Committee.aspx.cs and ResetPassword.aspx.cs (diff: the message constants only); for step RA1d: BMMS/PageAccessModule.cs, BMMS/Default.aspx.cs and BMMS/Global.asax.cs (diff), BMMSBAL/UserMgr.cs and BMMSDAL/UserDB.cs (diff), Database/README.md (section Step RA1d), Tests/packs/session-check/README.md;
+- Verified against: for step MF1: git diff HEAD (00b6062) of BMMS/Master/MinutesFinalization.aspx, .aspx.cs and .aspx.designer.cs, MinutesConfirmation.aspx, .aspx.cs and .aspx.designer.cs (the new code read in full), BMMSBAL/HtmlCleaner.cs and MinutesMgr.cs (the new code read in full), BMMS/CSS/bmms-workbench.css, BMMSBAL/MeetingMgr.cs (MinutesNotUpdatedMessage), Database/README.md (section Step MF1 and Known items), the tester and owner results as given; for step AZ1: git diff HEAD of BMMSBAL/WordUtilities.cs and the deleted BMMSBAL/DocToString.cs, Database/README.md (section Step AZ1); for step UI2a: git diff HEAD (3744571) of BMMS/Master/AgendaFinalization.aspx, MinutesFinalization.aspx, MinutesConfirmation.aspx (button and title lines), Followup.aspx and BMMS/XML/PageSettings.xml, Database/README.md (Known items of UI2a), the test results as given; for step GM1a: BMMS/Report/GovernanceMatrix.aspx and .aspx.cs, BMMSBAL/GovernanceMgr.cs (read in full), BMMS/PageAccessModule.cs (diff: RolesForPage), BMMS/UserControl/MenuUserControl.ascx, BMMS/XML/PageAccess.xml and PageSettings.xml (diff), BMMS/Master/Department.aspx.cs, BMMSBAL/DepartmentMgr.cs and BMMSDAL/DepartmentDB.cs (diff), Database/README.md (section Step GM1a); BMMSDAL/GovernanceDB.cs and BMMS/CSS/bmms-workbench.css only listed by the diff stat; for step IU1: BMMS/Master/Meeting.aspx.cs, Committee.aspx.cs and ResetPassword.aspx.cs (diff: the message constants only); for step RA1d: BMMS/PageAccessModule.cs, BMMS/Default.aspx.cs and BMMS/Global.asax.cs (diff), BMMSBAL/UserMgr.cs and BMMSDAL/UserDB.cs (diff), Database/README.md (section Step RA1d), Tests/packs/session-check/README.md;
   for step UN6e: BMMS/AssetVersion.cs (read in full), BMMS/DashBoard/DashBoard.aspx.cs, BMMS/MasterPage/Main.Master.cs, MainNoMenu.Master.cs, BMMS/Default.aspx.cs, BMMS/Master/Committee.aspx and BMMS.csproj (diff), Database/README.md (section Step UN6e and its Known items), Tests/packs/page-assets/README.md, the owner's tests and the tester run 2026-11-18_123549 as given; the .aspx changes of Agenda, MinutesUpdate and Meeting were taken from Database/README.md, not read in the diff; for step FU2b: git diff c4300b5 of BMMS/Report/Followup.aspx(.cs), BMMS/Report/FollowupActionTaken.aspx(.cs), BMMS/Master/Followup.aspx(.cs), BMMS/FollowupStatusText.cs, BMMSBAL/ReportsMgr.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/README.md (section Step FU2b and its Known items), the owner's tests as given; for step FU2a: git diff 9336d29 of BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs, BMMS/Master/Followup.aspx.cs, BMMS/BMMS.csproj and BMMS/CSS/bmms-workbench.css, BMMS/FollowupStatusText.cs (read in full), Database/README.md (section Step FU2a and its Known items), the owner's tests as given; for step FU1: BMMS/Master/Followup.aspx and Followup.aspx.cs (read in full: CanSave, Page_Load, BindFollowup, grvFollowup_RowDataBound, grvFollowup_RowCommand, the save, Submit and Reopen handlers, the script), Database/README.md (section Step FU1); and before: for step UN6d: git diff ce7358a 276e402 of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/Master/Followup.aspx and .aspx.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, BMMS/CSS/CommonHTML.css and bmms-workbench.css; Database/README.md (section Step UN6d and its Known items), the tester runs of 2026-11-15 as given; for step UN6c2b: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs; Database/README.md (section Step UN6c2b, Known items), the tester run of 2026-11-15 as given; for step UN6c2a: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff, and BindAgendaDetails read in full), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (diff), BMMS/CSS/bmms-workbench.css (diff),
   BMMSBAL/AgendaMgr.cs and MeetingMgr.cs (diff), BMMSDAL/AgendaDB.cs and MeetingDB.cs (diff), Database/README.md (section Step UN6c2a, Known items), Tests/packs/dashboard/README.md, the tester run of 2026-11-14 as given; for step UN6c1: BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (read: the Alerts and Action Items regions, the message constants, lnkSource_Click),
   BMMS/MasterPage/Main.Master.cs (alert count region), BMMSBAL/AlertMgr.cs, ActionItemMgr.cs and Common.cs (diff),
@@ -432,7 +432,8 @@ Master/Followup.aspx(.cs), the Followup page:
   Confirmation (MinutesConfirmation.aspx) to the same look: breadcrumb "Agenda / Agenda Finalize", "Minutes / Finalize
   Minutes", "Minutes / Minutes Confirmation"; a card headed "Meeting" with the rows Committee Name * and Meeting No * (the
   * in the label); Finalize (or Confirm) as `wb-btn`, Cancel as `wb-btn wb-btn-secondary`; the `confirm(...)` texts are
-  unchanged. On Agenda Finalize the pending agenda items (`pnlPendingAgenda`, `grvAgenda`) are a Masters list (`wb-card`
+  unchanged (step MF1 then sets them from the code-behind once a meeting is chosen, see "The Minutes Items list on Finalize
+  Minutes and Minutes Confirmation (step MF1)"). On Agenda Finalize the pending agenda items (`pnlPendingAgenda`, `grvAgenda`) are a Masters list (`wb-card`
   headed "Pending Agenda Details", `wb-table` in `wb-table-scroll`) with the columns S.No., Agenda No, Subject Type Name,
   Short Text, Agenda Status; the Committee Name and Meeting No columns are removed because they repeat the choice above
   the list (the mail code still reads those fields from the data, not from the grid). Sorting (`OnSorting`) and the
@@ -554,6 +555,97 @@ function that does not exist; the meeting date boxes are not used by the list's 
 Drawn from: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff), BMMS/Master/Followup.aspx, .aspx.cs
 and .aspx.designer.cs (diff), BMMSBAL/ActionItemMgr.cs and BMMSDAL/ActionItemDB.cs (diff), BMMS/CSS/CommonHTML.css and
 bmms-workbench.css (diff), Database/README.md (section Step UN6d and its Known items).
+
+### The Minutes Items list on Finalize Minutes and Minutes Confirmation (step MF1)
+
+Code only; no database step, no procedure changed. Controller only (the pages' access is unchanged: PageAccess.xml and
+PageSettings.xml are not touched). Master/MinutesFinalization.aspx(.cs) and Master/MinutesConfirmation.aspx(.cs).
+
+Data, in the business layer (BMMSBAL/MinutesMgr.cs):
+
+- `MinutesMgr.GetMinutesItemList(int MeetingId)` reads `MinutesDB.GetMinutesByMeetingId(MeetingId, -1, -1)`, that is the
+  existing spr_GetMinutesByMeetingId (View_Minute, all departments, as Update Minutes reads it), and returns a
+  `MinutesItemList`: `Items` (a DataTable with the text columns AgendaNo, SubjectNo, ShortText, Decision,
+  ActualResolution), `Total` (rows) and `NotSaved` (minutes not saved in Update Minutes). The rows are sorted by AgendaNo
+  ascending, as text (View_Minute.AgendaNo is varchar(50)).
+- A minute counts as saved when StatusId is 1 (the rule of fn_WorkflowState.MinutesUpdated); every other StatusId
+  (or NULL) counts in `NotSaved`. For a minute not saved, Decision and Actual Resolution are the constant
+  `MinutesMgr.NotYetRecorded` ("Not yet recorded"): the stored values are the defaults Agenda Finalize wrote. For a saved
+  minute an empty Decision, or an Actual Resolution that is empty after `HtmlCleaner.ToPlainText`, is
+  `MinutesMgr.NotRecorded` ("Not recorded"). SubjectNo NULL or 0 is "-".
+- `HtmlCleaner.ToPlainText(string html)` (BMMSBAL/HtmlCleaner.cs): null or empty gives an empty string. It replaces
+  tags with the existing `TagPattern`: br and the start or end of p, div, li, ul, ol, tr, td, th, table and h1 to h6 give
+  a space, any other (inline) tag gives nothing, so a word with a bold part stays one word. Then `HttpUtility.HtmlDecode`
+  (so `&amp;` becomes `&`, `&nbsp;` a space), control characters are dropped and every run of white space becomes one
+  space. The result is plain text, not HTML: it is encoded once, on the page. Text typed as `<b>x</b>` is stored by
+  `HtmlCleaner.Clean` as `&lt;b&gt;x&lt;/b&gt;`, is not a tag here and comes back as the literal text. The existing
+  methods of HtmlCleaner are unchanged.
+
+The list on the page (both pages, the same markup):
+
+- `pnlMinutesItems` (Visible false until a meeting is chosen) holds a second `wb-card` headed "Minutes Items" with
+  `div.wb-table-scroll` and the GridView `grvMinutesItems` (`wb-table`, SkinID grvSkinNoPaging, no paging, no sorting,
+  `EnableViewState="false"`), the same pattern as the pending list of Agenda Finalize. The five columns are TemplateFields
+  headed Agenda No, Subject No, Short Text, Decision, Actual Resolution; each cell is `HttpUtility.HtmlEncode(Eval(...))`,
+  once. Agenda No and Subject No have the cell class `wb-col-action`; Short Text and Actual Resolution `wb-col-text`.
+  `EmptyDataTemplate`: "No items in this meeting." (class `divNoRecord`).
+- bmms-workbench.css, new shared rule `.wb-table > tbody > tr > td.wb-col-text` (white-space normal, overflow-wrap and
+  word-wrap break-word). The rule is element plus class so that it outranks the single-class `wb-col-action` style of the
+  grid. Owner decision (Q3): in the grid's auto layout one unbroken string longer than the column widens it and the list
+  scrolls sideways inside `wb-table-scroll` (Known items in Database/README.md).
+- `ddlMeeting_SelectedIndexChanged` is new on both pages (an owner-approved exception to "no new events": `ddlMeeting`
+  already had `AutoPostBack="true"` and no handler). It calls `MsgHide()` and then `LoadMinutesItems`. The committee
+  handler (`ddlCommittee_SelectedIndexChanged`) reloads the meeting drop-down and now ends with `HideMinutesItems()`.
+- `LoadMinutesItems`: with Committee Name or Meeting No at -Select-, it calls `HideMinutesItems()` and stops; otherwise it
+  reads `GetMinutesItemList`, binds the grid, shows the panel and sets the text of the button's confirm.
+  `HideMinutesItems()` hides the panel, empties the grid and puts back the default confirm text of the markup (constant
+  `DefaultConfirmText` in each code-behind: it must be kept equal to the OnClientClick of the markup).
+  After `btnFinalize_Click` or `btnConfirm_Click` (success or refusal) and after a failed `PageValidation` the page calls
+  `LoadMinutesItems` again, so the list is current and the page's message stays (Committee and Meeting stay selected
+  after a postback, as before). `btnCancel_Click` calls `HideMinutesItems()` and then redirects to the Dashboard, as before.
+
+The confirm texts (built on the server when the list loads, from the same rows as the list, D3):
+
+- The confirm is `return confirm('...');` set on `OnClientClick` of the button through `ConfirmScript`, which passes the
+  text through `HttpUtility.JavaScriptStringEncode`. The text holds fixed words and counts only, never text of the
+  data.
+- Finalize Minutes (`n` = `Total`, `m` = `NotSaved`; `IsNew` from `MeetingMgr.GetMeetingWorkflowState(MeetingId)`, the
+  meeting created after step 23):
+
+| Case | Confirm text | Server refuses |
+|---|---|---|
+| T1: n > 0, m = 0 | "Do you want to Finalize this Meeting Minutes? Items: [n]." | No |
+| T2: n > 0, m > 0, not IsNew | "Do you want to Finalize this Meeting Minutes? Items: [n]. Not yet saved in Update Minutes: [m]." | No (an older meeting is finalized with unsaved minutes) |
+| T3: n > 0, m > 0, IsNew | "Items: [n]. Not yet saved in Update Minutes: [m]. These minutes cannot be finalized until every item is saved in Update Minutes. Nothing will be finalized." | Yes, Reason 19 (or an earlier Reason) |
+| T4: n = 0 | "This meeting has no minutes to finalize. Nothing will be finalized." | Yes (Reason 19 for IsNew; "No Minutes For the selected Committee/Meeting" for an older meeting) |
+
+- Minutes Confirmation: "Do you want to Confirm this Meeting Minutes? Items: [n]." (counts only; no hint for n = 0, a
+  Known item).
+- Finalize stays clickable in every case (the confirm does not block it): OK posts back and the server's refusal shows
+  as before. Spr_MinutesFinalizeByMeetingId refuses (Reason 19) a meeting created after step 23 with MinutesTotal = 0 or
+  MinutesUpdated < MinutesTotal; an older meeting is not refused for unsaved minutes, and an older meeting without minutes
+  is refused by the page itself before the procedure is called.
+
+The advance warning on Finalize Minutes (C7, narrowed by C8). `LoadMinutesItems(bool showWarning)`: the handler
+`ddlMeeting_SelectedIndexChanged` passes true; the calls after a Finalize or a failed validation pass false (the
+message of that action stays). When `showWarning` is true and the case is T3 or T4, the page's message block shows the
+refusal in advance, with the warning look (`MessageKind.Warning`):
+
+- not `IsNew` (an older meeting) and no minutes: `NoMinutesMessage` ("No Minutes For the selected Committee/Meeting"), the
+  constant `btnFinalize_Click` also uses;
+- `IsNew` and `AgendaFinalized` and `AttendanceRecorded` (the three values from the same `GetMeetingWorkflowState` call):
+  `MeetingChangeReason.MinutesNotUpdatedMessage(NotSaved + "/" + Total)`, the same text and counts the server gives for
+  Reason 19;
+- `IsNew` without a finalized agenda or without recorded attendance: no warning, because spr_MinutesFinalizeByMeetingId
+  refuses first with Reason 17 or 18, which the page does not forecast (the T3 or T4 confirm still says nothing will be
+  finalized; the reason shows after OK).
+
+The message is cleared by `MsgHide()` when the committee or the meeting changes, and on Cancel; the message of a Finalize
+replaces it. No other refusal is forecast.
+
+Not changed: Finalize and Confirm behaviour, procedures, mails, alerts, audit rows, control ids, validators,
+UpdatePanels, the other onclick handler (`MinutesFinalizeValidation`), the acting-user check of the minutes procedures
+(not added; a separate step).
 
 ### The Followup reports (step FU2b)
 

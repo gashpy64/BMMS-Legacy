@@ -103,6 +103,63 @@ namespace BMMSBAL
         private static readonly Regex TagPattern = new Regex("<[^>]*>", RegexOptions.CultureInvariant);
         #endregion
 
+        #region ToPlainText
+        // Step MF1: rich text as one line of plain text, for a list cell (Finalize Minutes, Minutes Confirmation).
+        // Tags are removed (TagPattern); the end of a block (p, div, li, tr, td, th, h1 to h6) and br become a space, an
+        // inline tag (b, i, u, span ...) nothing, so a word with a bold part stays one word. Then the entities are
+        // decoded (&amp; is &, &nbsp; a space) and runs of white space become one space. Null or empty gives "".
+        // Plain text, not HTML: the page encodes it once. Text typed as "<b>x</b>" is stored as &lt;b&gt;x&lt;/b&gt;
+        // by Clean, is not a tag here and comes back as the literal text.
+        public static string ToPlainText(string html)
+        {
+            if (string.IsNullOrEmpty(html))
+                return string.Empty;
+
+            string text = TagPattern.Replace(html, TagAsText);
+            text = System.Web.HttpUtility.HtmlDecode(text);
+
+            StringBuilder sb = new StringBuilder(text.Length);
+            bool space = false;
+            foreach (char c in text)
+            {
+                if (char.IsWhiteSpace(c))
+                {
+                    space = sb.Length > 0;
+                    continue;
+                }
+                if (char.IsControl(c))
+                    continue;
+                if (space)
+                    sb.Append(' ');
+                sb.Append(c);
+                space = false;
+            }
+            return sb.ToString();
+        }
+
+        // A space for br and the start or end of a block element, nothing for any other tag
+        private static string TagAsText(Match tag)
+        {
+            string s = tag.Value;
+            int i = 1;
+            if (i < s.Length && s[i] == '/')
+                i++;
+            int start = i;
+            while (i < s.Length && char.IsLetterOrDigit(s[i]))
+                i++;
+
+            switch (s.Substring(start, i - start).ToLowerInvariant())
+            {
+                case "br": case "p": case "div": case "li": case "ul": case "ol":
+                case "tr": case "td": case "th": case "table":
+                case "h1": case "h2": case "h3": case "h4": case "h5": case "h6":
+                    return " ";
+                default:
+                    return string.Empty;
+            }
+        }
+        #endregion
+
         #region EncodeText
         // & < > as entities, U+00A0 as &nbsp;, control characters other than tab and line breaks left out
         private static string EncodeText(string text)

@@ -50,6 +50,7 @@ namespace BMMS.Master
 
                 ViewState["dtMeeting"] = dtMeeting;
                 Common.LoadDropdownlist(ddlMeeting, dtMeeting, "MeetingNo", "MeetingId", true);
+                HideMinutesItems();     // step MF1: the meeting is -Select- again
 
             }
             catch (Exception ex)
@@ -60,6 +61,104 @@ namespace BMMS.Master
             {
 
             }
+        }
+        #endregion
+
+        #region ddlMeeting_SelectedIndexChanged
+        // Step MF1: the Minutes Items list follows the meeting chosen (owner-approved new handler; AutoPostBack was
+        // already set)
+        protected void ddlMeeting_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            MsgHide();
+            LoadMinutesItems(true);
+        }
+        #endregion
+
+        #region LoadMinutesItems
+        // Step MF1 (D1, D3): the meeting's items (MinutesMgr.GetMinutesItemList) and the Finalize confirm built from the
+        // same rows. Hidden, with the default confirm, when the committee or the meeting is -Select-. The confirm holds
+        // fixed text and counts only (T1 to T4); Finalize stays clickable. A meeting created after step 23 with a minute
+        // not saved in Update Minutes, or any meeting without minutes, is refused by the server (Reason 19, or "No
+        // Minutes" for an older meeting): the confirm says nothing will be finalized and, when showWarning, the message
+        // block shows the server's text in advance (C7; for a meeting created after step 23 MinutesNotUpdatedMessage with
+        // the counts of the list, only with the agenda finalized and attendance recorded (C8); for an older meeting
+        // NoMinutesMessage).
+        private void LoadMinutesItems(bool showWarning)
+        {
+            try
+            {
+                if (ddlCommittee.SelectedValue == "0" || string.IsNullOrEmpty(ddlMeeting.SelectedValue) || ddlMeeting.SelectedValue == "0")
+                {
+                    HideMinutesItems();
+                    return;
+                }
+
+                int MeetingId = int.Parse(ddlMeeting.SelectedValue);
+                MinutesItemList list = MinutesMgr.GetMinutesItemList(MeetingId);
+
+                grvMinutesItems.DataSource = list.Items;
+                grvMinutesItems.DataBind();
+                pnlMinutesItems.Visible = true;
+
+                MeetingWorkflowState state = MeetingMgr.GetMeetingWorkflowState(MeetingId);
+                string text;
+                bool refused = false;
+
+                if (list.Total == 0)
+                {
+                    text = "This meeting has no minutes to finalize. Nothing will be finalized.";                       // T4
+                    refused = true;
+                }
+                else if (list.NotSaved == 0)
+                    text = DefaultConfirmText + " Items: " + list.Total + ".";                                          // T1
+                else if (!state.IsNew)
+                    text = DefaultConfirmText + " Items: " + list.Total + ". Not yet saved in Update Minutes: " + list.NotSaved + ".";  // T2
+                else
+                {
+                    text = "Items: " + list.Total + ". Not yet saved in Update Minutes: " + list.NotSaved + ". These minutes cannot be"
+                         + " finalized until every item is saved in Update Minutes. Nothing will be finalized.";        // T3
+                    refused = true;
+                }
+
+                btnFinalize.OnClientClick = ConfirmScript(text);
+
+                // C7: the text the server gives after OK, with the counts of the same rows as the confirm (D3). A
+                // meeting created after step 23: Reason 19 (MinutesNotUpdatedMessage, 'not saved/total'), only when the
+                // agenda is finalized and attendance recorded (C8: otherwise the procedure refuses first with Reason 17
+                // or 18, which is not forecast, so no warning); an older meeting without minutes: the page's own
+                // refusal of btnFinalize_Click.
+                if (showWarning && refused)
+                {
+                    if (!state.IsNew)
+                        MsgDisplay(NoMinutesMessage, MessageKind.Warning);
+                    else if (state.AgendaFinalized && state.AttendanceRecorded)
+                        MsgDisplay(MeetingChangeReason.MinutesNotUpdatedMessage(list.NotSaved + "/" + list.Total), MessageKind.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                Utilities.GoToErrPage(className, "LoadMinutesItems", ex);
+            }
+        }
+
+        // The list hidden and the confirm of the markup back
+        private void HideMinutesItems()
+        {
+            pnlMinutesItems.Visible = false;
+            grvMinutesItems.DataSource = null;
+            grvMinutesItems.DataBind();
+            btnFinalize.OnClientClick = ConfirmScript(DefaultConfirmText);
+        }
+
+        // The page's refusal of an older meeting without minutes (btnFinalize_Click; also shown in advance, C7)
+        private const string NoMinutesMessage = "No Minutes For the selected Committee/Meeting";
+
+        // The text of the markup's confirm (OnClientClick of btnFinalize)
+        private const string DefaultConfirmText = "Do you want to Finalize this Meeting Minutes?";
+
+        private static string ConfirmScript(string text)
+        {
+            return "return confirm('" + HttpUtility.JavaScriptStringEncode(text) + "');";
         }
         #endregion
 
@@ -125,6 +224,7 @@ namespace BMMS.Master
                     {
                         MeetingChangeResult newResult = AgendaMgr.MinutesFinalizeByMeetingId(MeetingId, int.Parse(Session["UserId"].ToString()));
                         MsgDisplay(newResult.Result == 1 ? "Minutes Finalized" : newResult.RefusalMessage(), newResult.Result == 1 ? MessageKind.Success : MessageKind.Warning);
+                        LoadMinutesItems(false);    // step MF1: the list of the meeting, read again; the message stays
                         return;
                     }
 
@@ -133,7 +233,7 @@ namespace BMMS.Master
 
                     if (dtAgenda.Rows.Count <= 0)
                     {
-                        sMsg = "No Minutes For the selected Committee/Meeting";
+                        sMsg = NoMinutesMessage;
                         MsgDisplay(sMsg);
                     }
                     else
@@ -158,12 +258,15 @@ namespace BMMS.Master
                             MsgDisplay(sMsg, sMsg == "Minutes Finalized" ? MessageKind.Success : MessageKind.Warning);
                         }
                     }
+                    LoadMinutesItems(false);    // step MF1: the list of the meeting, read again; the message stays
                 }
                 catch (Exception ex)
                 {
                     Utilities.GoToErrPage(className, "btnFinalize_Click", ex);
                 }
             }
+            else
+                LoadMinutesItems(false);        // step MF1: the page's message stays; the list follows the choice
             
         }
         #endregion
@@ -219,6 +322,7 @@ namespace BMMS.Master
         protected void btnCancel_Click(object sender, EventArgs e)
         {
             MsgHide();
+            HideMinutesItems();     // step MF1 (C4); Cancel then leaves for the Dashboard, as before
             Response.Redirect("~/DashBoard/DashBoard.aspx");
         }
         #endregion

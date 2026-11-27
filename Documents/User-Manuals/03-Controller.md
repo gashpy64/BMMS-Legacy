@@ -421,6 +421,83 @@ a fresh visit starts from the defaults.
 [Screenshot: Governance Matrix, the Change log view - supplied by Gashpy Software]
 [Screenshot: Governance Matrix, the print preview - supplied by Gashpy Software]
 
+### Finalize Minutes
+
+Purpose: to finalize the minutes of a meeting. Before you press Finalize you can read the items of the meeting in a list.
+
+Open it from the Minutes menu, item Finalize Minutes. The breadcrumb reads "Minutes / Finalize Minutes".
+
+Fields and buttons:
+
+- The box "Meeting" has Committee Name and Meeting No (both required) and the buttons Finalize (the main button) and
+  Cancel.
+- When you have chosen a Committee Name and a Meeting No, a second box headed "Minutes Items" appears under the first.
+  It is a list you can only read, with the columns Agenda No, Subject No, Short Text, Decision and Actual Resolution. The
+  rows are in Agenda No order; you cannot sort them. Long texts wrap onto several lines. Actual Resolution is shown as
+  plain text, without its formatting.
+  - Subject No shows "-" when the item has no subject number.
+  - Decision and Actual Resolution show "Not yet recorded" for an item whose minutes were not saved in Update Minutes yet.
+  - For an item that was saved with nothing entered, they show "Not recorded".
+  - A meeting without items shows "No items in this meeting."
+- The list disappears when you set Committee Name or Meeting No back to -Select-, or choose another committee or
+  meeting, and when you press Cancel (which takes you to the Dashboard). After Finalize the same meeting stays chosen, the list is read again and the
+  message stays above it.
+
+Steps:
+
+1. Choose Committee Name, then Meeting No. The Minutes Items list appears.
+2. Read the list. If an item shows "Not yet recorded", open Minutes, Update Minutes and save it first.
+3. Press Finalize. BMMS asks whether you want to go on (see the texts below). Press OK to go on, or Cancel in the question to stay.
+4. After OK, BMMS says "Minutes Finalized", or tells you why it cannot.
+
+The question after Finalize shows the number of items ([n]) and the number not yet saved in Update Minutes ([m]):
+
+- All items are saved: "Do you want to Finalize this Meeting Minutes? Items: [n]."
+- Some items are not saved, on an older meeting: "Do you want to Finalize this Meeting Minutes? Items: [n]. Not yet saved
+  in Update Minutes: [m]." If you press OK, BMMS finalizes the minutes unless something else stops it.
+- Some items are not saved, on a newer meeting: "Items: [n]. Not yet saved in Update Minutes: [m]. These minutes cannot be
+  finalized until every item is saved in Update Minutes. Nothing will be finalized." Press OK only if you want BMMS to show
+  the reason; nothing is finalized.
+- The meeting has no items: "This meeting has no minutes to finalize. Nothing will be finalized."
+
+Finalize is never switched off: the question only tells you what is going to happen.
+
+Messages and what to do:
+
+- When you choose the meeting, BMMS can already show a warning above the boxes, in the warning colour, for a refusal it
+  expects:
+  - "[m] of the [n] minutes have not been updated yet. Update every item (Minutes, Update Minutes) before finalizing the
+    minutes.": save the items that show "Not yet recorded" in Update Minutes, then come back.
+  - "This meeting has no minutes to finalize (no agenda item was approved).": the meeting has no items to finalize.
+  - "No Minutes For the selected Committee/Meeting": the meeting has no minutes.
+  BMMS shows the first two only when the agenda of the meeting is finalized and its attendance is recorded. If one of
+  them is missing, BMMS gives no warning in advance, and shows the reason after you press Finalize and OK. The warning
+  goes away when you choose another committee or meeting, when you press Cancel and when you press Finalize (its message
+  replaces it).
+- "Minutes Finalized": done. The meeting stays chosen and the list shows the meeting again.
+
+[Screenshot: Finalize Minutes as the Controller, a meeting chosen with the Minutes Items list - supplied by Gashpy Software]
+
+### Minutes Confirmation
+
+Purpose: the final step for the minutes of a meeting, with the Confirm button. Before you press Confirm you can read the items of the meeting in a list.
+
+Open it from the Minutes menu, item Minutes Confirmation. The breadcrumb reads "Minutes / Minutes Confirmation".
+
+Fields and buttons: the box "Meeting" has Committee Name and Meeting No (both required) and the buttons Confirm (the main
+button) and Cancel. The box "Minutes Items" appears under it when both are chosen, with the same columns, wording and
+behaviour as on Finalize Minutes (Agenda No, Subject No, Short Text, Decision, Actual Resolution; "-", "Not yet
+recorded", "Not recorded", "No items in this meeting."; hidden again when you change or clear the choice, or press Cancel).
+
+Steps:
+
+1. Choose Committee Name, then Meeting No. The Minutes Items list appears.
+2. Read the list.
+3. Press Confirm. BMMS asks whether you want to go on and shows the number of items ([n]). Press OK to go on, or Cancel in the question to stay.
+4. BMMS says "Minutes confirmed.", or tells you why it cannot. The meeting stays chosen and the list shows it again.
+
+[Screenshot: Minutes Confirmation as the Controller, a meeting chosen with the Minutes Items list - supplied by Gashpy Software]
+
 [[CONFIRM: the other screens are not written yet]]
 
 ## Tasks by goal
