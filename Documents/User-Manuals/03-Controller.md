@@ -428,6 +428,95 @@ a fresh visit starts from the defaults.
 [Screenshot: Governance Matrix, the Change log view - supplied by Gashpy Software]
 [Screenshot: Governance Matrix, the print preview - supplied by Gashpy Software]
 
+### Agenda Finalize
+
+Purpose: to close the agenda of a meeting, so that the items you approved go to the minutes. The items that are still
+waiting for approval are rejected. Before you press Finalize you can read, in a list, the items that will be rejected.
+
+Open it from the Agenda menu, item Agenda Finalize. The breadcrumb reads "Agenda / Agenda Finalize" and the page title is
+"Agenda Finalize". Only the Controller can open this screen; any other role gets "Access denied".
+
+Fields and buttons:
+
+- The box "Meeting" has Committee Name and Meeting No (both required) and the buttons Finalize (the main button) and
+  Cancel. Cancel takes you to the Dashboard.
+- Meeting No lists only the meetings of the committee whose agenda is still open. A meeting whose agenda is finalized is
+  not listed. If the committee has no such meeting, Meeting No shows only "- Select -" and BMMS says "This committee has
+  no meeting with its agenda still to finalize."
+- When you have chosen a Committee Name and a Meeting No, and the meeting has items that are not yet approved (items
+  that still wait for the Manager or for you), a second box headed "Pending Agenda Details" appears under the first.
+  These are the items BMMS will reject when you finalize. It is a list you can only read, with the columns S.No., Agenda
+  No, Subject Type Name, Short Text and Agenda Status. Click the heading of Agenda No, Subject Type Name, Short Text or
+  Agenda Status to sort the list by it. The box is not shown when the meeting has no such items, and it disappears when
+  you set Committee Name or Meeting No back to "- Select -" or choose another committee or meeting.
+- After a successful Finalize the meeting drops out of the Meeting No list, Meeting No goes back to "- Select -", the
+  Pending Agenda Details list disappears and the message stays above the boxes. If this was the last meeting of the
+  committee to finalize, only the message shows. If BMMS refuses, the meeting stays chosen.
+
+Steps:
+
+1. Choose Committee Name, then Meeting No. If the meeting has items that are not yet approved, the Pending Agenda
+   Details list appears.
+2. Read the list. Every item in it will be rejected. To keep an item, it must be approved before you finalize: you
+   approve it on the Dashboard (My approvals), where your list holds the items that wait for you. An item that waits
+   for the Manager can be approved only by the Manager. Until the Manager acts, you cannot approve or reject it on the
+   Dashboard; if it is still waiting when you finalize the agenda, Finalize rejects it with the other pending items.
+3. Press Finalize. BMMS asks whether you want to go on (see the texts below). Press OK to go on, or Cancel in the
+   question to stay.
+4. After OK, BMMS says "Agenda Finalized", or tells you why it cannot.
+
+The question after Finalize. When you have chosen a committee and a meeting, it tells you what is going to happen. The
+numbers are counted when you choose the meeting; BMMS decides again when you press OK. The numbers can be out of date:
+another window, or a Manager, may change an item after you chose the meeting. The message after OK is what counts.
+
+- When Committee Name or Meeting No is still "- Select -": "Do you want to Finalize this Meeting Agenda?" (BMMS then
+  tells you to choose, see the messages below).
+- The meeting has items: "Finalize the agenda of [committee], Meeting No [no]?" followed by two sentences. The first is
+  "Approved items that go to the minutes: [n]." or, when no item is approved, "No item is approved, so no item goes to the
+  minutes." The second is "Items not yet approved that will be rejected, with a mail for each: [n]." or, when there is
+  none, "No item will be rejected."
+- The meeting has no items: "Finalize the agenda of [committee], Meeting No [no]? This meeting has no agenda items, so it
+  will have no minutes."
+
+Items that were already rejected are not counted.
+
+What happens when you press OK:
+
+- The items you approved go to the minutes, where you can update them (Minutes, Update Minutes). After this the items of
+  the meeting can no longer be added, changed or deleted.
+- Each item that is not yet approved is rejected, one by one. The item keeps its Short Text and Proposed Resolution and
+  gets the Controller comment "Agenda rejected by Controller on agenda finalized." BMMS then sends a mail for that item,
+  only when its rejection was saved. The mail is sent to you, and by blind copy to the active people who follow the item
+  (those who still have an open alert of it); the Admin gets none. The subject is "Agenda ([agenda number]) has been
+  rejected by Controller on agenda finalized".
+- A meeting with no items is finalized as well. It has no minutes, and Finalize Minutes tells you so.
+
+Messages and what to do:
+
+- "Agenda Finalized": done. The agenda is closed, the approved items are in the minutes and the rejected items have their
+  mails.
+- "Agenda Finalized (no agenda items).": done; the meeting had no items and has no minutes.
+- "Agenda Finalized." followed by one or two notes, in the warning colour: the agenda is finalized, but something about the
+  rejections needs a look.
+  - " [n] item(s) could not be rejected.": BMMS left that item as it was and sent no mail for it.
+  - " [n] rejection mail(s) could not be sent. The error is in the error log.": those items are rejected; only the mail
+    was not sent. Tell the administrator, who can read the error log.
+- "Please Select Committee Name": you pressed Finalize without a committee; choose one.
+- "Please Select Meeting No": you pressed Finalize without a meeting; choose one.
+- "Agenda already finalized": the agenda of this meeting is not open any more (for example another Controller finalized it
+  a moment ago). Nothing was changed. Choose another meeting.
+- "This step has already been done for this meeting (status: [status]). Reload the page to see the current state.": [status] is the current state of the
+  meeting's agenda (for example Close, which is how BMMS shows a finalized agenda, when the agenda is already finalized). Another window finalized the meeting first. You did not finalize it, but the items shown in Pending Agenda Details may already
+  have been rejected by you, each with its mail, before BMMS found this out. Reload the page and check the meeting. The
+  message can be followed by the notes above.
+- "The meeting or member no longer exists. Reload the page.": the meeting was not finalized by you, but the items shown in
+  Pending Agenda Details may already have been rejected, each with its mail. Reload the page and check the meeting. The
+  message can be followed by the notes above.
+- "This committee has no meeting with its agenda still to finalize.": every meeting of the committee has its agenda
+  finalized already. Choose another committee.
+
+[Screenshot: Agenda Finalize as the Controller, a meeting chosen with the Pending Agenda Details list and the question after Finalize - supplied by Gashpy Software]
+
 ### Finalize Minutes
 
 Purpose: to finalize the minutes of a meeting. Before you press Finalize you can read the items of the meeting in a list.

@@ -3,11 +3,11 @@
 - Title: Development Environment
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: HK1 (the section "Connection settings": the two files, the switch, -Show, the -Force backup, the check after a switch, the relink after a restore; the list of files git does not hold); AZ1 (the output folders, the MSBuild row of "The tester: what the development machine needs", the list of files a new working copy lacks, "Building without touching bin and obj"); UD1c (the Database BMMS_Quality row of "The tester: what the development machine needs": eleven qa_ accounts, qa_manager4 and the pack manager-scope); UD1b (the Database BMMS_Quality row of "The tester: what the development machine needs": the account qa_manager3 and the pack two-approvers); DA1 (the doc-auditor row of "The agents", the section "The doc-auditor and its guard", the section "The audit catalog"); UN6e (the SQL Server row and the App_Data row of "The tester: what the development machine needs"); UN6b (the memory reading in "The tester: what the development machine needs"); the rest WF3a2
-- Commit: b3f4407
-- Last updated by: HK1, based on b3f4407 (Connection settings and the list of files git does not hold); AZ1, based on 00838ed
+- Applies to: WF2c (documentation part 1: the Database row of "Tools and versions" from the catalog of 2026-11-28; the branch list and the base commit in "Getting the source", the link to the Azure redeploy in "After a database is restored"); HK1 (the section "Connection settings": the two files, the switch, -Show, the -Force backup, the check after a switch, the relink after a restore; the list of files git does not hold); AZ1 (the output folders, the MSBuild row of "The tester: what the development machine needs", the list of files a new working copy lacks, "Building without touching bin and obj"); UD1c (the Database BMMS_Quality row of "The tester: what the development machine needs": eleven qa_ accounts, qa_manager4 and the pack manager-scope); UD1b (the Database BMMS_Quality row of "The tester: what the development machine needs": the account qa_manager3 and the pack two-approvers); DA1 (the doc-auditor row of "The agents", the section "The doc-auditor and its guard", the section "The audit catalog"); UN6e (the SQL Server row and the App_Data row of "The tester: what the development machine needs"); UN6b (the memory reading in "The tester: what the development machine needs"); the rest WF3a2
+- Commit: 3172059
+- Last updated by: WF2c, based on 3172059; HK1, based on b3f4407 (Connection settings and the list of files git does not hold); AZ1, based on 00838ed
 - Status: Draft
-- Verified against: for step HK1: git diff HEAD (.gitignore), Tools/Switch-Db.ps1 and BMMS/connectionStrings.Azure.config.example (read in full), BMMS/connectionStrings.config.example (the parts table, from the earlier text), Database/README.md (section Step HK1 and Known items O1 and O2), the build, tester and owner results as given; for step AZ1: git diff HEAD (.gitignore, BMMS/BMMS.csproj, BMMSBAL/BMMSBAL.csproj, Tests/_runner/Tester.Common.ps1, the deleted and moved files under bin), Lib/iTextSharp/README.txt, Lib/AjaxControlToolkit/README.txt, Database/README.md (section Step AZ1), the build and owner results as given; for step UD1c: Tests/README.md, Tests/_runner/Tester.Common.ps1 and Setup-Quality.ps1, Tests/credentials.json.example (diff), Tests/fixture/BMMS-Quality-Fixture.sql and BMMS-Quality-Fixture-Check.sql (diff), Tests/packs/manager-scope/README.md; for step UD1b: Tests/README.md, Tests/_runner/Tester.Common.ps1 and Setup-Quality.ps1, Tests/credentials.json.example (diff), Tests/packs/two-approvers/README.md; for step DA1: .claude/agents/doc-auditor.md, .claude/hooks/doc-auditor-guard.ps1 (header comment and the lines that name the write pattern and the Grep extension list; not read line by line), Documents/_build/Export-Catalog.ps1 (parameters, the output-folder rule, the fingerprint), Documents/Audit/README.md, CLAUDE.md (diff); for step UN6e: Tests/README.md (diff: the Server and Site lines), Database/README.md (section Step UN6e, Tester); for step UN6b: Tests/_runner/Tester.Common.ps1 (diff: Get-QaMemory, QaMemoryWarnMB),
+- Verified against: for step WF2c: catalog.txt of the BMMS_Test export of 2026-11-28 at 3172059 (product version, edition, compatibility level; the Database row of "Tools and versions"), git for-each-ref on the working copy at 3172059 (branches, remote-tracking branches and tags), the audit DA-20261119-5f8c4fe (Gap-Register.md DA-G-042, Drift-Register.md), Chapter 03 "Redeploying the Azure copy from a local copy"; for step HK1: git diff HEAD (.gitignore), Tools/Switch-Db.ps1 and BMMS/connectionStrings.Azure.config.example (read in full), BMMS/connectionStrings.config.example (the parts table, from the earlier text), Database/README.md (section Step HK1 and Known items O1 and O2), the build, tester and owner results as given; for step AZ1: git diff HEAD (.gitignore, BMMS/BMMS.csproj, BMMSBAL/BMMSBAL.csproj, Tests/_runner/Tester.Common.ps1, the deleted and moved files under bin), Lib/iTextSharp/README.txt, Lib/AjaxControlToolkit/README.txt, Database/README.md (section Step AZ1), the build and owner results as given; for step UD1c: Tests/README.md, Tests/_runner/Tester.Common.ps1 and Setup-Quality.ps1, Tests/credentials.json.example (diff), Tests/fixture/BMMS-Quality-Fixture.sql and BMMS-Quality-Fixture-Check.sql (diff), Tests/packs/manager-scope/README.md; for step UD1b: Tests/README.md, Tests/_runner/Tester.Common.ps1 and Setup-Quality.ps1, Tests/credentials.json.example (diff), Tests/packs/two-approvers/README.md; for step DA1: .claude/agents/doc-auditor.md, .claude/hooks/doc-auditor-guard.ps1 (header comment and the lines that name the write pattern and the Grep extension list; not read line by line), Documents/_build/Export-Catalog.ps1 (parameters, the output-folder rule, the fingerprint), Documents/Audit/README.md, CLAUDE.md (diff); for step UN6e: Tests/README.md (diff: the Server and Site lines), Database/README.md (section Step UN6e, Tester); for step UN6b: Tests/_runner/Tester.Common.ps1 (diff: Get-QaMemory, QaMemoryWarnMB),
   Run-Tests.ps1 (diff, preflight), Tests/README.md (diff, the memory warning row); for the development workflow (steps 1, 5, 6, 7 and 9) and the agents: CLAUDE.md (diff),
   .claude/agents/tester.md; for the section "The tester: what the development machine needs": Tests/package.json,
   Tests/README.md, Tests/_runner/Tester.Common.ps1 and Run-Tests.ps1 (tool lookup), Tests/lib/run.js,
@@ -22,7 +22,7 @@
   BMMS-Current-State-Architecture.md); git ls-files BMMS/dll and the HintPaths of
   BMMSBAL/BMMSBAL.csproj
 - To confirm: the exact command lines for the compile, the site precompile and the SQL parse; the
-  branch policy (master protected, modernization for development); which Visual Studio workloads
+  branch policy (the recovery-baseline branch, main, called master in the old notes, protected; modernization for development); which Visual Studio workloads
   and which SQL Server edition a developer needs; how the
   documentation tools are installed
 
@@ -39,7 +39,7 @@ Installing BMMS on a server is in 03-Deployment-and-Installation.
 | Configurations | Debug and Release, each for Any CPU and for x86 (the solution lists all four) |
 | C# language version | `LangVersion` 7.3 is set in the x86 configurations of the three projects (see 01-Overview-and-Architecture) |
 | Web server for development | BMMS.csproj has `UseIISExpress` false |
-| Database | SQL Server. The BMMS_Test catalog export of 2026-11-09 shows product version 17.0.1145.4 (RTM), Enterprise Developer Edition (64-bit), with BMMS_Test at compatibility level 100 |
+| Database | SQL Server. The BMMS_Test catalog export of 2026-11-28 (catalog.txt) shows product version 17.0.1000.7 (RTM), Express Edition (64-bit), on the instance `.\SQLEXPRESS`, with BMMS_Test at compatibility level 100 (the export of 2026-11-09 showed 17.0.1145.4, Enterprise Developer Edition; which edition a developer needs is the open point under this table) |
 | Database scripts | Transact-SQL for compatibility level 100 (see "The development workflow"). From the command line they run with `sqlcmd -I` (quoted identifiers ON; Database/README.md) |
 | Shell for the tools | PowerShell 7 (the check, export and guard scripts start with `#Requires -Version 7` or 7.3) |
 | Source control | git |
@@ -114,17 +114,20 @@ folder. Nothing in these folders is committed, and no password is written in a d
 
 The repository has these branches and tags (git for-each-ref on the working copy):
 
-- Local branches `legacy`, `main`, `master` and `modernization`; remote-tracking branches
-  `origin/main` and `origin/modernization` (and `origin/HEAD`).
-- Tags: one per step (for example `user-ud1a`, `workflow-wf2a`), and the tag
+- Local branches `main`, `modernization` and `wip-h1`; remote-tracking branches `origin/HEAD`,
+  `origin/main`, `origin/modernization` and `origin/wip-h1`.
+- Tags: one per step (for example `user-ud1a`, `workflow-wf2a`, `hk1`), and the tag
   `BMMS-Recovered-Baseline`.
-- `modernization` and `origin/modernization` point to the same commit as this chapter's base
-  (3dd0eec, "WF2a: Documents baseline, doc-writer agent with guard hook, export and check tooling").
+- `modernization` and `origin/modernization` are at 3172059 (the tag `hk1`), the base of this chapter
+  for step WF2c. `main`, `origin/main` and `origin/HEAD` are at 990b26d, the commit of the tag
+  `BMMS-Recovered-Baseline`; `wip-h1` and `origin/wip-h1` are at ba361c3, the commit of the tag
+  `header-popups-h1`.
 
 Branch policy. The older architecture notes (Documentation/Architecture/BMMS-Current-State-Architecture.md)
 say that `master` is the recovery baseline with no direct changes (emergency fixes only) and that
-`modernization` is the branch for active development. The current development work is committed on
-`modernization`. [[CONFIRM: that `master` is protected and `modernization` is the development branch; the policy comes from the old notes, git shows only that the branches exist and that development commits are on modernization; confirm with the owner]]
+`modernization` is the branch for active development. The repository has no branch `master` today; the
+branch at the recovery baseline is `main`. The current development work is committed on
+`modernization`. [[CONFIRM: that the recovery-baseline branch (`main`, called `master` in the old notes) is protected and `modernization` is the development branch; the policy comes from the old notes, git shows only that the branches exist and that development commits are on modernization; confirm with the owner]]
 
 Working rules that apply to the source (CLAUDE.md): one tag per step; commits are staged by
 explicit path (`git add <path>`), never as a whole; the owner commits, tags and pushes, not the
@@ -264,6 +267,9 @@ A restore of a database brings back the application user without its login. Link
 ```sql
 ALTER USER bmms_app WITH LOGIN = bmms_app
 ```
+
+The same statement is part of redeploying the Azure copy of BMMS_Test from a local copy: see
+03-Deployment-and-Installation, "Redeploying the Azure copy from a local copy".
 
 ##### Visual Studio and the publish profile
 
