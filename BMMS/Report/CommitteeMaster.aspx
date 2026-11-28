@@ -5,43 +5,49 @@
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
         <ContentTemplate>
             <asp:Panel ID="pnlCommitteeMaster" runat="server">
+                <%-- Step UI2b: the Masters' form look (Committee Master): breadcrumb and title as in the menu, a card with
+                     label and field rows, Submit as the primary button. Control IDs, events and the handlers are unchanged. --%>
+                <div class="wb-page wb-page-fit">
+                    <div class="wb-breadcrumb">
+                        Reports<span class="wb-breadcrumb-sep">/</span>Committee Master</div>
+                    <h1 class="wb-h1">
+                        Committee Master</h1>
+                    <div class="wb-card">
+                        <div class="wb-card-header">
+                            Filter</div>
+                        <div class="wb-card-body">
+                            <div class="wb-row">
+                                <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlCommittee">
+                                    Committee</label>
+                                <div class="wb-field">
+                                    <asp:DropDownList ID="ddlCommittee" runat="server" AutoPostBack="true"
+                                        OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
+                                    </asp:DropDownList>
+                                </div>
+                            </div>
+                            <div class="wb-row">
+                                <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlStatus">
+                                    Status</label>
+                                <div class="wb-field">
+                                    <asp:DropDownList ID="ddlStatus" runat="server" AutoPostBack="true"
+                                        OnSelectedIndexChanged="ddlStatus_SelectedIndexChanged">
+                                    </asp:DropDownList>
+                                </div>
+                            </div>
+                            <div class="wb-actions">
+                                <asp:Button ID="btnSubmit" runat="server" CssClass="wb-btn" Text="Submit" OnClick="btnSubmit_Click" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <%-- Step UI2b (R12): the grid keeps its old frame and look, outside .wb-page --%>
                 <div class="formContent">
                 <div class="formPanel">
-                    <div class="divHeader">
-                    :: Committee Master Report</div>
-                    <div class="divRowFixed"></div>
-                    <div class="divRow">
-                        <table border="0" cellpadding="0" cellspacing="12" width="100%">
-                            <tr>
-                                <td class="Lable">
-                                    Committee :</td>
-                                <td>
-                                    <asp:DropDownList ID="ddlCommittee" runat="server" Width="150px" AutoPostBack="true"
-                                        OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
-                                    </asp:DropDownList>&nbsp;
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="Lable">
-                                    Status :</td>
-                                <td>
-                                    <asp:DropDownList ID="ddlStatus" runat="server" Width="150px" AutoPostBack="true"
-                                        OnSelectedIndexChanged="ddlStatus_SelectedIndexChanged">
-                                    </asp:DropDownList></td>
-                            </tr>
-                            <tr>
-                                <td class="Lable">
-                                   </td>
-                                <td>
-                                    <asp:Button ID="btnSubmit" runat="server" CssClass="button" Text="Submit" OnClick="btnSubmit_Click" /></td>
-                            </tr>
-                        </table>
-                    </div>
                     <div class="divRow">
                         <asp:GridView ID="grvCommittee" runat="server" SkinID="grvSkinNoPaging" AutoGenerateColumns="false"
                             CssClass="contentTable1" AllowSorting="true" CellPadding="4" DataKeyNames="CommitteeId"
                             Font-Names="Verdana, Arial, Helvetica, sans-serif" Font-Size="X-Small" ForeColor="#333333"
-                            GridLines="Horizontal" Height="32px" Width="100%">
+                            GridLines="Horizontal" Height="32px" Width="100%" OnSorting="grvRecord_Sorting">
                             <HeaderStyle CssClass="contentTableHeader" HorizontalAlign="Center" Font-Bold="true" />
                             <Columns>
                                 <asp:TemplateField HeaderText="S.No.">
@@ -57,7 +63,7 @@
                                             Style="color: White" CommandArgument="CommitteeCode"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblCommitteeCode" SkinID="lblSkinGen" Text='<%#Eval("CommitteeCode")%>'
+                                        <asp:Label ID="lblCommitteeCode" SkinID="lblSkinGen" Text='<%# HttpUtility.HtmlEncode(Eval("CommitteeCode")) %>'
                                             runat="server" />
                                         <asp:HiddenField ID="hdnCommitteeId" runat="server" Value='<%#Eval("CommitteeId")%>' />
                                     </ItemTemplate>
@@ -69,14 +75,14 @@
                                             Style="color: White" CommandArgument="CommitteeName"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblCommitteeName" SkinID="lblSkinGen" Text='<%#Eval("CommitteeName")%>'
+                                        <asp:Label ID="lblCommitteeName" SkinID="lblSkinGen" Text='<%# HttpUtility.HtmlEncode(Eval("CommitteeName")) %>'
                                             runat="server" />
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
                                 </asp:TemplateField>
                                 <asp:TemplateField SortExpression="IncorporationDate">
                                     <HeaderTemplate>
-                                        <asp:LinkButton ID="lnk2" runat="server" Text="Incorporation Date" CommandName="Sort"
+                                        <asp:LinkButton ID="lnk3" runat="server" Text="Incorporation Date" CommandName="Sort"
                                             Style="color: White" CommandArgument="IncorporationDate"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
@@ -100,7 +106,7 @@
                                             CommandArgument="StatusName"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblStatusName" runat="server" SkinID="lblskingen" Text='<%#Eval("StatusName") %>'></asp:Label>
+                                        <asp:Label ID="lblStatusName" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("StatusName")) %>'></asp:Label>
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
                                 </asp:TemplateField>

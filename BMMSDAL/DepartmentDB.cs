@@ -106,6 +106,50 @@ namespace BMMSDAL
         }
         #endregion
 
+        #region GetDashboardDepartments
+        // Step UN6b (BMMS-Fix-DashboardMeetings-Step42.sql): the departments of a Manager or a User, home first
+        // (DepartmentId, DepartmentName, IsHome), read by the procedure from the acting user id. Reason 0 when
+        // allowed, otherwise 8 (user missing or inactive) or 4 (another role), and then no rows.
+        public static DataTable GetDashboardDepartments(int ActingUserId, out int Reason)
+        {
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+
+            SqlParameter[] parameter = new SqlParameter[3];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = result;
+            parameter[2] = reason;
+
+            DataTable dt = CommonDB.GetDataTable("spr_GetDashboardDepartments", parameter);
+            Reason = MinutesDB.RefusalReason(result, reason);
+            return dt;
+        }
+        #endregion
+
+        #region GetManagerDepartments
+        // Step UD1c (BMMS-Fix-ManagerScope-Step54.sql): the departments of the acting Manager (fn_ManagerDepartments), home
+        // first (DepartmentId, DepartmentName, IsHome, IsActive), read by the procedure from the acting user id. Reason 0
+        // when allowed, otherwise 8 (user missing, inactive or the system account) or 4 (not a Manager), and then no rows.
+        public static DataTable GetManagerDepartments(int ActingUserId, out int Reason)
+        {
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+
+            SqlParameter[] parameter = new SqlParameter[3];
+            parameter[0] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[1] = result;
+            parameter[2] = reason;
+
+            DataTable dt = CommonDB.GetDataTable("spr_GetManagerDepartments", parameter);
+            Reason = MinutesDB.RefusalReason(result, reason);
+            return dt;
+        }
+        #endregion
+
         #region GetNextDeptCode
         public static string GetNextDeptCode()
         {
@@ -138,9 +182,16 @@ namespace BMMSDAL
         #endregion
 
         #region AddEditDepartment
-        public static int AddEditDepartment(DepartmentDAL deptDAL)
+        // Step GM1a (BMMS-Fix-GovernanceLog-Step56.sql): the acting user is passed and checked by the procedure (Reason 8
+        // missing or inactive, 4 not an Admin; nothing saved); Result 1 when saved. Reason 0 when saved.
+        public static int AddEditDepartment(DepartmentDAL deptDAL, int ActingUserId, out int Reason)
         {
-            SqlParameter[] parameter = new SqlParameter[10];
+            SqlParameter result = new SqlParameter("@Result", SqlDbType.Int);
+            result.Direction = ParameterDirection.Output;
+            SqlParameter reason = new SqlParameter("@Reason", SqlDbType.Int);
+            reason.Direction = ParameterDirection.Output;
+
+            SqlParameter[] parameter = new SqlParameter[13];
             parameter[0] = new SqlParameter("@Code", deptDAL.Code);
             parameter[1] = new SqlParameter("@DepartmentId", deptDAL.DepartmentId);
             parameter[2] = new SqlParameter("@DepartmentCode", deptDAL.DepartmentCode);
@@ -151,8 +202,13 @@ namespace BMMSDAL
             parameter[7] = new SqlParameter("@CreatedBy", deptDAL.CreatedBy);
             parameter[8] = new SqlParameter("@UpdatedOn", deptDAL.UpdatedOn);
             parameter[9] = new SqlParameter("@UpdatedBy", deptDAL.UpdatedBy);
+            parameter[10] = new SqlParameter("@ActingUserId", ActingUserId);
+            parameter[11] = result;
+            parameter[12] = reason;
 
-            return CommonDB.ExecuteProcedure("spr_AddEditDepartment", parameter);           
+            CommonDB.GetDataTable("spr_AddEditDepartment", parameter);
+            Reason = MinutesDB.RefusalReason(result, reason);
+            return Reason == 0 ? 1 : 0;
         }
         #endregion
 
@@ -162,7 +218,21 @@ namespace BMMSDAL
             SqlParameter[] parameter = new SqlParameter[1];
             parameter[0] = new SqlParameter("@DeptId", DeptId);
 
-            return CommonDB.ExecuteProcedure("spr_DeleteDepartmentByDeptId", parameter); ;
+            DataTable dtResult = new DataTable();
+            dtResult = CommonDB.GetDataTable("spr_DeleteDepartmentByDeptId", parameter);
+
+            return Convert.ToInt16(dtResult.Rows[0]["Result"].ToString());
+        }
+        #endregion
+
+        #region DeleteDepartment
+        // Step UD1a: the whole row, Result plus (with BMMS-Fix-UserHistory-Step39.sql) Reason and ReasonDetail
+        public static DataTable DeleteDepartment(int DeptId)
+        {
+            SqlParameter[] parameter = new SqlParameter[1];
+            parameter[0] = new SqlParameter("@DeptId", DeptId);
+
+            return CommonDB.GetDataTable("spr_DeleteDepartmentByDeptId", parameter);
         }
         #endregion
     }

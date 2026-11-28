@@ -2,157 +2,131 @@
     Codebehind="AgendaFinalization.aspx.cs" Inherits="BMMS.Master.AgendaFinalization"
     Title="Untitled Page" ValidateRequest="false" %>
 
-<%@ Register Assembly="FreeTextBox" Namespace="FreeTextBoxControls" TagPrefix="FTB" %>
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="cc1" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
         <ContentTemplate>
-            <asp:UpdateProgress ID="UpdateProgress1" runat="server">
-                <ProgressTemplate>
-                    <div class="divProgress">
-                        <div class="divProgressBackground">
+            <%-- Step UI2a: the Masters' form look (Committee Master): breadcrumb and title as in the menu, a card with
+                 label and field rows, Finalize as the primary button and Cancel as the secondary one. Control IDs,
+                 events and the confirmation are unchanged. --%>
+            <div class="wb-page">
+                <asp:UpdateProgress ID="UpdateProgress1" runat="server">
+                    <ProgressTemplate>
+                        <div class="divProgress">
+                            <div class="divProgressBackground">
+                            </div>
+                            <div class="divProgressImg">
+                                Loading ...</div>
                         </div>
-                        <div class="divProgressImg">
-                            Loading ...</div>
+                    </ProgressTemplate>
+                </asp:UpdateProgress>
+                <div class="wb-breadcrumb">
+                    Agenda<span class="wb-breadcrumb-sep">/</span>Agenda Finalize</div>
+                <h1 class="wb-h1">
+                    Agenda Finalize</h1>
+                <div aria-live="polite">
+                    <div id="divErrLogin" runat="server" class="divErrorHide">
+                        <span id="spanErrLogin" runat="server" class="lblError"></span>
                     </div>
-                </ProgressTemplate>
-            </asp:UpdateProgress>
-            <div class="formContent">
-                <div class="formPanel">
-                    <div class="divHeader">
-                        :: Agenda Finalization</div>
-                    <div class="divRowFixed">
-                    </div>
-                    <div class="divRow" style="height: 25px">
-                        <div id="divErrLogin" runat="server" class="divErrorHide">
-                            <span id="spanErrLogin" runat="server" class="lblError"></span>
-                        </div>
-                    </div>
-                    <asp:Panel ID="pnlAgendaFinalize" runat="server">
-                        <div class="divRow">
-                            <div class="divRow">
-                                <div class="divRowLeft">
-                                    Committee Name :
-                                </div>
-                                <div class="divRowRight">
-                                    <asp:DropDownList ID="ddlCommittee" runat="server" Width="150px" AutoPostBack="true"
+                </div>
+                <asp:Panel ID="pnlAgendaFinalize" runat="server">
+                    <div class="wb-card">
+                        <div class="wb-card-header">
+                            Meeting</div>
+                        <div class="wb-card-body">
+                            <div class="wb-row">
+                                <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlCommittee">
+                                    Committee Name <span class="wb-req">*</span></label>
+                                <div class="wb-field">
+                                    <asp:DropDownList ID="ddlCommittee" runat="server" AutoPostBack="true"
                                         OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
                                     </asp:DropDownList>
-                                    <span class="spanMandatory">*</span>
                                 </div>
                             </div>
-                            <div class="divRow">
-                                <div class="divRowLeft">
-                                    Meeting No :
-                                </div>
-                                <div class="divRowRight">
-                                    <asp:DropDownList ID="ddlMeeting" runat="server" Width="150px" AutoPostBack="true"
+                            <div class="wb-row">
+                                <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlMeeting">
+                                    Meeting No <span class="wb-req">*</span></label>
+                                <div class="wb-field">
+                                    <asp:DropDownList ID="ddlMeeting" runat="server" AutoPostBack="true"
                                         OnSelectedIndexChanged="ddlMeeting_SelectedIndexChanged">
                                     </asp:DropDownList>
-                                    <span class="spanMandatory">*</span>
-                                    <br />
-                                    <br />
-                                    <asp:Button ID="btnFinalize" runat="server" CssClass="button" Text="Finalize" OnClick="btnFinalize_Click"
-                                        OnClientClick="return confirm('Do you want to Finalize this Meeting Agenda?');" />
-                                    <asp:Button ID="btnCancel" runat="server" CssClass="button" Text="Cancel" OnClick="btnCancel_Click" />
                                 </div>
                             </div>
-                            <div class="divRow" style="width: 90%; margin-left: 50px;">
-                                <asp:Panel ID="pnlPendingAgenda" runat="server" Visible="false">
-                                    <div class="divRow">
-                                        Pending Agenda Details :
-                                    </div>
-                                    <div class="divRow">
-                                        <div class="divRowGridScroll">
-                                            <asp:GridView ID="grvAgenda" runat="server" SkinID="grvSkinNoPaging" AutoGenerateColumns="false"
-                                                CssClass="contentTable1" AllowSorting="true" CellPadding="4" DataKeyNames="AgendaId"
-                                                Font-Names="Verdana, Arial, Helvetica, sans-serif" Font-Size="X-Small" ForeColor="#333333"
-                                                GridLines="Horizontal" Height="32px" Width="100%" OnRowDataBound="grvAgenda_RowDataBound"
-                                                OnSorting="grvRecord_Sorting">
-                                                <HeaderStyle CssClass="contentTableHeader" HorizontalAlign="Center" Font-Bold="true" />
-                                                <Columns>
-                                                    <asp:TemplateField HeaderText="S.No.">
-                                                        <ItemTemplate>
-                                                            <%# Container.DataItemIndex+1 + "."%>
-                                                        </ItemTemplate>
-                                                        <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center"
-                                                            Width="10px" />
-                                                    </asp:TemplateField>
-                                                    <asp:TemplateField SortExpression="AgendaNo">
-                                                        <HeaderTemplate>
-                                                            <asp:LinkButton ID="lnk1" runat="server" Text="Agenda No" CommandName="Sort" Style="color: White"
-                                                                CommandArgument="AgendaNo"></asp:LinkButton>
-                                                        </HeaderTemplate>
-                                                        <ItemTemplate>
-                                                            <asp:Label ID="lblAgendaNo" SkinID="lblSkinGen" Text='<%#Eval("AgendaNo")%>' runat="server" />
-                                                            <asp:HiddenField ID="hdnAgendaId" runat="server" />
-                                                        </ItemTemplate>
-                                                        <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
-                                                    </asp:TemplateField>
-                                                    <asp:TemplateField SortExpression="CommitteeName">
-                                                        <HeaderTemplate>
-                                                            <asp:LinkButton ID="lnk2" runat="server" Text="Committee Name" CommandName="Sort"
-                                                                Style="color: White" CommandArgument="CommitteeName"></asp:LinkButton>
-                                                        </HeaderTemplate>
-                                                        <ItemTemplate>
-                                                            <asp:Label ID="lblCommitteeName" runat="server" SkinID="lblskingen" Text='<%#Eval("CommitteeName")%>'></asp:Label>
-                                                        </ItemTemplate>
-                                                        <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Left" />
-                                                    </asp:TemplateField>
-                                                    <asp:TemplateField SortExpression="MeetingNo">
-                                                        <HeaderTemplate>
-                                                            <asp:LinkButton ID="lnk3" runat="server" Text="MeetingNo" CommandName="Sort" Style="color: White"
-                                                                CommandArgument="StatusId"></asp:LinkButton>
-                                                        </HeaderTemplate>
-                                                        <ItemTemplate>
-                                                            <asp:Label ID="lblMeetingNo" runat="server" SkinID="lblskingen" Text='<%#Eval("MeetingNo") %>'></asp:Label>
-                                                        </ItemTemplate>
-                                                        <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
-                                                    </asp:TemplateField>
-                                                    <asp:TemplateField SortExpression="SubjectTypeName">
-                                                        <HeaderTemplate>
-                                                            <asp:LinkButton ID="lnk4" runat="server" Text="Subject Type Name" CommandName="Sort"
-                                                                Style="color: White" CommandArgument="SubjectTypeName"></asp:LinkButton>
-                                                        </HeaderTemplate>
-                                                        <ItemTemplate>
-                                                            <asp:Label ID="lblSubjectTypeName" runat="server" SkinID="lblskingen" Text='<%#Eval("SubjectTypeName") %>'></asp:Label>
-                                                        </ItemTemplate>
-                                                        <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
-                                                    </asp:TemplateField>
-                                                    <asp:TemplateField SortExpression="ShortText">
-                                                        <HeaderTemplate>
-                                                            <asp:LinkButton ID="lnk5" runat="server" Text="Short Text" CommandName="Sort" Style="color: White"
-                                                                CommandArgument="ShortText"></asp:LinkButton>
-                                                        </HeaderTemplate>
-                                                        <ItemTemplate>
-                                                            <asp:Label ID="lblShortText" runat="server" SkinID="lblskingen" Text='<%#Eval("ShortText") %>'></asp:Label>
-                                                        </ItemTemplate>
-                                                        <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Justify" />
-                                                    </asp:TemplateField>
-                                                    <asp:TemplateField SortExpression="AgendaStatusName">
-                                                        <HeaderTemplate>
-                                                            <asp:LinkButton ID="lnk6" runat="server" Text="Agenda Status" CommandName="Sort"
-                                                                Style="color: White" CommandArgument="AgendaStatusName"></asp:LinkButton>
-                                                        </HeaderTemplate>
-                                                        <ItemTemplate>
-                                                            <asp:Label ID="lblAgendaStatusName" runat="server" SkinID="lblskingen" Text='<%#Eval("AgendaStatusName") %>'></asp:Label>
-                                                        </ItemTemplate>
-                                                        <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
-                                                    </asp:TemplateField>
-                                                </Columns>
-                                                <EmptyDataTemplate>
-                                                    <div class="divNoRecord">
-                                                        <%#Session["NoRecord"].ToString()%>
-                                                    </div>
-                                                </EmptyDataTemplate>
-                                            </asp:GridView>
+                            <div class="wb-actions">
+                                <asp:Button ID="btnFinalize" runat="server" CssClass="wb-btn" Text="Finalize" OnClick="btnFinalize_Click"
+                                    OnClientClick="return confirm('Do you want to Finalize this Meeting Agenda?');" />
+                                <asp:Button ID="btnCancel" runat="server" CssClass="wb-btn wb-btn-secondary" Text="Cancel" OnClick="btnCancel_Click" />
+                            </div>
+                        </div>
+                    </div>
+                    <%-- Step UI2a (D5): the pending agenda items as a Masters list (wb-table). Sorting and the Visible
+                         rule of pnlPendingAgenda (code-behind) are unchanged. Owner test G1: no Committee Name and
+                         Meeting No columns (they repeat the choice above); the mail still reads them from the data. --%>
+                    <asp:Panel ID="pnlPendingAgenda" runat="server" Visible="false">
+                        <div class="wb-card">
+                            <div class="wb-card-header">
+                                Pending Agenda Details</div>
+                            <div class="wb-table-scroll">
+                                <asp:GridView ID="grvAgenda" runat="server" SkinID="grvSkinNoPaging" AutoGenerateColumns="false"
+                                    CssClass="wb-table" AllowSorting="true" DataKeyNames="AgendaId" GridLines="None"
+                                    OnRowDataBound="grvAgenda_RowDataBound" OnSorting="grvRecord_Sorting">
+                                    <Columns>
+                                        <asp:TemplateField HeaderText="S.No.">
+                                            <ItemTemplate>
+                                                <%# Container.DataItemIndex+1 + "."%>
+                                            </ItemTemplate>
+                                            <ItemStyle CssClass="wb-col-action" />
+                                        </asp:TemplateField>
+                                        <asp:TemplateField SortExpression="AgendaNo">
+                                            <HeaderTemplate>
+                                                <asp:LinkButton ID="lnk1" runat="server" Text="Agenda No" CommandName="Sort"
+                                                    CommandArgument="AgendaNo"></asp:LinkButton>
+                                            </HeaderTemplate>
+                                            <ItemTemplate>
+                                                <asp:Label ID="lblAgendaNo" SkinID="lblSkinGen" Text='<%#Eval("AgendaNo")%>' runat="server" />
+                                                <asp:HiddenField ID="hdnAgendaId" runat="server" />
+                                            </ItemTemplate>
+                                            <ItemStyle CssClass="wb-col-action" />
+                                        </asp:TemplateField>
+                                        <asp:TemplateField SortExpression="SubjectTypeName">
+                                            <HeaderTemplate>
+                                                <asp:LinkButton ID="lnk4" runat="server" Text="Subject Type Name" CommandName="Sort"
+                                                    CommandArgument="SubjectTypeName"></asp:LinkButton>
+                                            </HeaderTemplate>
+                                            <ItemTemplate>
+                                                <asp:Label ID="lblSubjectTypeName" runat="server" SkinID="lblskingen" Text='<%#Eval("SubjectTypeName") %>'></asp:Label>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
+                                        <asp:TemplateField SortExpression="ShortText">
+                                            <HeaderTemplate>
+                                                <asp:LinkButton ID="lnk5" runat="server" Text="Short Text" CommandName="Sort"
+                                                    CommandArgument="ShortText"></asp:LinkButton>
+                                            </HeaderTemplate>
+                                            <ItemTemplate>
+                                                <asp:Label ID="lblShortText" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("ShortText")) %>'></asp:Label>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
+                                        <asp:TemplateField SortExpression="AgendaStatusName">
+                                            <HeaderTemplate>
+                                                <asp:LinkButton ID="lnk6" runat="server" Text="Agenda Status" CommandName="Sort"
+                                                    CommandArgument="AgendaStatusName"></asp:LinkButton>
+                                            </HeaderTemplate>
+                                            <ItemTemplate>
+                                                <asp:Label ID="lblAgendaStatusName" runat="server" SkinID="lblskingen" Text='<%#Eval("AgendaStatusName") %>'></asp:Label>
+                                            </ItemTemplate>
+                                            <ItemStyle CssClass="wb-col-action" />
+                                        </asp:TemplateField>
+                                    </Columns>
+                                    <EmptyDataTemplate>
+                                        <div class="divNoRecord">
+                                            <%#Session["NoRecord"].ToString()%>
                                         </div>
-                                    </div>
-                                </asp:Panel>
+                                    </EmptyDataTemplate>
+                                </asp:GridView>
                             </div>
                         </div>
                     </asp:Panel>
-                </div>
+                </asp:Panel>
             </div>
         </ContentTemplate>
     </asp:UpdatePanel>

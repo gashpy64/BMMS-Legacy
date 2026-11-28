@@ -5,30 +5,35 @@
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
         <ContentTemplate>
             <asp:Panel ID="pnlCommitteeMaster" runat="server">
+                <%-- Step UI2b: the Masters' form look (Committee Master): breadcrumb and title as in the menu, a card with
+                     label and field rows, Submit as the primary button. Control IDs, events and the handlers are unchanged. --%>
+                <div class="wb-page wb-page-fit">
+                    <div class="wb-breadcrumb">
+                        Reports<span class="wb-breadcrumb-sep">/</span>Meeting Master</div>
+                    <h1 class="wb-h1">
+                        Meeting Master</h1>
+                    <div class="wb-card">
+                        <div class="wb-card-header">
+                            Filter</div>
+                        <div class="wb-card-body">
+                            <div class="wb-row">
+                                <label class="wb-label" for="ctl00_ContentPlaceHolder1_ddlCommittee">
+                                    Committee</label>
+                                <div class="wb-field">
+                                    <asp:DropDownList ID="ddlCommittee" runat="server" AutoPostBack="true"
+                                        OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
+                                    </asp:DropDownList>
+                                </div>
+                            </div>
+                            <div class="wb-actions">
+                                <asp:Button ID="btnSubmit" runat="server" CssClass="wb-btn" Text="Submit" OnClick="btnSubmit_Click" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <%-- Step UI2b (R12): the grid keeps its old frame and look, outside .wb-page --%>
                 <div class="formContent">
                 <div class="formPanel">
-                    <div class="divHeader">
-                    :: Meeting Master Report</div>
-                    <div class="divRowFixed"></div>
-                    <div class="divRow">
-                        <table border="0" cellpadding="0" cellspacing="12" width="100%">
-                            <tr>
-                                <td class="Lable">
-                                    Committee :</td>
-                                <td>
-                                    <asp:DropDownList ID="ddlCommittee" runat="server" Width="150px" AutoPostBack="true"
-                                        OnSelectedIndexChanged="ddlCommittee_SelectedIndexChanged">
-                                    </asp:DropDownList>&nbsp;
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="Lable">
-                                </td>
-                                <td>
-                                    <asp:Button ID="btnSubmit" runat="server" CssClass="button" Text="Submit" OnClick="btnSubmit_Click" /></td>
-                            </tr>
-                        </table>
-                    </div>
                     <div class="divRow">
                         <asp:GridView ID="grvMeeting" runat="server" SkinID="grvSkinNoPaging" AutoGenerateColumns="false"
                             CssClass="contentTable1" AllowSorting="true" CellPadding="4" DataKeyNames="MeetingId"
@@ -49,7 +54,7 @@
                                             Style="color: White" CommandArgument="CommitteeName"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblCommitteeName" runat="server" SkinID="lblskingen" Text='<%#Eval("CommitteeName")%>'></asp:Label>
+                                        <asp:Label ID="lblCommitteeName" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("CommitteeName")) %>'></asp:Label>
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Left" />
                                 </asp:TemplateField>
@@ -59,7 +64,7 @@
                                             CommandArgument="MeetingNo"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblMeetingNoe" SkinID="lblSkinGen" Text='<%#Eval("MeetingNo")%>' runat="server" />
+                                        <asp:Label ID="lblMeetingNoe" SkinID="lblSkinGen" Text='<%# HttpUtility.HtmlEncode(Eval("MeetingNo")) %>' runat="server" />
                                         <asp:HiddenField ID="hdnMeetingNo" runat="server" />
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
@@ -80,7 +85,7 @@
                                             CommandArgument="MeetingTime"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblMeetingTime" runat="server" SkinID="lblskingen" Text='<%#Eval("MeetingTime")%>'></asp:Label> Hrs.
+                                        <asp:Label ID="lblMeetingTime" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("MeetingTime")) %>'></asp:Label> Hrs.
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Center" />
                                 </asp:TemplateField>
@@ -90,7 +95,7 @@
                                             CommandArgument="Venue"></asp:LinkButton>
                                     </HeaderTemplate>
                                     <ItemTemplate>
-                                        <asp:Label ID="lblVenue" runat="server" SkinID="lblskingen" Text='<%#Eval("Venue")%>'></asp:Label>
+                                        <asp:Label ID="lblVenue" runat="server" SkinID="lblskingen" Text='<%# HttpUtility.HtmlEncode(Eval("Venue")) %>'></asp:Label>
                                     </ItemTemplate>
                                     <ItemStyle CssClass="contentTabletd" VerticalAlign="Middle" HorizontalAlign="Left" />
                                 </asp:TemplateField>

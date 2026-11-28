@@ -57,13 +57,13 @@ namespace BMMS.Master
             if (PageValidation())
             {
                 int UserId = Convert.ToInt16(Session["UserId"].ToString());
-                string Password = Common.EncryptVal(txtNewPassword.Text.Trim());
+                string Password = Common.HashPassword(txtNewPassword.Text.Trim());
                 int UpdatedBy = Convert.ToInt16(Session["UserId"].ToString());
 
                 UserMgr.ResetPasswordByUserId(UserId, Password, UpdatedBy);
 
                 string sMsg = "Successfully Saved";
-                MsgDisplay(sMsg);
+                MsgDisplay(sMsg, MessageKind.Success);
             }
         }
         #endregion
@@ -76,9 +76,7 @@ namespace BMMS.Master
 
             DataTable dtUser = UserMgr.GetUserDataTableByUserId(UserId);
 
-            string Password = Common.DecryptVal(dtUser.Rows[0]["Password"].ToString());
-
-            if (Password != txtOldPassword.Text.Trim())
+            if (!Common.VerifyPassword(txtOldPassword.Text.Trim(), dtUser.Rows[0]["Password"].ToString()))
             {
                 MsgDisplay("Plese enter correct old password.");
                 ScriptManager.GetCurrent(this).SetFocus(txtOldPassword.ClientID);
@@ -98,9 +96,9 @@ namespace BMMS.Master
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

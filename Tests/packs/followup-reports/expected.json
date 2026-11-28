@@ -1,0 +1,14 @@
+{
+  "controller": "controller",
+  "management": "mgmt",
+  "controllerName": "QA Controller (qa_ctrl)",
+  "committee": "QA Test Committee",
+  "statusHeader": "Followup status",
+  "confirmRow": "QA1-00005-002",
+  "reopenRow": "QA1-00006-001",
+  "reopenMeetingNo": 6,
+  "reopenReason": "QA FU2b reopen & \"check\" 'q' <5",
+  "confirmedTwo": "2 followups were confirmed.",
+  "reopened": "The followup was reopened.",
+  "confirmLabels": ["Both", "Confirmed", "Pending"]
+}

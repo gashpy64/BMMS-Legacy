@@ -32,16 +32,16 @@
                         </div>
                         <div class="divRow">
                             <div class="divRowLeft">
-                                Login Name :
+                                User :
                             </div>
                             <div class="divRowRight">
-                                <asp:DropDownList ID="ddlLoginUser" runat="server" Width="150px" AutoPostBack="true"
+                                <%-- "Name (login)", value UserId (step UN3) --%>
+                                <asp:DropDownList ID="ddlLoginUser" runat="server" CssClass="wb-user-select" AutoPostBack="true"
                                     OnSelectedIndexChanged="ddlLoginUser_SelectedIndexChanged">
                                 </asp:DropDownList>
                                 <br />
                                 <div style="float: left; width: 75%; line-height: 20pt;">
                                     <asp:Literal ID="ltrlUserDetails" runat="server"></asp:Literal>
-                                    <asp:HiddenField ID="hdnEmailId" runat="server" />
                                 </div>
                                 <div class="divRow">
                                     <asp:Panel ID="pnlResetPassword" runat="server">

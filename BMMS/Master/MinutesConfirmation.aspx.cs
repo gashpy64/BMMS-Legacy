@@ -43,12 +43,8 @@ namespace BMMS.Master
             try
             {
                 MsgHide();
-                int _intCommitteeId = Convert.ToInt16(ddlCommittee.SelectedValue);
-                DataTable dtMeeting = new DataTable();
-                dtMeeting = MeetingMgr.GetMeetingByCommitteeId(_intCommitteeId);
-
-                ViewState["dtMeeting"] = dtMeeting;
-                Common.LoadDropdownlist(ddlMeeting, dtMeeting, "MeetingNo", "MeetingId", true);
+                LoadMeetings(true);
+                HideMinutesItems();     // step MF1: the meeting is -Select- again
 
             }
             catch (Exception ex)
@@ -59,6 +55,82 @@ namespace BMMS.Master
             {
 
             }
+        }
+        #endregion
+
+        #region LoadMeetings
+        // Step AF1 (R3, R6): only the meetings whose minutes are finalized and not confirmed. A committee with none
+        // keeps "- Select -" alone and, when showEmpty, the message says so. Not shown after a Confirm (R4: the
+        // success message stays).
+        private void LoadMeetings(bool showEmpty)
+        {
+            int _intCommitteeId = Convert.ToInt16(ddlCommittee.SelectedValue);
+            DataTable dtMeeting = MeetingMgr.GetMeetingsToActOn(_intCommitteeId, MeetingAction.MinutesConfirm);
+
+            ViewState["dtMeeting"] = dtMeeting;
+            Common.LoadDropdownlist(ddlMeeting, dtMeeting, "MeetingNo", "MeetingId", true);
+
+            if (showEmpty && ddlCommittee.SelectedValue != "0" && dtMeeting.Rows.Count == 0)
+                MsgDisplay(NoMeetingMessage);
+        }
+
+        private const string NoMeetingMessage = "This committee has no meeting with finalized minutes waiting for confirmation.";
+        #endregion
+
+        #region ddlMeeting_SelectedIndexChanged
+        // Step MF1: the Minutes Items list follows the meeting chosen (owner-approved new handler; AutoPostBack was
+        // already set)
+        protected void ddlMeeting_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            MsgHide();
+            LoadMinutesItems();
+        }
+        #endregion
+
+        #region LoadMinutesItems
+        // Step MF1 (D1, D3): the meeting's items (MinutesMgr.GetMinutesItemList) and the Confirm confirm with the count
+        // of the same rows (fixed text and the count only). Hidden, with the default confirm, when the committee or
+        // the meeting is -Select-.
+        private void LoadMinutesItems()
+        {
+            try
+            {
+                if (ddlCommittee.SelectedValue == "0" || string.IsNullOrEmpty(ddlMeeting.SelectedValue) || ddlMeeting.SelectedValue == "0")
+                {
+                    HideMinutesItems();
+                    return;
+                }
+
+                int MeetingId = int.Parse(ddlMeeting.SelectedValue);
+                MinutesItemList list = MinutesMgr.GetMinutesItemList(MeetingId);
+
+                grvMinutesItems.DataSource = list.Items;
+                grvMinutesItems.DataBind();
+                pnlMinutesItems.Visible = true;
+
+                btnConfirm.OnClientClick = ConfirmScript(DefaultConfirmText + " Items: " + list.Total + ".");
+            }
+            catch (Exception ex)
+            {
+                Utilities.GoToErrPage(className, "LoadMinutesItems", ex);
+            }
+        }
+
+        // The list hidden and the confirm of the markup back
+        private void HideMinutesItems()
+        {
+            pnlMinutesItems.Visible = false;
+            grvMinutesItems.DataSource = null;
+            grvMinutesItems.DataBind();
+            btnConfirm.OnClientClick = ConfirmScript(DefaultConfirmText);
+        }
+
+        // The text of the markup's confirm (OnClientClick of btnConfirm)
+        private const string DefaultConfirmText = "Do you want to Confirm this Meeting Minutes?";
+
+        private static string ConfirmScript(string text)
+        {
+            return "return confirm('" + HttpUtility.JavaScriptStringEncode(text) + "');";
         }
         #endregion
 
@@ -127,18 +199,31 @@ namespace BMMS.Master
                     }
                     else
                     {
-                        int result = AgendaMgr.MinutesConfirmByMeetingId(MeetingId, int.Parse(Session["UserId"].ToString()));
+                        // Refused if another tab confirmed it first (BMMS-Fix-MeetingLocks.sql)
+                        MeetingChangeResult result = AgendaMgr.MinutesConfirmByMeetingId(MeetingId, int.Parse(Session["UserId"].ToString()));
 
-                        sMsg = "Minutes confirmed.";
+                        sMsg = result.Result == 1 ? "Minutes confirmed." : result.RefusalMessage();
 
-                        MsgDisplay(sMsg);
+                        MsgDisplay(sMsg, sMsg == "Minutes confirmed." ? MessageKind.Success : MessageKind.Warning);
+
+                        if (result.Result == 1)
+                        {
+                            // Step AF1 (R4): the meeting drops out of the list; Meeting No is "- Select -", the
+                            // Minutes Items list is hidden and the confirm is the markup's; the message stays
+                            LoadMeetings(false);
+                            HideMinutesItems();
+                            return;
+                        }
                     }
+                    LoadMinutesItems();     // step MF1: the list of the meeting, read again; the message stays
                 }
                 catch (Exception ex)
                 {
                     Utilities.GoToErrPage(className, "btnConfirm_Click", ex);
                 }
             }
+            else
+                LoadMinutesItems();         // step MF1: the page's message stays; the list follows the choice
 
         }
         #endregion
@@ -180,7 +265,7 @@ namespace BMMS.Master
 
                     if (dtMeeting.Rows.Count <= 0)
                     {
-                        MsgDisplay("Minutes not finalize for this meeting.");
+                        MsgDisplay(MeetingChangeReason.MinutesNotFinalizedForConfirmMessage);   // step 23 wording
                         ScriptManager.GetCurrent(this).SetFocus(ddlMeeting.ClientID);
                         result = false;
                     }
@@ -194,14 +279,15 @@ namespace BMMS.Master
         protected void btnCancel_Click(object sender, EventArgs e)
         {
             MsgHide();
+            HideMinutesItems();     // step MF1 (C4); Cancel then leaves for the Dashboard, as before
             Response.Redirect("~/DashBoard/DashBoard.aspx");
         }
         #endregion
 
         #region MsgDisplay
-        private void MsgDisplay(string errMsg)
+        private void MsgDisplay(string errMsg, MessageKind kind = MessageKind.Warning)
         {
-            divErrLogin.Attributes.Add("class", "divError");
+            divErrLogin.Attributes.Add("class", Common.MessageCss(kind));
             spanErrLogin.InnerHtml = errMsg;
         }
         #endregion

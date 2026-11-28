@@ -1,0 +1,118 @@
+/* ==========================================================================
+   Rich-text editor (step A2a, BMMS.Controls.RichTextEditor and JScript/RichTextEditor.js).
+   Colours from bmms-colours.css. The width comes from the control (Width) or fills its cell; the
+   height (Height) is the height of the text box, which scrolls and can be made taller by dragging.
+   ========================================================================== */
+.rte {
+    display: block;
+    box-sizing: border-box;
+    max-width: 100%;
+    text-align: left;
+    margin: 0;
+}
+
+.rte-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--bmms-field-border, #6B7280);
+    border-bottom: none;
+    background: var(--bmms-table-head-bg, #E3EBF6);
+}
+
+.rte-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 26px;
+    padding: 0 4px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    background: transparent;
+    color: var(--bmms-text, #1F2937);
+    font: 14px/1 Verdana, Arial, Helvetica, sans-serif;
+    cursor: pointer;
+}
+
+.rte-button:hover {
+    border-color: var(--bmms-panel-border, #D5DCE5);
+    background: var(--bmms-panel-bg, #FFFFFF);
+}
+
+.rte-button[aria-pressed="true"] {
+    border-color: var(--bmms-primary, #1E5AA8);
+    background: var(--bmms-panel-bg, #FFFFFF);
+    color: var(--bmms-primary, #1E5AA8);
+}
+
+.rte-button:focus-visible,
+.rte-box:focus-visible {
+    outline: 2px solid var(--bmms-focus, #2563EB);
+    outline-offset: 1px;
+}
+
+.rte-separator {
+    width: 1px;
+    height: 18px;
+    margin: 0 4px;
+    background: var(--bmms-panel-border, #D5DCE5);
+}
+
+.rte-box {
+    box-sizing: border-box;
+    min-height: 60px;
+    height: 100px;
+    overflow: auto;
+    resize: vertical;
+    padding: 4px 6px;
+    border: 1px solid var(--bmms-field-border, #6B7280);
+    background: var(--bmms-field-bg, #FFFFFF);
+    color: var(--bmms-text, #1F2937);
+    font: 12px/1.4 Verdana, Arial, Helvetica, sans-serif;
+    text-align: left;
+    word-wrap: break-word;
+}
+
+.rte-box p {
+    margin: 0 0 6px 0;
+}
+
+.rte-box ul,
+.rte-box ol {
+    margin: 0 0 6px 0;
+    padding-left: 24px;
+}
+
+.rte-box table {
+    border-collapse: collapse;
+    margin: 0 0 6px 0;
+}
+
+.rte-box td,
+.rte-box th {
+    border: 1px solid var(--bmms-field-border, #6B7280);
+    padding: 4px;
+    vertical-align: top;
+}
+
+.rte-readonly .rte-box {
+    background: var(--bmms-page-bg, #F4F6F9);
+    resize: vertical;
+}
+
+.rte-message {
+    color: var(--bmms-error, #B42318);
+    font-size: 12px;
+    min-height: 0;
+}
+
+.rte-message:empty {
+    display: none;
+}
+
+.rte-over .rte-box {
+    border-color: var(--bmms-error, #B42318);
+}

@@ -1,0 +1,4 @@
+<connectionStrings>
+	<add name="ConnectionString"
+		 connectionString="server=tcp:bmmstest.database.windows.net,1433;database=BMMS_Test;uid=bmms_app;password=YOUR_PASSWORD;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30"/>
+</connectionStrings>

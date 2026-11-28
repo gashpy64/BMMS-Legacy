@@ -225,7 +225,16 @@ namespace BMMS.Master {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Panel pnlViewFollowup;
-        
+
+        /// <summary>
+        /// pFollowupReadOnly control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl pFollowupReadOnly;
+
         /// <summary>
         /// grvFollowup control.
         /// </summary>
@@ -260,7 +269,7 @@ namespace BMMS.Master {
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::FreeTextBoxControls.FreeTextBox ftxtActualResolution;
+        protected global::BMMS.Controls.RichTextEditor ftxtActualResolution;
         
         /// <summary>
         /// btnActualResolutionCancel control.
@@ -279,7 +288,16 @@ namespace BMMS.Master {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Panel pnlActionText;
-        
+
+        /// <summary>
+        /// litActionTextTitle control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Literal litActionTextTitle;
+
         /// <summary>
         /// ftxtActionText control.
         /// </summary>
@@ -287,8 +305,17 @@ namespace BMMS.Master {
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::FreeTextBoxControls.FreeTextBox ftxtActionText;
-        
+        protected global::BMMS.Controls.RichTextEditor ftxtActionText;
+
+        /// <summary>
+        /// pActionTextPanelMessage control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl pActionTextPanelMessage;
+
         /// <summary>
         /// btnActionTextSave control.
         /// </summary>
@@ -306,7 +333,70 @@ namespace BMMS.Master {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Button btnActionTextCancel;
-        
+
+        /// <summary>
+        /// pnlReopen control (step FU1).
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel pnlReopen;
+
+        /// <summary>
+        /// pReopenItem control (step FU1).
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl pReopenItem;
+
+        /// <summary>
+        /// lblReopenReason control (step FU1).
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblReopenReason;
+
+        /// <summary>
+        /// txtReopenReason control (step FU1).
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtReopenReason;
+
+        /// <summary>
+        /// pReopenPanelMessage control (step FU1).
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl pReopenPanelMessage;
+
+        /// <summary>
+        /// btnReopenSave control (step FU1).
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnReopenSave;
+
+        /// <summary>
+        /// btnReopenCancel control (step FU1).
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnReopenCancel;
+
         /// <summary>
         /// hdnMinutesId control.
         /// </summary>

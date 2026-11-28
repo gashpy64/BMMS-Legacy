@@ -1,0 +1,40 @@
+{
+  "pages": [
+    { "role": "anonymous", "address": "Default.aspx",
+      "css": ["CSS/CommonHTML.css", "CSS/bmms-colours.css", "CSS/bmms-workbench.css"] },
+    { "role": "controller", "address": "DashBoard/DashBoard.aspx",
+      "css": ["CSS/MainMaster.css", "CSS/MainMaster.css", "CSS/ddlevelsmenu-topbar.css", "CSS/CommonHTML.css", "CSS/ddlevelsmenu-base.css",
+              "CSS/AjaxCalender.css", "CSS/PasswordCheck.css", "CSS/bmms-colours.css", "CSS/bmms-workbench.css", "CSS/RichTextEditor.css"] },
+    { "role": "manager", "address": "DashBoard/DashBoard.aspx",
+      "css": ["CSS/MainMaster.css", "CSS/MainMaster.css", "CSS/ddlevelsmenu-topbar.css", "CSS/CommonHTML.css", "CSS/ddlevelsmenu-base.css",
+              "CSS/AjaxCalender.css", "CSS/PasswordCheck.css", "CSS/bmms-colours.css", "CSS/bmms-workbench.css", "CSS/RichTextEditor.css"] },
+    { "role": "user", "address": "DashBoard/DashBoard.aspx",
+      "css": ["CSS/MainMaster.css", "CSS/MainMaster.css", "CSS/ddlevelsmenu-topbar.css", "CSS/CommonHTML.css", "CSS/ddlevelsmenu-base.css",
+              "CSS/AjaxCalender.css", "CSS/PasswordCheck.css", "CSS/bmms-colours.css", "CSS/bmms-workbench.css", "CSS/RichTextEditor.css"] },
+    { "role": "controller", "address": "Master/Followup.aspx",
+      "css": ["CSS/MainMaster.css", "CSS/MainMaster.css", "CSS/ddlevelsmenu-topbar.css", "CSS/CommonHTML.css", "CSS/ddlevelsmenu-base.css",
+              "CSS/AjaxCalender.css", "CSS/PasswordCheck.css", "CSS/bmms-colours.css", "CSS/bmms-workbench.css", "CSS/RichTextEditor.css"] },
+    { "role": "controller", "address": "Master/Agenda.aspx",
+      "css": ["CSS/MainMaster.css", "CSS/MainMaster.css", "CSS/ddlevelsmenu-topbar.css", "CSS/CommonHTML.css", "CSS/ddlevelsmenu-base.css",
+              "CSS/AjaxCalender.css", "CSS/PasswordCheck.css", "CSS/bmms-colours.css", "CSS/bmms-workbench.css", "CSS/RichTextEditor.css",
+              "CSS/bmms-forms.css"] },
+    { "role": "controller", "address": "Master/MinutesUpdate.aspx",
+      "css": ["CSS/MainMaster.css", "CSS/MainMaster.css", "CSS/ddlevelsmenu-topbar.css", "CSS/CommonHTML.css", "CSS/ddlevelsmenu-base.css",
+              "CSS/AjaxCalender.css", "CSS/PasswordCheck.css", "CSS/bmms-colours.css", "CSS/bmms-workbench.css", "CSS/RichTextEditor.css",
+              "CSS/bmms-forms.css"] },
+    { "role": "controller", "address": "Master/Committee.aspx",
+      "css": ["CSS/MainMaster.css", "CSS/MainMaster.css", "CSS/ddlevelsmenu-topbar.css", "CSS/CommonHTML.css", "CSS/ddlevelsmenu-base.css",
+              "CSS/AjaxCalender.css", "CSS/PasswordCheck.css", "CSS/bmms-colours.css", "CSS/bmms-workbench.css", "CSS/RichTextEditor.css",
+              "JScript/ColorPicker/js_color_picker_v2.css"] },
+    { "role": "controller", "address": "Master/Meeting.aspx",
+      "css": ["CSS/MainMaster.css", "CSS/MainMaster.css", "CSS/ddlevelsmenu-topbar.css", "CSS/CommonHTML.css", "CSS/ddlevelsmenu-base.css",
+              "CSS/AjaxCalender.css", "CSS/PasswordCheck.css", "CSS/bmms-colours.css", "CSS/bmms-workbench.css", "CSS/RichTextEditor.css",
+              "JScript/ColorPicker/js_color_picker_v2.css"] },
+    { "role": "controller", "address": "ChangePasswordFirst.aspx",
+      "css": ["CSS/MainMaster.css", "CSS/MainMaster.css", "CSS/ddlevelsmenu-topbar.css", "CSS/CommonHTML.css", "CSS/ddlevelsmenu-base.css",
+              "CSS/AjaxCalender.css", "CSS/PasswordCheck.css", "CSS/bmms-colours.css", "CSS/bmms-workbench.css"] }
+  ],
+  "viewState": [
+    { "role": "controller", "address": "DashBoard/DashBoard.aspx", "maxBytes": 12900 }
+  ]
+}

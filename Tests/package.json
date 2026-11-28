@@ -1,0 +1,13 @@
+{
+  "name": "bmms-tester",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BMMS tester (WF3a): drives the local site copy in the installed Chrome. Run it only through Tests/_runner/Run-Tests.ps1.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "playwright-core": "1.65.0"
+  }
+}

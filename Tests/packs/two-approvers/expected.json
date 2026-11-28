@@ -1,0 +1,15 @@
+{
+  "comment": "Step UD1b (database step 53): two Managers of Credit, qa_manager and qa_manager3. The rules are in README.md.",
+  "managers": ["manager", "manager3"],
+  "approvals": { "title": "My approvals (2)", "rows": ["QA1-00001-001 | QA Test Committee | No 00001 | Credit", "QA1-00002-001 | QA Test Committee | No 00002 | Credit"] },
+  "waiting": { "QA Test Committee | No 00001": "1", "QA Test Committee | No 00002": "1" },
+  "waitingAlerts": ["Agenda (QA1-00001-001)", "Agenda (QA1-00002-001)"],
+  "second": "manager3",
+  "secondHeader": "Alerts (4)",
+  "allRows": 15,
+  "handledBy": "QA Manager (qa_manager)",
+  "handledItems": ["Agenda (QA1-00001-002)", "Agenda (QA1-00001-003)", "Agenda (QA1-00001-004)", "Agenda (QA1-00001-005)", "Agenda (QA1-00003-001)",
+                   "Agenda (QA1-00004-001)", "Agenda (QA1-00004-002)", "Agenda (QA1-00005-001)", "Agenda (QA1-00005-002)", "Agenda (QA1-00006-001)"],
+  "noLongerItem": "Agenda (QA1-00001-006)",
+  "removeButton": "Remove from my list"
+}

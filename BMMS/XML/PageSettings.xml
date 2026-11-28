@@ -15,7 +15,7 @@
 	</page>
 
 	<page Name="AgendaFinalization">
-		<pageTitle>Agenda Finalization</pageTitle>
+		<pageTitle>Agenda Finalize</pageTitle>
 		<pageURL>~/Master/AgendaFinalization.aspx</pageURL>
 	</page>
 
@@ -42,7 +42,7 @@
 
 	<page Name="Department">
 		<pageTitle>Department</pageTitle>
-		<pageURL>~/Master/.aspx</pageURL>
+		<pageURL>~/Master/Department.aspx</pageURL>
 	</page>
 
 	<page Name="Designation">
@@ -70,19 +70,24 @@
 		<pageURL>~/Master/MemberType.aspx</pageURL>
 	</page>
 
+	<page Name="Followup">
+		<pageTitle>Followup</pageTitle>
+		<pageURL>~/Master/Followup.aspx</pageURL>
+	</page>
+
+	<page Name="MinutesConfirmation">
+		<pageTitle>Minutes Confirmation</pageTitle>
+		<pageURL>~/Master/MinutesConfirmation.aspx</pageURL>
+	</page>
+
 	<page Name="MinutesFinalization">
-		<pageTitle>MinutesFinalization</pageTitle>
+		<pageTitle>Finalize Minutes</pageTitle>
 		<pageURL>~/Master/MinutesFinalization.aspx</pageURL>
 	</page>
 
 	<page Name="MinutesUpdate">
 		<pageTitle>MinutesUpdate</pageTitle>
 		<pageURL>~/Master/MinutesUpdate.aspx</pageURL>
-	</page>
-
-	<page Name="SubjectNoAllocation">
-		<pageTitle>SubjectNoAllocation</pageTitle>
-		<pageURL>~/Master/SubjectNoAllocation.aspx</pageURL>
 	</page>
 
 	<page Name="SubjectType">
@@ -100,12 +105,12 @@
 
 
 	<page Name="CommitteeMaster">
-		<pageTitle>CommitteeMaster</pageTitle>
+		<pageTitle>Committee Master</pageTitle>
 		<pageURL>~/Report/CommitteeMaster.aspx</pageURL>
 	</page>
 
 	<page Name="MeetingMaster">
-		<pageTitle>MeetingMaster</pageTitle>
+		<pageTitle>Meeting Master</pageTitle>
 		<pageURL>~/Report/MeetingMaster.aspx</pageURL>
 	</page>
 	
@@ -133,6 +138,34 @@
 		<pageTitle>Followup</pageTitle>
 		<pageURL>~/Report/Followup.aspx</pageURL>
 	</page>
+	<page Name="followup_summary">
+		<pageTitle>Followup Summary</pageTitle>
+		<pageURL>~/Report/Followup.aspx?fc=summary</pageURL>
+	</page>
+	<page Name="MeetingCalendar">
+		<pageTitle>Meeting Calendar</pageTitle>
+		<pageURL>~/Report/MeetingCalendar.aspx</pageURL>
+	</page>
+	<page Name="SittingFeesApplicable">
+		<pageTitle>Sitting Fees Applicable</pageTitle>
+		<pageURL>~/Report/SittingFeesApplicable.aspx</pageURL>
+	</page>
+	<page Name="SittingFees">
+		<pageTitle>Sitting Fees</pageTitle>
+		<pageURL>~/Report/SittingFees.aspx</pageURL>
+	</page>
+	<page Name="AttendanceDetails">
+		<pageTitle>Attendance Details</pageTitle>
+		<pageURL>~/Report/AttendanceDetails.aspx</pageURL>
+	</page>
+	<page Name="AgendaApproval">
+		<pageTitle>Agenda Approval</pageTitle>
+		<pageURL>~/Report/AgendaApproval.aspx</pageURL>
+	</page>
+	<page Name="FollowupActionTaken">
+		<pageTitle>Followup by Department</pageTitle>
+		<pageURL>~/Report/FollowupActionTaken.aspx</pageURL>
+	</page>
 	
 	<page Name="Notice">
 		<pageTitle>Notice</pageTitle>
@@ -144,9 +177,9 @@
 		<pageURL>~/Report/SendMail.aspx</pageURL>
 	</page>
 
-	<page Name="-">
-		<pageTitle>-</pageTitle>
-		<pageURL>~/Report/-.aspx</pageURL>
+	<page Name="GovernanceMatrix">
+		<pageTitle>Governance Matrix</pageTitle>
+		<pageURL>~/Report/GovernanceMatrix.aspx</pageURL>
 	</page>
 
 </pageSettings>

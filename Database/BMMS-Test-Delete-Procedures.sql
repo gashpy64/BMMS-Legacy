@@ -1,0 +1,267 @@
+/* ============================================================================
+   BMMS — Validation script for the 7 remaining fixed delete procedures
+   ----------------------------------------------------------------------------
+   For each procedure, this script:
+     1. Finds a row that IS referenced elsewhere -> expects Result = 0 (blocked)
+     2. Finds a row that is NOT referenced anywhere -> expects Result = 1,
+        then confirms the row is actually gone afterward
+
+   The "unreferenced" branch of each test deletes a real row, so the whole
+   script runs inside one transaction that is ROLLED BACK at the end: nothing
+   stays deleted. (Before this change the deletes were permanent.)
+
+   Users are no longer tested here: see BMMS-Test-UserDelete.sql.
+   If a given test prints "No unreferenced row found", that's informational,
+   not a failure — it just means every row of that type currently has a
+   reference, so only the "blocked" half of that test could run.
+
+   Read the PRINT output in SSMS's Messages tab as you go.
+
+   It has no USE line: select the database in SSMS first (the test copy, then
+   BMMS). It stops if the current database name does not start with "BMMS".
+   ============================================================================ */
+
+SET NOCOUNT ON;
+
+DECLARE @CurrentDatabase SYSNAME = DB_NAME();
+
+IF (@CurrentDatabase NOT LIKE 'BMMS%')
+BEGIN
+    RAISERROR('Current database is "%s". Select the BMMS database (or its test copy) and run again. Nothing was changed.', 16, 1, @CurrentDatabase);
+    SET NOEXEC ON;
+END
+GO
+
+PRINT 'Database: ' + DB_NAME();
+GO
+
+
+BEGIN TRANSACTION;
+
+-------------------------------------------------------------------------------
+PRINT '=== 1. Committee ===';
+-------------------------------------------------------------------------------
+DECLARE @RefCommitteeId INT = (SELECT TOP 1 CommitteeId FROM Meeting);
+DECLARE @UnrefCommitteeId INT = (
+    SELECT TOP 1 c.CommitteeId FROM Committee c
+    WHERE NOT EXISTS (SELECT 1 FROM Meeting m WHERE m.CommitteeId = c.CommitteeId)
+      AND NOT EXISTS (SELECT 1 FROM Committee_Member cm WHERE cm.CommitteeId = c.CommitteeId)
+);
+
+IF @RefCommitteeId IS NOT NULL
+BEGIN
+    PRINT '  Referenced CommitteeId = ' + CAST(@RefCommitteeId AS VARCHAR) + ' (expect Result = 0):';
+    EXEC spr_DeleteCommitteeByCommitteeId @CommitteeId = @RefCommitteeId;
+END
+ELSE PRINT '  No referenced Committee found to test.';
+
+IF @UnrefCommitteeId IS NOT NULL
+BEGIN
+    PRINT '  Unreferenced CommitteeId = ' + CAST(@UnrefCommitteeId AS VARCHAR) + ' (expect Result = 1):';
+    EXEC spr_DeleteCommitteeByCommitteeId @CommitteeId = @UnrefCommitteeId;
+    PRINT '  Row count after (expect 0):';
+    SELECT COUNT(*) AS RemainingRows FROM Committee WHERE CommitteeId = @UnrefCommitteeId;
+END
+ELSE PRINT '  No unreferenced Committee found — skipped delete test.';
+
+
+-------------------------------------------------------------------------------
+PRINT '=== 2. Committee_Member ===';
+-------------------------------------------------------------------------------
+DECLARE @RefCommitteeMemberId INT = (
+    SELECT TOP 1 cm.CommitteeMemberId FROM Committee_Member cm
+    WHERE EXISTS (SELECT 1 FROM Attendance a WHERE a.CommitteeId = cm.CommitteeId AND a.MemberId = cm.MemberId)
+);
+DECLARE @UnrefCommitteeMemberId INT = (
+    SELECT TOP 1 cm.CommitteeMemberId FROM Committee_Member cm
+    WHERE NOT EXISTS (SELECT 1 FROM Attendance a WHERE a.CommitteeId = cm.CommitteeId AND a.MemberId = cm.MemberId)
+);
+
+IF @RefCommitteeMemberId IS NOT NULL
+BEGIN
+    PRINT '  Referenced CommitteeMemberId = ' + CAST(@RefCommitteeMemberId AS VARCHAR) + ' (expect Result = 0):';
+    EXEC spr_DeleteCommitteeMemberByCommitteeMemberId @CommitteeMemberId = @RefCommitteeMemberId;
+END
+ELSE PRINT '  No referenced Committee_Member found to test.';
+
+IF @UnrefCommitteeMemberId IS NOT NULL
+BEGIN
+    PRINT '  Unreferenced CommitteeMemberId = ' + CAST(@UnrefCommitteeMemberId AS VARCHAR) + ' (expect Result = 1):';
+    EXEC spr_DeleteCommitteeMemberByCommitteeMemberId @CommitteeMemberId = @UnrefCommitteeMemberId;
+    PRINT '  Row count after (expect 0):';
+    SELECT COUNT(*) AS RemainingRows FROM Committee_Member WHERE CommitteeMemberId = @UnrefCommitteeMemberId;
+END
+ELSE PRINT '  No unreferenced Committee_Member found — skipped delete test.';
+
+
+-------------------------------------------------------------------------------
+PRINT '=== 3. Designation ===';
+-------------------------------------------------------------------------------
+DECLARE @RefDesignationId INT = (
+    SELECT TOP 1 DesignationId FROM (
+        SELECT DesignationId FROM Users
+        UNION ALL
+        SELECT DesignationId FROM Member
+    ) x WHERE DesignationId IS NOT NULL
+);
+DECLARE @UnrefDesignationId INT = (
+    SELECT TOP 1 d.DesignationId FROM Designation d
+    WHERE NOT EXISTS (SELECT 1 FROM Users u WHERE u.DesignationId = d.DesignationId)
+      AND NOT EXISTS (SELECT 1 FROM Member m WHERE m.DesignationId = d.DesignationId)
+);
+
+IF @RefDesignationId IS NOT NULL
+BEGIN
+    PRINT '  Referenced DesignationId = ' + CAST(@RefDesignationId AS VARCHAR) + ' (expect Result = 0):';
+    EXEC spr_DeleteDesignationByDesignationId @DesignationId = @RefDesignationId;
+END
+ELSE PRINT '  No referenced Designation found to test.';
+
+IF @UnrefDesignationId IS NOT NULL
+BEGIN
+    PRINT '  Unreferenced DesignationId = ' + CAST(@UnrefDesignationId AS VARCHAR) + ' (expect Result = 1):';
+    EXEC spr_DeleteDesignationByDesignationId @DesignationId = @UnrefDesignationId;
+    PRINT '  Row count after (expect 0):';
+    SELECT COUNT(*) AS RemainingRows FROM Designation WHERE DesignationId = @UnrefDesignationId;
+END
+ELSE PRINT '  No unreferenced Designation found — skipped delete test.';
+
+
+-------------------------------------------------------------------------------
+PRINT '=== 4. Member_Type ===';
+-------------------------------------------------------------------------------
+-- Since step 21 the procedure needs an acting Admin or Controller and refuses the
+-- reserved types (2, 3 and 6): the unreferenced row is then a free type, and one
+-- is added for the test (rolled back) when none exists.
+DECLARE @Step21 INT = CASE WHEN COL_LENGTH('dbo.Member_Type', 'IsReserved') IS NOT NULL THEN 1 ELSE 0 END;
+DECLARE @MemberTypeActing INT = (SELECT TOP 1 u.UserId FROM Users u JOIN Roles r ON r.RoleId = u.RoleId
+                                 WHERE r.RoleCode = 'admin' AND u.AccountStatus = 1 ORDER BY u.UserId);
+DECLARE @RefMemberTypeId INT = (
+    SELECT TOP 1 MemberTypeId FROM (
+        SELECT MemberTypeId FROM Committee_Member
+        UNION ALL
+        SELECT MemberTypeId FROM Meeting_Member
+    ) x WHERE MemberTypeId IS NOT NULL
+);
+DECLARE @UnrefMemberTypeId INT;
+DECLARE @ReservedMemberTypeId INT;
+
+IF (@Step21 = 0)
+    SET @UnrefMemberTypeId = (
+        SELECT TOP 1 mt.MemberTypeId FROM Member_Type mt
+        WHERE NOT EXISTS (SELECT 1 FROM Committee_Member cm WHERE cm.MemberTypeId = mt.MemberTypeId)
+          AND NOT EXISTS (SELECT 1 FROM Meeting_Member mm WHERE mm.MemberTypeId = mt.MemberTypeId)
+    );
+ELSE
+BEGIN
+    EXEC sp_executesql N'SELECT @u = (SELECT TOP 1 mt.MemberTypeId FROM dbo.Member_Type mt WHERE mt.IsReserved = 0
+              AND NOT EXISTS (SELECT 1 FROM dbo.Committee_Member cm WHERE cm.MemberTypeId = mt.MemberTypeId)
+              AND NOT EXISTS (SELECT 1 FROM dbo.Meeting_Member mm WHERE mm.MemberTypeId = mt.MemberTypeId)),
+          @r = (SELECT TOP 1 MemberTypeId FROM dbo.Member_Type WHERE IsReserved = 1 ORDER BY MemberTypeId)',
+         N'@u INT OUTPUT, @r INT OUTPUT', @u = @UnrefMemberTypeId OUTPUT, @r = @ReservedMemberTypeId OUTPUT;
+    IF (@UnrefMemberTypeId IS NULL)
+    BEGIN
+        INSERT INTO Member_Type (MemberTypeCode, MemberTypeName, StatusId, CreatedOn, CreatedBy)
+        VALUES ('ZZDEL', 'ZZ delete test', 1, GETDATE(), @MemberTypeActing);
+        SET @UnrefMemberTypeId = SCOPE_IDENTITY();
+        PRINT '  Added a free member type for the test (rolled back).';
+    END
+END
+
+IF @RefMemberTypeId IS NOT NULL
+BEGIN
+    PRINT '  Referenced MemberTypeId = ' + CAST(@RefMemberTypeId AS VARCHAR) + ' (expect Result = 0):';
+    IF (@Step21 = 0)
+        EXEC spr_DeleteMemberTypeByMemberTypeId @MemberTypeId = @RefMemberTypeId;
+    ELSE
+        EXEC spr_DeleteMemberTypeByMemberTypeId @MemberTypeId = @RefMemberTypeId, @ActingUserId = @MemberTypeActing;
+END
+ELSE PRINT '  No referenced Member_Type found to test.';
+
+IF @ReservedMemberTypeId IS NOT NULL
+BEGIN
+    PRINT '  Reserved MemberTypeId = ' + CAST(@ReservedMemberTypeId AS VARCHAR) + ' (step 21; expect Result = 0, Reason 7):';
+    EXEC spr_DeleteMemberTypeByMemberTypeId @MemberTypeId = @ReservedMemberTypeId, @ActingUserId = @MemberTypeActing;
+END
+
+IF @UnrefMemberTypeId IS NOT NULL
+BEGIN
+    PRINT '  Unreferenced MemberTypeId = ' + CAST(@UnrefMemberTypeId AS VARCHAR) + ' (expect Result = 1):';
+    IF (@Step21 = 0)
+        EXEC spr_DeleteMemberTypeByMemberTypeId @MemberTypeId = @UnrefMemberTypeId;
+    ELSE
+        EXEC spr_DeleteMemberTypeByMemberTypeId @MemberTypeId = @UnrefMemberTypeId, @ActingUserId = @MemberTypeActing;
+    PRINT '  Row count after (expect 0):';
+    SELECT COUNT(*) AS RemainingRows FROM Member_Type WHERE MemberTypeId = @UnrefMemberTypeId;
+END
+ELSE PRINT '  No unreferenced Member_Type found — skipped delete test.';
+
+
+-------------------------------------------------------------------------------
+PRINT '=== 5. Subject_Type ===';
+-------------------------------------------------------------------------------
+DECLARE @RefSubjectTypeId INT = (SELECT TOP 1 SubjectTypeId FROM Agenda);
+DECLARE @UnrefSubjectTypeId INT = (
+    SELECT TOP 1 st.SubjectTypeId FROM Subject_Type st
+    WHERE NOT EXISTS (SELECT 1 FROM Agenda a WHERE a.SubjectTypeId = st.SubjectTypeId)
+);
+
+IF @RefSubjectTypeId IS NOT NULL
+BEGIN
+    PRINT '  Referenced SubjectTypeId = ' + CAST(@RefSubjectTypeId AS VARCHAR) + ' (expect Result = 0):';
+    EXEC spr_DeleteSubjectTypeBySubjectTypeId @SubjectTypeId = @RefSubjectTypeId;
+END
+ELSE PRINT '  No referenced Subject_Type found to test.';
+
+IF @UnrefSubjectTypeId IS NOT NULL
+BEGIN
+    PRINT '  Unreferenced SubjectTypeId = ' + CAST(@UnrefSubjectTypeId AS VARCHAR) + ' (expect Result = 1):';
+    EXEC spr_DeleteSubjectTypeBySubjectTypeId @SubjectTypeId = @UnrefSubjectTypeId;
+    PRINT '  Row count after (expect 0):';
+    SELECT COUNT(*) AS RemainingRows FROM Subject_Type WHERE SubjectTypeId = @UnrefSubjectTypeId;
+END
+ELSE PRINT '  No unreferenced Subject_Type found — skipped delete test.';
+
+
+-------------------------------------------------------------------------------
+PRINT '=== 6. Decision_Type ===';
+-------------------------------------------------------------------------------
+DECLARE @RefDecisionTypeId INT = (SELECT TOP 1 DecisionTypeId FROM Minutes WHERE DecisionTypeId IS NOT NULL);
+DECLARE @UnrefDecisionTypeId INT = (
+    SELECT TOP 1 dt.DecisionTypeId FROM Decision_Type dt
+    WHERE NOT EXISTS (SELECT 1 FROM Minutes m WHERE m.DecisionTypeId = dt.DecisionTypeId)
+);
+
+IF @RefDecisionTypeId IS NOT NULL
+BEGIN
+    PRINT '  Referenced DecisionTypeId = ' + CAST(@RefDecisionTypeId AS VARCHAR) + ' (expect Result = 0):';
+    EXEC spr_DeleteDecisionTypeByDecisionTypeId @DecisionTypeId = @RefDecisionTypeId;
+END
+ELSE PRINT '  No referenced Decision_Type found to test.';
+
+IF @UnrefDecisionTypeId IS NOT NULL
+BEGIN
+    PRINT '  Unreferenced DecisionTypeId = ' + CAST(@UnrefDecisionTypeId AS VARCHAR) + ' (expect Result = 1):';
+    EXEC spr_DeleteDecisionTypeByDecisionTypeId @DecisionTypeId = @UnrefDecisionTypeId;
+    PRINT '  Row count after (expect 0):';
+    SELECT COUNT(*) AS RemainingRows FROM Decision_Type WHERE DecisionTypeId = @UnrefDecisionTypeId;
+END
+ELSE PRINT '  No unreferenced Decision_Type found — skipped delete test.';
+
+
+-------------------------------------------------------------------------------
+PRINT '=== 7. Users ===';
+-------------------------------------------------------------------------------
+PRINT '  Not tested here any more: this section used to delete a real user permanently.';
+PRINT '  Run BMMS-Test-UserDelete.sql instead (it rolls everything back).';
+
+
+IF (@@TRANCOUNT > 0)
+    ROLLBACK TRANSACTION;
+
+PRINT '=== All deletes above were rolled back. ===';
+PRINT '=== Done. Scroll up through the Messages tab and check each Result value above. ===';
+GO
+
+SET NOEXEC OFF;
+GO

@@ -1,0 +1,1476 @@
+# Application Code
+
+- Title: Application Code
+- Audience: Developers and installers (internal)
+- Shipped: No
+- Applies to: WF2c (documents only: the roles of Report/Followup.aspx and Report/Reports.aspx; the MeetingSummary.ascx row; the RequireRole bullet; the GoToErrPage call-site count; the Session_End line of the known limitations; the new paragraph on the step 52 (MR1) changes in MeetingMgr.cs and UserMgr.cs after "Area classes"); AF1 (the new section "The meeting lists and the Agenda Finalize confirm (step AF1)"; the MF1 paragraph on the list read again after Finalize or Confirm); AD1 (the UI2b report-pages paragraph in the Report folder section: one paragraph on the Attendance Details View button); UI2b (the Report folder paragraph and table notes, the new section "The report filter pages in the Workbench look (step UI2b)": the PageSettings.xml entries, the rule on XML comments, the classes wb-page-fit and wb-filter-meetno; the page title paragraph); MF1 (the new section "The Minutes Items list on Finalize Minutes and Minutes Confirmation (step MF1)"; the Master folder paragraph on the three pages: the confirm texts); AZ1 (the WordUtilities row; the DocToString row removed); UI2a (the Master folder: the Followup page paragraph, the new paragraph on Agenda Finalize, Finalize Minutes and Minutes Confirmation, the page title paragraph); GM1a (the Report folder now has 16 pages with GovernanceMatrix.aspx; the Department row of the area classes and the new GovernanceMgr row; the new bullets "RolesForPage" in "PageAccessModule" and the new section "The Governance Matrix page (step GM1a)"); IU1 (the table of mail failure messages: the Meeting, Committee and ResetPassword rows); RA1d (the Default.aspx row, "Set at login", "Cleared at logout", the keys table row DepartmentSet and the bullets of "PageAccessModule": the session check, the log, the cleaning of logged values); UN6e (the new sections "Lists are not kept in ViewState (step UN6e)" and "Stylesheet version stamp (step UN6e)", the Action Items paragraph of "The Dashboard Alerts and Action Items cards (step UN6c1)" and the Ctrl+F5 sentence and the list sentence of "The Action Item Details panel and the Followup page saves (step UN6d)"); FU2b (the new section "The Followup reports (step FU2b)" and the Followup by Department note in "Pages in no menu and the unlisted page"); FU2a ("The Action Item Details panel and the Followup page saves (step UN6d)": the new FU2a paragraph on FollowupStatusText, the panel mode, the status line, the Reopened chip); FU1 ("The Action Item Details panel and the Followup page saves (step UN6d)": the Followup page bullets, the FU1 bullets for the list, Submit and Reopen); UN6d ("The Action Item Details panel and the Followup page saves (step UN6d)", the Followup.aspx row, the Dashboard Action Items paragraph note); UN6c2b ("The Dashboard summary cards and the Committee filter (step UN6c2b)"); UN6c2a ("The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)" and the layout line of "The Dashboard Meetings card (step UN6b)"); UN6c1 (the Main.Master row and paragraph, "The Dashboard Alerts and Action Items cards (step UN6c1)"); UN6b (the Dashboard rows, the user control row, "The Dashboard Meetings card (step UN6b)" and the code with no caller); the rest RA1c2
+- Commit: 3172059
+- Last updated by: WF2c, based on 3172059 (the items named in Applies to; the rest of the chapter keeps the verification of the steps named below); AF1, based on be23b24 (the new AF1 section and one MF1 sentence; the rest of the chapter keeps the verification of the steps named below); AD1, based on 4f9aae0 (the Attendance Details sentence after the UI2b report-pages paragraph; the rest of the chapter keeps the verification of the steps named below); UI2b, based on 29c6de3 (the Report folder paragraph and notes, the new UI2b section, the page title paragraph); MF1, based on 00b6062 (the new MF1 section and the note in the UI2a paragraph; the rest of the chapter keeps the verification of the steps named below); AZ1, based on 00838ed (the WordUtilities row, the DocToString row removed; the Commit field above still names the commit of UI2a for the rest of the chapter); UI2a, based on 3744571 (the Followup page paragraph, the paragraph on the three other pages, the page title paragraph); GM1a, based on 32c619d (the Report folder table, the area classes, the PageAccessModule bullet and the new GovernanceMatrix section; the rest of the chapter was last updated by IU1 and RA1d)
+- Status: Draft
+- Verified against: for WF2c at 3172059: BMMS/XML/PageAccess.xml (the Report/ entries), BMMS/Report/Reports.aspx.cs and ViewReport.aspx.cs (the mgmt lines), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (divSummaryCards), BMMS/PageAccessModule.cs (ReadDatabaseRole and its comment), BMMS/Global.asax.cs (Session_End), a Grep of .cs files for GoToErrPage( and for Convert.ToInt16, BMMSBAL/MeetingMgr.cs (DecisionAfterMeetingDate, its message, RefusalMessage) and BMMSBAL/UserMgr.cs (LastManagerMessage, DepartmentCounts, Items), Documents/Audit/DA-20261119-5f8c4fe/Drift-Register.md and Gap-Register.md (DA-G-038, DA-G-043); for step AF1: git diff HEAD (be23b24) of BMMSBAL/MeetingMgr.cs, BMMS/Master/AgendaFinalization.aspx.cs, MinutesFinalization.aspx.cs and MinutesConfirmation.aspx.cs (read), Database/README.md (section Step AF1 and Known items), the owner's tests and the tester run 2026-11-27_234318 as given; for step AD1: git diff HEAD (4f9aae0) of BMMS/Report/AttendanceDetails.aspx and .aspx.cs (read), the owner's tests and the tester run 2026-11-27_222326 as given; for step UI2b: git diff HEAD (29c6de3) of the 13 pages in BMMS/Report and BMMS/Master/Followup.aspx (markup read), BMMS/Report/Reports.aspx.cs and Followup.aspx.cs (diff), BMMS/XML/PageSettings.xml and BMMS/CSS/bmms-workbench.css (diff), BMMSBAL/Common.cs (InitSetup read), Database/README.md (Known items of UI2b), the build, tester and owner results as given; for step MF1: git diff HEAD (00b6062) of BMMS/Master/MinutesFinalization.aspx, .aspx.cs and .aspx.designer.cs, MinutesConfirmation.aspx, .aspx.cs and .aspx.designer.cs (the new code read in full), BMMSBAL/HtmlCleaner.cs and MinutesMgr.cs (the new code read in full), BMMS/CSS/bmms-workbench.css, BMMSBAL/MeetingMgr.cs (MinutesNotUpdatedMessage), Database/README.md (section Step MF1 and Known items), the tester and owner results as given; for step AZ1: git diff HEAD of BMMSBAL/WordUtilities.cs and the deleted BMMSBAL/DocToString.cs, Database/README.md (section Step AZ1); for step UI2a: git diff HEAD (3744571) of BMMS/Master/AgendaFinalization.aspx, MinutesFinalization.aspx, MinutesConfirmation.aspx (button and title lines), Followup.aspx and BMMS/XML/PageSettings.xml, Database/README.md (Known items of UI2a), the test results as given; for step GM1a: BMMS/Report/GovernanceMatrix.aspx and .aspx.cs, BMMSBAL/GovernanceMgr.cs (read in full), BMMS/PageAccessModule.cs (diff: RolesForPage), BMMS/UserControl/MenuUserControl.ascx, BMMS/XML/PageAccess.xml and PageSettings.xml (diff), BMMS/Master/Department.aspx.cs, BMMSBAL/DepartmentMgr.cs and BMMSDAL/DepartmentDB.cs (diff), Database/README.md (section Step GM1a); BMMSDAL/GovernanceDB.cs and BMMS/CSS/bmms-workbench.css only listed by the diff stat; for step IU1: BMMS/Master/Meeting.aspx.cs, Committee.aspx.cs and ResetPassword.aspx.cs (diff: the message constants only); for step RA1d: BMMS/PageAccessModule.cs, BMMS/Default.aspx.cs and BMMS/Global.asax.cs (diff), BMMSBAL/UserMgr.cs and BMMSDAL/UserDB.cs (diff), Database/README.md (section Step RA1d), Tests/packs/session-check/README.md;
+  for step UN6e: BMMS/AssetVersion.cs (read in full), BMMS/DashBoard/DashBoard.aspx.cs, BMMS/MasterPage/Main.Master.cs, MainNoMenu.Master.cs, BMMS/Default.aspx.cs, BMMS/Master/Committee.aspx and BMMS.csproj (diff), Database/README.md (section Step UN6e and its Known items), Tests/packs/page-assets/README.md, the owner's tests and the tester run 2026-11-18_123549 as given; the .aspx changes of Agenda, MinutesUpdate and Meeting were taken from Database/README.md, not read in the diff; for step FU2b: git diff c4300b5 of BMMS/Report/Followup.aspx(.cs), BMMS/Report/FollowupActionTaken.aspx(.cs), BMMS/Master/Followup.aspx(.cs), BMMS/FollowupStatusText.cs, BMMSBAL/ReportsMgr.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/README.md (section Step FU2b and its Known items), the owner's tests as given; for step FU2a: git diff 9336d29 of BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs, BMMS/Master/Followup.aspx.cs, BMMS/BMMS.csproj and BMMS/CSS/bmms-workbench.css, BMMS/FollowupStatusText.cs (read in full), Database/README.md (section Step FU2a and its Known items), the owner's tests as given; for step FU1: BMMS/Master/Followup.aspx and Followup.aspx.cs (read in full: CanSave, Page_Load, BindFollowup, grvFollowup_RowDataBound, grvFollowup_RowCommand, the save, Submit and Reopen handlers, the script), Database/README.md (section Step FU1); and before: for step UN6d: git diff ce7358a 276e402 of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/Master/Followup.aspx and .aspx.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, BMMS/CSS/CommonHTML.css and bmms-workbench.css; Database/README.md (section Step UN6d and its Known items), the tester runs of 2026-11-15 as given; for step UN6c2b: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/CSS/bmms-workbench.css, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs; Database/README.md (section Step UN6c2b, Known items), the tester run of 2026-11-15 as given; for step UN6c2a: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff, and BindAgendaDetails read in full), BMMS/UserControl/MeetingSummary.ascx and .ascx.cs (diff), BMMS/CSS/bmms-workbench.css (diff),
+  BMMSBAL/AgendaMgr.cs and MeetingMgr.cs (diff), BMMSDAL/AgendaDB.cs and MeetingDB.cs (diff), Database/README.md (section Step UN6c2a, Known items), Tests/packs/dashboard/README.md, the tester run of 2026-11-14 as given; for step UN6c1: BMMS/DashBoard/DashBoard.aspx and DashBoard.aspx.cs (read: the Alerts and Action Items regions, the message constants, lnkSource_Click),
+  BMMS/MasterPage/Main.Master.cs (alert count region), BMMSBAL/AlertMgr.cs, ActionItemMgr.cs and Common.cs (diff),
+  BMMSDAL/AlertDB.cs and ActionItemDB.cs (diff), Database/README.md (section Step UN6c1); for step UN6b: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/DashBoard/DashBoard.aspx
+  (headings and column headers by Grep), DashBoard.aspx.cs (diff), BMMSBAL/MeetingMgr.cs and DepartmentMgr.cs (diff),
+  BMMSDAL/MeetingDB.cs and DepartmentDB.cs (diff), Grep of .cs files for GetScheduleMeet, Database/README.md (section
+  Step UN6b); and: BMMS/**/*.aspx, BMMS/MasterPage/*.Master(.cs), BMMS/UserControl/*.ascx(.cs),
+  BMMS/XML/PageAccess.xml, PageSettings.xml, AppSettings.xml, ReportSettings.xml,
+  BMMS/PageAccessModule.cs, BMMS/Global.asax.cs, BMMS/Default.aspx.cs, BMMS/Logout.aspx.cs,
+  BMMS/Error/ErrorPage.aspx(.cs), BMMS/Report/ViewReport.aspx.cs,
+  BMMS/RichTextEditor.cs, BMMS/JScript/AsyncPostBackError.js,
+  BMMS/Web.config, BMMSBAL/*.cs (Common, Utilities, Mail_Mgr, AgendaMail, WordUtilities,
+  Sql_Backup_Mgr, PDFUtilities, PdfFonts, HtmlCleaner, RichTextPost, RichTextLimits, SafeFileName,
+  OrganisationDetails and the class lists of the other files), BMMSDAL/CommonDB.cs, ConnectDB.cs,
+  UtilitiesDB.cs, MinutesDB.cs, AgendaDB.cs, Grep results over BMMS, BMMSBAL and BMMSDAL (Session
+  keys, GetAppSetting, GoToErrPage, WriteErrorLog, mail messages), chapters 01 and 04 of this
+  manual, and, as leads only, Documentation/Architecture/BMMS-Architecture.md section 9 and the
+  "Known items for later steps" list of Database/README.md; for step RA1a: BMMS/PageAccessModule.cs
+  (RequireRole), BMMS/UserControl/MenuUserControl.ascx, BMMS/XML/PageAccess.xml and the Page_Load
+  of the nine pages (git diff against ea268e5); for step RA1c1: git diff against 4946500 (BMMS/Report/ViewReport.aspx.cs,
+  BMMS/XML/PageAccess.xml, BMMS/BMMS.csproj, BMMS/PageAccessModule.cs), the file list of BMMS/Report
+  and the Grep count of MasterPageFile in BMMS/**/*.aspx; for step RA1c2: git diff against 1db6ac6
+  (BMMS/Report/FollowupActionTaken.aspx(.cs, .designer.cs), BMMS/UserControl/MenuUserControl.ascx,
+  BMMS/XML/PageAccess.xml, PageSettings.xml, BMMS/BMMS.csproj, the deleted BMMS/Error/TestPage.aspx(.cs)), the Grep
+  results for PDFUtilities.GenerateHTMLPdf and btnSendMail_Click in BMMS/Report and BMMSBAL
+- To confirm: whether the installed site runs PageAccess.xml in Enforce mode;
+  the reason Export to Pdf cannot print Tamil or Hindi text for the Followup by Department report (from the
+  step requirement, not shown by the code read); what an old address of Error/TestPage.aspx now answers;
+  the size limit for uploads (no maxRequestLength is set in Web.config)
+
+This chapter describes the code of the three projects. The layers and the request flow are in
+chapter 01 and are not repeated; every procedure, its data-layer class and the Reason codes with their
+messages are in chapter 04. The pages are in BMMS, the business layer in BMMSBAL and the data layer in
+BMMSDAL. A Grep count is given where a number is stated, so that it can be checked again.
+
+## Pages and master pages
+
+BMMS holds 44 `.aspx` pages (47 before step RA1c1 removed Event Calendar and Report Print, 45 before step RA1c2 removed Error/TestPage), two master pages and two user controls. Two master pages are in
+BMMS/MasterPage:
+
+| Master page | Used by | Contents |
+|---|---|---|
+| Main.Master | 40 pages (every page that names a master except ChangePasswordFirst) | Header with the logo, the menu (MenuUserControl), "Alerts ([n])" link to the Dashboard (the number in its own UpdatePanel, step UN6c1; "Alerts" without a number when it cannot be read), the user's name and role (the login ID as tooltip), Change Password and Logout; the ScriptManager; the message bar for a failed UpdatePanel postback; the footer with the product line and, for Admin and Controller, "Database: [name]" |
+| MainNoMenu.Master | ChangePasswordFirst.aspx | The same header without the menu and without the Alerts link |
+
+Both masters set the page title from `Session["PageTitle"]` or, when it is not set, from the
+`PageTitle` setting of AppSettings.xml, build the footer with `Common.ProductFooter`, and handle
+`OnAsyncPostBackError` (see "Error handling"). Since step UN6c1 Main.Master computes the number in "Alerts ([n])"
+with `AlertMgr.GetAlertCount` (spr_GetAlertCount: the unread alerts by the rule of the Dashboard's Alerts card,
+the role read from the database). The number sits in its own conditional UpdatePanel; it is read in `OnPreRender`
+on every full page load and not during an UpdatePanel postback, unless the page calls the public
+`RefreshAlertCount()`, which reads it again and redraws it. A count that cannot be read (an error, or a Reason
+other than 0) shows "Alerts" without a number and writes the error to the error log. Three pages have no master page
+(Default, Logout, ViewReport). The login page has its own footer and its own
+ScriptManager.
+
+Most pages carry `Title="Untitled Page"` in the markup. The title the user sees is set at run time
+by `Common.InitSetup` from XML/PageSettings.xml (title) and the `PageTitle` setting of AppSettings.xml
+(prefix). `InitSetup` replaces `Session["PageTitle"]` only when it finds an entry for the page's class name, so a page
+without an entry shows the title that the last page with an entry left in the
+session (Attendance Details was such a page until step UI2b). Since step UI2a PageSettings.xml names Agenda Finalize ("Agenda Finalize"), Finalize Minutes ("Finalize
+Minutes") and has new entries for Minutes Confirmation and Followup, so the tab title of these four pages follows the
+menu names (the entries held "Agenda Finalization" and "MinutesFinalization" before). `InitSetup` joins the two parts
+without a separator (a known item in Database/README.md).
+
+How the tables are read:
+
+- Roles are the `roles` attribute of the page in BMMS/XML/PageAccess.xml (`*` is every logged-in user;
+  the file in the repository has mode `Enforce`). The Admin, Controller, Manager, User, MD Secretariat and
+  Management roles are the codes admin, controller, manager, user, md_sect and mgmt.
+- Purpose is taken from the menu entry in MenuUserControl.ascx, the heading of the page or its code.
+- "No call" under InitSetup means that the code-behind does not call `Common.InitSetup`; such a page is still
+  protected by PageAccessModule (see "Session and role handling").
+
+### Root folder, Error and DashBoard
+
+| Page | Purpose | Roles | Notes |
+|---|---|---|---|
+| Default.aspx | Login. Checks the login ID and password, opens the session, sends the user to the Dashboard, or to ChangePasswordFirst after a first sign-in with the default password | Public | No master page; `?status=inactive` shows "Your account is inactive. Contact the administrator."; `?status=changed` (step RA1d) shows "Your access has changed. Please sign in again."; any other value shows nothing |
+| Logout.aspx | Records the end of the login in the access log, clears the session and returns to Default.aspx | Public | No master page; reached by the Logout button of the masters (PostBackUrl) |
+| ChangePasswordFirst.aspx | "Change Password" for the first sign-in (MainNoMenu.Master) | `*` | Reached from Default.aspx only |
+| DashBoard/DashBoard.aspx | Alerts, action items, committee, meeting and agenda alerts, approval of agenda items; the landing page of every role; menu entry "Home" for every role except Admin and MD Secretariat | `*` | Hosts the MeetingSummary user control; the code-behind has more than 1,000 lines. Since step UN6b the layout is cards in the grid `.wb-dash` (since step UN6c2a: Meetings three parts of four of the content width beside Alerts, the My approvals panel above them for a Controller and a Manager, Action Items below; one column at 1240 px and below); the Alerts card has two columns, "Alert" (the Source link with the alert type, committee and department below it, separated by a vertical bar with a space on each side) and "Date" (dd-MMM-yyyy with HH:mm below it; "Created on" until step UN6c1); the list behaviour, the links and the control IDs are unchanged. After a successful Approve or Reject the page calls `MeetingSummary1.Reload()` and loads the My approvals panel again (see "The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)") |
+| Error/ErrorPage.aspx | The error page shown after `Utilities.GoToErrPage`: a fixed text and an Exit button | Public | OnPreInit sends a visitor with no session to Default.aspx |
+
+### Master folder (BMMS/Master, 24 pages)
+
+| Page | Purpose (menu entry) | Roles | InitSetup |
+|---|---|---|---|
+| Agenda.aspx | Agenda Entry: Controller under "Agenda", User and Manager as top-level "Agenda Entry" | controller, manager, user | Yes |
+| AgendaFinalization.aspx | Agenda Finalize (menu "Agenda") | controller | Yes |
+| Attendance.aspx | Attendance (menu "Master") | admin, controller | Yes |
+| BackupDatabase.aspx | Backup Database (menu "Admin") | admin (since RA1a; page check RequireRole) | No call |
+| ChangePassword.aspx | Change Password (link in the header, not in the menu) | `*` | Yes |
+| Committee.aspx | Committee Master | admin, controller | Yes |
+| CommitteeMember.aspx | Committee Member Tag / UnTag | admin, controller | Yes |
+| DecisionType.aspx | Decision Type | admin (since RA1a; page check RequireRole) | Yes |
+| Department.aspx | Department Master | admin (since RA1a; page check RequireRole) | Yes |
+| Designation.aspx | Designation Master | admin (since RA1a; page check RequireRole) | Yes |
+| Followup.aspx | Followup (menu "Minutes"); since step UN6d only the Controller saves, md_sect reads | controller, md_sect | Yes (ActionItemMgr.SaveFollowupActionText and SaveFollowupConfirmed, since step UN6d) |
+| Meeting.aspx | Meeting Master | admin, controller | Yes |
+| MeetingMember.aspx | Meeting - Member Tag / UnTag | admin, controller | Yes |
+| Member.aspx | Member Master | admin, controller | Yes |
+| MemberType.aspx | Member Type | admin (since RA1a; page check RequireRole) | Yes |
+| MinutesConfirmation.aspx | Minutes Confirmation (menu "Minutes") | controller | Yes |
+| MinutesFinalization.aspx | Finalize Minutes (menu "Minutes") | controller | Yes |
+| MinutesUpdate.aspx | Update Minutes (menu "Minutes") | controller | Yes |
+| ResetDatabase.aspx | Reset Database (menu "Admin", Admin only) | admin | Yes |
+| ResetPassword.aspx | Reset Password (menu "Admin") | admin (since RA1a; page check RequireRole, also in the Reset Password button) | No call |
+| SMTPServerConfig.aspx | SMTP Configuration (menu "Admin", Admin only) | admin | No call |
+| SubjectType.aspx | Subject Type | admin (since RA1a; page check RequireRole) | Yes |
+| SystemSettings.aspx | System Settings (menu "Admin", Admin only) | admin | No call |
+| User.aspx | User Master | admin (since RA1a; page check RequireRole) | Yes |
+
+### Report folder (BMMS/Report, 16 pages)
+
+All entries except Reports.aspx, Followup.aspx, AuditTrail.aspx and ViewReport.aspx are in the "Reports" menu of the Controller (FollowupActionTaken.aspx, "Followup by Department", since RA1c2; GovernanceMatrix.aspx, "Governance Matrix", since GM1a, which is also in the "Admin" menu).
+Since RA1a, Audit Trail is in the "Admin" menu (Admin only), after System Settings and before Reset Database,
+and the Controller's "Reports" menu no longer has it. The Manager's "Reports" menu holds the four Reports.aspx
+entries only.
+
+Since step UI2b the 13 filter pages (Reports, Followup, FollowupActionTaken, SendMail, CommitteeMaster, MeetingMaster,
+CommitteeMember, MeetingCalendar, SittingFeesApplicable, SittingFees, AttendanceDetails, AgendaApproval, Notice) have the
+Masters' form look: a `wb-page` with a breadcrumb "Reports / [menu name]", an `h1`, cards (Filter; Mail on Send Mail;
+Signatory on Sitting Fees; Print details on Followup by Department and Agenda Approval; Notice details on Notice) and the
+`wb-btn` buttons. Control IDs, events and handlers are unchanged. The result grids stay in their old frame
+(`formContent` / `formPanel`) outside `.wb-page`; on Reports, Followup, Followup by Department, Agenda Approval and
+Attendance Details the frame is now inside the grid's panel. See "The report filter pages in the Workbench look (step UI2b)".
+Since step AD1 the Attendance Details list shows on the View button (`btnView`) only: Committee Name still loads the
+meetings, and a change of Committee Name or Meeting No only hides a list already shown. View with either not chosen shows
+"Select committee name." or "Select meeting no." in the message block.
+
+| Page | Purpose (menu entry) | Roles | InitSetup |
+|---|---|---|---|
+| AgendaApproval.aspx | Agenda Approval (PDF of approved agenda items of a meeting) | controller | Yes |
+| AttendanceDetails.aspx | Attendance Details | controller | Yes |
+| AuditTrail.aspx | Audit Trail (menu "Admin" since RA1a) | admin (since RA1a; page check RequireRole) | Yes |
+| CommitteeMaster.aspx | Committee Master report | controller | Yes |
+| CommitteeMember.aspx | Committee Member report | controller | Yes |
+| Followup.aspx | Followup (`?fc=followup`) and Followup Summary (`?fc=summary`) | controller, mgmt | Yes (name `followup_report`; since step UI2b the entry `followup_summary` when `fc=summary`) |
+| FollowupActionTaken.aspx | Followup by Department (menu "Reports" of the Controller, after Followup Summary; the heading and the page title are "Followup by Department"): the follow-up items of one committee, one meeting or a range of meetings, all departments or one, all subjects or a range; View shows the grid, Generate Report opens the report in ViewReport.aspx | controller (since RA1c2; `RequireRole("controller")` first in Page_Load and again first in the Generate Report handler); the Manager gets "Access denied" | Yes |
+| GovernanceMatrix.aspx | Governance Matrix (menu "Admin" for the Admin, "Reports" for the Controller; step GM1a): the Matrix view and the Change log view, read only; see "The Governance Matrix page (step GM1a)" | admin, controller (PageAccess.xml; `RequireRole("admin", "controller")` first in Page_Load) | Yes (name GovernanceMatrix) |
+| MeetingCalendar.aspx | Meeting Calendar | controller | Yes |
+| MeetingMaster.aspx | Meeting Master report | controller | Yes |
+| Notice.aspx | Notice (report and Send Mail of the notice) | controller | Yes |
+| Reports.aspx | One page for four reports chosen by `?rc=`: `agenda_summary` (Agenda Summary), `agenda_details` (Agenda Details), `minutes` (Minutes), `minutes_extract` (Minutes Extract) | controller, manager, mgmt | Yes (name is the report code) |
+| SendMail.aspx | Send Mail (free-form mail with an attachment) | controller | Yes |
+| SittingFees.aspx | Sitting Fees (reports and PDF certificates) | controller | Yes |
+| SittingFeesApplicable.aspx | Sitting Fees Applicable | controller | Yes |
+| ViewReport.aspx | The report window: shows `Session["ViewReport"]`, sends a stored PDF (`?pdf=1`), Export to PDF, Export to Word. With no stored report it shows "The report is no longer available. Close this window and click Generate again." (see "Pages in no menu and the unlisted page") | controller, manager, mgmt (Management for its own report kinds only) | No call |
+
+### User controls and master pages
+
+| File | Purpose | Notes |
+|---|---|---|
+| UserControl/MenuUserControl.ascx | The top menu and its drop-down lists; the links shown depend on `Session["RoleCode"]` | Hides links only; PageAccessModule is the server-side check. Since RA1a the Master menu shows Department Master, Designation Master, Member Type, Subject Type, Decision Type and User Master to Admin only (the Controller keeps Member Master, Committee Master, Committee Member Tag / UnTag, Meeting Master, Meeting - Member Tag / UnTag and Attendance), and the "Admin" heading and menu are for Admin only (Reset Password, Backup Database, SMTP Configuration, System Settings, Audit Trail, Reset Database, in that order). The code-behind is empty. The markup calls `Session["RoleCode"].ToString()`, so it needs a logged-in session; only Main.Master uses it (MainNoMenu.Master has it commented out) |
+| UserControl/MeetingSummary.ascx | Since step UN6b (rewritten): the Dashboard heading "Dashboard" with the Committee and Department drop-downs and the subtitle, the container for the summary cards (`divSummaryCards`, filled in step 45, UN6c2b; see "The Dashboard summary cards and the Committee filter (step UN6c2b)"), and the Meetings card with the Scheduled and Completed (last 10) lists (columns Meeting, Meeting date, Submit agenda by, Status, Items, Approved, Rejected and the last column; since step UN6c2a a ninth column, "Waiting for me", in the Scheduled list for a Controller and a Manager, and the properties `CommitteeId` and `DepartmentId` and the event `FiltersChanged` for the page). It reads `MeetingMgr.GetDashboardMeetings` and `DepartmentMgr.GetDashboardDepartments` (see "The Dashboard Meetings card (step UN6b)" below) | Used by DashBoard.aspx only. It renders no wrapper: its blocks are cells of the Dashboard grid (`.wb-dash`) |
+| MasterPage/Main.Master, MainNoMenu.Master | See above | |
+
+### The Dashboard Meetings card (step UN6b)
+
+UserControl/MeetingSummary.ascx(.cs) was rewritten in step UN6b. What it does, from the code:
+
+- Page_Load (first load only), `Filter_Changed` (both drop-downs post back on every change) and the public
+  `Reload()` (called by DashBoard.aspx.cs after a successful Approve or Reject) all call `LoadMeetings`.
+- `LoadMeetings` reads the acting user id from `Session["UserId"]` (none or not a number: the "not active"
+  message and no filters). It calls `DepartmentMgr.GetDashboardDepartments` on every load, then
+  `MeetingMgr.GetDashboardMeetings(actingUserId, committeeId, departmentId, out reason, out statisticsShown, out
+  roleCode)`. The two filter values come from the drop-downs; a chosen department that is no longer in the
+  department list falls back to 0 ("All my departments"). The role and the departments are read by the
+  procedures from the acting user id; nothing comes from ViewState, the query string or the session role. The
+  procedures check both filter values again (Reason 4).
+- The role table `RoleViews` (one place in MeetingSummary.ascx.cs) holds, per role code returned by the
+  procedure: whether the Committee drop-down is shown, whether the Department drop-down may be shown (only for a
+  Manager with two or more departments), whether the titles carry the department, and the header of the last
+  statistics column ("In progress" for the User, "Pending" for the others). controller, manager, mgmt, md_sect
+  and admin show the Committee drop-down; user does not. controller, mgmt, md_sect and admin have the plain
+  title "Meetings"; the last three are provisional until their mock-up screens are decided (Database/README.md).
+  A role code the table does not know gets no filter and no title change.
+- `ShowTitles`: Manager with two or more departments: subtitle "Departments: [a, b]", title "Meetings, items of
+  my departments", or "Meetings, [department] items" when one is chosen; one department (Manager or User):
+  subtitle "Department: [name]" and title "Meetings, [department] items". The department names come from the
+  database and are encoded on output (`InnerText`, a Literal in encode mode).
+- The statistics columns (Items, Approved, Rejected and the last one) are shown or hidden by the value of
+  `StatisticsShown` returned by the procedure, not by the role table. The table is split into the Scheduled and
+  Completed grids by `ListCode` (S or C), in the procedure's order.
+- `StateCssClass` turns the colour name of the procedure (grey, red, green, orange, blue) into the chip classes
+  `wb-chip wb-chip-[colour]`; an unknown name gives the plain `wb-chip`. The label text is always shown.
+- Dates are formatted dd-MMM-yyyy (`FormatDate`, the same format as DashBoard.aspx.cs); the meeting time is shown
+  under the date as "[time] Hrs.".
+- Failure handling: any exception is written to the error log (`Utilities.WriteErrorLog`, class MeetingSummary,
+  method LoadMeetings) and `ShowFailure` hides the filters and the subtitle, sets the title to "Meetings" and
+  shows "The meeting list could not be loaded. Reload the page to try again." A SqlException with number -2, 8645
+  or 701, an InvalidOperationException whose message starts with "Timeout expired" (no free connection in the
+  pool in time) or an OutOfMemoryException (`IsServerBusy`) gives "The server is busy and the meeting list could
+  not be loaded. Wait a moment, then reload the page." instead. The filters are also hidden in the markup until a
+  load succeeds. The Alerts and Action Items lists load on their own.
+- Messages for a refusal: Reason 8 "The meeting list is not available: your account is not active. Sign in
+  again."; Reason 4 "The meeting list is not shown for this choice." plus "Choose All committees or All my
+  departments." (both filters shown), "Choose All committees." or "Choose All my departments.", or, with no
+  filter shown, "The meeting list is not shown for your role." Empty lists: "No scheduled meetings." and "No
+  completed meetings."
+- Markup and styles: the heading with the filters, the container `divSummaryCards` for the summary cards (built in
+  step UN6c2b, see "The Dashboard summary cards and the Committee filter (step UN6c2b)"), and the Meetings card in the Workbench card style. DashBoard.aspx puts the control and
+  the Alerts and Action Items cards in the grid `.wb-dash` (CSS/bmms-workbench.css, Dashboard section: grid, heading
+  and filters, chips with the palette's tints, number columns, the panel widths, the 1240 px and 720 px rules;
+  since step UN6c2a the Meetings card is three parts of four of the content width beside the Alerts card, one
+  column at 1240 px and below and two columns from 1241 px).
+  The Agenda Alert and Action Item Details panels have a 165 px label column and fields up to 550 px, with the
+  labels above the fields at 720 px and below.
+- DashBoard.aspx.cs (Alerts card): `FormatDate` is now protected, and `FormatTimeOfDay` (HH:mm) and `AlertDetails`
+  (alert type, committee and department, empty ones left out, joined by a vertical bar with a space on each side)
+  are new. The unused hidden Read column of the Alerts grid is gone; the read and unread rows, paging, hidden values
+  and every control ID that `lnkSource_Click` reads are unchanged.
+- BAL and DAL: `MeetingMgr.GetDashboardMeetings` and `MeetingDB.GetDashboardMeetings` (seven parameters, four of
+  them OUTPUT, until step UN6c2a, which added the OUTPUT `WaitingShown`: eight parameters, five of them OUTPUT;
+  `StatisticsShown` is true only when the Reason is 0 and the procedure returned 1);
+  `DepartmentMgr.GetDashboardDepartments` and `DepartmentDB.GetDashboardDepartments` (the Reason turned into one
+  number by `MinutesDB.RefusalReason`).
+
+Drawn from: BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMS/DashBoard/DashBoard.aspx (headings) and
+DashBoard.aspx.cs (diff), BMMSBAL/MeetingMgr.cs and DepartmentMgr.cs (diff), BMMSDAL/MeetingDB.cs and
+DepartmentDB.cs (diff), Database/README.md (section Step UN6b). The CSS file and DashBoard.aspx were not read in
+full for this section: the CSS and layout statements are from Database/README.md.
+
+### The Dashboard Alerts and Action Items cards (step UN6c1)
+
+DashBoard.aspx(.cs) changed in step UN6c1; the rules are on the server (database step 43) and the page sends the
+acting user id from `Session["UserId"]`, never a role.
+
+- Alerts card (`LoadAlertGRV`): `AlertMgr.GetDashboardAlerts(userId, mode, page, out reason, out totalRows, out
+  unreadCount, out pageShown)`. The three links Recent, Unread and All (`lnkRecent`, `lnkUnread`, `lnkAll`, all
+  `AlertMode_Click` with the CommandArgument R, U or A) set `AlertMode` (ViewState, R by default) and go to page 1.
+  The grid uses custom paging of 10 (`AllowCustomPaging`, `VirtualItemCount` from `totalRows`); only the page shown
+  is read and the list is no longer kept in ViewState. `MarkCurrent` sets the class `bmms-filter-current` (bold in
+  bmms-workbench.css) and `aria-current` on the link of the mode shown. Reason 8 gives "The alerts are not
+  available: your account is not active. Sign in again."; any other Reason or an exception gives "The alerts could
+  not be loaded. Reload the page to try again." (the exception is written to the error log; `Common.IsServerBusy`
+  gives "The server is busy and the alerts could not be loaded. Wait a moment, then reload the page."); the grid and
+  its pager are hidden then. The empty text is "No alerts.".
+- The muted line of an alert ends with "by [name]" (`ActorName`, a dash when empty; the login ID, `ActorLogin`, is
+  the tooltip); the second column is headed "Date" and shows `EventOn`, not the entry date.
+- Opening an alert (`lnkSource_Click`) still marks it read with `AlertMgr.UpdateAlertByUserId` and, in a finally
+  block, reloads the list in the mode chosen, so the header count follows.
+- "Remove from my list": the two buttons (`btnDeleteAlert`, `btnDeleteAgendaAlert`, text "Remove from my list") call
+  `AlertMgr.RemoveAlertForUser`; the row id comes from the hidden field `hdnAlertUserId`. Reason 4 gives "This alert
+  is not in your list."; an error gives "The alert could not be removed from your list. Try again."
+- Header count: after the list is reloaded on a postback (Approve, Reject, Remove, the three links, paging)
+  `RefreshHeaderCount` calls `Main.RefreshAlertCount()`.
+- Action Items card (`LoadActionItemGRV`): `ActionItemMgr.GetDashboardActionItems(userId, out reason)`. Reason 4
+  (MD Secretariat, Admin) hides the card (`cardActionItems`); Reason 8 and failures show a message in the card
+  ("The action items are not available: your account is not active. Sign in again." and the two "could not be
+  loaded" texts). The whole list comes back on every load and the three links Show All, Read and Unread filter it in the
+  page by `ActionMode` (A, R, U; ViewState); since step UN6e the list itself is not kept in ViewState (see "Lists are not
+  kept in ViewState (step UN6e)"); `LoadActionItemGRV` sets the mark from `ActionMode`, so the link
+  chosen stays chosen when an item is opened or the page is changed. New column "Due date" with a red "Overdue"
+  chip when `IsOverdue` is true; "Meeting Date" is shown as dd-MMM-yyyy.
+- Opening an item calls `ActionItemMgr.OpenDashboardActionItem` and Submit calls
+  `ActionItemMgr.SaveDashboardActionText`; the answer decides, whatever the page sent. Reason 4 gives "You cannot
+  change this action item: your role can only read it, or it is not an item of your department. Nothing was
+  saved."; Reason 8 "Your account is not active. Nothing was saved. Sign in again."; a failure "The action text
+  could not be saved. Nothing was saved. Try again." (busy: "The server is busy and the action text could not be
+  saved. Nothing was saved. Wait a moment, then try again."). Until step UN6d the Submit button was still shown to
+  Management; see "The Action Item Details panel and the Followup page saves (step UN6d)".
+- `Common.IsServerBusy` (BMMSBAL/Common.cs) moved there from MeetingSummary.ascx.cs, which now calls it.
+- BAL and DAL: `AlertMgr` / `AlertDB` (`GetDashboardAlerts`, `GetAlertCount`, `RemoveAlertForUser`) and
+  `ActionItemMgr` / `ActionItemDB` (`GetDashboardActionItems`, `OpenDashboardActionItem`,
+  `SaveDashboardActionText`). The older `AlertMgr.GetAlertByUserId`, `UpdateAlertByAlertUserId` and
+  `ActionItemMgr.GetActionItemByUserId` have no caller any more.
+
+Drawn from: BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/MasterPage/Main.Master.cs, BMMSBAL/AlertMgr.cs,
+ActionItemMgr.cs and Common.cs (diff), BMMSDAL/AlertDB.cs and ActionItemDB.cs (diff), Database/README.md (section
+Step UN6c1).
+
+### The Dashboard My approvals panel, Waiting for me and the approval buttons (step UN6c2a)
+
+DashBoard.aspx(.cs), MeetingSummary.ascx(.cs) and the Agenda and Meeting BAL and DAL classes changed in step
+UN6c2a; the rule is one database function, fn_AgendaWaitingFor (database step 44), and the page sends the acting
+user id and the filters, never a role.
+
+- My approvals panel (`cardApprovals`, `grvApprovals`, `LoadApprovals`): `AgendaMgr.GetDashboardApprovals(userId,
+  committeeId, departmentId, page, out reason, out totalRows, out pageShown)`. The committee and department are
+  those the Meetings card last used (`MeetingSummary1.CommitteeId` and `DepartmentId`, kept in the control's
+  ViewState); the control raises `FiltersChanged` when a drop-down changes and the page then loads the panel again
+  from page 1. Reason 0 shows the panel with the title "My approvals ([n])" and the grid (10 to a page, custom
+  paging, the page number in ViewState `ApprovalPage`; the server returns the page it shows). Reason 4 hides
+  the card when the server has not yet said that this person has the panel (a role without it: Management, MD
+  Secretariat, Admin, User); Reason 12 (the system account) hides it; Reason 4 once the server has said that the
+  person has the panel (`HasApprovalsPanel`, ViewState) shows "The
+  approvals cannot be shown for this choice. Choose All committees or All my departments."; Reason 8 shows "The
+  approvals are not available: your account is not active. Sign in again."; an exception is written to the error
+  log and shows "The approvals could not be loaded. Reload the page to try again." or, when `Common.IsServerBusy`,
+  "The server is busy and the approvals could not be loaded. Wait a moment, then reload the page."; the count is
+  not shown after a failure. The empty text is "Nothing is waiting for your approval.". The columns are Item (the
+  agenda number as a link, the short text under it), Committee, Meeting (the meeting number and its date) and
+  Department; every value is HTML encoded.
+- Opening a row (`lnkApproval_Click`): the Agenda Alert panel opens through `BindAgendaDetails`; the person's own
+  alert of the item, when the row has one (`AlertId`), is marked read with `AlertMgr.UpdateAlertByUserId` (that
+  procedure marks the acting user's row only), the Alerts card is loaded again (so the header count follows) and
+  the panel is loaded again. An item that is gone shows the "item is gone" text.
+- The buttons: `BindAgendaDetails` asks `AgendaMgr.GetAgendaApprovalState` (`TryGetApprovalState`) and shows
+  Approve and Reject only when CanApprove is 1 and AgendaOpen is 1, for a Controller and for a Manager; before
+  step UN6c2a it showed them to every Controller at AMA and to every Manager at AC. A Controller at AC (where he
+  may reject by the rule) is therefore shown no buttons: Approve and Reject always appear together, from "may
+  approve". When the person could decide but DateOpen is 0 the item is shown read-only, `ShowAgendaPanelMessage`
+  puts "The meeting date has passed, so this item can no longer be approved or rejected. It will be rejected when
+  the agenda is finalized." in the paragraph `pAgendaPanelMessage` inside the Agenda Alert panel, just above the
+  buttons (above Close and "Remove from my list"), and "Remove from my list" is shown. When the answer cannot be
+  read (Reason other than 0, or an exception, written to the error log) a Controller or a Manager who is not the
+  system account sees the item read-only with "Whether you may approve this item could not be checked, so it is
+  shown read-only. Close it and open it again."
+- Approve and Reject (`btnApprove_Click`, `btnReject_Click`): after the existing checks the page asks
+  `GetAgendaApprovalState` again for the date. An answer that cannot be read gives "The item could not be checked,
+  so nothing was changed. Try again." (nothing is saved); DateOpen 0 gives the meeting-date message in the page's
+  message box (`MsgDisplay`), as before step UN6c2a, now by the database server's date (before: `MeetingMgr.
+  IsMeetingOpenForChange` with the web server's date). Who may decide is checked by `spr_UpdateAgendaByAgendaId`
+  (Reason 14). After every outcome of a decision `LoadApprovals` runs with `LoadAlertGRV` and the meeting list is
+  reloaded (`MeetingSummary1.Reload()`), so the panel, the Waiting for me counts and the Alerts card follow.
+- Waiting for me (MeetingSummary.ascx, a ninth column of the Scheduled grid, `WaitingColumn` 8): visible when the
+  OUTPUT `WaitingShown` is 1 (Controller and Manager); `WaitingText` shows the count and nothing where it is 0 or
+  NULL; the cell is bold (`wb-dash-waiting`). The heading has the tooltip "Items of this meeting waiting for your
+  approval".
+- Layout (CSS/bmms-workbench.css, Dashboard section): the grid `.wb-dash` has the columns 3fr and 1fr (the
+  Meetings card three parts of four of the content width beside the Alerts card); the panel has the grid area
+  `approvals` over the full width above the lists; the single column starts at `max-width: 1240px` (was 1100 px).
+  The Scheduled table has nine columns for the Controller and the Manager and fits its card from 1241 px; the
+  number cells and the Status cell (the fourth column, `nth-child(4)`) have 4 px padding; a narrower card scrolls
+  inside `.wb-table-scroll`. Measured by the dashboard pack: the Meetings card 864 px wide; its table needs 793
+  px with the widest realistic cells in an 830 px box (37 px spare).
+- BAL and DAL: `AgendaMgr` / `AgendaDB` (`GetAgendaApprovalState`, `GetDashboardApprovals`; the flags come back as
+  INT output values that are 1 only when the Reason is 0) and `MeetingMgr` / `MeetingDB` (`GetDashboardMeetings`
+  with `WaitingShown`).
+- Known items (Database/README.md): the page still chooses the editable fields and the action word by the role in
+  the session; a blank agenda number would give a row without link text; the Status cell padding is set by column
+  position; the Short Text box may look editable while the buttons are hidden.
+
+Drawn from: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff), BMMS/UserControl/MeetingSummary.ascx
+and .ascx.cs (diff), BMMS/CSS/bmms-workbench.css (diff), BMMSBAL/AgendaMgr.cs and MeetingMgr.cs (diff),
+BMMSDAL/AgendaDB.cs and MeetingDB.cs (diff), Database/BMMS-Fix-AgendaWaitingFor-Step44.sql, Database/README.md
+(section Step UN6c2a, Known items), Tests/packs/dashboard/README.md, the tester run of 2026-11-14 as given.
+
+### The Dashboard summary cards and the Committee filter (step UN6c2b)
+
+MeetingSummary.ascx(.cs), DashBoard.aspx(.cs), the Agenda and Action Item BAL and DAL classes and the CSS changed in
+step UN6c2b; the rules are on the server (database step 45) and the page sends the acting user id and the filters,
+never a role.
+
+- Summary cards (MeetingSummary.ascx, `divSummaryCards`, three `.wb-card.wb-dash-stat` tiles): `LoadSummary` runs in
+  `LoadMeetings` after the titles, with the committee id and department id of the meeting list, and calls
+  `AgendaMgr.GetDashboardSummary(userId, committeeId, departmentId, out inProgress, out rejected)` (BAL, then
+  `AgendaDB.GetDashboardSummary`; the two counts are `int?` and null unless the Reason is 0). Reason 0 shows the
+  cards and sets `HasSummaryCards` (ViewState); Reason 4 once the cards were shown (`HasSummaryCards`) shows dashes and
+  `SummaryChoiceMessage` plus `ChoiceHint`; Reason 4 before that (MD Secretariat, Admin), 8 and 12 hide the cards;
+  an exception is written to the error log and, for a person who has the cards or a role in `SummaryRoles`, shows
+  dashes with "The counts could not be loaded. Reload the page to try again." (busy: "The server is busy and the
+  counts could not be loaded. Wait a moment, then reload the page."). When the meeting list itself fails
+  (`ShowFailure`) cards that were shown keep their place with dashes. `SetCount` writes the number or the dash (an
+  en dash, `NoCount`) and shows the hidden span "count not available" (`wb-visually-hidden`); a count is never 0 by
+  default.
+- Labels: `ItemsOf` builds "Items", "[department] items" or "Items of my departments" from the role table and the
+  department list, then " in progress" or " rejected"; the scope line is "Scheduled meetings, " plus the committee name
+  or "all committees". The Unread alerts card has fixed texts ("Unread alerts", "Your alerts, not filtered").
+- Unread alerts: `DashBoard.LoadAlertGRV` calls `MeetingSummary1.SetUnreadAlerts(unreadCount)` with the unread count
+  of its own load (null when the load failed or was refused), so the card and the header use the rule of the Alerts
+  card; it follows no filter. The Alerts card carries a note (`wb-dash-note`) "Your own alerts, for every committee.
+  The filters at the top do not apply."
+- "In progress": `RoleViews` has "In progress" as the last column heading of every role, and the User now has the
+  Committee drop-down. `InProgressMeaningFor(roleCode)` (the role code the server returned) gives the sentence: the
+  two-part sentence for `controller` and `manager`, "Items not yet approved or rejected." for every other role. It is
+  the header tooltip (`SetInProgressTip`), the note on the In progress card and, where statistics are shown and no
+  card is (MD Secretariat), the visible line `pInProgressNote` "In progress: ...".
+- The hint: `MeetingSummary.ChoiceHint` is " Choose All committees." or, when the Department drop-down is shown
+  (`divDepartmentFilter.Visible`: a Manager with two or more departments), " Choose All committees or All my
+  departments."; the page adds it to the refusal text of My approvals (`ApprovalsFilterMessage`, now without the
+  hint) and of the Action Items card.
+- Action Items card: `LoadActionItemGRV` calls the new overload `ActionItemMgr.GetDashboardActionItems(userId,
+  committeeId, departmentId, out reason)` (`ActionItemDB`, procedure parameters @CommitteeId and @DepartmentId). Reason
+  4 once the server has said the person has the card (`HasActionItemsCard`, ViewState) shows
+  "The action items cannot be shown for this choice." plus the hint inside the card; Reason 4 before that hides the
+  card as before. `MeetingSummary1_FiltersChanged` loads My approvals from page 1 and the Action Items card from its
+  first page.
+- My approvals heading: `litApprovalCount` no longer has `EnableViewState="false"`, so the count survives the
+  postbacks that do not reload the panel (the Alerts and Action Items links, opening and closing an alert or an
+  item). `ShowApprovalsMessage` (failed or refused load) writes " (" and an en dash and ")" and shows the hidden
+  span `spanApprovalCountUnknown`; a successful load hides the span.
+- Layout (CSS/bmms-workbench.css): `.wb-dash-summary` is a wrapping flex row, `.wb-dash-stat` tiles at least 200 px
+  wide; at `max-width: 1240px` the Meetings cells have 6 px by 3 px padding, 13 px headings, a committee minimum of 6em
+  and a smaller wrapping chip; at `max-width: 959px` the first column is sticky (`position: sticky; left: 0`) while a
+  list wider than its card scrolls inside `.wb-table-scroll`. The page never scrolls sideways.
+- Known items (Database/README.md): the page sends the department chosen last even when the Department drop-down is
+  not shown (the server checks it); the visible "In progress" line sits under both lists; the sticky column and the
+  3 px padding are owner checks by eye.
+
+Drawn from: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff), BMMS/UserControl/MeetingSummary.ascx,
+.ascx.cs and .ascx.designer.cs (diff), BMMS/CSS/bmms-workbench.css (diff), BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs (diff),
+BMMSDAL/AgendaDB.cs and ActionItemDB.cs (diff), Database/README.md (section Step UN6c2b, Known items).
+
+### The Action Item Details panel and the Followup page saves (step UN6d)
+
+Database step 46 and the code of step UN6d. Both pages send the acting user id (`Session["UserId"]`); the server decides
+every save (chapter 08). What the pages show follows `Session["RoleCode"]` and is for display only.
+
+DashBoard.aspx(.cs), the Action Item Details panel:
+
+- The open-item handler sets `canSave` for the roles controller, manager and user: Submit (`btnActionItemApprove`)
+  and Cancel are visible and the Action Text editor is writable; for every other role (in practice Management; MD
+  Secretariat and Admin have no card) Close is visible, the editor is read-only and the line "You can read this
+  action item. Your role cannot change it." is shown. The Controller no longer has Close. The X in the header stays
+  for everyone.
+- The new line `pActionItemPanelMessage` (inside the panel, above the buttons, plain text) shows the read-only line, and
+  for the roles that save the failed-save, server-busy and text-too-long messages (the page's message box lies under
+  the open panel). It is cleared when the panel opens and when it closes (Cancel, Close, the page's close-all).
+- After Submit: a failure, a busy server or a text that is too long keeps the panel open with the text typed and the
+  message on the line. A done or refused save closes the panel, calls `LoadActionItemGRV` (the link chosen, the page
+  and the Committee and Department filters are kept) and shows "The action text was saved." as a success (Reason 0),
+  or the Reason 8 or Reason 4 text of step 43 unchanged. The server rule (spr_SaveDashboardActionText) is not
+  changed.
+
+Master/Followup.aspx(.cs), the Followup page:
+
+- Step UI2a (code only; markup only, the code-behind is unchanged): the title, the message box and the filter are in
+  the Masters' form look (Committee Master is the reference), inside `div.wb-page`: the breadcrumb "Minutes / Followup",
+  `h1.wb-h1` "Followup", the message box (`divErrLogin`, `spanErrLogin`) in a polite live region, and the filter in a
+  `wb-card` headed "Find followups", one `wb-row` per line in this order: Meeting Date From (from date, "to", to date; the
+  `wb-req` * is in this label, it stood after the to date before), Committee Name, Department, Meeting No. Search,
+  Meeting No., Confirmed Status. The labels have no colon. View (`btnViewFollowup`) has the class `wb-btn` and Cancel
+  (`btnCancel`) `wb-btn wb-btn-secondary`. The list (`pnlViewFollowup` with its old frame `formContent` / `formPanel`),
+  Submit and the three panels stay outside `.wb-page`, on purpose (decision D6: the rules of `.wb-page` for box sizing,
+  select and textarea size must not reach the grid, the Status column or the editors). Submit has `wb-btn` inside a
+  `wb-actions` row. Control IDs, events, validation, messages and role checks are unchanged. The date boxes keep
+  `onfocus="this.blur()"` and `TabIndex="-1"`. The list as a Workbench list is for a later step (candidate UI3, Database/README.md).
+  The frame is now inside `pnlViewFollowup`, so no empty frame shows before View.
+- The same step moved Agenda Finalize (AgendaFinalization.aspx), Finalize Minutes (MinutesFinalization.aspx) and Minutes
+  Confirmation (MinutesConfirmation.aspx) to the same look: breadcrumb "Agenda / Agenda Finalize", "Minutes / Finalize
+  Minutes", "Minutes / Minutes Confirmation"; a card headed "Meeting" with the rows Committee Name * and Meeting No * (the
+  * in the label); Finalize (or Confirm) as `wb-btn`, Cancel as `wb-btn wb-btn-secondary`; the `confirm(...)` texts are
+  unchanged (step MF1 then sets them from the code-behind once a meeting is chosen, see "The Minutes Items list on Finalize
+  Minutes and Minutes Confirmation (step MF1)"). On Agenda Finalize the pending agenda items (`pnlPendingAgenda`, `grvAgenda`) are a Masters list (`wb-card`
+  headed "Pending Agenda Details", `wb-table` in `wb-table-scroll`) with the columns S.No., Agenda No, Subject Type Name,
+  Short Text, Agenda Status; the Committee Name and Meeting No columns are removed because they repeat the choice above
+  the list (the mail code still reads those fields from the data, not from the grid). Sorting (`OnSorting`) and the
+  Visible rule of the panel (code-behind) are unchanged.
+
+- Step FU1 (database step 47) changed this page; the points below that say "step 46" describe what FU1 replaced and
+  the FU1 bullets that follow them say what holds now. `CanSave` is true when the session role is controller. In
+  Page_Load, on every request, Submit (`btnSubmit`) is visible only for `CanSave` and while the list shown has a Pending
+  row (`ViewState["HasPending"]`, set by `BindFollowup`), and the line `pFollowupReadOnly` ("You can read the followups.
+  Your role cannot change them.") above the list is visible when `CanSave` is false. The Action Text panel opened by
+  `grvFollowup_RowCommand` has the editor read-only, no Save, Cancel renamed Close, the title ":: View Action Text"
+  (`litActionTextTitle`; ":: Edit Action Text" for an editable item) and a line inside it (`pActionTextPanelMessage`).
+- FU1, the list: `BindFollowup` reads `ActionItemMgr.GetFollowupList` (spr_GetFollowupList) with the filters kept at
+  View in `ViewState["FollowupFilter"]` (the old ViewState copy of the whole list is gone); a refused list is empty and
+  says "You cannot read the followups: your role has no access to them." (Reason 8: "Your account is not active. Sign in
+  again."). The Status column replaces the Is Confirmed tick. `grvFollowup_RowDataBound` builds the cell: a Pending row
+  gets the drop-down `ddlStatus` (Pending, Confirmed) for the Controller and the word "Pending" for a reader, and, when its
+  latest history row is a Reopen, the line "Reopened by [Name (login)] on [dd-MMM-yyyy HH:mm]: [reason]"; a confirmed row
+  has no drop-down, "Confirmed" and "Confirmed by [Name (login)] on [date]" ("Confirmed (before history)" when it has
+  no history row), and the Reopen button for the Controller. A confirmed row's Action Text button reads "View" for every
+  role, and its panel carries the line "This followup is confirmed and can no longer be changed. Reopen it to change the
+  action text." for the Controller. Every text from the database goes through `HttpUtility.HtmlEncode` and a Literal.
+- FU1, Submit: `btnSubmit_Click` collects only the ids of Pending rows whose drop-down is Confirmed and sends them in one
+  call, `ActionItemMgr.SaveFollowupConfirmed(userId, ids, out saved, out skipped)`; no row changed: nothing is sent and
+  the page says "No followup was changed to Confirmed. Nothing was saved." Reason 0: "[n] followups were confirmed." /
+  "1 followup was confirmed." (success) with " [m] had already been confirmed." when rows were skipped, or "No followup
+  was confirmed. [m] had already been confirmed." (warning); the list is read again with `RebindAfterSave`.
+- FU1, Reopen: the Reopen button (`CommandName` Reopen) opens the panel `pnlReopen` (":: Reopen Followup"); Save
+  (`btnReopenSave_Click`) trims the reason, refuses a blank one ("Enter the reason for reopening.") or one over 500
+  characters (`ActionItemMgr.ReopenReasonMaxLength`; "The reason can be at most 500 characters.") inside the panel, then
+  calls `ActionItemMgr.ReopenFollowup`. The browser check `FollowupReopenCheck` (the Reopen Save button's
+  OnClientClick) stops a "<" followed by a letter, "!", "/" or "?", or "&#", with `Remove the "<" or "&#" from the
+  reason, then save again.`, and nothing is posted. Reason 0: "The followup was reopened." and the list is read again,
+  the not yet submitted Confirmed choices on other rows kept (`ChosenConfirmed`, `ApplyChosenConfirmed`); Reason 27:
+  "This followup is no longer confirmed. Nothing was saved. Click View to read the list again."; Reason 8 and 4 or 12 as
+  below; a failure or a busy server keeps the panel open with "The followup could not be reopened. Nothing was saved.
+  Try again." (busy: "The server is busy and the followup could not be reopened. Nothing was saved. Wait a moment, then
+  try again.") and writes the error log.
+- `btnActionTextSave_Click` (Save): a text over the limit shows the too-long message inside the panel and the panel
+  stays open; the item id is read with `int.TryParse` (before: `Convert.ToInt16`, which failed above 32,767); the
+  call is `ActionItemMgr.SaveFollowupActionText(userId, itemId, text)`. Reason 0 closes the panel and shows "The action
+  text was saved."; Reason 8 shows "Your account is not active. Nothing was saved. Sign in again."; Reason 4 or 12
+  shows "You cannot change the followups: your role can only read them, or an item on the list no longer exists.
+  Nothing was saved. Click View to read the list again." and the panel closes; since step 47 Reason 26 (the item is
+  confirmed) shows "This followup is confirmed and can no longer be changed. Nothing was saved. Click View to read the
+  list again." An exception is written to the error
+  log (`Utilities.WriteErrorLog`) and the panel stays open with "The action text could not be saved. Nothing was
+  saved. Try again." (busy: "The server is busy and the action text could not be saved. Nothing was saved. Wait a
+  moment, then try again."). There is no error page.
+- `btnSubmit_Click` (Submit), step 46 text, replaced in step 47 (see the FU1 Submit bullet above): every row of the
+  list was sent with its tick and Reason 0 said "The confirmations were saved." (was "Successfully Saved"). Still
+  true: a row whose id cannot be read refuses the Submit with the Reason 4 text before anything is sent; Reason 8 and 4
+  or 12 as above; an exception: "The confirmations could not be saved. Nothing was saved. Try again." (busy: "The
+  server is busy and the confirmations could not be saved. Nothing was saved. Wait a moment, then try again."),
+  written to the error log.
+- `HasSessionUser`: a session without a usable user id redirects to the sign-in page, as the Dashboard does.
+- Markup: the new lines sit in wrappers of the class `wb-followup-row`, the two popup panels carry `wb-followup-popup`.
+
+BMMSBAL/ActionItemMgr.cs and BMMSDAL/ActionItemDB.cs: `SaveFollowupActionText` (the text is cleaned with
+`HtmlCleaner.Clean` first, as before) and `SaveFollowupConfirmed` (the list written with `XmlWriter` as
+`<items><i id=".." c=".."/>...</items>`, so nothing of it is read as markup) are new; both return the Reason through
+`MinutesDB.RefusalReason`, `SaveFollowupConfirmed` also the number of rows written. The wrappers
+`ActionItemMgr.UpdateActionItem` and `ActionItemDB.UpdateActionItem` are removed; nothing calls spr_UpdateActionItem
+any more (it stays in the database and goes on the drop list).
+
+Styles: CSS/bmms-workbench.css has `.wb-followup-row` (floated, full width, so a message line stands below the
+floated `.divRow` rows of CommonHTML.css instead of under them) and `.wb-followup-popup` (the editor centred with auto
+margins and the message line 600 px wide, as wide as the editor; the same width is `Width="600px"` of `ftxtActionText`
+in Followup.aspx, change both together). CSS/CommonHTML.css: the rule for `#contentArea` with a popup
+(`:has(.MyPopupOuter)`) now has `display: flow-root`; it took away the containment of floats that `overflow: visible`
+had removed in step H1 (commit ba361c3), so on Followup a list taller than 70 percent of the window no longer left the
+footer as a narrow column beside the floats (an old fault, not caused by UN6d; the Dashboard and Update Minutes
+measure the same). The stylesheets have no Cache-Control header; before step UN6e a stylesheet change needed Ctrl+F5.
+Since step UN6e every local stylesheet link carries a version stamp (see "Stylesheet version stamp (step UN6e)"), and
+Ctrl+F5 is a fallback only.
+
+Step FU2a (database step 48) changed the Dashboard panel and added a shared class; this is what holds now, in
+addition to the bullets above:
+
+- `BMMS/FollowupStatusText.cs` (`public static class FollowupStatusText`, namespace BMMS, added to BMMS.csproj) holds the
+  status texts in one place for the two pages: `Caption` (the one line of the Dashboard's panel: for a confirmed item
+  the Confirm line, "Confirmed (before history)" or "Confirmed"; for an item not confirmed the Reopen line when its latest
+  row is a Reopen, else empty), `ConfirmedLine` ("Confirmed by Name (login) on dd-MMM-yyyy HH:mm"), `ReopenedLine`
+  ("Reopened by Name (login) on dd-MMM-yyyy HH:mm: reason"), `ActedByName` (`Common.UserDisplayName`, " (inactive)",
+  "an unknown user"), `ActedOnText` ("an unknown date" when none), `IsSet` (a flag as IsConfirmed is read: NULL and
+  blank are 0) and the constants `DateTimeFormat`, `ConfirmedWord`, `ConfirmedBeforeHistory`. The texts are plain; the
+  page encodes them. Master/Followup.aspx.cs uses it for the Status cell (its own copies of `ActedByName`, `ActedOnText`
+  and `DateTimeFormat` are removed); the output is the same as in step 47.
+- DashBoard.aspx.cs: `lnkActionItem_Click` now reads `canSave` with `CanSaveActionText(RoleCode)` (controller, manager
+  or user) and, after the item is read, calls `SetActionItemPanelMode(canSave, confirmed, message)`: the editor is
+  writable and Submit and Cancel are shown only when the role may save and the item is not confirmed; otherwise the
+  editor is read-only and only Close is shown, with one line: the message given (the Reason 26 refusal), else for a
+  confirmed item "This followup is confirmed and can no longer be changed." (for every role, in place of the line of a
+  role that only reads), else for a role that only reads "You can read this action item. Your role cannot change it."
+  The status line is the paragraph `pActionItemStatus` (class `bmms-comment-by wb-dash-status-line`, set with
+  `InnerText`, hidden when empty), under the Action Text editor in the value column; `BindActionItemDetails` fills it
+  with `ActionItemStatusCaption`, which reads the seven status columns only when all are present in the row (a
+  database where step 43 or 45 was run again after step 48 has none: no line, no error). It is cleared with the
+  editors and when the panel closes.
+- After Submit with Reason 26 (`ShowConfirmedAfterSave`): the item is read again with
+  `ActionItemMgr.OpenDashboardActionItem` so that the editor shows the saved text and the line shows who confirmed it,
+  the panel stays open in the read-only mode with "This followup is confirmed and can no longer be changed. Nothing was
+  saved." (`ActionItemConfirmedNotSavedMessage`) and the card is read again (`LoadActionItemGRV`). When the read fails
+  (an exception goes to the error log) the panel stays open, read-only, with the message and no status line.
+- The card's Due date column has a second placeholder `phReopened` with the chip `wb-chip wb-chip-orange
+  wb-dash-reopened` ("Reopened"), shown by `IsReopened(Container.DataItem)` when the row has IsReopened 1 (false when the
+  column is not there). It stands after `phOverdue`; both can show. There is no "Confirmed" chip.
+- CSS/bmms-workbench.css: `.wb-dash-reopened` (left margin) and `body.wb .wb-dash-status-line` (block, full width of the
+  value column, wraps also a reason without a space, 500 characters). The orange chip is #8A5300 on #FDF3E1, 5.75:1.
+- The list came back with the seven more columns (the reason of a reopened item, at most 500 characters). Until step UN6e
+  it travelled in ViewState; it no longer does.
+- ActionItemMgr and ActionItemDB are not changed.
+
+Known items (Database/README.md): the Submit writes every listed row with the ticks read at View (a lost update); the
+saves set no UpdatedOn or UpdatedBy and write no audit row; opening a panel for an item that no longer exists, View
+and the drop-down handlers still go to the error page; nothing sets IsComplied to 1; the View button calls a script
+function that does not exist; the meeting date boxes are not used by the list's query.
+
+Drawn from: BMMS/DashBoard/DashBoard.aspx, .aspx.cs and .aspx.designer.cs (diff), BMMS/Master/Followup.aspx, .aspx.cs
+and .aspx.designer.cs (diff), BMMSBAL/ActionItemMgr.cs and BMMSDAL/ActionItemDB.cs (diff), BMMS/CSS/CommonHTML.css and
+bmms-workbench.css (diff), Database/README.md (section Step UN6d and its Known items).
+
+### The Minutes Items list on Finalize Minutes and Minutes Confirmation (step MF1)
+
+Code only; no database step, no procedure changed. Controller only (the pages' access is unchanged: PageAccess.xml and
+PageSettings.xml are not touched). Master/MinutesFinalization.aspx(.cs) and Master/MinutesConfirmation.aspx(.cs).
+
+Data, in the business layer (BMMSBAL/MinutesMgr.cs):
+
+- `MinutesMgr.GetMinutesItemList(int MeetingId)` reads `MinutesDB.GetMinutesByMeetingId(MeetingId, -1, -1)`, that is the
+  existing spr_GetMinutesByMeetingId (View_Minute, all departments, as Update Minutes reads it), and returns a
+  `MinutesItemList`: `Items` (a DataTable with the text columns AgendaNo, SubjectNo, ShortText, Decision,
+  ActualResolution), `Total` (rows) and `NotSaved` (minutes not saved in Update Minutes). The rows are sorted by AgendaNo
+  ascending, as text (View_Minute.AgendaNo is varchar(50)).
+- A minute counts as saved when StatusId is 1 (the rule of fn_WorkflowState.MinutesUpdated); every other StatusId
+  (or NULL) counts in `NotSaved`. For a minute not saved, Decision and Actual Resolution are the constant
+  `MinutesMgr.NotYetRecorded` ("Not yet recorded"): the stored values are the defaults Agenda Finalize wrote. For a saved
+  minute an empty Decision, or an Actual Resolution that is empty after `HtmlCleaner.ToPlainText`, is
+  `MinutesMgr.NotRecorded` ("Not recorded"). SubjectNo NULL or 0 is "-".
+- `HtmlCleaner.ToPlainText(string html)` (BMMSBAL/HtmlCleaner.cs): null or empty gives an empty string. It replaces
+  tags with the existing `TagPattern`: br and the start or end of p, div, li, ul, ol, tr, td, th, table and h1 to h6 give
+  a space, any other (inline) tag gives nothing, so a word with a bold part stays one word. Then `HttpUtility.HtmlDecode`
+  (so `&amp;` becomes `&`, `&nbsp;` a space), control characters are dropped and every run of white space becomes one
+  space. The result is plain text, not HTML: it is encoded once, on the page. Text typed as `<b>x</b>` is stored by
+  `HtmlCleaner.Clean` as `&lt;b&gt;x&lt;/b&gt;`, is not a tag here and comes back as the literal text. The existing
+  methods of HtmlCleaner are unchanged.
+
+The list on the page (both pages, the same markup):
+
+- `pnlMinutesItems` (Visible false until a meeting is chosen) holds a second `wb-card` headed "Minutes Items" with
+  `div.wb-table-scroll` and the GridView `grvMinutesItems` (`wb-table`, SkinID grvSkinNoPaging, no paging, no sorting,
+  `EnableViewState="false"`), the same pattern as the pending list of Agenda Finalize. The five columns are TemplateFields
+  headed Agenda No, Subject No, Short Text, Decision, Actual Resolution; each cell is `HttpUtility.HtmlEncode(Eval(...))`,
+  once. Agenda No and Subject No have the cell class `wb-col-action`; Short Text and Actual Resolution `wb-col-text`.
+  `EmptyDataTemplate`: "No items in this meeting." (class `divNoRecord`).
+- bmms-workbench.css, new shared rule `.wb-table > tbody > tr > td.wb-col-text` (white-space normal, overflow-wrap and
+  word-wrap break-word). The rule is element plus class so that it outranks the single-class `wb-col-action` style of the
+  grid. Owner decision (Q3): in the grid's auto layout one unbroken string longer than the column widens it and the list
+  scrolls sideways inside `wb-table-scroll` (Known items in Database/README.md).
+- `ddlMeeting_SelectedIndexChanged` is new on both pages (an owner-approved exception to "no new events": `ddlMeeting`
+  already had `AutoPostBack="true"` and no handler). It calls `MsgHide()` and then `LoadMinutesItems`. The committee
+  handler (`ddlCommittee_SelectedIndexChanged`) reloads the meeting drop-down and now ends with `HideMinutesItems()`.
+- `LoadMinutesItems`: with Committee Name or Meeting No at -Select-, it calls `HideMinutesItems()` and stops; otherwise it
+  reads `GetMinutesItemList`, binds the grid, shows the panel and sets the text of the button's confirm.
+  `HideMinutesItems()` hides the panel, empties the grid and puts back the default confirm text of the markup (constant
+  `DefaultConfirmText` in each code-behind: it must be kept equal to the OnClientClick of the markup).
+  After a refused `btnFinalize_Click` or `btnConfirm_Click` and after a failed `PageValidation` the page calls
+  `LoadMinutesItems` again, so the list is current and the page's message stays (Committee and Meeting stay selected
+  after a postback, as before). Since step AF1 a successful Finalize or Confirm does not do this: the meeting drops out of
+  the Meeting No list (see "The meeting lists and the Agenda Finalize confirm (step AF1)"). `btnCancel_Click` calls `HideMinutesItems()` and then redirects to the Dashboard, as before.
+
+The confirm texts (built on the server when the list loads, from the same rows as the list, D3):
+
+- The confirm is `return confirm('...');` set on `OnClientClick` of the button through `ConfirmScript`, which passes the
+  text through `HttpUtility.JavaScriptStringEncode`. The text holds fixed words and counts only, never text of the
+  data.
+- Finalize Minutes (`n` = `Total`, `m` = `NotSaved`; `IsNew` from `MeetingMgr.GetMeetingWorkflowState(MeetingId)`, the
+  meeting created after step 23):
+
+| Case | Confirm text | Server refuses |
+|---|---|---|
+| T1: n > 0, m = 0 | "Do you want to Finalize this Meeting Minutes? Items: [n]." | No |
+| T2: n > 0, m > 0, not IsNew | "Do you want to Finalize this Meeting Minutes? Items: [n]. Not yet saved in Update Minutes: [m]." | No (an older meeting is finalized with unsaved minutes) |
+| T3: n > 0, m > 0, IsNew | "Items: [n]. Not yet saved in Update Minutes: [m]. These minutes cannot be finalized until every item is saved in Update Minutes. Nothing will be finalized." | Yes, Reason 19 (or an earlier Reason) |
+| T4: n = 0 | "This meeting has no minutes to finalize. Nothing will be finalized." | Yes (Reason 19 for IsNew; "No Minutes For the selected Committee/Meeting" for an older meeting) |
+
+- Minutes Confirmation: "Do you want to Confirm this Meeting Minutes? Items: [n]." (counts only; no hint for n = 0, a
+  Known item).
+- Finalize stays clickable in every case (the confirm does not block it): OK posts back and the server's refusal shows
+  as before. Spr_MinutesFinalizeByMeetingId refuses (Reason 19) a meeting created after step 23 with MinutesTotal = 0 or
+  MinutesUpdated < MinutesTotal; an older meeting is not refused for unsaved minutes, and an older meeting without minutes
+  is refused by the page itself before the procedure is called.
+
+The advance warning on Finalize Minutes (C7, narrowed by C8). `LoadMinutesItems(bool showWarning)`: the handler
+`ddlMeeting_SelectedIndexChanged` passes true; the calls after a Finalize or a failed validation pass false (the
+message of that action stays). When `showWarning` is true and the case is T3 or T4, the page's message block shows the
+refusal in advance, with the warning look (`MessageKind.Warning`):
+
+- not `IsNew` (an older meeting) and no minutes: `NoMinutesMessage` ("No Minutes For the selected Committee/Meeting"), the
+  constant `btnFinalize_Click` also uses;
+- `IsNew` and `AgendaFinalized` and `AttendanceRecorded` (the three values from the same `GetMeetingWorkflowState` call):
+  `MeetingChangeReason.MinutesNotUpdatedMessage(NotSaved + "/" + Total)`, the same text and counts the server gives for
+  Reason 19;
+- `IsNew` without a finalized agenda or without recorded attendance: no warning, because spr_MinutesFinalizeByMeetingId
+  refuses first with Reason 17 or 18, which the page does not forecast (the T3 or T4 confirm still says nothing will be
+  finalized; the reason shows after OK).
+
+The message is cleared by `MsgHide()` when the committee or the meeting changes, and on Cancel; the message of a Finalize
+replaces it. No other refusal is forecast.
+
+Not changed: Finalize and Confirm behaviour, procedures, mails, alerts, audit rows, control ids, validators,
+UpdatePanels, the other onclick handler (`MinutesFinalizeValidation`), the acting-user check of the minutes procedures
+(not added; a separate step).
+
+### The meeting lists and the Agenda Finalize confirm (step AF1)
+
+Code only; no database step, no procedure changed. Master/AgendaFinalization.aspx(.cs), MinutesFinalization.aspx(.cs),
+MinutesConfirmation.aspx(.cs) and BMMSBAL/MeetingMgr.cs. Markup, control ids, look and page access are unchanged.
+
+The list (BMMSBAL/MeetingMgr.cs):
+
+- `enum MeetingAction` (AgendaFinalize, MinutesFinalize, MinutesConfirm) and
+  `MeetingMgr.GetMeetingsToActOn(int CommitteeId, MeetingAction Action)`. It reads `MeetingDB.GetMeetingByCommitteeId`, the
+  existing spr_GetMeetingByCommitteeId (View_Meeting, all meetings of the committee), and copies the rows to keep into a clone
+  of the table, in the same order. The status columns are compared trimmed, in upper case, "" for NULL.
+- AgendaFinalize: AgendaStatus equals OPEN (spr_CheckAgendaFinalizeByMeetingId); NULL is not kept. MinutesFinalize:
+  MinutesStatus is neither F nor C (spr_CheckMinutesFinalizeByMeetingId, spr_CheckMinutesConfirmByMeetingId); status only, so
+  a meeting not ready yet stays and the MF1 messages explain; NULL is kept. MinutesConfirm: MinutesStatus is F.
+- The procedures still decide. The other pages that read spr_GetMeetingByCommitteeId (Master Attendance, Committee, Followup,
+  Meeting, MeetingMember, MinutesUpdate; Report AgendaApproval, AttendanceDetails, Followup, FollowupActionTaken, Notice, Reports,
+  SendMail, SittingFeesApplicable) keep every meeting.
+
+On each of the three pages:
+
+- `LoadMeetings(bool showEmpty)` replaces the old reading in `ddlCommittee_SelectedIndexChanged` (which passes true): it keeps the
+  rows in `ViewState["dtMeeting"]` and fills Meeting No. With showEmpty, a chosen committee and no row, `MsgDisplay` shows the
+  page's constant `NoMeetingMessage`: "This committee has no meeting with its agenda still to finalize." (Agenda Finalize),
+  "This committee has no meeting with minutes still to finalize." (Finalize Minutes), "This committee has no meeting with
+  finalized minutes waiting for confirmation." (Minutes Confirmation).
+- After a success (Result 1) the page calls `LoadMeetings(false)`, so the meeting drops out, Meeting No is "- Select -" and no
+  empty-list message replaces the success message. Agenda Finalize: `ReloadAfterFinalize` also calls `LoadAgenda`,
+  `BindGridView` and `SetFinalizeConfirm`; it is called on both success branches (with agenda items, and "Agenda Finalized (no
+  agenda items)."). Finalize Minutes: `ReloadAfterFinalize` calls `LoadMeetings(false)` and `HideMinutesItems`. Minutes
+  Confirmation does the same inline and returns before `LoadMinutesItems`. After a refusal nothing is reloaded for the list and the meeting stays
+  chosen (Finalize Minutes and Minutes Confirmation read the Minutes Items list again, as in MF1).
+
+The Agenda Finalize confirm (`SetFinalizeConfirm`, called after the committee and the meeting handlers and in `ReloadAfterFinalize`):
+
+- It sets `OnClientClick` of `btnFinalize` to `return confirm('...');` through `ConfirmScript`, the text passed through
+  `HttpUtility.JavaScriptStringEncode`. With Committee Name or Meeting No at "- Select -" it is `DefaultConfirmText`, "Do you want
+  to Finalize this Meeting Agenda?", which must be kept equal to the markup's OnClientClick.
+- Counts: approved = the rows of `AgendaMgr.CheckAgendaByMeetingId(MeetingId)` whose ControllerApprovedStatus is "Approved"
+  (the rows spr_AgendaFinalizeByMeetingId copies to the minutes); to be rejected = the rows of `ViewState["dtAgenda"]`, the pending
+  list `LoadAgenda` reads with spr_CheckAgendaApprovedByMeetingId (AgendaStatusCode AC or AMA), the items `btnFinalize_Click` rejects with a mail each.
+- Text: "Finalize the agenda of [committee], Meeting No [no]?" (the selected texts of the two drop-downs), then for no rows: " This
+  meeting has no agenda items, so it will have no minutes."; otherwise " Approved items that go to the minutes: [A]." or " No item
+  is approved, so no item goes to the minutes.", then " Items not yet approved that will be rejected, with a mail for each: [R]."
+  or " No item will be rejected."
+- The counts are read when the meeting is chosen, not when Finalize is pressed (a Known item in Database/README.md).
+
+Not changed: the procedures, refusals, Reasons, locks, audit rows and mails; the MF1 confirm texts and warnings; PageAccess.xml.
+
+### The Followup reports (step FU2b)
+
+Step FU2b (database step 49) changed Report/Followup.aspx (Followup and Followup Summary), Report/FollowupActionTaken.aspx
+(Followup by Department), the data and business layers behind them, and the reopen reason check of Master/Followup.aspx.
+
+- Data layer. `ActionItemDB.GetFollowupReport(ActingUserId, CommitteeId, MeetingNoSearch, MeetingId, FromMeetingId,
+  ToMeetingId, DepartmentId, ConfirmStatus, out Reason)` calls `spr_GetFollowupReport`;
+  `ActionItemDB.GetFollowupByDepartmentReport(ActingUserId, CommitteeId, MeetingNoFrom, MeetingNoTo, DepartmentId,
+  int? SubjectNoFrom, int? SubjectNoTo, out Reason)` calls `spr_GetFollowupByDepartmentReport` (a null subject number is sent as
+  DBNull). Both use stored procedures and parameters only; `Reason` comes from `MinutesDB.RefusalReason`. Removed:
+  `ActionItemDB.GetFollowup(string)` (the one path that ran a text it was given, the string SQL of the reports),
+  `ActionItemDB.GetFollowupReportForManagement` and `ActionItemDB.GetActionItemByMeetingIdDeptId`.
+- Business layer. `ReportsMgr.GetFollowupReport` has the acting user and `out Reason` and no longer builds SQL text;
+  `ReportsMgr.GetFollowupReportForManagement` is removed. `ActionItemMgr.GetFollowupByDepartmentReport` replaces
+  `ActionItemMgr.GetActionItemByMeetingIdDeptId`. `ActionItemMgr.ReopenBlankCharacters` (27 characters written as code points)
+  and `ActionItemMgr.IsBlankReopenReason(string)` are the one list of blank characters for a reopen reason; `ReopenFollowup`
+  and the Reopen Save of Master/Followup.aspx.cs both use it, and `spr_ReopenFollowup` has the same list.
+- `FollowupStatusText`: new `PendingWord`, `Word(confirmed, action, WordOnly)` ("Pending", "Confirmed", "Confirmed (before
+  history)"; with WordOnly only "Pending" or "Confirmed") and `Line(confirmed, action, reason, on, name, login, active)` (the
+  Confirm line for a confirmed item whose latest row is a Confirm, the Reopen line for an item not confirmed whose latest row is
+  a Reopen, else empty).
+- Report/Followup.aspx(.cs). Both roles call `ReportsMgr.GetFollowupReport(UserId, ...)`; `reportReason` (was
+  `managementReason`) not 0 shows `ReportsMgr.ReportRefusedMessage(reportReason)` and no grid, in View, Generate and the other
+  handler. The Confirmed Status choice "Not Confirmed" is "Pending" (value 0). The grid has a TemplateField headed "Followup
+  status" (a Literal filled by `StatusCellHtml`: the word and the line, each HtmlEncoded, in the classes `wb-followup-status` and
+  `wb-followup-status-line`; the Summary has the word only; the cell is 220 px wide). The generated Followup report adds
+  `StatusBlockHtml` (FOLLOWUP STATUS, the word in bold, the line under it, wrapping) after ACTION TAKEN; the printed Summary has a
+  "Followup status" column with the word (`StatusWordOf(row, true)`). The minutes status (grid column, "Minutes status" lines,
+  Summary column) follows `forManagement`, which is read from the database in Page_Load (`HasRole("mgmt")`), no longer whether the
+  rows hold the mark column. The From and To meeting dates are still not used.
+- Report/FollowupActionTaken.aspx(.cs). `GetCommitteeFollowupRows(DepartmentId, SubjectNoFrom, SubjectNoTo)` calls
+  `ActionItemMgr.GetFollowupByDepartmentReport` with the session's UserId (0 when there is none: the procedure answers Reason
+  8); the two RowFilters (committee, subject range) are gone, and `GetFollowup` parses both subject numbers with `int.TryParse`
+  before it sends them. `reportReason` not 0 shows the refusal message in the grid, the subject lists (disabled), Generate Report
+  and the check of Submit. The grid has the same "Followup status" column; the report's Subject cell holds the word in bold and the
+  line (10 pt) under the subject, HtmlEncoded.
+- Master/Followup.aspx: the script that checks the reopen reason ("<" followed by a letter, "!", "/" or "?", or "&#") first
+  clears and hides the server's message line (`pReopenPanelMessage`), so one message shows. Its Reopen Save uses
+  `ActionItemMgr.IsBlankReopenReason`.
+
+Known items (Database/README.md): the From and To dates; `btnSendMail_Click` and `CreateBodyText` of Report/Followup.aspx are
+still in the page and unreachable; a 500-character reason without spaces in the Word export is an owner check.
+
+Drawn from: BMMS/Report/Followup.aspx(.cs) and FollowupActionTaken.aspx(.cs) (diff), BMMS/Master/Followup.aspx(.cs) (diff),
+BMMS/FollowupStatusText.cs (diff), BMMSBAL/ReportsMgr.cs and ActionItemMgr.cs (diff), BMMSDAL/ActionItemDB.cs (diff),
+Database/README.md (section Step FU2b).
+
+### Lists are not kept in ViewState (step UN6e)
+
+Rule (owner decision R29, Dashboard and Followup only): a list is not kept in ViewState. Stage A is built, stage B is not.
+
+- Stage A, Dashboard.aspx.cs. `LoadActionItemGRV` no longer writes `ViewState["dtActionItem"]`, and the places that cleared
+  it (a refused filter choice, Reason 4, Reason 8, a failure, an exception) no longer have to. `OnPagingAction` sets the page
+  index and calls `LoadActionItemGRV()`, which reads the list again through `ActionItemMgr.GetDashboardActionItems` (so
+  spr_GetDashboardActionItems) with the acting user id and the Committee and Department filters. The Show All, Read and Unread
+  links and every save already read it again. `BindActionItemGRV` shows the last page there is when the list changed so that
+  the page asked for no longer exists. ViewState keeps `ActionMode`, the page number, the filters and the panel flags; the
+  grids keep only their own row state. There is no message between pages, and rows, order, paging, bold unread, the due date
+  and the status lines are as before. When the read at a paging step fails, the card shows the failure message of
+  `LoadActionItemGRV` ("The action items could not be loaded. Reload the page to try again.").
+- Stage B, not built (owner decision): display-only row controls without ViewState, with every list read again before the
+  page is drawn. The Followup page is unchanged: it keeps every row of its grid.
+- Users see no change.
+- Size of the `__VIEWSTATE` field in characters, as measured for the step (a scratch copy of the site against two throwaway
+  database copies; Database/README.md, section Step UN6e): the Controller's Dashboard on a copy of BMMS_Test 23,316 before and
+  7,788 after; on a copy filled to about one year of use 899,196 before and 21,908 after (Manager 61,496 and 22,992, User
+  59,680 and 21,176); Followup of a Controller with a committee of about 110 followups 85,016, unchanged. After stage A the
+  filled-copy Dashboard is still over the proposed 20 KB (20,480), what is left being the grids' row state; whether to build
+  stage B waits for the owner (Known items).
+- The tester guards the rule: the pack page-assets fails when the Controller's Dashboard `__VIEWSTATE` is over 12,900
+  characters (see chapter 10, "The page-assets pack (step UN6e)").
+
+### Stylesheet version stamp (step UN6e)
+
+BMMS/AssetVersion.cs (new; listed in BMMS.csproj) is the shared helper. `AssetVersion.Register(page, containers)` is called
+from the Page_Load of Main.Master and MainNoMenu.Master (the page header and the ContentPlaceHolder1 content) and of
+Default.aspx (the header). It adds a `PreRenderComplete` handler that goes through the direct children of the header and of
+each container: every `<link rel="stylesheet">` with a local `.css` address (no query, no fragment, no colon, no leading
+double slash, no backslash) gets `?v=` and the first 8 hex characters (lower case) of the SHA-256 of the file.
+
+- The address is resolved from the control that holds the link (`ResolveUrl`, `Server.MapPath`), so a path in a content page is
+  relative to that page.
+- The stamp is computed once per file and kept for the life of the application (a static, case-insensitive dictionary). A
+  changed file gets its new stamp when the application restarts, which a deployment does; a stylesheet changed or added
+  without a restart keeps the old stamp until the application recycles.
+- A missing or unreadable file, or an address that cannot be mapped, keeps its link without `?v=`: no error and no line in
+  the error log (the missing result is cached too).
+- Content links need `runat="server"` to be controls: the link of bmms-forms.css in Master/Agenda.aspx and MinutesUpdate.aspx
+  and of ColorPicker/js_color_picker_v2.css in Master/Committee.aspx and Meeting.aspx got it for this step. The two master
+  pages carry the other links; the pages with their own links are Default.aspx and these four.
+- Local `.js` links (BrowserSecurity.js, ColorPicker/color_functions.js and js_color_picker_v2.js) are not stamped (an option
+  only; Known items).
+- Effect: the browser fetches a stylesheet again when it changed and keeps it otherwise, so nobody has to clear the browser
+  cache after a CSS change; Ctrl+F5 is a fallback only. MainMaster.css is linked twice by both master pages (the second link
+  does nothing; Known items).
+
+Drawn from: BMMS/AssetVersion.cs (read in full), BMMS/MasterPage/Main.Master.cs, MainNoMenu.Master.cs and BMMS/Default.aspx.cs
+(diff), BMMS/DashBoard/DashBoard.aspx.cs (diff), BMMS/Master/Agenda.aspx, MinutesUpdate.aspx, Committee.aspx and Meeting.aspx
+(diff), BMMS/BMMS.csproj (diff), Database/README.md (section Step UN6e and its Known items), Tests/packs/page-assets/README.md.
+
+### The Governance Matrix page (step GM1a)
+
+BMMS/Report/GovernanceMatrix.aspx(.cs, .designer.cs) is read only: no control saves anything. It is listed in
+PageAccess.xml for `admin,controller`, has an entry in PageSettings.xml (title "Governance Matrix") and one link in each of
+two menus in MenuUserControl.ascx (the Admin menu, between Audit Trail and Reset Database, and the Controller's Reports
+menu, after Followup by Department). `Page_Load` calls `RequireRole("admin", "controller")` first (the role is read from the
+database on every request), then `Common.InitSetup`.
+
+- Two views in two panels, switched by the buttons "Matrix" and "Change log" (`aria-pressed` and the button style show the
+  active one). The matrix view opens with As on today, All departments and All transactions; the change log filters are
+  loaded when the Change log button is first clicked (last 30 days, "- All -", "All departments", "All change types"; the
+  users from spr_GetGovernanceLogUsers, the departments of today). A refused or failed read of the filters leaves them
+  unloaded, so the next click tries again.
+- Every fresh visit starts from the defaults: the response is no-cache and no-store, and the fields carry
+  `autocomplete="off"`. The choices are kept within the page by the postback. A reload after a postback re-sends the form.
+- The breadcrumb names the menu: "Admin" when the user has the Admin role, else "Reports".
+- The matrix is read by three procedures in this order: `GetSettings`, `GetDepartments`, `GetMatrix` (each takes the
+  acting user from `Session["UserId"]`; a Reason other than 0 becomes the text of `GovernanceMgr.RefusalMessage`, and a failure
+  writes the error log and shows "The governance matrix could not be loaded. Reload the page to try again."). The date is parsed
+  as dd-MMM-yyyy or d-MMM-yyyy; a text that does not parse gives "Enter a valid date (dd-MMM-yyyy)." before any call. The
+  Department filter is filled with the departments of the day, a department not active on that date marked "(inactive)".
+- `GovernanceMgr.BuildMatrix` makes one row per transaction and department. A transaction is a rule of the database
+  (agenda entry, Manager and Controller approval, action items: people from the procedure; the notes are written in the
+  class) or a page rule (agenda finalisation, minutes update, finalisation and confirmation, Followup, meeting, committee,
+  attendance, User Master, Department Master, System Settings): the roles come from `PageAccessModule.RolesForPage` and
+  the people of those roles from the "H" rows of the procedure. MD Secretariat is left out of the Followup row as "can open the page
+  to read only" (a list in `GovernanceMgr`, because PageAccess.xml lets it open the page and only the procedures refuse its
+  saves).
+- The Settings block shows `DeptNoManagerAction` and `AgendaControllerBypass` as on the date, as words. The Read-only access
+  block is built from the menu and the page rules: `GovernanceMgr.ReadMenu` reads MenuUserControl.ascx itself (the role
+  blocks and the drop-downs, with comments left out; a text with no link gives null and the block says "The menu or the page
+  rules could not be read.") and `BuildReadOnly` keeps, for Management and MD Secretariat, the entries the menu shows and
+  PageAccess.xml allows, named "Dashboard", "Dashboard (read only)" (Management), "[title] report" for a page under Report/ and
+  "[title] page" (with "(read only)" for MD Secretariat on Followup). The "read only" mark of the Management Dashboard comes
+  from a one-line list in `GovernanceMgr` (Known items in Database/README.md).
+- People are "Name (login)" through `Common.UserDisplayName`; "(system account)" and, for an earlier date, "(inactive now)"
+  are added by `GovernanceMgr`. The notes of an earlier date are added by the page (the four texts of the requirement).
+- Exports: both views have Print (a client script, `window.print()`; the page adds a print-only `@page { size: landscape; }`
+  style to its head, and the filters, buttons and breadcrumb carry the class `wb-noprint`), Export to Excel (CSV) and
+  Export to PDF. The CSV and the PDF are built by the page from the same reads as the grids (the page reads again at the click):
+  `GovernanceMgr.Csv` (every cell quoted; a cell that begins with = + - @, a tab or a carriage return gets a leading '; UTF-8
+  with a byte order mark; the file name GovernanceMatrix-yyyymmdd.csv or GovernanceChangeLog-yyyymmdd-yyyymmdd.csv) and
+  `GovernanceMgr.HtmlTable` through `PDFUtilities.HtmlReportToPdf` with `OrganisationDetails.ReportBannerHtml()` (every value
+  HTML-encoded). The download is sent with `X-Content-Type-Options: nosniff` and ends the request with `Response.End()`.
+- The change log rows are shown as "Changed on" (dd-MMM-yyyy HH:mm), "Changed by" ("(user no longer exists)" when the key is
+  empty), the change type name, the user, the department or the setting name, the old and new value (a setting value as
+  words) and the source ("Recorded", "From history", "From audit trail"). A deleted user in the user filter is marked
+  "(deleted)", an inactive one "(inactive)".
+- Every value on the page is plain text, encoded by the `BoundField` columns, the literals (`HtmlEncode`) and the exports.
+
+Drawn from: BMMS/Report/GovernanceMatrix.aspx and .aspx.cs (read in full), BMMSBAL/GovernanceMgr.cs (read in full), BMMS/PageAccessModule.cs (diff), BMMS/UserControl/MenuUserControl.ascx (diff), BMMS/XML/PageAccess.xml and PageSettings.xml (diff), Database/README.md (section Step GM1a).
+
+### The report filter pages in the Workbench look (step UI2b)
+
+Step UI2b (code only, no database step) gave the 13 report filter pages the form look of Committee Master. No behaviour
+changed: control IDs, events, handlers, messages, role checks and the URLs sent to ViewReport.aspx are the same as before.
+
+- Titles. The breadcrumb and the h1 follow the menu names. On Reports.aspx and Followup.aspx the text is `lblPageHeader.Text`,
+  set in Page_Load from the query string (the leading ":: " and the word "Report" were dropped: "Minutes", "Minutes Extract",
+  "Agenda Summary", "Agenda Details"; "Followup", "Followup Summary"); the breadcrumb prints it with `<%: lblPageHeader.Text %>`.
+- Tab titles (PageSettings.xml). New entries: `followup_summary` ("Followup Summary", `~/Report/Followup.aspx?fc=summary`),
+  `MeetingCalendar`, `SittingFeesApplicable`, `SittingFees`, `AttendanceDetails` and `AgendaApproval`. `CommitteeMaster` and
+  `MeetingMaster` now read "Committee Master" and "Meeting Master" (they held the class names). Report/Followup.aspx.cs calls
+  `Common.InitSetup("followup_summary")` when `fc=summary` and `Common.InitSetup(className)` otherwise; the class name stays the
+  name the error log uses for both.
+- No XML comments in PageSettings.xml. `Common.InitSetup` loops over every child node of `pageSettings` and reads
+  `childNode.Attributes["Name"].Value`; a comment node has no attributes, so one comment in the file would make every
+  `InitSetup` call fail with a null reference. Keep the file to `page` elements only.
+- Required marker. The red `*` (`span.wb-req`) is inside the label. It was added only where the server already refuses an
+  empty value: Committee Name on Reports and Report/Followup (Generate refuses; View does not check, a known item), Committee
+  and Meeting No on Followup by Department, To on Send Mail. Markers that existed moved into the label.
+- Buttons. Reports and Report/Followup keep today's order, View as `wb-btn` and Generate (and Cancel) as
+  `wb-btn wb-btn-secondary`. Followup by Department has Submit as the primary button of the Filter card and Generate Report as
+  the primary button of the Print details card. Notice has Create PDF primary and Send Mail secondary. The other pages have one
+  primary button (Submit, Send Mail, Generate Report, Create PDF).
+- `.wb-page.wb-page-fit` (bmms-workbench.css; owner's test G1). `.wb-page` has `min-height: 420px` (room for the calendar
+  pop-ups below short forms); a page whose grid follows `.wb-page` in its old frame would start 78 to 180 px under the filter
+  card. The modifier sets `min-height: 0` and is on Committee Master, Meeting Master, Committee Member, Meeting Calendar,
+  Sitting Fees Applicable and Attendance Details. `.wb-page` itself is unchanged. Another page that puts a grid after
+  `.wb-page` can take the modifier; check its calendar pop-ups first.
+- `.wb-filter-meetno` (bmms-workbench.css; owner's test G2). `body.wb select.wb-filter-select.wb-filter-meetno` is 112 px wide
+  (min-width 0), so a five-digit meeting number and "- Select -" show whole with the arrow. It is on the 11 meeting number
+  pickers of Report/Reports.aspx (ddlMeetingNo, ddlMeetingNoFrom, ddlMeetingNoTo), Report/Followup.aspx (the same three),
+  Report/FollowupActionTaken.aspx (ddlMeetingNoFrom, ddlMeetingNoTo) and Master/Followup.aspx (the same three, from step UI2a).
+  The Subject No pickers keep `wb-filter-short` (80 px). Use `wb-filter-meetno` on any new meeting number picker.
+- Inline grids. The old grid look (`formContent`, `formPanel`, `divRow`, `contentTable1`) is kept outside `.wb-page` (rule R12 of
+  the requirement). Where the code-behind does not hide the grid's panel, the frame shows as an empty 14 px strip (known item
+  in Database/README.md).
+
+Known items of the step are in Database/README.md, "Known items for later steps". Drawn from: the markup and code-behind diff of
+the 13 pages, BMMS/XML/PageSettings.xml and BMMS/CSS/bmms-workbench.css (diff), BMMSBAL/Common.cs (InitSetup).
+
+### Pages in no menu and the unlisted page
+
+- Report/FollowupActionTaken.aspx was in no menu until step RA1c2. It is now the last entry of the Controller's
+  "Reports" menu, "Followup by Department" (after Followup Summary), with its own entry in PageSettings.xml
+  (title "Followup by Department"), and PageAccess.xml gives it `roles="controller"` (before: controller and
+  manager, with a comment that managers reach it from the dashboard action items; the code has no such link).
+  The page calls `PageAccessModule.RequireRole("controller")` first in `Page_Load` and again first in the
+  Generate Report handler, so a Manager who opens the address gets "Access denied". The Send Mail code of the
+  page (`btnSendMail_Click`, `CreateBodyText`, `CreatePDF`, the download panel), whose button was commented out,
+  was removed. Two fixes of the report:
+  - Committee filter: `spr_GetActionItemByMeetingIdDeptId` selects by meeting number and department and
+    ignores `@CommitteeId`, and meeting numbers start again in every committee, so the page filtered the rows by
+    `CommitteeId` itself (`GetCommitteeFollowupRows`). Since step FU2b (step 49) this is done in the database: see
+    "The Followup reports (step FU2b)" below.
+  - PDF border: the report table was written with `border='1px'`, which the PDF converter rejects (it reads the
+    border as a number), so Export to Pdf in the report window printed its fallback sentence; it is now
+    `border='1'`, and the stray `<style>@media print` block of the report HTML was removed. Export to Pdf cannot
+    print Tamil or Hindi text (the converter has no font for it); Export to Word and Print can.
+    [[CONFIRM: the reason Export to Pdf cannot print Tamil or Hindi text for this report; the note is taken from the step requirement, and the code read here does not show it]]
+- Report/EventCalendar.aspx and Report/ReportPrint.aspx were removed in step RA1c1 (files, project entries
+  and PageAccess.xml lines). An old bookmark to either gets "Page not found" (HTTP 404), because the pages
+  are no longer in PageAccess.xml or on disk (the owner's test of 2026-11-11 saw this for both addresses).
+- ChangePasswordFirst.aspx, Logout.aspx and Report/ViewReport.aspx are reached by redirects, buttons and
+  report pop-ups, not by the menu. Change Password is a link of the header.
+- Error/TestPage.aspx (a development page that wrote a PDF under ~/Files/PDF and was not listed in
+  PageAccess.xml) was removed in step RA1c2 (files, project entries and the PageAccess.xml comment). PageAccessModule
+  treats a page that is not in the file as not allowed (reason "page is not in PageAccess.xml"): in `Enforce`
+  mode a logged-in user gets the "Access denied" page (HTTP 403) and the request is written to
+  `App_Data\PageAccessLog.txt` as DENIED; in `LogOnly` mode the request would run and is written as WOULD-DENY.
+  A visitor who is not logged in is sent to the login page first, in both modes. [[CONFIRM: what an old address of Error/TestPage.aspx now answers; the page is gone from disk and from PageAccess.xml, so it should be "Page not found" like the two pages of RA1c1, but the step test does not show it]]
+- Pages that make their own choices from the query string: Reports.aspx (`rc`), Followup.aspx (`fc`) and
+  ViewReport.aspx (`pdf=1`).
+
+How the report pop-ups work: a report page builds the report as HTML and keeps it in the session
+(`Session["ViewReport"]`, `Session["ViewReportName"]`), or builds a PDF in memory and keeps the bytes
+(`Session["ReportPdf"]`, `Session["ReportPdfName"]`), then opens ViewReport.aspx in a window with the
+JavaScript `popup(...)`. ViewReport shows the HTML or streams the stored PDF once (`?pdf=1`, and then clears
+it); its Export to PDF builds the PDF in memory from the HTML (`PDFUtilities.HtmlReportToPdf`) and its Export to
+Word sends the HTML as a `.doc` with the content type `application/msword` (`ViewReport.WordDocument`); no file
+is written on the server and Word is not started.
+
+No stored report (step RA1c1): when `Session["ViewReport"]` is null or empty (the window was opened by address,
+or the session ended), `ViewReport.Page_Load` answers with a small HTML page that says "The report is no longer
+available. Close this window and click Generate again.", with HTTP 200 and no entry in the error log
+(`NoStoredReport`, `SendNoReportMessage`; the request ends with `Response.End`). The same text is used for
+`?pdf=1` when no PDF is stored. The Export to PDF and Export to Word handlers (`btnExportToPdf_Click`,
+`btnExportToWord_Click`) check again and send the same message; Page_Load answers first, so the second check
+is a safeguard. The Management check of step RA1b stays first in Page_Load: a Management user with no report
+kind is refused with "Access denied", before the message is considered.
+
+Drawn from: BMMS/MasterPage/Main.Master(.cs), MainNoMenu.Master(.cs), BMMS/UserControl/*.ascx(.cs),
+BMMS/XML/PageAccess.xml, PageSettings.xml, MenuUserControl.ascx, the `MasterPageFile` and `Common.InitSetup`
+Grep results, Report/ViewReport.aspx.cs (diff of step RA1c1), Report/FollowupActionTaken.aspx(.cs) (diff of
+step RA1c2), PageAccessModule.cs.
+
+## Business layer (BAL)
+
+BMMSBAL has 37 source files (not counting Properties). An area has a data class (`*BAL`), a list class (`*BALList`) and a `*Mgr`
+class with static methods that call the data layer (see chapter 01, "Layers"). The pages do not call BMMSDAL
+(chapter 01). The DB class of each area and the procedures behind each method are in chapter 04 ("How the
+data layer calls them" and the tables of "Stored procedures and functions").
+
+### Area classes
+
+| BAL class (file) | Area | DB class it uses |
+|---|---|---|
+| ActionItemMgr | Action items and follow-up | ActionItemDB |
+| AgendaMgr | Agenda entry, routing, approval, finalisation, minutes finalise and confirm, the agenda lock | AgendaDB |
+| AlertMgr | Alerts of the Dashboard and the addresses of alert mails | AlertDB |
+| AttendanceMgr | Attendance and sitting-fee amounts | AttendanceDB |
+| AuditTrail_Mgr | Audit Trail and the backup log | AuditTrail_DB |
+| CommitteeMemberMgr | Committee members, sitting fees applicable | CommitteeMemberDB |
+| CommitteeMgr | Committees | CommitteeDB |
+| DecisionTypeMgr | Decision types | DecisionTypeDB |
+| DepartmentMgr | Departments; `DeleteDepartment` turns Reason 5 and 25 into the message; since GM1a `AddEditDepartment(dept, actingUserId, out message)` turns Reason 8 and 4 into the two "Not saved" messages | DepartmentDB |
+| DesignationMgr | Designations | DesignationDB |
+| GovernanceMgr | Governance Matrix and change log (step GM1a): the transactions list, the rows of the matrix, the rule notes, the reading of the menu, the Read-only access block, the refusal and change type texts, the CSV and PDF text; no state | GovernanceDB |
+| MeetingMemberMgr | Meeting members | MeetingMemberDB |
+| MeetingMgr | Meetings; also holds `MeetingChangeResult` and `MeetingChangeReason` (the result row of every procedure with a Reason, except the user ones) | MeetingDB, and MinutesDB for the list of meetings of the minutes reports |
+| MemberMgr | Members | MemberDB |
+| MemberTypeMgr | Member types, with its own `RefusalMessage` | MemberTypeDB |
+| MinutesMgr | Minutes | MinutesDB |
+| ReportsMgr | Report queries | ActionItemDB, MinutesDB, and `CommonDB.GetDataTableFromQuery` (3 direct text queries; chapter 04, "Report queries built in the code") |
+| RoleMgr | Roles | RoleDB |
+| SubjectTypeMgr | Subject types | SubjectTypeDB |
+| SysCodeMgr | Code lists (`SysCode`) | SysCodeDB |
+| UserMgr | Users, login, status, password reset; also holds `UserChangeResult` and `UserChangeReason` | UserDB |
+| Utilities | Error log, error page helpers, settings, SMTP master, reset database, login audit, grid sorting (see below) | UtilitiesDB |
+
+Step 52 (MR1) changed two of these classes. `MeetingMgr.cs` has the constant
+`MeetingChangeReason.DecisionAfterMeetingDate` (Reason 28: a Manager's approve or reject after the meeting date) and
+its text `DecisionAfterMeetingDateMessage`, which the `RefusalMessage` of that file returns for that Reason; the text
+is the same as the Dashboard's own meeting-date check, which normally stops the request first (chapter 04, "Reason
+codes"). `UserMgr.cs` builds the refusal messages of the Manager release (Reason 24) in `LastManagerMessage`: it reads
+the `ReasonDetail` of the form `open:[n]|past:[n]|[department part]` and writes one line for the items still open, one
+for the items of meetings whose date has passed with the agenda never finalized, and one for the last active Manager of
+a department (`DepartmentCounts` says the count as the department's); a detail in the older step 39 form gets the
+step 39 message. The helpers `Items` and `Capitalise` format the counts and the first letter.
+
+### Shared helpers, mail, PDF, Word and files
+
+| Class (file) | Purpose | Notes |
+|---|---|---|
+| Common | Settings from XML, the logged-in check, password hashing, secrets, message styles, drop-down loading, footer text, the mail audit write (see below) | Uses ConnectDB and CommonDB; `SaveSendMail` calls `spr_SaveSendMail` itself |
+| Mail_Mgr | Sends every mail through the SMTP settings of the database (`SendWebEmail`, `FindInvalidMailAddress`) | When, to whom and what is sent is in chapter 07. The code sets no `EnableSsl` |
+| AgendaMail | The parts shared by the agenda mails: detail rows, the comment row, the item read after the save (`ReadItemAfterSave`) | No database access of its own; it calls AgendaMgr |
+| PDF_Reports | The three sitting-fee certificates and reports as PDF bytes, and the Tamil/Hindi test for them | Fixed wording in the code (see "Known limitations in the code") |
+| PDFUtilities | PDF building blocks: cells, HTML text, logo, page numbers, uploaded agenda text, and `HtmlReportToPdf` | iTextSharp 4.0.2.0 (chapter 01, "Third-party components") |
+| HtmlToPdfBuilder (with `HtmlPdfPage`) | Builds a PDF from HTML pages and style sheets | Used by `PDFUtilities.GenerateHTMLPdf`, which no page calls since RA1c2 removed TestPage (Grep) |
+| PdfFonts | The Noto Serif fonts of the PDF output, the test for Tamil or Hindi text and the message for it | Constant `IndicTextMessage` |
+| WordUtilities | Old HTML helpers (`ExportToWord`, `ExportToPdf`, `ReadWordDocument`). Since step AZ1 `CreateWord` (Word started through Office Interop, no caller) is removed | No page or class calls any of its methods (Grep); the Word export of a report is `ViewReport.WordDocument` and needs no Word |
+| HTML_Report | `ReplaceRichTextFont` (changes typed font and colour text) and `HTML_PageBreak` | Used by the Agenda, Followup, Reports and PDF code |
+| HtmlCleaner | Cleans rich text to a fixed allow-list of tags and attributes, using HtmlAgilityPack | Called before rich text is saved or shown |
+| RichTextPost | Encodes and decodes the rich-text value as Base64 of its UTF-8 bytes in the hidden field | Result `Text`, `Empty`, `TooLong` or `Invalid` |
+| RichTextLimits | The two size limits (`RichTextMaxChars` 200000 and `RichTextMaxTotalChars` 600000 by default) read from Web.config appSettings | `TooLongMessage` is "The text is too long. Shorten it or attach the document as a file." |
+| SafeFileName | Makes an uploaded file name safe and unique | |
+| OrganisationDetails | The organisation settings and the logo printed on notices, minutes, reports and certificates | Uses UtilitiesDB; the logo file is under Files/Branding |
+| Sql_Backup_Mgr | Backup Database: a `BACKUP DATABASE` command built on a connection from ConnectDB, with a 600-second timeout | The destination must be writable by the SQL Server service account |
+
+The project's own rich-text control, `BMMS.Controls.RichTextEditor` (BMMS/RichTextEditor.cs), is in the web
+project, not in BMMSBAL. It is a WebControl with a toolbar over a contenteditable box, driven by
+JScript/RichTextEditor.js. The text travels in one hidden field through `RichTextPost`; the server cleans every
+posted value with `HtmlCleaner.Clean`; a read-only editor ignores posted values. A page's save, attach and
+upload handlers call `RichTextEditor.IsTooLong(Page)` first and refuse with `RichTextLimits.TooLongMessage`.
+It is registered in Web.config with the tag prefix `bmms`.
+
+### Common.cs
+
+- Settings from the XML files. `Common.GetAppSetting(key)` loads XML/AppSettings.xml, `GetReportSettings(key)`
+  loads XML/ReportSettings.xml and `InitSetup` loads XML/PageSettings.xml, each time they are called (no
+  caching), and returns an empty string for a key that is not found. The keys of AppSettings.xml read by the
+  code are `PageTitle`, `NoRecord`, `LoginIdMaxLength`, `PasswordMaxLength`, `PasswordMinLength`,
+  `delete_reference`, `data.notDelete` and `delete_msg`; a search finds no reader of `CommonErrMsg`.
+  ReportSettings.xml holds the pop-up widths `MinutesReport_Width`, `MinutesExtractReport_Width` and
+  `FollowupReport_Width`. The settings that an Admin changes on System Settings are rows of the database
+  (chapter 04, "Settings rows"; chapter 06), not these files. `MondifyAppSettings` can write AppSettings.xml
+  but nothing calls it.
+- Password hashing. `HashPassword` uses PBKDF2 (`Rfc2898DeriveBytes`) with 100,000 iterations and a random
+  16-byte salt, and stores `iterations.salt.hash` as Base64 text. `VerifyPassword` compares in constant time
+  and returns false for a stored value that is not in that format (`IsLegacyFormat`).
+  The branch of Default.aspx.cs that upgrades an old-format password runs only after `VerifyPassword` has
+  accepted the password, so it does not run for a value in the old format.
+  `HashPassword` is called by Change Password, Change Password First, Reset Password and User Master (Save).
+- The default password. `Common.DefaultPassword` is a constant of the code. Reset Password sets a user's
+  password to it (`ResetPassword.aspx.cs`), Reset Database seeds the default accounts with it (chapter 04,
+  "Reset Database and backup"), and the login page opens ChangePasswordFirst.aspx instead of the Dashboard when
+  the password typed equals it. The value is not written in this manual.
+- Secrets. `ProtectSecret` and `UnprotectSecret` keep the SMTP password with Windows DPAPI at machine scope
+  and a fixed entropy text, with the prefix `dpapi:` in front. A value without the prefix is read with
+  `DecryptVal` (a Triple DES routine kept for a value saved before DPAPI); `EncryptVal` has no caller.
+  After the database is restored on another server the SMTP password must be entered again.
+- Logged-in check. `IsLoggedIn` is true when the session holds a numeric `UserId` above 0 (step UN2).
+  `IsSystemAccountSession` reads `Session["IsSystem"]`.
+- Display and messages. `MessageKind` and `MessageCss` (see "Messages shown to users"); `UserDisplayName`
+  ("Name (login)", with " (inactive)") and `UserCaptionName` (the name alone) are the two formats of a person;
+  `LoadDropdownlist`, `LoadDDLwithAll` and `LoadDDLwithAllNew` fill a drop-down list with "- Select -" or
+  "- All -"; `ProductFooter` and `FooterDatabaseName` build the footer (the database name is read once per
+  application from the open connection, only for a logged-in Admin or Controller, and is HTML-encoded).
+- Mail audit. `SaveSendMail` writes one row per sent mail (`spr_SaveSendMail`; chapter 04, "Settings and mail").
+
+### Utilities.cs
+
+`Utilities` holds the error helpers (`WriteErrorLog`, `GoToErrPage`, `LogUnhandledError`,
+`LogAsyncPostBackError`, `IsReturnablePage`; see "Error handling"), `GridViewDataTableSorting` for the sort
+headers, and thin methods over UtilitiesDB: `ResetDatabase`, `GetDatabaseName`, `GetSMTPMaster`,
+`UpdateSMTPMaster`, `GetStateMaster`, `AddEditAuditTrialLogin`, `GetAppSetting` and `SetAppSetting`
+(the database settings; constants `AgendaControllerBypass` and `DeptNoManagerAction`) and
+`SetDepartmentManagerRule`. `GetLocalIPAddress` returns an address of the machine that runs the site.
+
+### Mail_Mgr.cs
+
+`Mail_Mgr.SendWebEmail(To, Subject, Body, AttachFile, [AttachName,] Bcc, [ToRequired])` reads the SMTP settings
+through `Utilities.GetSMTPMaster`, adds the configured Bcc to the caller's Bcc, builds an HTML mail in UTF-8
+with a fixed closing note, sends it with `SmtpClient` on the stored port (25 when the port is not a number) and
+then writes the audit row. It returns the text "Success", or "Error: [message]" after writing the exception to
+the error log; the pages test for "Success" and show their own text. The rules for recipients, the Bcc, the
+skipped bad addresses and when each mail is sent are in chapter 07.
+
+Drawn from: BMMSBAL/*.cs (class lists, `*DB.` calls by file), Common.cs, Utilities.cs, Mail_Mgr.cs,
+AgendaMail.cs, WordUtilities.cs, Sql_Backup_Mgr.cs, PDFUtilities.cs, PdfFonts.cs,
+HtmlCleaner.cs, RichTextPost.cs, RichTextLimits.cs, SafeFileName.cs, OrganisationDetails.cs,
+BMMS/RichTextEditor.cs, BMMS/Report/ViewReport.aspx.cs, the Grep for callers of the Word and PDF methods.
+
+## Data layer (DAL)
+
+BMMSDAL is 22 files: `CommonDB`, `ConnectDB` and 20 `*DB` classes. A `*DB` method builds a `SqlParameter` array
+and calls `CommonDB` with the procedure name as a string; it does not read the result.
+
+### CommonDB and ConnectDB
+
+| Method | What it does |
+|---|---|
+| `CommonDB.GetDataTable(name, parameters)` | Opens a new connection, runs the stored procedure (`CommandType.StoredProcedure`), fills a `DataTable` with `SqlDataAdapter` and closes the connection |
+| `CommonDB.ExecuteProcedure(name, parameters)` | The same with `ExecuteNonQuery`; returns the affected-row count and no result set |
+| `CommonDB.GetDataTableFromQuery(sql)` | Runs a text query (`CommandType.Text`) with no parameters; the callers are `ReportsMgr` (3; `ActionItemDB.GetFollowup`, the follow-up query, was removed in step FU2b), `UtilitiesDB.GetDatabaseName`, `UserDB` (`HasUserHistory`), `MinutesDB.HasDueDateParameter` and `AgendaDB` (the last three check the parameters of a procedure) |
+| `ConnectDB.GetConnectionString()` | Returns the connection string named `ConnectionString` of the application's configuration; the connection strings are read from a separate file that Web.config names (chapter 01, 06). The value is never written in a document |
+| `ConnectDB.GetConnectedDatabaseName()` | Opens a connection and returns `SqlConnection.Database` (used for the footer) |
+
+Parameters, timeouts and errors:
+
+- Parameters are `SqlParameter` objects made by the `*DB` method; most carry only a name and a value, so the
+  type follows the value. A few set the type and size: `@DepartmentIds` (varchar max) in `UserDB`, `@DueDate`
+  (datetime) in `MinutesDB.UpdateMinutes`, the organisation settings (nvarchar 400) and
+  `@ConfirmDatabaseName` (nvarchar 128) in `UtilitiesDB`. `CommonDB` clears the parameter list after the call.
+- Timeouts. `CommonDB` sets no `CommandTimeout`, so the ADO.NET default applies. Two other places set their own:
+  `UtilitiesDB.ResetDatabase` builds its own command with 300 seconds, and `Sql_Backup_Mgr.BackupDatabase`
+  uses 600 seconds.
+- Errors. The three methods catch the exception, close the connection in `finally` and throw the exception again
+  with `throw ex;`, which restarts the stack trace at that line. The data layer never turns an error into a
+  result (chapter 04, "A refusal is not a database error"). A connection is made for every call; no
+  transaction is opened in the code (a procedure that needs one opens it itself).
+- Optional parameters. Two methods ask the database whether a procedure has a newer parameter before calling
+  it: `MinutesDB.HasDueDateParameter` (`@DueDate` of `spr_UpdateMinutes`, step 38) and
+  `AgendaDB.SaveAgendaRow` with an output parameter `@ChangedFields` (step 37). A build that is ahead of its
+  database then still works, and the page says so in its message (see "Messages shown to users"). Both read
+  `sys.parameters` with a text query; the procedure names in it are fixed in the code.
+
+### The *DB classes
+
+The count is the number of lines in the class with a call of `CommonDB.GetDataTable` or `ExecuteProcedure`
+that names the procedure as a literal (Grep). The procedures themselves and the methods that call them are in
+chapter 04.
+
+| DB class | Area | Literal calls |
+|---|---|---|
+| ActionItemDB | Action items, follow-up | 12 |
+| AgendaDB | Agenda | 25 |
+| AlertDB | Alerts | 5 |
+| AttendanceDB | Attendance | 6 |
+| AuditTrail_DB | Audit trail | 3 |
+| CommitteeDB | Committees | 5 |
+| CommitteeMemberDB | Committee members | 9 |
+| DecisionTypeDB | Decision types | 5 |
+| DepartmentDB | Departments | 6 |
+| DesignationDB | Designations | 5 |
+| MeetingDB | Meetings | 18 |
+| MeetingMemberDB | Meeting members | 6 |
+| MemberDB | Members | 9 |
+| MemberTypeDB | Member types | 6 |
+| MinutesDB | Minutes and the minutes reports | 7 |
+| RoleDB | Roles | 5 |
+| SubjectTypeDB | Subject types | 5 |
+| SysCodeDB | Code lists | 1 |
+| UserDB | Users and login | 17 |
+| UtilitiesDB | Settings, SMTP master, login audit, organisation settings, Reset Database | 10 |
+
+`UtilitiesDB.ResetDatabase`, `GetDatabaseName` and the optional-parameter checks are the methods that do not
+go through the two procedure methods of `CommonDB` with a literal name.
+
+Drawn from: BMMSDAL/CommonDB.cs, ConnectDB.cs, UtilitiesDB.cs (ResetDatabase), MinutesDB.cs (UpdateMinutes,
+HasDueDateParameter), AgendaDB.cs (SaveAgendaRow), BMMSBAL/Sql_Backup_Mgr.cs, the Grep count of
+`CommonDB.` calls with a literal name per file, chapter 04 ("How the data layer calls them").
+
+## Messages shown to users
+
+Where the texts come from:
+
+| Source | What it holds | Examples |
+|---|---|---|
+| The page code | Most messages: constants and literals of the code-behind, built with the name or number the screen fills in | "Successfully Saved"; "Invalid User Id / Password" (Default.aspx.cs); "Your account is inactive. Contact the administrator." |
+| XML/AppSettings.xml | Common texts: `delete_reference` ("You cannot delete this record, because it has references."), `delete_msg` ("Record deleted successfully."), `data.notDelete`, `NoRecord` ("No such records found", kept in `Session["NoRecord"]` for the grids' empty rows) | Read by `Common.GetAppSetting`; the other keys are limits and the page title (see "Common.cs") |
+| The result classes of the BAL | The message for a Reason code: `RefusalMessage()` of `MeetingChangeResult` and `UserChangeResult`, `MemberTypeMgr.RefusalMessage`, `DepartmentMgr.DeleteDepartment` | The mapping, the fallbacks and the pages that choose their own wording are in chapter 04, "How the data layer and the pages read the row" and "Reason codes" |
+| Fixed texts of the error paths | `Utilities.AsyncPostBackErrorMessage`, the safe error page of Global.asax.cs, the text of ErrorPage.aspx, the texts of AsyncPostBackError.js, the "Access denied" page of PageAccessModule | See "Error handling" |
+| Constants of helper classes | `RichTextLimits.TooLongMessage`, `PdfFonts.IndicTextMessage` and `PdfFonts.IndicTextMessageFor(...)` | Shown by the pages that use them |
+
+How a page shows a message:
+
+- The message box. Most pages have a `divErrLogin` with a `spanErrLogin` and a private `MsgDisplay(text, kind)`
+  and `MsgHide()` of their own (32 code-behind files define `MsgDisplay` and most of them `MsgHide`; they are copies, not one shared method).
+  `MsgDisplay` sets the class of the box with `Common.MessageCss(kind)` and puts the text into the box
+  (`InnerHtml`). The kind is `MessageKind.Warning` (the default: refusals, "please select", checks; the class
+  `divError`), `Success` (class `divError msg-success`) or `Error` (class `divError msg-error`); the styles are in
+  CSS/bmms-workbench.css. Because the text goes into the box as HTML, a text that contains typed or database
+  text is encoded by the page first (for example Notice.aspx.cs line 54 uses `HttpUtility.HtmlEncode`).
+- Alert windows. The Dashboard refusal and the report pages (Agenda Approval, Followup, Followup by Department,
+  Notice, Sitting Fees) use `ScriptManager.RegisterStartupScript` with a JavaScript `alert(...)`; the text is
+  encoded for JavaScript (`HttpUtility.JavaScriptStringEncode`) where it can hold typed text. ChangePasswordFirst
+  shows an alert and then goes to the login page.
+- A failed UpdatePanel request. The masters and the login page show the fixed text in the bar `wbAsyncError`
+  (see "Error handling").
+
+A text that a screen fills in is written in square brackets in the documents ("Saved. Not restored:
+[departments]"), because the code builds it with the name or list at run time.
+
+### "Saved, but the mail could not be sent"
+
+Several pages save first and send the mail second, and a failed mail never undoes the save. The code of each
+page follows the same steps (steps M1, M2, M3, ML1 and ML2c in Database/README.md describe how it came about):
+
+```mermaid
+sequenceDiagram
+    participant P as Page code-behind
+    participant B as Mgr class
+    participant M as Mail_Mgr
+    P->>B: Save (database accepts or refuses)
+    B-->>P: Result 1, or a refusal
+    alt refused
+        P->>P: Show the refusal, no mail
+    else saved
+        P->>M: GenerateMail builds the body, SendWebEmail
+        alt mail returns Success
+            P->>P: Show the success text
+        else mail returns an error, or GenerateMail throws
+            P->>P: Write the error log (the mail method does) and show the "saved, but" text as a Warning
+        end
+    end
+```
+
+| From | To | Data | Notes |
+|---|---|---|---|
+| Page | Mgr class | The item and the acting user | The mail is built only when the result is 1 |
+| Page | Mail_Mgr | To, Subject, Body, Bcc | `GenerateMail` catches its own exception, writes the error log and returns "Error" |
+| Mail_Mgr | Page | "Success" or "Error: [message]" | The page tests for "Success" and does not show the error text |
+| Page | User | One message | Warning kind; the text says the item is saved and that the error is in the error log |
+
+| Page (code-behind) | Message when the mail fails | Where in the code |
+|---|---|---|
+| Master/Agenda.aspx.cs, Save | "The agenda item was saved, but the mail could not be sent. The error is in the error log." (followed by the submission-date notice when there is one) | `MailNotSentMessage`, line 33; used line 814 |
+| Master/Agenda.aspx.cs, Update | "The agenda item was updated, but the mail could not be sent. The error is in the error log." (also shown when the database does not have step 37) | `UpdateMailNotSentMessage`, line 36; used line 820 |
+| Master/Meeting.aspx.cs | "The meeting was saved, but the mail could not be sent. The error is in the error log." | `MailNotSentMessage`; since step 55 also `NoRecipientsMessage`, "The meeting was saved. No mail was sent because there were no recipients." (green; no mail at all). Line numbers of this row were not recounted after step 55 |
+| Master/Committee.aspx.cs (since step 55) | "The committee was saved, but the mail could not be sent. The error is in the error log."; with no recipients, green: "The committee was saved. No mail was sent because there were no recipients." | `MailNotSentMessage`, `NoRecipientsMessage`; the Committee mail was switched off in the code until step 55 |
+| DashBoard/DashBoard.aspx.cs, Approve | "The item was approved, but the mail could not be sent. The error is in the error log." | line 21; used line 721 |
+| DashBoard/DashBoard.aspx.cs, Reject | "The item was rejected, but the mail could not be sent. The error is in the error log." | line 22; used line 810 |
+| Master/AgendaFinalization.aspx.cs | The count of rejection mails that failed is added to the message: "[n] rejection mail(s) could not be sent. The error is in the error log." | line 229 |
+| Master/ResetPassword.aspx.cs | "The password was reset to the default password, but the mail could not be sent. The error is in the error log." (since step 55 also for a refusal of spr_GetResetPasswordMail after the reset; an inactive user gets the green "The password was reset to the default password. No mail was sent because the user is inactive.") | `MailNotSentMessage`, `InactiveNoMailMessage`; line number not recounted after step 55 |
+| Report/Notice.aspx.cs | "[n] mail(s) could not be sent; see the error log." added to the result | line 208 |
+| Report/SendMail.aspx.cs | "The mail could not be sent. The error is in the error log." (Error kind; nothing was saved, and the attachment is kept for a new try) | line 102 |
+
+The reading of the item after a saved decision is part of the same pattern: `AgendaMail.ReadItemAfterSave`
+returns `null` when the item cannot be read, writes the error log, and the mail is sent without the comment
+row. A bad address in To or Bcc is skipped and logged by `Mail_Mgr.AddRecipients`; the mail fails only when
+no valid address is left (Reset Password and Notice need a valid To). Both rules are described in chapter 07.
+
+Drawn from: BMMSBAL/Common.cs (MessageKind, MessageCss), Mail_Mgr.cs, AgendaMail.cs, BMMS/XML/AppSettings.xml,
+the pages named in the table, the Grep results for `MsgDisplay`, `RegisterStartupScript` and `GetAppSetting`,
+chapter 04 ("Result, Reason and ReasonDetail", "Reason codes").
+
+## Session and role handling
+
+Session state is in process with a timeout of 10 minutes (Web.config, chapter 01). Nothing in the code
+keeps a user logged in after the session ends.
+
+### Session keys
+
+| Key | Set by | Used by | Notes |
+|---|---|---|---|
+| `UserId` | Default.aspx.cs (after the password is verified and the account is active) | `Common.IsLoggedIn`, PageAccessModule, Main.Master, almost every save | The identity of the logged-in user; a number as text |
+| `UserName` | Default.aspx.cs | Header of the masters, the access-log line of PageAccessModule | The person's name |
+| `LoginName` | Default.aspx.cs | Header tooltip, the access-log line | The login ID |
+| `RoleCode` | Default.aspx.cs | MenuUserControl, PageAccessModule, `Common.FooterDatabaseName`, the pages that choose by role | admin, controller, manager, user, mgmt or md_sect |
+| `RoleName` | Default.aspx.cs | Header of the masters | |
+| `DesignName` | Default.aspx.cs | A search finds no reader | |
+| `IsSystem` | Default.aspx.cs | `Common.IsSystemAccountSession` | "1" for the protected system account, otherwise "0" |
+| `DepartmentSet` | Default.aspx.cs (from `UserMgr.GetUserAccessState`, step RA1d) | PageAccessModule (compared on every request) | The department stamp: Users.DepartmentId, a vertical bar, the open department rows, the home one marked "h" (as in the procedure's output, chapter 04). `RoleCode` and `RoleName` come from the same read |
+| `NoRecord` | Default.aspx.cs (text of the AppSettings key `NoRecord`) | The empty row of the grids (aspx files) | |
+| `LoginCount` | Default.aspx.cs | Nothing | Counts failed passwords in the session; the call that would lock the user is commented out |
+| `PageTitle`, `PageURL` | `Common.InitSetup` (`PageURL` also by Default.aspx.cs) | The masters (`PageTitle`) | `PageURL` is no longer used by the error page's Exit |
+| `ErrorReturnPage` | `Utilities.GoToErrPage` | ErrorPage.aspx Exit | The page that failed, with its query string |
+| `ViewReport`, `ViewReportName`, `ReportPdf`, `ReportPdfName`, `FollowupHTML` | The report pages | ViewReport.aspx | The report HTML or PDF bytes handed to the pop-up |
+
+Set at login (Default.aspx.cs, `btnLogin_Click`): the login page reads the user by login ID
+(`UserMgr.GetUserByLoginName`), then checks in this order: a user who does not exist or a wrong password gives
+"Invalid User Id / Password" (the same text for both); a password that is right for an inactive account gives
+"Your account is inactive. Contact the administrator." (checked after the password so the text does not reveal
+that the login exists); otherwise (step RA1d) `UserMgr.GetUserAccessState` reads the role, status and department set
+(a user missing or inactive at that moment gets the inactive text), `UserMgr.RecordLogin` writes the access-log row,
+the session keys are set (`RoleCode` and `RoleName` from the access-state read, and `DepartmentSet`) and the user goes
+to ChangePasswordFirst.aspx (password equals the default) or to the Dashboard. A database error gives "Database not
+connected" and an error log entry.
+
+Cleared at logout: Logout.aspx.cs writes the end of the login (`Utilities.AddEditAuditTrialLogin`), then calls
+`Session.Clear()` and `Session.Abandon()` and redirects to Default.aspx. Since step RA1d PageAccessModule ends a
+session whose access changed with `Session.Abandon()` only (no `Clear`), so `Session_End` in Global.asax.cs still
+finds the UserId and writes the same audit row; the same happens when the session ends by timeout. `Session_End` runs
+its audit call inside a try/catch that writes the error log, and reads the UserId with `int.TryParse` (a value that does
+not parse, or is not above 0, skips the call).
+
+```mermaid
+flowchart TD
+    aUser(["User"])
+    pLogin("Default.aspx")
+    bUser["UserMgr.GetUserByLoginName, RecordLogin"]
+    tSession[("Session: UserId, RoleCode, ...")]
+    pDash("DashBoard.aspx or ChangePasswordFirst.aspx")
+    aUser -->|"login ID, password"| pLogin
+    pLogin -->|"login ID"| bUser
+    bUser -->|"user row"| pLogin
+    pLogin -->|"session keys"| tSession
+    pLogin -->|"redirect"| pDash
+```
+
+| From | To | Data | Notes |
+|---|---|---|---|
+| User | Default.aspx | Login ID and password | Maximum lengths come from `LoginIdMaxLength` and `PasswordMaxLength` |
+| Default.aspx | UserMgr | Login ID, the address of the machine running the site, the URL | The password is not sent to the database; it is verified in the code against the stored hash |
+| UserMgr | Default.aspx | User row | Includes the hash, the account status, the role |
+| Default.aspx | Session | The keys of the table above | |
+| Default.aspx | Dashboard or Change Password First | Redirect | `Response.Redirect(..., false)` |
+
+Drawn from: BMMS/Default.aspx.cs, Logout.aspx.cs, Global.asax.cs, BMMSBAL/Common.cs (`IsLoggedIn`), the Grep of
+`Session["..."]` over BMMS and BMMSBAL.
+
+### PageAccessModule
+
+The request flow is in chapter 01 ("Request life cycle"). The points a developer needs:
+
+- It is an `IHttpModule` (`BMMS.Security.PageAccessModule`) registered in Web.config in `httpModules` and in
+  `system.webServer/modules`; it runs on `PostAcquireRequestState` for `.aspx` requests only. A request for any
+  other file type (images, scripts, files under Files/) is not checked by it.
+- Public pages (`<public>`): Default.aspx, Logout.aspx and Error/ErrorPage.aspx. Every other page needs a
+  logged-in user in both modes (`Common.IsLoggedIn`: a `UserId` in the session); if there is none the request is
+  redirected to Default.aspx, or answered in the AJAX "pageRedirect" format for an UpdatePanel postback.
+- Session check (step RA1d, replacing the active-user check of step 14). On every request for a page that is not
+  public, `ReadAccessState` makes one call, `UserMgr.GetUserAccessState` (spr_GetUserAccessState, step 51), and keeps
+  the result in `HttpContext.Items` for the rest of the request. `SessionMatches` then compares it with the session:
+  user missing ("missing"), status other than 1 ("inactive"), `RoleCode` different (trimmed, case ignored: "role X to
+  Y"), `DepartmentSet` different or absent ("departments changed"). On a difference `EndSession` writes one
+  SESSION-ENDED line (user id and reason), calls `Session.Abandon()`, redirects to `Default.aspx?status=changed` (role
+  or departments) or `?status=inactive` (missing or inactive; the constants `StatusChanged` and `StatusInactive`), and
+  expires the session cookie after the redirect (the cookie name is read from the sessionState section, default
+  ASP.NET_SessionId). `RedirectToLogin` gives an UpdatePanel postback the AJAX pageRedirect answer. If the read fails the
+  error is written to the error log, one SESSION-CHECK-ERROR line is written, the session is kept and the request
+  ends with the safe error page (`Global.WriteSafeAnswer`, HTTP 500; for an UpdatePanel postback the error bar); the
+  next request checks again. Before step RA1d a failed read let the request through. `RequireRole` and `HasRole` reuse
+  the read of the same request, so there is still one database call per request.
+- Role check. The role in `Session["RoleCode"]` must be in the page's `roles` (case-insensitive; `*` is every
+  logged-in user). A page that is not in PageAccess.xml is not allowed.
+- Modes. In `Enforce` the module writes a DENIED line and answers with the "Access denied" page and HTTP 403
+  ("Your role does not have access to this page." and a link back to the Dashboard). In `LogOnly` (any
+  `mode` value other than `Enforce`) nothing is blocked for a role reason and a WOULD-DENY line is written.
+  When the policy file cannot be read, only the login and session checks apply and a POLICY-NOT-LOADED line is
+  written. The policy is cached and reloaded when the file changes; a failed load is cached for 30 seconds.
+- The log. Lines are appended to `App_Data\PageAccessLog.txt` (tab-separated: time, action, user as
+  "Name (login)", role, page, reason; since step RA1d every value is cleaned of control characters, so a line always has six columns; the actions include SESSION-ENDED and SESSION-CHECK-ERROR). App_Data is not served by IIS. A write failure never breaks the request.
+  No code removes or rotates the file (a Grep for file deletion finds only the logo, the Send Mail attachment and
+  the unused Word code).
+- The page check `RequireRole` (step RA1a). `PageAccessModule.RequireRole(params string[] roles)` is a second check
+  inside a page, for pages that only some roles may use. It reads the user's role and account status from the
+  database by the session's `UserId`, not from `Session["RoleCode"]`. Since step RA1d it reuses the
+  `spr_GetUserAccessState` read that the module made for the request (`ReadDatabaseRole`, BMMS/PageAccessModule.cs), so the nine pages
+  make no second call; `UserMgr.GetUserDataTableByUserId` is the fallback only, for a request the module did not
+  check. It therefore
+  also holds in `LogOnly` mode, for a session opened before a deployment and for a role changed during the
+  session. When the user is not an active user with one of the roles it writes a DENIED-PAGE line to the page
+  access log (reason "role not allowed by the page (allowed: [roles])"), answers the same "Access denied" page
+  (HTTP 403) and ends the request with `Response.End()`, so no event handler of the page runs. A database error
+  denies (fail closed) and is written to the error log. It is called outside any try/catch, as the first line of
+  `Page_Load` of nine pages: Master/User, Department, Designation, MemberType, SubjectType, DecisionType,
+  ResetPassword, BackupDatabase and Report/AuditTrail, each with `RequireRole("admin")`; and again first in the
+  Reset Password and Backup Database button handlers. Since step RA1d a role changed
+  during the session also ends the session before any page runs (the session check above); see chapter 08, "Page access".
+- `PageAccessModule.RolesForPage(path)` (step GM1a) returns the roles PageAccess.xml allows for an application-relative page path,
+  read from the same cached policy the module enforces: an empty array for a page that is not listed (not allowed), `*` as
+  written, null when the policy could not be read or there is no request. The Governance Matrix uses it for the transactions
+  whose rule is a page rule, so it keeps no copy of the policy. Since GM1a `Report/GovernanceMatrix.aspx` also calls
+  `RequireRole("admin", "controller")` first in `Page_Load` (a tenth page with the check).
+- The logged-in check by user id (step UN2) replaced a test of the person's name: before it, pages tested
+  `Session["UserName"]`, which is display text and not an identity.
+- The menu and the module are two lists to keep in step: MenuUserControl.ascx shows links by role, and
+  PageAccess.xml allows pages by role. A role that is listed in one and not in the other either sees a link that
+  ends in "Access denied" or can open a page it has no link to. Chapter 08 describes the security rules.
+
+Drawn from: BMMS/PageAccessModule.cs, BMMS/XML/PageAccess.xml, BMMS/Web.config, BMMS/UserControl/MenuUserControl.ascx,
+BMMSBAL/Common.cs, Database/README.md (step UN2 as a lead).
+
+## Error handling
+
+Three paths lead to an error message. None of them shows an exception text to the user.
+
+```mermaid
+flowchart TD
+    pPage("Page code-behind")
+    bGoToErr["Utilities.GoToErrPage"]
+    fLog[/"Log/yyyy_MM_dd_ErrorLog.txt"/]
+    pErr("Error/ErrorPage.aspx")
+    bAppError["Global.asax Application_Error"]
+    pFixed("Fixed error page or 404 page")
+    bAsync["Master and login page async handler"]
+    pBar("AsyncPostBackError.js message bar")
+    pPage -->|"caught exception"| bGoToErr
+    bGoToErr -->|"class, method, exception"| fLog
+    bGoToErr -->|"redirect"| pErr
+    pPage -->|"unhandled exception"| bAppError
+    bAppError -->|"exception, path, user id"| fLog
+    bAppError -->|"fixed text, status"| pFixed
+    pPage -->|"error in an UpdatePanel postback"| bAsync
+    bAsync -->|"exception, source control"| fLog
+    bAsync -->|"fixed text"| pBar
+```
+
+| From | To | Data | Notes |
+|---|---|---|---|
+| Page | `Utilities.GoToErrPage` | Class name, method name, exception | 171 call sites in 36 files (Grep of `GoToErrPage(` over the .cs files at 3172059: 174 matches, less the definition in Utilities.cs and two commented-out lines in PDFUtilities.cs and PDF_Reports.cs); the pages catch the exception around their calls |
+| `GoToErrPage` | Error log | The exception | `Utilities.WriteErrorLog` through `DescribeForLog` |
+| `GoToErrPage` | ErrorPage.aspx | Redirect | `Session["ErrorReturnPage"]` keeps the failed page for Exit |
+| Page | Global.asax `Application_Error` | An unhandled exception | Also request-validation errors and a dangerous URL path (HTTP 400) |
+| `Application_Error` | Error log | Exception, request path, user id | One entry; none for HTTP 404; none when the async handler already logged it |
+| `Application_Error` | Browser | A fixed page with the status | No exception text, no redirect |
+| Page | Master async handler | The error of an UpdatePanel postback | `OnAsyncPostBackError` of Main.Master, MainNoMenu.Master and Default.aspx |
+| Async handler | Browser | `AsyncPostBackErrorMessage` | JScript/AsyncPostBackError.js shows it in the bar `wbAsyncError` |
+
+### Utilities.WriteErrorLog and the log file
+
+`Utilities.WriteErrorLog(class, method, message)` appends to the file `yyyy_MM_dd_ErrorLog.txt` (one file per day)
+in the folder `Log` under the application's base directory, creating the folder when it is missing. One entry is a
+line of dashes, the date and time, "Class  Name", "Method Name", "Description" and a closing line. One writer at
+a time (a lock); the method never throws, so that a logging failure does not hide the caller's error. Web.config
+hides the segment `Log` (and `PDF` and `SqlBackup`) from browsers with `requestFiltering`, so the files are not
+served. The text written for an exception is `Exception.ToString()`, except for a request-validation error: the
+value the user typed is replaced by "(value not logged)". Form values are never written.
+
+### The paths
+
+- Caught in a page (`GoToErrPage`). It writes the log, remembers the failed page (only a normal `.aspx` path
+  of the application; `IsReturnablePage` refuses anything that could point to another site) and redirects to
+  Error/ErrorPage.aspx. The page shows a fixed text ("This action could not be completed because of an error on
+  the server. The error is in the error log. Use Exit to return to the page, and check what was saved before you
+  try again.") and the Exit button, which returns to the failed page when the file exists, otherwise to the
+  Dashboard. With no session the page sends the visitor to the login page.
+- Not caught (`Application_Error`, Global.asax.cs). It logs once through `Utilities.LogUnhandledError`, clears the
+  error and writes a short fixed page: "This action could not be completed because of an error on the server. The
+  error is in the error log. Open the page again and check what was saved before you try again.", with the status
+  of the error (HTTP 500 when there is none) and links "Open the page again" and "Back to home". The link is left
+  out for a 400, for the error page itself and for a path that could point elsewhere, and the text then leaves
+  out that sentence. For an UpdatePanel request the answer is the fixed text only. HTTP 404 gets a "Page not
+  found." page, is not logged and shows no path. If the page cannot be written the answer is status 500 with no
+  body. The "Access denied" page of PageAccessModule does not pass through this handler.
+- Error in an UpdatePanel postback. The handler of the master sets `AsyncPostBackErrorMessage` ("The action could
+  not be completed. The error is in the error log.") and logs the exception, the page, the control that posted and
+  the user id (`Utilities.LogAsyncPostBackError`); it marks the request as logged, so `Application_Error` does
+  not write a second entry. The script shows a bar with its own text: "This action could not be completed because
+  of an error on the server. The error is in the error log. Reload the page and check what was saved before you
+  try again.", or "The server did not answer in time. Reload the page and check what was saved before you try
+  again." for a timeout. The bar is hidden at the start of the next request. A page that adds its own end-request
+  handler first can mark the error as handled (Reset Database does).
+- Refusals are not errors. A refusal is a result row with a Reason code, and the page shows the message of its
+  Reason (chapter 04, "A refusal is not a database error"). A database error is the other path and ends in one of
+  the three above.
+
+Web.config has no `customErrors` and no `httpErrors` element: errors reach `Application_Error`, and the pages
+and modules answer for themselves. Request validation is on (`requestValidationMode="2.0"`) with
+`ValidateRequest="false"` on 11 pages (a Grep of the aspx files; Database/README.md names them in the step A2a
+item of its known-items list). The version headers are off (`enableVersionHeader="false"`, no `X-Powered-By`).
+
+Drawn from: BMMS/Global.asax.cs, BMMSBAL/Utilities.cs, BMMS/Error/ErrorPage.aspx(.cs), BMMS/MasterPage/Main.Master(.cs),
+BMMS/JScript/AsyncPostBackError.js, BMMS/Web.config, Database/README.md (steps E1, E2, E2b, E2c as leads).
+
+## Known limitations in the code
+
+The list is from Documentation/Architecture/BMMS-Architecture.md section 9 (a lead) and from the "Known items for
+later steps" list of Database/README.md, each checked against the code. The limits that sit in the database are in
+chapter 04 ("Known database limitations"). The full backlog stays in Database/README.md.
+
+| Limitation | Evidence in the code |
+|---|---|
+| Some report and certificate texts are fixed in the code. The old note says that making them company-specific is planned. The organisation name, address and logo are settings (`OrganisationDetails`), but the wording is not | PDF_Reports.cs line 182 ("This is to certify that we have paid to Shri. ..."); Report/Reports.aspx.cs line 626 ("Minutes of the ... meeting of the ...") |
+| Old mail and login audit rows can show the wrong user (the old note says ids of users deleted long ago were reused) | A data matter, not a code fault; see chapter 04. The audit writes are `Common.SaveSendMail` and `Utilities.AddEditAuditTrialLogin` |
+| Mail has no TLS: the code never sets `EnableSsl`, so only a server that accepts plain SMTP works | Mail_Mgr.cs, `SendWebEmail` (the `SmtpClient` is made with a host and port only) |
+| The mail audit row keeps the full server path of the attachment, and a mail that was sent but whose audit row could not be written is reported as a failure | Mail_Mgr.cs line 109 (`Common.SaveSendMail` with the attachment path, after `smtp.Send`, inside the same `try`) |
+| The IP address recorded at login is an address of the machine that runs the site, not of the user's computer | Default.aspx.cs line 71 (`Utilities.GetLocalIPAddress`, which uses the server's own host name) |
+| User ids are read with `Convert.ToInt16` in several places, so an id above 32767 fails there | Logout.aspx.cs (line 15), Master/ResetPassword.aspx.cs and other places (a Grep finds 85 matches of `Convert.ToInt16` in 27 .cs files of BMMS at 3172059; not every match reads a user id). Global.asax.cs `Session_End` no longer does: it reads the UserId with `int.TryParse` and `UserId > 0` |
+| Code with no caller: `WordUtilities` (all methods; `DocToString` was removed in step AZ1), `Common.EncryptVal`, `Common.CreateRandomPassword`, `Common.MondifyAppSettings`; the Send Mail handler `btnSendMail_Click` of Report/Followup has no button (the same code of Report/FollowupActionTaken was removed in RA1c2); `PDFUtilities.GenerateHTMLPdf` and `HtmlToPdfBuilder` have no caller since RA1c2 removed TestPage; `MeetingMgr.GetScheduleMeet` and `MeetingDB.GetScheduleMeet` have no caller since UN6b (the Dashboard reads `GetDashboardMeetings`) | Grep for callers |
+| Files under ~/Files (uploads, attachments) are plain files served by IIS: PageAccessModule checks `.aspx` requests only, and Web.config hides only the segments `PDF`, `SqlBackup` and `Log`. Database/README.md lists a login-checked download page as an open step (step 27) | PageAccessModule.cs lines 62 to 68; Web.config `hiddenSegments` |
+| Web.config sets no `maxRequestLength`, so the ASP.NET default applies to uploads; the old list says a larger upload is refused before the page runs and shows the safe error page | Web.config (`httpRuntime`); [[CONFIRM: the effective upload limit on the installed site; check the installed Web.config and the IIS request-filtering limit]] |
+| `CommonDB` rethrows with `throw ex;`, so the stack trace of an error starts at `CommonDB` and not at the procedure call | CommonDB.cs lines 36 to 39 and 78 to 81 |
+| `Common.GetAppSetting` reads and parses the XML file on every call | Common.cs `GetAppSetting` |
+| `DecryptVal` (Triple DES) is kept only for an SMTP password saved before DPAPI; the code marks the line as transitional | Common.cs `UnprotectSecret` |
+
+Other items of the Database/README.md list that concern single pages (for example the Agenda Approval PDF and
+the Agenda Details report) were not rechecked in this chapter and stay in that list.
+
+Drawn from: Documentation/Architecture/BMMS-Architecture.md section 9 (lead), Database/README.md "Known items for
+later steps" (lead), BMMSBAL/PDF_Reports.cs, Mail_Mgr.cs, Common.cs, Utilities.cs, BMMS/Default.aspx.cs,
+Global.asax.cs, Logout.aspx.cs, Master/ResetPassword.aspx.cs, Report/Reports.aspx.cs,
+PageAccessModule.cs, Web.config, BMMSDAL/CommonDB.cs.

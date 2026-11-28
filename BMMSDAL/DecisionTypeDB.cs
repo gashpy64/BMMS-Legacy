@@ -152,7 +152,10 @@ namespace BMMSDAL
             SqlParameter[] parameter = new SqlParameter[1];
             parameter[0] = new SqlParameter("@DecisionTypeId", DecisionTypeId);
 
-            return CommonDB.ExecuteProcedure("spr_DeleteDecisionTypeByDecisionTypeId", parameter); ;
+            DataTable dtResult = new DataTable();
+            dtResult = CommonDB.GetDataTable("spr_DeleteDecisionTypeByDecisionTypeId", parameter);
+
+            return Convert.ToInt16(dtResult.Rows[0]["Result"].ToString());
         }
         #endregion
     }
