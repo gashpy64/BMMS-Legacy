@@ -8,7 +8,7 @@
 - Last updated by: IU1, based on 79f50ea
 - Status: Draft
 - Verified against: for IU1: the step's diff (BMMS/Master/Meeting.aspx.cs, Committee.aspx.cs, ResetPassword.aspx.cs, BMMSBAL/AlertMgr.cs, UserMgr.cs), Database/BMMS-Fix-InactiveUsers-Step55.sql, Database/README.md (section Step IU1); for UD1b: BMMS/Master/Agenda.aspx.cs (GenerateMail, GenerateUpdateMail), BMMS/DashBoard/DashBoard.aspx.cs (the mail after Result 1), BMMS/Master/AgendaFinalization.aspx.cs (the call of AlertMgr.GetAlertMailId), Database/BMMS-Fix-DepartmentApprovers-Step53.sql (spr_GetAlertMailId, spr_GetAgendaUpdateMailId, spr_GetAgendaCreationMailId read in full), Database/README.md (section Step UD1b)
-- To confirm: feature area written only for the recipients of the agenda mails since step UD1b (WF2c3); the mail server settings, the Mail_Mgr send, the mail log and the other mails are not written yet
+- To confirm: feature area written only for the recipients of the agenda mails since step UD1b (WF2e4); the mail server settings, the Mail_Mgr send, the mail log and the other mails are not written yet
 
 ## Scope
 
@@ -16,7 +16,7 @@ This file covers who gets which agenda mail since step UD1b (database step 53). 
 "has been Created" mail of a User's item sent to the Controller adds the line "Sent to the Controller: the department had no
 active Manager." The Admin role is in no recipient list.
 
-[[CONFIRM: the sending itself (Mail_Mgr, the SMTP settings, the log) and the other mails are not written yet (WF2c3)]]
+[[CONFIRM: the sending itself (Mail_Mgr, the SMTP settings, the log) and the other mails are not written yet (WF2e4)]]
 
 ## Programs involved
 
@@ -68,7 +68,7 @@ flowchart TD
 
 ## Refusal paths
 
-[[CONFIRM: not written yet (WF2c3)]]
+[[CONFIRM: not written yet (WF2e4)]]
 
 ## Where each rule lives
 

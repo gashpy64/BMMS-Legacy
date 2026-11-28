@@ -8,7 +8,7 @@
 - Last updated by: GM1a, based on 32c619d (the one paragraph; the rest was last updated by UD1b, based on db1d641)
 - Status: Draft
 - Verified against: for GM1a: Database/README.md (section Step GM1a), Database/BMMS-Fix-GovernanceLog-Step56.sql (the Reason lines of spr_SetDepartmentManagerRule and spr_SetAppSetting); for UD1b: BMMS/Master/SystemSettings.aspx and .aspx.cs (the card, LoadDeptRule, btnSaveDeptRule_Click), BMMSBAL/Utilities.cs (DeptNoManagerAction), Database/BMMS-Fix-DepartmentApprovers-Step53.sql (fn_AgendaRoute), Database/README.md (section Step UD1b)
-- To confirm: feature area written only for the setting DeptNoManagerAction (WF2c3); the other settings of the page (the agenda lock option, the organisation details) are not written yet
+- To confirm: feature area written only for the setting DeptNoManagerAction (WF2e3); the other settings of the page (the agenda lock option, the organisation details) are not written yet
 
 ## Scope
 
@@ -16,7 +16,7 @@ This file covers the setting DeptNoManagerAction, shown on the System Settings p
 Manager". Until step 52 it was only stored. Since step UD1b (database step 53) fn_AgendaRoute reads it when a User saves a new
 agenda item whose department has no active Manager: Refused (the default) or Sent to the Controller.
 
-[[CONFIRM: the other settings of the page are not written yet (WF2c3)]]
+[[CONFIRM: the other settings of the page are not written yet (WF2e3)]]
 
 ## Programs involved
 

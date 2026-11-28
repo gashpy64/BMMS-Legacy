@@ -8,7 +8,7 @@
 - Last updated by: IU1, based on 79f50ea
 - Status: Draft
 - Verified against: for IU1: the step's diff (BMMS/Master/Committee.aspx.cs, BMMSBAL/AlertMgr.cs, BMMSDAL/AlertDB.cs), Database/BMMS-Fix-InactiveUsers-Step55.sql, BMMS-Test-InactiveUsers-Step55.sql, Database/README.md (section Step IU1); for UD1b: Database/BMMS-Fix-DepartmentApprovers-Step53.sql (the alert insert of spr_AddEditCommittee and the comment), Database/README.md (section Step UD1b)
-- To confirm: feature area written only for the committee alert and mail recipients (UD1b, IU1; WF2c2); the master lists themselves (department, designation, member, committee and the others) are not written yet
+- To confirm: feature area written only for the committee alert and mail recipients (UD1b, IU1; WF2e3); the master lists themselves (department, designation, member, committee and the others) are not written yet
 
 ## Scope
 
@@ -17,7 +17,7 @@ Updated mail). Since step IU1 (database step 55) both follow one rule, fn_Functi
 person who saved, the protected system account and the users of the Admin role. The Committee mail had been switched off in
 Committee.aspx.cs since the baseline; since step IU1 it is sent after a successful save, by the path of the Meeting page.
 
-[[CONFIRM: the master lists and their flows are not written yet (WF2c2)]]
+[[CONFIRM: the master lists and their flows are not written yet (WF2e3)]]
 
 ## Programs involved
 

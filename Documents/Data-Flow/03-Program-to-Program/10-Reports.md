@@ -17,7 +17,7 @@
 - To confirm: why Export to Pdf cannot print Tamil or Hindi for Followup by Department (from the step
   requirement, not shown by the code read); the file covers only the flows changed in steps RA1b and RA1c2 (the Minutes report in every
   status, Management's Followup and Followup by Department); the other reports (agenda reports, Minutes Extract, the Controller's Followup,
-  notices, sitting fees and so on) are not written yet (WF2c3); the tables the three procedures read are
+  notices, sitting fees and so on) are not written yet (WF2e2); the tables the three procedures read are
   from the views named in their header (View_Minute, View_Meeting, View_Action_Item), not from the view
   texts
 
@@ -30,7 +30,7 @@ RA1c2 adds Followup by Department (FollowupActionTaken.aspx, Controller only; se
 The Followup page of the Master menu (Master/Followup.aspx, where the Controller saves the action text and the
 Confirmed ticks and the MD Secretariat reads) is not a report. It is described in 09-Dashboard-and-Alerts.md, section
 "Action Item Details panel and the Followup page saves (step UN6d)", beside the other save of Action_Item.
-[[CONFIRM: the other report pages are not written yet (WF2c3)]]
+[[CONFIRM: the other report pages are not written yet (WF2e2)]]
 
 ## Programs involved
 

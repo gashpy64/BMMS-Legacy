@@ -8,7 +8,7 @@
 - Last updated by: IU1, based on 79f50ea
 - Status: Draft
 - Verified against: for IU1: the step's diff (BMMS/Master/Meeting.aspx.cs, BMMSBAL/AlertMgr.cs, BMMSDAL/AlertDB.cs), Database/BMMS-Fix-InactiveUsers-Step55.sql, BMMS-Test-InactiveUsers-Step55.sql, Database/README.md (section Step IU1); for UD1b: Database/BMMS-Fix-DepartmentApprovers-Step53.sql (the alert insert of spr_AddEditMeeting, MC branch, and the comment), Database/README.md (section Step UD1b)
-- To confirm: feature area written only for the meeting alert and mail recipients (UD1b, IU1; WF2c2); the meeting create and update flow, the date rules and the notice are not written yet
+- To confirm: feature area written only for the meeting alert and mail recipients (UD1b, IU1; WF2e2); the meeting create and update flow, the date rules and the notice are not written yet
 
 ## Scope
 
@@ -17,7 +17,7 @@ Updated mail). Since step IU1 (database step 55) both follow one rule, fn_Functi
 person who saved, the protected system account and the users of the Admin role (since step UD1b the Admin role gets no alert
 row). The existing Admin rows stay in the table and are not listed.
 
-[[CONFIRM: the rest of the meeting flow (create, update, delete, the date rules, the notice) is not written yet (WF2c2)]]
+[[CONFIRM: the rest of the meeting flow (create, update, delete, the date rules, the notice) is not written yet (WF2e2)]]
 
 ## Programs involved
 
@@ -82,7 +82,7 @@ the alert rows of the event.
 | No address in the list | Meeting.aspx.cs GenerateMail | No mail is sent; green "The meeting was saved. No mail was sent because there were no recipients." |
 | The mail fails (address check or send) | Mail_Mgr, Meeting.aspx.cs | The meeting stays saved; the warning above; the error is in the error log |
 
-[[CONFIRM: the refusal paths of the save itself (the date rules, the locks) are not written yet (WF2c2)]]
+[[CONFIRM: the refusal paths of the save itself (the date rules, the locks) are not written yet (WF2e2)]]
 
 ## Where each rule lives
 

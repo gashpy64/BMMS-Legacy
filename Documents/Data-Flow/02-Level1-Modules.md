@@ -8,15 +8,15 @@
 - Last updated by: UD1c, based on 42cb88c
 - Status: Draft
 - Verified against: for UD1c: Database/BMMS-Fix-ManagerScope-Step54.sql (fn_ManagerDepartments and the comment and Reason 30 checks of spr_AddEditAgendaByManager); the other rows were not re-checked for step 54 (the new read procedures of step 54 are in Data-Flow/03-Program-to-Program/10-Reports.md, 04-Agenda-Entry-and-Routing.md and 02-User-Master.md); for UD1b: Database/BMMS-Fix-DepartmentApprovers-Step53.sql (the comment blocks and the alert and column statements of the 20 objects), System-Manual/04-Database (the Step 53 section), Database/README.md (section Step UD1b)
-- To confirm: diagram and matrix not written yet (WF2c1), except the rows of the matrix that step UD1b changed; the other processes and every unchanged cell are not written yet
+- To confirm: diagram and matrix not written yet (WF2e4), except the rows of the matrix that step UD1b changed; the other processes and every unchanged cell are not written yet
 
 ## Level 1 diagram
 
-[[CONFIRM: not written yet (WF2c1)]]
+[[CONFIRM: not written yet (WF2e4)]]
 
 ## Flows
 
-[[CONFIRM: not written yet (WF2c1)]]
+[[CONFIRM: not written yet (WF2e4)]]
 
 ## Process-by-table R/W matrix
 
@@ -38,7 +38,7 @@ columns that are new in step 53 are Alert_User_Map.HandledReason, HandledBy and 
 | Manager alert rows (spr_SetManagerAlertRows, internal) | R | R | R | R | R | R | RW |  |  |
 | System Settings, Department without an active Manager (spr_SetDepartmentManagerRule) |  |  |  |  |  |  |  | W | W |
 
-[[CONFIRM: the cells of this matrix were taken from the comment blocks and statements of the Fix script and the chapter 04 tables, not from a line-by-line read of the long save procedures; the owner or the WF2c1 pass confirms them]]
+[[CONFIRM: the cells of this matrix were taken from the comment blocks and statements of the Fix script and the chapter 04 tables, not from a line-by-line read of the long save procedures; the owner or the WF2e4 pass confirms them]]
 
 ## Drawn from
 

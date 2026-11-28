@@ -12,7 +12,7 @@
   (fn_MeetingDashboardState, spr_GetDashboardMeetings), BMMS/UserControl/MeetingSummary.ascx.cs,
   BMMS/DashBoard/DashBoard.aspx.cs (diff: Reload after Approve and Reject), Database/README.md (section Step UN6b),
   Documents/User-Manuals/Glossary.md (the screens of each role)
-- To confirm: workflow only partly written (WF2c4): the lanes below show the meeting status the Dashboard gives at
+- To confirm: workflow only partly written (WF2e2): the lanes below show the meeting status the Dashboard gives at
   each stage; the agenda routing, the approval stages, the minutes steps, the follow-up and the mails are not drawn
   yet
 
@@ -22,7 +22,7 @@ The meeting status the Dashboard shows (step UN6b) follows the stages of the lif
 Controller (who saves the meeting, finalises the agenda and takes the minutes through their steps), the Manager and
 the User (who enter and decide agenda items) and the Dashboard (what every role sees in the Meetings card).
 
-[[CONFIRM: the lanes for the Admin, MD Secretariat and Management, the agenda routing and the mails are not written yet (WF2c4)]]
+[[CONFIRM: the lanes for the Admin, MD Secretariat and Management, the agenda routing and the mails are not written yet (WF2e2)]]
 
 ## Workflow diagram
 

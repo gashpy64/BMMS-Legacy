@@ -3,11 +3,11 @@
 - Title: Program to Program: Dashboard and Alerts
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: UD1b (step 53): the new section "Handled alert rows: one Manager decides, the others' alerts are closed" and two rows of the UN6c1 and UN6c2a rule tables; MR1 (step 52): Reason 28 in the refusal paths and the rule row for the meeting date in the database; UN6e (step 50): two rows of the Action Items tables (the list is no longer kept in ViewState); FU2a (step 48): the new section "The Action Items card and panel: a confirmed followup is final, the status line, Reopened"; FU1 (step 47): the Followup page (list, Submit, Reopen, status history) in the new section after the UN6d section; UN6d (step 46): the Action Item Details panel Submit and the Followup page saves; UN6c2b (step 45): the summary cards, the Committee filter on every card, the Action Items filters; UN6c2a (step 44): the My approvals panel, the Waiting for me column and the Approve and Reject buttons; UN6c1 (step 43): the Alerts card, the header count and the Action Items card; UN6b (step 42): the Meetings card; the rest not written yet
-- Commit: db1d641
-- Last updated by: UD1b, based on db1d641
+- Applies to: WF2e1 (the new section "The Agenda Alert panel and the Approve and Reject flow, end to end"; two corrections, see the change record); UD1b (step 53): the new section "Handled alert rows: one Manager decides, the others' alerts are closed" and two rows of the UN6c1 and UN6c2a rule tables; MR1 (step 52): Reason 28 in the refusal paths and the rule row for the meeting date in the database; UN6e (step 50): two rows of the Action Items tables (the list is no longer kept in ViewState); FU2a (step 48): the new section "The Action Items card and panel: a confirmed followup is final, the status line, Reopened"; FU1 (step 47): the Followup page (list, Submit, Reopen, status history) in the new section after the UN6d section; UN6d (step 46): the Action Item Details panel Submit and the Followup page saves; UN6c2b (step 45): the summary cards, the Committee filter on every card, the Action Items filters; UN6c2a (step 44): the My approvals panel, the Waiting for me column and the Approve and Reject buttons; UN6c1 (step 43): the Alerts card, the header count and the Action Items card; UN6b (step 42): the Meetings card; the rest not written yet
+- Commit: 31c81ab
+- Last updated by: WF2e1, based on 31c81ab (earlier: UD1b, based on db1d641)
 - Status: Draft
-- Verified against: for step UD1b: BMMS/DashBoard/DashBoard.aspx and .aspx.cs and BMMS/CSS/bmms-workbench.css (diff), Database/BMMS-Fix-DepartmentApprovers-Step53.sql (fn_DashboardAlerts, spr_SetManagerAlertRows, spr_GetDashboardAlerts, spr_GetAlertCount read), Database/README.md (section Step UD1b), Tests/packs/two-approvers/README.md; for step MR1: BMMSBAL/MeetingMgr.cs (diff: Reason 28 text), Database/README.md (section Step MR1: spr_UpdateAgendaByAgendaId); the Fix script itself was not read line by line; for step UN6e: BMMS/DashBoard/DashBoard.aspx.cs (diff: LoadActionItemGRV, OnPagingAction), Database/README.md (section Step UN6e); for the step FU2a section: BMMS/DashBoard/DashBoard.aspx and .aspx.cs (diff), BMMS/FollowupStatusText.cs, BMMS/Master/Followup.aspx.cs (diff), BMMS/CSS/bmms-workbench.css (diff), Database/BMMS-Fix-DashboardFollowupFinal-Step48.sql (the Reason lines of the three procedures), Database/README.md (section Step FU2a and its Known items), the Test result of step 48 (43 of 43) and the tester run 2026-11-16_181041 as given;
+- Verified against: for step WF2e1: BMMS/DashBoard/DashBoard.aspx.cs (BindAgendaDetails, lnkSource_Click, lnkApproval_Click, btnApprove_Click, btnReject_Click, TryGetAgenda, TryGetApprovalState, GenerateMail, ShowAgendaPanelMessage, ShowItemGone, ShowAlert, ShowCommentCaptions, HandledCaption, btnDeleteAlert_Click, ClearAgendaEditors) and BMMS/DashBoard/DashBoard.aspx (the Agenda Alert panel, its fields and buttons), BMMSBAL/AgendaMgr.cs, MeetingMgr.cs (IsAgendaOpen, RefusalMessage, MeetingChangeReason) and AlertMgr.cs, BMMSDAL/AgendaDB.cs (GetAgendaApprovalState) and AlertDB.cs (GetAlertMailId), the catalog of BMMS_Test at step 57 (catalog-20261128-3172059: spr_GetAgendaApprovalState, fn_AgendaWaitingFor, spr_UpdateAgendaByAgendaId, spr_GetAlertMailId, spr_GetMeetingStatusByMeetingId, spr_CheckAgendaFinalizeByMeetingId; parameters.txt for spr_GetDashboardAlerts; indexes.txt for Agenda); no Test script was read; for the two drift corrections: Documents/Audit/DA-20261119-5f8c4fe/Drift-Register.md; for step UD1b: BMMS/DashBoard/DashBoard.aspx and .aspx.cs and BMMS/CSS/bmms-workbench.css (diff), Database/BMMS-Fix-DepartmentApprovers-Step53.sql (fn_DashboardAlerts, spr_SetManagerAlertRows, spr_GetDashboardAlerts, spr_GetAlertCount read), Database/README.md (section Step UD1b), Tests/packs/two-approvers/README.md; for step MR1: BMMSBAL/MeetingMgr.cs (diff: Reason 28 text), Database/README.md (section Step MR1: spr_UpdateAgendaByAgendaId); the Fix script itself was not read line by line; for step UN6e: BMMS/DashBoard/DashBoard.aspx.cs (diff: LoadActionItemGRV, OnPagingAction), Database/README.md (section Step UN6e); for the step FU2a section: BMMS/DashBoard/DashBoard.aspx and .aspx.cs (diff), BMMS/FollowupStatusText.cs, BMMS/Master/Followup.aspx.cs (diff), BMMS/CSS/bmms-workbench.css (diff), Database/BMMS-Fix-DashboardFollowupFinal-Step48.sql (the Reason lines of the three procedures), Database/README.md (section Step FU2a and its Known items), the Test result of step 48 (43 of 43) and the tester run 2026-11-16_181041 as given;
   for the step FU1 section: BMMS/Master/Followup.aspx and .aspx.cs (read in full), BMMSBAL/ActionItemMgr.cs and BMMSDAL/ActionItemDB.cs (diff), Database/README.md (section Step FU1 and its Known items), the Test result of step 47 (95 of 95) and the tester run of 2026-11-16 as given;
   for the step UN6d section: git diff ce7358a 276e402 of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/Master/Followup.aspx and .aspx.cs, BMMSBAL/ActionItemMgr.cs, BMMSDAL/ActionItemDB.cs, Database/BMMS-Fix-FollowupSave-Step46.sql (read in full), Database/README.md (section Step UN6d and its Known items), the Test script result of step 46 (56 of 56) and the tester runs of 2026-11-15 as given;
   for the step UN6c2b section: git diff f3cbd7e~1 f3cbd7e of BMMS/DashBoard/DashBoard.aspx and .aspx.cs, BMMS/UserControl/MeetingSummary.ascx and .ascx.cs, BMMSBAL/AgendaMgr.cs and ActionItemMgr.cs, BMMSDAL/AgendaDB.cs,
@@ -27,9 +27,8 @@
   DepartmentDB.cs (diff), Database/BMMS-Fix-DashboardMeetings-Step42.sql (all five objects),
   BMMS-Rollback-DashboardMeetings-Step42.sql, BMMS-Test-DashboardMeetings-Step42.sql (header), Database/README.md
   (section Step UN6b), the owner's test result as given for the step (71 of 71, not re-run)
-- To confirm: feature area not written yet except the Meetings card and, since UN6c1, the Alerts card, the header count and the
-  Action Items card (WF2c3): the Agenda Alert panel and the approval flow of the Dashboard are still to be drawn (the
-  Submit of the Action Item Details panel is drawn since UN6d)
+- To confirm:
+- Change record (WF2e1): (1) the Agenda Alert panel and the Approve and Reject flow end to end are new (the section after "My approvals, Waiting for me and the Approve and Reject buttons (step UN6c2a)"); the open CONFIRM point in the Scope and the To confirm line that said they were still to be drawn are closed. (2) Corrected: "The Agenda table has only its primary key ... an index is a later step (UN6e)" was outdated; step 50 (UN6e) created IX_Agenda_MeetingId; the measured numbers are kept as measured on 2026-11-12 and are now said to be taken before the index. (3) Corrected: the row for spr_GetDashboardAlerts in the Alerts table said "Six OUTPUT values" while listing five; it now says five (catalog parameters.txt: @Result, @Reason, @TotalRows, @UnreadCount, @PageShown). The rest of the text is unchanged.
 
 ## Scope
 
@@ -54,8 +53,9 @@ The status line, the "Reopened" chip and the read-only panel of a confirmed foll
 "The Action Items card and panel: a confirmed followup is final, the status line, Reopened (step FU2a)" below. It
 replaces the Action Items parts of the sections of steps 43 and 46 where they differ.
 
-[[CONFIRM: the rest of the Agenda Alert panel and the Approve and Reject flow of the
-Dashboard (mail, the finalised agenda) are not written yet (WF2c3)]]
+The Agenda Alert panel (what it shows, when Approve and Reject show) and the Approve and Reject flow of the Dashboard from the
+open panel to the mail and the finalised-agenda refusal are in the section "The Agenda Alert panel and the Approve and Reject flow,
+end to end" below; the rules of the approval itself are in 05-Approval.
 
 ## Programs involved
 
@@ -165,10 +165,12 @@ Read only; the card writes nothing.
 | fn_AgendaStatusGroup | Agenda |
 | CommitteeMgr.GetCommitteeList(1) | The active committees for the drop-down (its own procedure, not read for this file) |
 
-Measured on BMMS_Test on 2026-11-12 (17 meetings, 66 items, warm runs): 373 logical reads for the Controller, 405
-for a Manager with one department, 613 for a Manager with two, 404 for a User, no physical reads, 7 to 33 ms
-elapsed. The Agenda table has only its primary key, so the counts scan it once per listed meeting; an index is a
-later step (UN6e; Database/README.md, "Known items for later steps").
+Measured on BMMS_Test on 2026-11-12 (17 meetings, 66 items, warm runs), before step 50 (UN6e) created the index below:
+373 logical reads for the Controller, 405 for a Manager with one department, 613 for a Manager with two, 404 for a
+User, no physical reads, 7 to 33 ms elapsed. At that time the Agenda table had only its primary key, so the counts
+scanned it once per listed meeting. Since step 50 (UN6e) the table has the nonclustered index IX_Agenda_MeetingId, with
+MeetingId as its key and DepartmentId and AgendaStatusCode as included columns (catalog of BMMS_Test at step 57,
+indexes.txt). The numbers above were not measured again after the index.
 
 ## Alerts card, header count and Action Items card (step UN6c1)
 
@@ -236,7 +238,7 @@ sequenceDiagram
 |---|---|---|---|
 | Role (any) | DashBoard.aspx | Opens the page, or clicks Recent, Unread, All, a page number, an alert, an item, Remove from my list or Submit | The mode and the page number are kept in ViewState; the procedure checks both |
 | DashBoard.aspx | AlertMgr.GetDashboardAlerts | Acting user id, mode (R, U or A), page number | Only the page shown is read; Recent is the default |
-| AlertMgr / AlertDB | spr_GetDashboardAlerts | @ActingUserId, @Mode, @PageNo | Six OUTPUT values: @Result, @Reason, @TotalRows, @UnreadCount, @PageShown |
+| AlertMgr / AlertDB | spr_GetDashboardAlerts | @ActingUserId, @Mode, @PageNo | Five OUTPUT values: @Result, @Reason, @TotalRows, @UnreadCount, @PageShown |
 | spr_GetDashboardAlerts | AlertDB | Rows with AlertUserId, AlertId, ReadStatus, SourceType, SourceTypeId, AlertTypeName, CommitteeName, DepartmentName, DisplayText, EventOn, ActorName, ActorLogin | Newest event first, 10 to a page (ROW_NUMBER, compatibility level 100) |
 | DashBoard.aspx | Main.Master.RefreshAlertCount | A call, after the alert list is reloaded on a postback (Approve, Reject, Remove, the links, paging) and after an alert was opened | Not on the first load of the page: the master reads the count in `OnPreRender` |
 | Main.Master | AlertMgr.GetAlertCount | Acting user id | A Reason other than 0 or an exception: the header shows "Alerts" without a number, and the error log holds the cause |
@@ -441,6 +443,171 @@ BMMSBAL/AgendaMgr.cs and MeetingMgr.cs (diff), BMMSDAL/AgendaDB.cs and MeetingDB
 Database/BMMS-Fix-AgendaWaitingFor-Step44.sql (all five objects), BMMS-Rollback-AgendaWaitingFor-Step44.sql,
 BMMS-Test-AgendaWaitingFor-Step44.sql (header, the 1352-case comparison), Database/README.md (section Step UN6c2a,
 Known items), the tester run of 2026-11-14 as given.
+
+## The Agenda Alert panel and the Approve and Reject flow, end to end
+
+Added in the documentation step WF2e1 (code and database as of step 57; no behaviour changed). The panel is the one the Controller
+and the Manager decide in; the rules of the decision (who may decide, the Reasons and their order, the alert rows, the subject number)
+are in 05-Approval and are not repeated here. This section is about what the panel shows and the path of one decision through the
+page. The finalisation of the agenda is in 06-Finalisation-and-Mail.
+
+### The Agenda Alert panel (BindAgendaDetails)
+
+The panel, headed ":: Agenda Alert", opens from an agenda alert (`lnkSource_Click`, source type Agenda) or from a row of My approvals
+(`lnkApproval_Click`); both then mark the acting user's own alert row read (`AlertMgr.UpdateAlertByUserId`) and read the lists again.
+`BindAgendaDetails(AgendaId)` fills it. It returns false, and the page shows "This item no longer exists." with the panels closed, when
+`AgendaMgr.GetAgendaByAgendaId` (spr_GetAgendaByAgendaId) returns no row or the item's MeetingId is not a number.
+
+```mermaid
+sequenceDiagram
+    participant U as Controller or Manager
+    participant P as DashBoard.aspx.cs
+    participant B as AgendaMgr
+    participant SG as spr_GetAgendaByAgendaId
+    participant SF as spr_CheckAgendaFinalizeByMeetingId
+    participant SS as spr_GetAgendaApprovalState
+
+    U->>P: opens an alert or a My approvals row
+    P->>B: GetAgendaByAgendaId(item)
+    B->>SG: AgendaId
+    SG-->>P: the item with committee, meeting, department, texts, files, comments
+    P->>B: CheckAgendaFinalizeByMeetingId(meeting)
+    B->>SF: MeetingId
+    SF-->>P: a row only when the meeting's agenda is Open
+    P->>B: GetAgendaApprovalState(acting user, item)
+    B->>SS: ActingUserId, AgendaId
+    SS-->>P: CanApprove, CanReject, AgendaOpen, DateOpen (or a Reason)
+    P-->>U: the panel, with or without Approve and Reject
+```
+
+| From | To | Data | Notes |
+|---|---|---|---|
+| Controller or Manager | DashBoard.aspx | Opens an alert (Source link) or a My approvals row | `lnkSource_Click`, `lnkApproval_Click`; a person who cannot decide opens the same panel read-only |
+| DashBoard.aspx | AgendaMgr.GetAgendaByAgendaId | Item id | The item is read for the fields below; no row means "This item no longer exists." |
+| DashBoard.aspx | AgendaMgr.CheckAgendaFinalizeByMeetingId | Meeting id of the item | No row (the agenda is not Open): every field read-only, no Approve and Reject, "Remove from my list" shown |
+| DashBoard.aspx | AgendaMgr.GetAgendaApprovalState | Acting user id, item id | Read only when the session holds a usable user id. A Reason other than 0 or an exception is logged and counts as "not read" |
+| DashBoard.aspx | Controller or Manager | The panel | See the two lists below |
+
+What the panel shows (fields and links): Agenda No, Subject No, Committee Name, Meeting No, Meeting Date, Department, Subject Type, Short
+Text, Agenda Text (the text, or a View link to the file when the item's AgendaType is not Entry), Proposed Resolution, Files to be Attached
+(links), Manager's comment and Controller's comment, each with a line "who, date and time" under its label where the comment has an author
+(`ShowCommentCaptions`). The text fields are cleaned for display (HtmlCleaner). The buttons are Approve, Reject, Close, "Remove from my
+list" and the X in the header (Close). A line above the buttons (`pAgendaPanelMessage`) says why a decision is not offered. When the panel
+is opened from an alert row marked as handled, the same line shows the handled text ("Handled by [name] ([login]) on [date]", "No longer
+Manager of the department ([date])" or "Item moved to another department ([date])"); the panel is then read-only as for anyone who may not
+decide the item.
+
+When Approve and Reject show (the one rule is the server's, spr_GetAgendaApprovalState; the page adds the role and the date):
+
+| Case | Approve and Reject | The rest of the panel |
+|---|---|---|
+| The meeting's agenda is not Open (no row from spr_CheckAgendaFinalizeByMeetingId) | Hidden | Every field read-only, "Remove from my list" shown |
+| Role controller or manager, CanApprove and AgendaOpen are 1, DateOpen is 1 | Shown ("Remove from my list" hidden) | Manager: the Manager's comment is editable. Controller: the Controller's comment is editable. A comment is editable only for the role that writes it and only while the buttons show |
+| As above but DateOpen is 0 | Hidden | Read-only, "Remove from my list" shown, and in the panel: "The meeting date has passed, so this item can no longer be approved or rejected. It will be rejected when the agenda is finalized." |
+| Role controller or manager, the state could not be read | Hidden | Read-only, and in the panel: "Whether you may approve this item could not be checked, so it is shown read-only. Close it and open it again." |
+| Role controller, item not at AMA (for example at AC) | Hidden: CanApprove is 0 there | The Controller's Short Text and Proposed Resolution are not set read-only, although at this stage no button saves them (the Approve button is what saves them, and it is not shown) |
+| Role manager who is not a Manager of the item's department, or the creator, or an item not at AC | Hidden | Read-only |
+| Role user, mgmt, md_sect, admin | Hidden | Read-only, "Remove from my list" shown |
+| The protected system account (`Common.IsSystemAccountSession`) | Hidden | "Remove from my list" shown; no panel message |
+
+### The decision from the open panel
+
+```mermaid
+sequenceDiagram
+    participant U as Controller or Manager
+    participant P as DashBoard.aspx.cs
+    participant B as AgendaMgr and MeetingMgr
+    participant SS as spr_GetAgendaApprovalState
+    participant SU as spr_UpdateAgendaByAgendaId
+    participant SN as spr_GenerateSubjectNoByMeetingId
+    participant SA as spr_GetAlertMailId
+    participant X as Mail_Mgr
+
+    U->>P: Approve or Reject
+    P->>P: session user, rich-text limit
+    P->>B: GetAgendaByAgendaId(item)
+    alt the item cannot be read
+        P-->>U: "This item no longer exists."
+    end
+    P->>B: IsAgendaOpen(meeting)
+    alt the agenda is finalised
+        P-->>U: alert box with the finalised-agenda text, panel closed
+    end
+    P->>B: GetAgendaApprovalState(acting user, item)
+    B->>SS: ActingUserId, AgendaId
+    alt the state cannot be read
+        P-->>U: "The item could not be checked, so nothing was changed. Try again."
+    else DateOpen is 0
+        P-->>U: "The meeting date has passed, so this item can no longer be approved or rejected. It will be rejected when the agenda is finalized."
+    end
+    P->>B: UpdateAgendaByAgendaId(item, decision of the role, acting user)
+    B->>SU: texts, comments, status, acting user
+    alt Result 1
+        SU-->>P: Result 1
+        opt Approve
+            P->>B: GenerateSubjectNoByMeetingId(meeting, item)
+            B->>SN: MeetingId, AgendaId
+        end
+        P->>SA: AMA, AMR, ACA or ACR, acting user, item
+        SA-->>P: the addresses
+        P->>X: SendWebEmail(to, subject, body, Bcc)
+        X-->>P: Success or Error
+        P-->>U: panel closed, lists and counts read again
+    else Reason 4
+        SU-->>P: Reason 4
+        P-->>U: "This item no longer exists."
+    else any other Reason
+        SU-->>P: Result 0, Reason, ReasonDetail
+        P-->>U: alert box with the text of the Reason
+    end
+```
+
+| From | To | Data | Notes |
+|---|---|---|---|
+| Controller or Manager | DashBoard.aspx | Approve or Reject | `btnApprove_Click`, `btnReject_Click`; the two methods differ only in the decision word and the mail codes |
+| DashBoard.aspx | Itself | Session user id and role code; the rich-text limit | No session user: back to the sign-in page. Over the limit: "The text is too long. Shorten it or attach the document as a file." in the message box, nothing saved, the panel stays open |
+| DashBoard.aspx | AgendaMgr.GetAgendaByAgendaId | Item id from the hidden field | The item before the save, kept for the comment row of the mail. Not readable: "This item no longer exists.", lists read again |
+| DashBoard.aspx | MeetingMgr.IsAgendaOpen | Meeting id of the item | spr_GetMeetingStatusByMeetingId, a NULL status read as Open there. Not Open: the finalised-agenda text in an alert box, the panel closed, lists read again, no state check, no save, no mail |
+| DashBoard.aspx | AgendaMgr.GetAgendaApprovalState | Acting user id, item id | Asked again, because the date may have passed since the panel opened. Not read: warning "The item could not be checked, so nothing was changed. Try again." DateOpen 0: warning "The meeting date has passed, so this item can no longer be approved or rejected. It will be rejected when the agenda is finalized." For every role. Panel closed, lists read again |
+| DashBoard.aspx | AgendaMgr.UpdateAgendaByAgendaId | Short Text, Proposed Resolution, both comments, MgrApprovedStatus or ControllerApprovedStatus (Approved or Rejected, by the session role), acting user | The procedure decides who may act and what is written (05-Approval) |
+| AgendaMgr | DashBoard.aspx | Result, Reason, ReasonDetail | Result 1 continues. Reason 4: "This item no longer exists." Any other Reason: the text of `MeetingChangeResult.RefusalMessage` in an alert box (Reasons 12, 8, 5, 14, 28: 05-Approval, "Refusal paths") |
+| DashBoard.aspx | AgendaMgr.GenerateSubjectNoByMeetingId | Meeting id, item id | After an approval with Result 1, before the mail, so a mail problem cannot leave the number out. See 05-Approval, "Subject numbers" |
+| DashBoard.aspx | AlertMgr.GetAlertMailId, Mail_Mgr.SendWebEmail | Code AMA or ACA (approve), AMR or ACR (reject), acting user, item | The To is the acting user's own address, the Bcc the recipients of the procedure (05-Approval; System-Manual/07-Mail, "Who gets which mail"). The item is read again after the save for the Subject No and the comment row; if that read fails the mail still goes out without the comment row |
+| DashBoard.aspx | Controller or Manager | After Result 1: the panel closes (`ClearAgendaEditors`, `pnlAgenda` hidden), `MeetingSummary1.Reload()`, `LoadAlertGRV()`, `LoadApprovals()` | A mail that failed: warning "The item was approved, but the mail could not be sent. The error is in the error log." or "The item was rejected, but the mail could not be sent. The error is in the error log." On success nothing is shown. The decision stays saved either way |
+
+### The refusal of a finalised agenda
+
+A finalised agenda is refused in three places, so no later step is reached:
+
+| Place | What happens | Text |
+|---|---|---|
+| Opening the panel: spr_CheckAgendaFinalizeByMeetingId gives no row | The panel is read-only, with no Approve and Reject | None in the panel |
+| Before the decision: `MeetingMgr.IsAgendaOpen` is false | Nothing is saved, no mail, the panel closes, the lists are read again | Alert box: "The agenda for this meeting is finalized, so agenda items can no longer be added, changed or deleted." |
+| In the procedure: Reason 5 (ReasonDetail "Finalized") | Nothing is saved, no mail | The same alert box text (the " Controller changes after finalization are switched off in System Settings." addition belongs to ReasonDetail "BypassOff", which this procedure does not set) |
+
+### Where each rule lives
+
+| Rule | C# | Procedure or function |
+|---|---|---|
+| What the panel shows and which fields are editable | `BindAgendaDetails`, `ShowCommentCaptions`, `HandledCaption` | spr_GetAgendaByAgendaId (the item), spr_CheckAgendaFinalizeByMeetingId, spr_GetAgendaApprovalState |
+| Approve and Reject shown | `BindAgendaDetails` (controller and manager cases, `mayApprove`, `stateDateOpen`) | spr_GetAgendaApprovalState (fn_AgendaWaitingFor) |
+| The order of the page's checks before a decision | `btnApprove_Click`, `btnReject_Click` | none |
+| The finalised-agenda refusal | `MeetingMgr.IsAgendaOpen`, `ShowAlert` | spr_GetMeetingStatusByMeetingId, spr_UpdateAgendaByAgendaId (Reason 5) |
+| The decision, the Reasons, the alert rows | `AgendaMgr.UpdateAgendaByAgendaId`, `MeetingChangeResult.RefusalMessage` | spr_UpdateAgendaByAgendaId (05-Approval) |
+| Mail after a saved decision | `GenerateMail` of the page | spr_GetAlertMailId |
+| The panel closes and the lists follow | `ClearAgendaEditors`, `LoadApprovals`, `LoadAlertGRV`, `MeetingSummary1.Reload()` | none |
+
+### Tables read and written
+
+The page writes nothing itself. The procedures it calls read and write the tables named in 05-Approval ("Tables read and written");
+spr_GetAgendaApprovalState reads Users, Agenda, Meeting and fn_AgendaWaitingFor, and spr_CheckAgendaFinalizeByMeetingId reads Meeting;
+neither writes. The text of spr_GetAgendaByAgendaId was not read for this section.
+
+Drawn from (WF2e1): BMMS/DashBoard/DashBoard.aspx.cs (BindAgendaDetails, lnkSource_Click, lnkApproval_Click, btnApprove_Click,
+btnReject_Click, TryGetAgenda, TryGetApprovalState, GenerateMail, ShowAgendaPanelMessage, ShowItemGone, ShowAlert,
+ShowCommentCaptions, HandledCaption, ClearAgendaEditors), BMMS/DashBoard/DashBoard.aspx (the Agenda Alert panel), BMMSBAL/AgendaMgr.cs
+and MeetingMgr.cs, BMMSDAL/AgendaDB.cs, the catalog of BMMS_Test at step 57 (spr_GetAgendaApprovalState, fn_AgendaWaitingFor,
+spr_UpdateAgendaByAgendaId, spr_GetAlertMailId, spr_GetMeetingStatusByMeetingId, spr_CheckAgendaFinalizeByMeetingId).
 
 ## Summary cards and the Committee filter on every card (step UN6c2b)
 

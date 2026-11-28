@@ -8,7 +8,7 @@
 - Last updated by: AF1, based on be23b24 (the AF1 section and the Programs row); MF1, based on 00b6062 (the MF1 section and rows); IU1, based on 79f50ea
 - Status: Draft
 - Verified against: for AF1: BMMS/Master/MinutesFinalization.aspx.cs and MinutesConfirmation.aspx.cs and BMMSBAL/MeetingMgr.cs (GetMeetingsToActOn) read in the diff, Database/README.md (section Step AF1); for MF1: BMMS/Master/MinutesFinalization.aspx.cs and MinutesConfirmation.aspx.cs (the new code read in full), BMMSBAL/MinutesMgr.cs (GetMinutesItemList), BMMSBAL/HtmlCleaner.cs (ToPlainText), BMMSDAL/MinutesDB.cs and MeetingDB.cs (the two calls), Database/README.md (section Step MF1); for IU1: Database/BMMS-Fix-InactiveUsers-Step55.sql (spr_MinutesFinalizeByMeetingId, fn_FunctionalUsers), BMMS-Test-InactiveUsers-Step55.sql (part 2, R2 and R3), Database/README.md (section Step IU1)
-- To confirm: feature area written only for the action item rows at finalisation (IU1) and the Minutes Items list (MF1); the rest is not written yet (WF2c3)
+- To confirm: feature area written only for the action item rows at finalisation (IU1) and the Minutes Items list (MF1); the rest is not written yet (WF2e2)
 
 ## Scope
 
@@ -16,7 +16,7 @@ This file covers, since step IU1 (database step 55), which users get an action i
 of a meeting are finalised, and, since step MF1, the Minutes Items list that Finalize Minutes and Minutes Confirmation show. The
 rest of the minutes flow (update, finalise, confirm) is not written yet.
 
-[[CONFIRM: not written yet (WF2c3): the minutes update and confirmation flows; only the action item rows at finalisation (IU1) and the Minutes Items list (MF1) are written]]
+[[CONFIRM: not written yet (WF2e2): the minutes update and confirmation flows; only the action item rows at finalisation (IU1) and the Minutes Items list (MF1) are written]]
 
 ## Programs involved
 
@@ -155,7 +155,7 @@ and Confirm handlers), BMMSBAL/MeetingMgr.cs (MeetingAction, GetMeetingsToActOn)
 
 ## Refusal paths
 
-[[CONFIRM: not written yet (WF2c3)]]
+[[CONFIRM: not written yet (WF2e2)]]
 
 The advance warning of Finalize Minutes (step MF1) is shown when the meeting is chosen, with the counts of the list; the
 server still decides at Finalize. Reason 19 (a meeting created after step 23 with no minutes, or a minute not saved) is

@@ -8,7 +8,7 @@
 - Last updated by: GM1a, based on 32c619d (the new section only; the rest was last updated by UD1c, based on 42cb88c)
 - Status: Draft
 - Verified against: for GM1a: Database/BMMS-Fix-GovernanceLog-Step56.sql (comment blocks of the log writers and the replaced procedures), Database/README.md (section Step GM1a); for UD1c: BMMS/Master/User.aspx.cs (diff: LoadMgrController, NotAllowedManagerChosen, PageValidation, the Department change), BMMSBAL/UserMgr.cs (diff), Database/BMMS-Fix-ManagerScope-Step54.sql (fn_ReportingPersonAllowed and spr_GetReportingPersonList read in full; spr_AddEditUser read at its comment block and the two Reason 31 checks), Database/README.md (section Step UD1c); for UD1b: BMMS/Master/User.aspx.cs (diff: the save and the status messages), BMMSBAL/UserMgr.cs (diff: ReleasedMessage, SuccessDetail), BMMSDAL/UserDB.cs (the two procedure calls), Database/BMMS-Fix-DepartmentApprovers-Step53.sql (fn_ManagerReleaseRefusal, spr_SetManagerAlertRows and the comment blocks of spr_AddEditUser and spr_SetUserStatusByUserId read; the long procedure texts not read line by line), Database/README.md (section Step UD1b)
-- To confirm: feature area written only for the release of a Manager since step UD1b (WF2c2); the rest of User Master (save, role history, department history, delete, reset password) is not written yet
+- To confirm: feature area written only for the release of a Manager since step UD1b (WF2e3); the rest of User Master (save, role history, department history, delete, reset password) is not written yet
 
 ## Scope
 
@@ -18,7 +18,7 @@ Manager and Activate. Rule 12 (step 39, changed in step 52) stops the change onl
 decide the items waiting for him; when it allows it, his waiting alert rows of the department are closed and the page says so.
 The protected system account may make these changes (as an Admin).
 
-[[CONFIRM: the rest of User Master and of the history tables is not written yet (WF2c2)]]
+[[CONFIRM: the rest of User Master and of the history tables is not written yet (WF2e3)]]
 
 ## Programs involved
 

@@ -7,7 +7,7 @@
 - Last updated by: RA1d, based on d642746
 - Status: Draft
 - Verified against: for RA1d: BMMS/PageAccessModule.cs, BMMS/Default.aspx.cs, BMMS/Global.asax.cs (diff), BMMSBAL/UserMgr.cs and BMMSDAL/UserDB.cs (diff), Database/BMMS-Fix-SessionCheck-Step51.sql (read in full), Database/README.md (section Step RA1d), Tests/packs/session-check/README.md
-- To confirm: the password check, the first-login password change and the sign-out are not written yet (WF2c2); the table of the sign-in itself (spr_GetUserByLoginName, spr_RecordLoginByUserId) is only named here
+- To confirm: the password check, the first-login password change and the sign-out are not written yet (WF2e3); the table of the sign-in itself (spr_GetUserByLoginName, spr_RecordLoginByUserId) is only named here
 
 ## Scope
 
@@ -22,7 +22,7 @@ postbacks, Report/ViewReport.aspx (the pop-up, the PDF stream, the Word export) 
 Not checked: Default.aspx, Logout.aspx, Error/ErrorPage.aspx, WebResource.axd, ScriptResource.axd and static
 files. The project has no .ashx or .asmx.
 
-[[CONFIRM: the part of this file on the password check, the first-login password change and the sign-out is not written yet (WF2c2)]]
+[[CONFIRM: the part of this file on the password check, the first-login password change and the sign-out is not written yet (WF2e3)]]
 
 ## Programs involved
 
