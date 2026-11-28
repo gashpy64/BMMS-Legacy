@@ -3,11 +3,11 @@
 - Title: Development Environment
 - Audience: Developers and installers (internal)
 - Shipped: No
-- Applies to: AZ1 (the output folders, the MSBuild row of "The tester: what the development machine needs", the list of files a new working copy lacks, "Building without touching bin and obj"); UD1c (the Database BMMS_Quality row of "The tester: what the development machine needs": eleven qa_ accounts, qa_manager4 and the pack manager-scope); UD1b (the Database BMMS_Quality row of "The tester: what the development machine needs": the account qa_manager3 and the pack two-approvers); DA1 (the doc-auditor row of "The agents", the section "The doc-auditor and its guard", the section "The audit catalog"); UN6e (the SQL Server row and the App_Data row of "The tester: what the development machine needs"); UN6b (the memory reading in "The tester: what the development machine needs"); the rest WF3a2
-- Commit: 00838ed
-- Last updated by: AZ1, based on 00838ed
+- Applies to: HK1 (the section "Connection settings": the two files, the switch, -Show, the -Force backup, the check after a switch, the relink after a restore; the list of files git does not hold); AZ1 (the output folders, the MSBuild row of "The tester: what the development machine needs", the list of files a new working copy lacks, "Building without touching bin and obj"); UD1c (the Database BMMS_Quality row of "The tester: what the development machine needs": eleven qa_ accounts, qa_manager4 and the pack manager-scope); UD1b (the Database BMMS_Quality row of "The tester: what the development machine needs": the account qa_manager3 and the pack two-approvers); DA1 (the doc-auditor row of "The agents", the section "The doc-auditor and its guard", the section "The audit catalog"); UN6e (the SQL Server row and the App_Data row of "The tester: what the development machine needs"); UN6b (the memory reading in "The tester: what the development machine needs"); the rest WF3a2
+- Commit: b3f4407
+- Last updated by: HK1, based on b3f4407 (Connection settings and the list of files git does not hold); AZ1, based on 00838ed
 - Status: Draft
-- Verified against: for step AZ1: git diff HEAD (.gitignore, BMMS/BMMS.csproj, BMMSBAL/BMMSBAL.csproj, Tests/_runner/Tester.Common.ps1, the deleted and moved files under bin), Lib/iTextSharp/README.txt, Lib/AjaxControlToolkit/README.txt, Database/README.md (section Step AZ1), the build and owner results as given; for step UD1c: Tests/README.md, Tests/_runner/Tester.Common.ps1 and Setup-Quality.ps1, Tests/credentials.json.example (diff), Tests/fixture/BMMS-Quality-Fixture.sql and BMMS-Quality-Fixture-Check.sql (diff), Tests/packs/manager-scope/README.md; for step UD1b: Tests/README.md, Tests/_runner/Tester.Common.ps1 and Setup-Quality.ps1, Tests/credentials.json.example (diff), Tests/packs/two-approvers/README.md; for step DA1: .claude/agents/doc-auditor.md, .claude/hooks/doc-auditor-guard.ps1 (header comment and the lines that name the write pattern and the Grep extension list; not read line by line), Documents/_build/Export-Catalog.ps1 (parameters, the output-folder rule, the fingerprint), Documents/Audit/README.md, CLAUDE.md (diff); for step UN6e: Tests/README.md (diff: the Server and Site lines), Database/README.md (section Step UN6e, Tester); for step UN6b: Tests/_runner/Tester.Common.ps1 (diff: Get-QaMemory, QaMemoryWarnMB),
+- Verified against: for step HK1: git diff HEAD (.gitignore), Tools/Switch-Db.ps1 and BMMS/connectionStrings.Azure.config.example (read in full), BMMS/connectionStrings.config.example (the parts table, from the earlier text), Database/README.md (section Step HK1 and Known items O1 and O2), the build, tester and owner results as given; for step AZ1: git diff HEAD (.gitignore, BMMS/BMMS.csproj, BMMSBAL/BMMSBAL.csproj, Tests/_runner/Tester.Common.ps1, the deleted and moved files under bin), Lib/iTextSharp/README.txt, Lib/AjaxControlToolkit/README.txt, Database/README.md (section Step AZ1), the build and owner results as given; for step UD1c: Tests/README.md, Tests/_runner/Tester.Common.ps1 and Setup-Quality.ps1, Tests/credentials.json.example (diff), Tests/fixture/BMMS-Quality-Fixture.sql and BMMS-Quality-Fixture-Check.sql (diff), Tests/packs/manager-scope/README.md; for step UD1b: Tests/README.md, Tests/_runner/Tester.Common.ps1 and Setup-Quality.ps1, Tests/credentials.json.example (diff), Tests/packs/two-approvers/README.md; for step DA1: .claude/agents/doc-auditor.md, .claude/hooks/doc-auditor-guard.ps1 (header comment and the lines that name the write pattern and the Grep extension list; not read line by line), Documents/_build/Export-Catalog.ps1 (parameters, the output-folder rule, the fingerprint), Documents/Audit/README.md, CLAUDE.md (diff); for step UN6e: Tests/README.md (diff: the Server and Site lines), Database/README.md (section Step UN6e, Tester); for step UN6b: Tests/_runner/Tester.Common.ps1 (diff: Get-QaMemory, QaMemoryWarnMB),
   Run-Tests.ps1 (diff, preflight), Tests/README.md (diff, the memory warning row); for the development workflow (steps 1, 5, 6, 7 and 9) and the agents: CLAUDE.md (diff),
   .claude/agents/tester.md; for the section "The tester: what the development machine needs": Tests/package.json,
   Tests/README.md, Tests/_runner/Tester.Common.ps1 and Run-Tests.ps1 (tool lookup), Tests/lib/run.js,
@@ -133,7 +133,13 @@ bin and obj. Rebuilt binaries are never committed (since step AZ1 none is tracke
 
 Files that git does not hold and a new working copy therefore lacks (`.gitignore`):
 
-- `BMMS/connectionStrings.config` (the connection string; see the next section);
+- `BMMS/connectionStrings.config` (the connection string; see the next section) and, since step HK1,
+  every other copy of it in BMMS/: `BMMS/connectionStrings*.config` (`.Local`, `.Azure`, " - Copy" and the
+  `connectionStrings.Force-backup.config` of the switch script) and hand copies with another suffix
+  (`BMMS/connectionStrings*.config.*`, for example `.old`, `.orig`, `.txt`). The two files that end in `.example`
+  stay tracked;
+- `BMMS/Properties/PublishProfiles/` (Visual Studio publish profiles, which can hold a server and a user name) and the
+  working folder `Claude outputs/` (since step HK1);
 - `App_Data/PageAccessLog.txt`, and the upload and output folders `BMMS/Files/MemberPhoto/`,
   `BMMS/Files/MemberResume/`, `BMMS/Files/PDF/`, `BMMS/Files/AgendaAttach/`,
   `BMMS/Files/SqlBackup/`, `BMMS/Files/Branding/` and the contents of `BMMS/Files/Temp/` (the
@@ -155,12 +161,28 @@ Error" (Database/README.md, section Step AZ1).
 BMMS/Web.config does not hold the connection string: it contains
 `<connectionStrings configSource="connectionStrings.config"/>`, so ASP.NET reads the section from
 the file `BMMS/connectionStrings.config` next to Web.config. That file is in `.gitignore`
-(twice, in two spellings) and is never committed. The data layer reads the connection named
+(twice, in two spellings) and is never committed; since step HK1 every copy of it is ignored too
+(see "Files that git does not hold" above). The data layer reads the connection named
 `ConnectionString` (see 01-Overview-and-Architecture).
 
-To set up a development machine, copy `BMMS/connectionStrings.config.example` (tracked) to
-`BMMS/connectionStrings.config` and replace the placeholders. The example holds one
-`add` element named `ConnectionString`, with these parts:
+Since step HK1 a developer who works against two databases (the Local one and the Azure one)
+keeps two source files and lets a script copy the one he needs over `connectionStrings.config`.
+
+#### Making the two source files (once per machine)
+
+Both examples are tracked; both copies are ignored by git. Make each copy in `BMMS/` and put the real
+values in it (never into a document, a commit message or a tracked file):
+
+| Source file | Copy it to | Put in |
+|---|---|---|
+| `BMMS/connectionStrings.config.example` | `BMMS/connectionStrings.Local.config` | the Local server, `<database>`, `<login>` and `<password>` (table below) |
+| `BMMS/connectionStrings.Azure.config.example` | `BMMS/connectionStrings.Azure.config` | `<password>` of the Azure login (the example already names the Azure server on port 1433, the database BMMS_Test and the user bmms_app; change the server if yours differs) |
+
+The Azure example sets `Encrypt=True`, `TrustServerCertificate=False` and `Connection Timeout=30`. On a
+machine that uses one database only, copying `connectionStrings.config.example` to
+`connectionStrings.config` by hand, as before, still works.
+
+The example `connectionStrings.config.example` holds one `add` element named `ConnectionString`, with these parts:
 
 | Part | Value in the example | What you put there |
 |---|---|---|
@@ -174,6 +196,79 @@ Never put the real values into a document, a commit message or a tracked file. T
 BMMS_Test only (CLAUDE.md); the database-name guard in the scripts is `BMMS%`, so the name of a
 test copy must start with BMMS (see 03-Deployment-and-Installation for the scripts).
 [[CONFIRM: which database name and login a developer's connectionStrings.config should use; the example shows BMMS and bmms_app, the house rules say tests run on BMMS_Test]]
+
+#### Switching between Local and Azure (Tools/Switch-Db.ps1, step HK1)
+
+`Tools/Switch-Db.ps1` runs on Windows PowerShell 5.1 and on PowerShell 7. It finds the BMMS folder from its own
+location (`..\BMMS`), so it works from any current folder, and it makes no network call: the connection string is only
+read, never opened. Windows blocks scripts by default, so every command is written in this form (found in the owner's
+test; `<repo>` is the folder of the working copy):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File <repo>\Tools\Switch-Db.ps1 -Show
+powershell -ExecutionPolicy Bypass -File <repo>\Tools\Switch-Db.ps1 -Target Local
+powershell -ExecutionPolicy Bypass -File <repo>\Tools\Switch-Db.ps1 -Target Azure
+powershell -ExecutionPolicy Bypass -File <repo>\Tools\Switch-Db.ps1 -Target Azure -Force
+```
+
+| Command | What it does |
+|---|---|
+| `-Target Local` or `-Target Azure` | Copies `BMMS\connectionStrings.<Target>.config` over `BMMS\connectionStrings.config`, then prints Target, Server and Database read from the copied file. It never prints the user name, the password or the whole connection string. When the current file already is that file it says so and copies nothing. After a copy a running site restarts by itself (the section is read from a file named in Web.config) and signed-in users must sign in again |
+| `-Show` | Prints the current Target (Local, Azure or unknown), Server and Database, and changes nothing. It takes no `-Target` or `-Force` |
+| `-Force` | Only with `-Target`. Needed only when the current `connectionStrings.config` matches neither the Local nor the Azure file (see the refusals). The script first saves the current file as `BMMS\connectionStrings.Force-backup.config` (an older backup is replaced; git ignores it), then copies |
+
+The script refuses, prints "REFUSED" and "Nothing was changed." and ends with exit code 1, when:
+
+- the source file `connectionStrings.Local.config` or `connectionStrings.Azure.config` is missing (the message names the
+  example to copy);
+- the source file is not XML, or has no `ConnectionString` entry under `connectionStrings`;
+- the current `connectionStrings.config` matches neither source file, so a copy could lose a hand edit. Save it first by
+  copying it to `connectionStrings.Local.config` or `connectionStrings.Azure.config`, or run again with `-Force`; the
+  backup `connectionStrings.Force-backup.config` then holds the replaced file. The backup is never used as a source file.
+
+Called with no parameter, or with `-Show` together with `-Target` or `-Force`, it prints the usage line and ends with exit code 2.
+
+```mermaid
+flowchart LR
+    L[connectionStrings.Local.config]
+    A[connectionStrings.Azure.config]
+    S[Switch-Db.ps1]
+    C[connectionStrings.config]
+    B[connectionStrings.Force-backup.config]
+    L -->|source| S
+    A -->|source| S
+    S -->|copy| C
+    S -->|"saved first, only with -Force"| B
+```
+
+| From | To | Data | Notes |
+|---|---|---|---|
+| connectionStrings.Local.config, connectionStrings.Azure.config | Switch-Db.ps1 | The chosen file, read for its server and database | Both files are made by hand from the examples and are ignored by git |
+| Switch-Db.ps1 | connectionStrings.config | A copy of the chosen file | Only when the current file is a known one, or with -Force |
+| Switch-Db.ps1 | connectionStrings.Force-backup.config | The replaced file | Only with -Force on an unknown file |
+
+Drawn from: Tools/Switch-Db.ps1, Database/README.md (section Step HK1).
+
+##### Check after a switch
+
+Both the Local and the Azure database are named BMMS_Test, so the name alone cannot tell them apart. After a switch:
+
+1. Run `-Show` and read the Server line (the Local server or the Azure server) and the Database line.
+2. Sign in as Admin (or Controller): the footer shows "Database: [name]". It confirms the database name only; the Server
+   line of `-Show` confirms which server it is (Database/README.md, Known items, O1).
+
+##### After a database is restored
+
+A restore of a database brings back the application user without its login. Link it again in that database:
+
+```sql
+ALTER USER bmms_app WITH LOGIN = bmms_app
+```
+
+##### Visual Studio and the publish profile
+
+On the Base Laptop Visual Studio adds a publish-profile line to `BMMS/BMMS.csproj`, which git tracks. Git cannot ignore one
+line of a tracked file, so that line stays out of commits by practice (the owner leaves it out). The folder `BMMS/Properties/PublishProfiles/` itself is ignored.
 
 ## Building without touching bin and obj
 

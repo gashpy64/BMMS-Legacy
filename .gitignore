@@ -75,3 +75,14 @@ Tests/_site/
 Tests/_build/
 Tests/local/
 Tests/node_modules/
+
+# Step HK1: every copy of the connection file (.Local, .Azure, " - Copy") is never committed;
+# the *.example files do not end in .config, so they stay tracked.
+/BMMS/connectionStrings*.config
+# Step HK1: also hand copies with another suffix (.old, .orig, .txt); the two .example files stay tracked
+/BMMS/connectionStrings*.config.*
+!/BMMS/connectionStrings*.config.example
+# Visual Studio publish profiles (they can hold the server and the user name)
+/BMMS/Properties/PublishProfiles/
+# Local working folder of Claude sessions
+Claude outputs/
